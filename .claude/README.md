@@ -1,0 +1,23 @@
+# `.claude/` — Project Knowledge Base
+
+Documentation Claude Code (and humans) should read before working in this repo.
+
+| File | What it holds |
+| --- | --- |
+| [SCOPE.md](./SCOPE.md) | **What we're building and why** — purpose, platform targets, what's out of scope |
+| [PROJECT.md](./PROJECT.md) | The stack, the layout, how to run it |
+| [ECOSYSTEM.md](./ECOSYSTEM.md) | **The other repos** — backend, web app, API contract, brand and domain rules |
+| [CONVENTIONS.md](./CONVENTIONS.md) | Code conventions in force (naming, imports, theming, platform splits) |
+| [settings.json](./settings.json) | Grants read access to the sibling repos; denies the deprecated one |
+| [decisions/](./decisions/) | Decision log — one file per decision, newest number highest |
+
+## Rule: every decision gets written down
+
+Whenever a decision is made in this project — a library choice, an architectural
+split, a convention, a thing deliberately *not* done — add a numbered file to
+[decisions/](./decisions/) before or alongside the code that implements it.
+See [decisions/README.md](./decisions/README.md) for the format.
+
+"Decision" means anything a future reader could reasonably ask "why is it like
+this?" about. Routine implementation that follows an already-recorded decision
+does not need a new entry.

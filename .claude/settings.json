@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "additionalDirectories": [
+      "/Users/ed/Desktop/repos/senpai-backend",
+      "/Users/ed/Desktop/repos/cronogol"
+    ]
+  }
+}
