@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><style>
+body{margin:0;background:#e9e6e0;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
+.ph{width:393px;height:852px;background:#0a0b0c;border-radius:48px;overflow:hidden;position:relative;display:flex;flex-direction:column;color:#f4f6f6;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 0 9px #1a1b1d,0 30px 70px rgba(0,0,0,.45)}
+.sb{flex:none;height:56px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 9px;font:600 15px/1 -apple-system,system-ui;letter-spacing:-.01em}
+.scr{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch}
+.scr::-webkit-scrollbar{display:none}
+.hi{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.32);z-index:40;pointer-events:none}
+a{color:#3c6ea8}a:hover{color:#2b527d}
+</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px 20px 34px;box-sizing:border-box">
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+
+  <sc-if value="{{ isOnb }}" hint-placeholder-val="{{ false }}">
+  <div class="scr" style="padding:8px 20px 0">
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:16px">{{ t.onbStep }}</div>
+    <div style="font:700 30px/1.05 -apple-system,system-ui;letter-spacing:-.03em;margin-bottom:8px">{{ onb.title }}</div>
+    <div style="font:400 14.5px/1.45 -apple-system,system-ui;color:#8fa0a6;margin-bottom:18px;max-width:32ch">{{ onb.body }}</div>
+    <sc-if value="{{ onb.isPick }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="height:40px;border-radius:12px;background:#15171a;display:flex;align-items:center;gap:9px;padding:0 13px;margin-bottom:16px"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2"><circle cx="9" cy="9" r="5.5"></circle><path d="M13.5 13.5L17 17"></path></svg><span style="font:400 14.5px/1 -apple-system,system-ui;color:#59626a">{{ t.search }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding-bottom:16px">
+        <sc-for list="{{ onbClubs }}" as="c" hint-placeholder-count="9">
+          <div onClick="{{ c.onPick }}" style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px;position:relative;cursor:pointer;border:1px solid {{ c.ring }}">
+            <span style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:9px;display:{{ c.checkShow }};align-items:center;justify-content:center;background:#c8f25a"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#101806" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span>
+            {{ c.img }}
+            <span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:{{ c.nameColor }}">{{ c.short }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <sc-if value="{{ onb.isAlerts }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <div style="background:#15171a;border-radius:20px;overflow:hidden;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:13px;padding:16px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:34px;height:34px;border-radius:10px;background:rgba(200,242,90,.14);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="10" cy="10.5" r="6.5"></circle><path d="M10 7.5v3.2l2.2 1.4"></path></svg></span><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ t.alReminder }}</span><span style="font:500 12.5px/1.35 -apple-system,system-ui;color:#7c858b">{{ t.alReminderSub }}</span></span></div>
+        <div style="display:flex;align-items:center;gap:13px;padding:16px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:34px;height:34px;border-radius:10px;background:rgba(200,242,90,.14);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h9M11 4.5L13.5 7 11 9.5M16 13H7M9 10.5L6.5 13 9 15.5"></path></svg></span><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ t.alMoved }}</span><span style="font:500 12.5px/1.35 -apple-system,system-ui;color:#7c858b">{{ t.alMovedSub }}</span></span></div>
+        <div style="display:flex;align-items:center;gap:13px;padding:16px"><span style="width:34px;height:34px;border-radius:10px;background:rgba(255,92,71,.14);display:flex;align-items:center;justify-content:center;color:#ff5c47"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 3.5l7 12.5H3l7-12.5z"></path><path d="M10 8v3.4M10 13.6v.1"></path></svg></span><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ t.alPostponed }}</span><span style="font:500 12.5px/1.35 -apple-system,system-ui;color:#7c858b">{{ t.alPostponedSub }}</span></span></div>
+      </div>
+      <div style="display:flex;gap:11px;align-items:flex-start;padding:14px 16px;background:#15171a;border-radius:18px">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#7c858b" stroke-width="1.9" style="flex:none;margin-top:1px"><rect x="3" y="4.5" width="14" height="13" rx="3.5"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>
+        <span style="font:400 12.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">{{ t.onbCalNote }}</span>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  <div style="flex:none;padding:12px 20px 26px;display:flex;flex-direction:column;gap:9px">
+    <div onClick="{{ onb.onPrimary }}" style="height:50px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:600 16px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer">{{ onb.primary }}</div>
+    <div onClick="{{ onb.onSecondary }}" style="height:44px;display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0;cursor:pointer">{{ onb.secondary }}</div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div class="scr">
+
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:6px 20px 24px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+          <div><div style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#7c858b;margin-bottom:8px">{{ board.eyebrow }}</div><div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">{{ t.boardTitle }}</div></div>
+          <div onClick="{{ openAccount }}" style="width:36px;height:36px;border-radius:18px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 12px -apple-system,system-ui;color:#a3abb0;cursor:pointer">EM</div>
+        </div>
+
+        <sc-if value="{{ boardLive }}" hint-placeholder-val="{{ true }}">
+        <div style="border-radius:24px;padding:18px;background:#15171a;border:1px solid rgba(255,92,71,.35);margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <span style="display:flex;align-items:center;gap:7px;font:800 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#ff5c47"><span style="width:7px;height:7px;border-radius:4px;background:#ff5c47;display:inline-block"></span>{{ t.inProgress }}</span>
+            <span style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ live.minute }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1;display:flex;align-items:center;gap:11px">{{ live.homeImg }}<div style="font:600 15px/1.15 -apple-system,system-ui;letter-spacing:-.015em">{{ live.homeName }}</div></div>
+            <div style="font:700 38px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.04em">{{ live.score }}</div>
+            <div style="flex:1;display:flex;align-items:center;gap:11px;justify-content:flex-end"><div style="font:600 15px/1.15 -apple-system,system-ui;letter-spacing:-.015em;text-align:right;color:#a3abb0">{{ live.awayName }}</div>{{ live.awayImg }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2"><circle cx="10" cy="10" r="7.5"></circle><path d="M10 6v4.4l3 1.8"></path></svg>
+            <span style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">{{ t.scoreChecked }}</span>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ boardIdle }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="background:#15171a;border-radius:24px;padding:17px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">{{ t.lastResult }}</span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ last.meta }}</span></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="flex:1;display:flex;align-items:center;gap:11px">{{ last.homeImg }}<div style="font:600 14.5px/1.15 -apple-system,system-ui;letter-spacing:-.015em">{{ last.homeName }}</div></div>
+              <div style="display:flex;align-items:center;gap:9px"><span style="font:700 26px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.035em">{{ last.score }}</span><span style="width:22px;height:22px;border-radius:7px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui">{{ last.result }}</span></div>
+              <div style="flex:1;display:flex;align-items:center;gap:11px;justify-content:flex-end"><div style="font:600 14.5px/1.15 -apple-system,system-ui;letter-spacing:-.015em;text-align:right;color:#a3abb0">{{ last.awayName }}</div>{{ last.awayImg }}</div>
+            </div>
+          </div>
+          <div style="background:#15171a;border-radius:24px;padding:18px;border:1px solid rgba(200,242,90,.28);margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">{{ t.nextUp }}</span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ next.venue }}</span></div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">{{ next.homeImg }}<div style="font:600 13.5px/1.2 -apple-system,system-ui;letter-spacing:-.01em;text-align:center">{{ next.homeName }}</div></div>
+              <div style="font:700 11px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">V</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">{{ next.awayImg }}<div style="font:600 13.5px/1.2 -apple-system,system-ui;letter-spacing:-.01em;text-align:center">{{ next.awayName }}</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.07)"><span style="font:700 40px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.035em">{{ next.time }}</span><span style="font:700 12px/1.5 -apple-system,system-ui;letter-spacing:.1em;color:#a3abb0;padding-bottom:5px">{{ next.date }}<br><span style="color:#59626a">{{ next.zone }}</span></span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px"><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">{{ t.kickoffIn }}</span><span style="font:700 22px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">{{ next.countdown }}</span></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">{{ t.resultsToday }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ resultsCount }}</span></div>
+        <div style="background:#15171a;border-radius:20px;overflow:hidden">
+          <sc-for list="{{ results }}" as="g" hint-placeholder-count="3">
+            <div>
+              <div style="display:flex;align-items:center;gap:9px;padding:11px 16px 9px;background:#12151a;border-bottom:1px solid rgba(255,255,255,.06)">{{ g.mark }}<span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">{{ g.label }}</span></div>
+              <sc-for list="{{ g.rows }}" as="m" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid {{ m.rule }}">
+                  <div style="flex:1;display:flex;align-items:center;gap:9px;min-width:0">{{ m.homeImg }}<span style="font:600 13.5px/1 -apple-system,system-ui;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:{{ m.homeColor }}">{{ m.home }}</span></div>
+                  <span style="font:700 14.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">{{ m.score }}</span>
+                  <div style="flex:1;display:flex;align-items:center;gap:9px;justify-content:flex-end;min-width:0"><span style="font:600 13.5px/1 -apple-system,system-ui;letter-spacing:-.01em;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:{{ m.awayColor }}">{{ m.away }}</span>{{ m.awayImg }}</div>
+                  <span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;width:20px;text-align:right">{{ m.state }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font:400 11.5px/1.45 -apple-system,system-ui;color:#59626a;margin-top:10px;max-width:44ch">{{ t.resultsFoot }}</div>
+
+        <sc-if value="{{ hasSubs }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin:22px 0 10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">{{ t.upcoming }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span></div>
+          <div style="background:#15171a;border-radius:20px;overflow:hidden">
+            <sc-for list="{{ rest }}" as="r" hint-placeholder-count="3">
+              <div onClick="{{ r.onOpen }}" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid {{ r.rule }};cursor:pointer">
+                {{ r.img }}
+                <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ r.opponent }}</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:{{ r.subColor }}">{{ r.sub }}</div></div>
+                <div style="text-align:right"><div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ r.time }}</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:{{ r.dayColor }};margin-top:4px">{{ r.day }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:14px">
+            <div onClick="{{ goClubs }}" style="flex:1;background:#15171a;border-radius:18px;padding:14px 16px;cursor:pointer"><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;margin-bottom:8px">{{ t.subscribedLabel }}</div><div style="font:700 22px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ stats.subs }}</div></div>
+            <div onClick="{{ openAccount }}" style="flex:1;background:#15171a;border-radius:18px;padding:14px 16px;cursor:pointer"><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;margin-bottom:8px">{{ t.inCalendar }}</div><div style="font:700 22px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ stats.feeds }}</div></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ noSubs }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px;background:#15171a;border-radius:24px;border:1px solid rgba(200,242,90,.18);padding:20px 18px">
+          <div style="font:700 22px/1.2 -apple-system,system-ui;letter-spacing:-.03em;margin-bottom:10px">{{ t.followTitle }}</div>
+          <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:16px;text-wrap:pretty">{{ t.followBody }}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+            <sc-for list="{{ followClubs }}" as="c" hint-placeholder-count="6">
+              <div onClick="{{ c.onOpen }}" style="background:#1a1d21;border-radius:14px;padding:12px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0">{{ c.img }}<span style="font:600 13px/1.25 -apple-system,system-ui;letter-spacing:-.01em">{{ c.name }}</span></div>
+            </sc-for>
+          </div>
+          <div onClick="{{ goClubs }}" style="height:46px;border-radius:23px;background:#c8f25a;color:#101806;display:inline-flex;align-items:center;gap:10px;padding:0 22px;font:700 12px -apple-system,system-ui;letter-spacing:.12em;cursor:pointer">{{ t.browseAll }}<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isMatchdays }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:6px 0 24px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:0 20px 12px">
+          <div style="min-width:0"><div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#59626a;margin-bottom:9px">{{ md.eyebrow }}</div><div style="font:700 30px/1 -apple-system,system-ui;letter-spacing:-.03em">{{ md.title }}</div></div>
+          <div onClick="{{ openAccount }}" style="width:36px;height:36px;border-radius:18px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 12px -apple-system,system-ui;color:#a3abb0;cursor:pointer;flex:none">EM</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:0 20px 14px">
+          <div onClick="{{ md.onPrev }}" style="width:34px;height:34px;border-radius:11px;background:#15171a;border:1px solid rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#a3abb0"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l-6 6 6 6"></path></svg></div>
+          <div onClick="{{ md.onNext }}" style="width:34px;height:34px;border-radius:11px;background:#15171a;border:1px solid rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#a3abb0"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 4l6 6-6 6"></path></svg></div>
+          <div style="flex:1;font:700 10px/1.55 -apple-system,system-ui;letter-spacing:.1em;color:#a3abb0;text-align:right">{{ md.range }}<br><span style="color:#59626a">{{ md.meta }}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;padding:0 20px 16px;overflow-x:auto">
+          <sc-for list="{{ leagues }}" as="l" hint-placeholder-count="4">
+            <div onClick="{{ l.onPick }}" style="flex:none;height:36px;padding:0 14px;border-radius:11px;display:flex;align-items:center;gap:7px;cursor:pointer;background:{{ l.bg }};border:1px solid {{ l.border }};opacity:{{ l.opacity }}">{{ l.mark }}<span style="display:{{ l.labelShow }};font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:{{ l.labelColor }}">{{ l.label }}</span></div>
+          </sc-for>
+        </div>
+        <div style="padding:0 20px 8px;font:700 9px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a">{{ t.matchdayLabel }}</div>
+        <div style="display:flex;gap:6px;padding:0 20px 16px;overflow-x:auto">
+          <sc-for list="{{ mdStrip }}" as="n" hint-placeholder-count="12">
+            <div onClick="{{ n.onPick }}" style="flex:none;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font:700 13px -apple-system,system-ui;font-variant-numeric:tabular-nums;cursor:pointer;background:{{ n.bg }};color:{{ n.color }}">{{ n.n }}</div>
+          </sc-for>
+        </div>
+        <div style="padding:0 20px 16px"><div onClick="{{ md.onSubscribe }}" style="height:48px;border-radius:15px;border:1px solid rgba(200,242,90,.45);background:rgba(200,242,90,.1);display:flex;align-items:center;justify-content:center;gap:9px;color:#c8f25a;font:600 14.5px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>{{ md.subscribeLabel }}</div></div>
+        <sc-for list="{{ md.days }}" as="d" hint-placeholder-count="3">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 8px;background:#12151a;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.06)"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">{{ d.label }}</span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ d.count }}</span></div>
+            <sc-for list="{{ d.rows }}" as="m" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:11px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05);background:{{ m.bg }}">
+                <div style="width:46px;flex:none"><div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:{{ m.statusColor }}">{{ m.status }}</div><div style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;margin-top:5px;display:{{ m.stateShow }};color:{{ m.stateColor }}">{{ m.state }}</div></div>
+                <div style="display:flex;align-items:center;gap:5px;flex:none">{{ m.homeImg }}<span style="font:700 8px/1 -apple-system,system-ui;color:#59626a">V</span>{{ m.awayImg }}</div>
+                <div style="flex:1;min-width:0"><div style="font:600 14px/1.3 -apple-system,system-ui;letter-spacing:-.01em;color:{{ m.homeColor }}">{{ m.home }}</div><div style="font:600 14px/1.3 -apple-system,system-ui;letter-spacing:-.01em;color:{{ m.awayColor }}">{{ m.away }}</div><div style="font:500 11px/1.3 -apple-system,system-ui;color:#7c858b;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.venue }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="padding:16px 20px 0;font:400 12px/1.5 -apple-system,system-ui;color:#59626a;max-width:44ch">{{ t.matchdayFoot }}</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isTable }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:6px 0 24px">
+        <div style="padding:0 20px 12px;display:flex;align-items:flex-end;justify-content:space-between">
+          <div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">{{ t.tabTable }}</div>
+          <div style="font:700 10px/1.5 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;text-align:right">{{ t.afterMd }}<br>{{ t.clubsCount }}</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;padding:0 20px 14px">
+          <div style="height:36px;padding:0 14px;border-radius:11px;background:#1e2126;border:1px solid rgba(200,242,90,.35);display:flex;align-items:center"><img src="leagues/laliga.png" alt="LaLiga" style="height:15px;width:auto;display:block"></div>
+          <div style="height:36px;padding:0 14px;border-radius:11px;background:#15171a;display:flex;align-items:center;opacity:.45"><img src="leagues/premier-league.png" alt="Premier League" style="height:20px;width:auto;display:block"></div>
+          <div style="height:36px;padding:0 14px;border-radius:11px;background:#15171a;display:flex;align-items:center;opacity:.45"><img src="leagues/bundesliga.png" alt="Bundesliga" style="height:19px;width:auto;display:block"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:8px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
+          <span></span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">#</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">{{ t.club }}</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;text-align:center">{{ t.pl }}</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#f4f6f6;text-align:center">{{ t.ptsShort }}</span>
+        </div>
+        <sc-for list="{{ table }}" as="row" hint-placeholder-count="10">
+          <div>
+            <div onClick="{{ row.onToggle }}" style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;background:{{ row.bg }}">
+              <span style="width:3px;height:26px;border-radius:2px;display:block;background:{{ row.band }}"></span>
+              <span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ row.pos }}</span>
+              <span style="display:flex;align-items:center;gap:10px;min-width:0">{{ row.img }}<span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.name }}</span><span style="width:5px;height:5px;border-radius:3px;flex:none;display:{{ row.dot }};background:#c8f25a"></span></span>
+              <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">{{ row.pld }}</span>
+              <span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">{{ row.pts }}</span>
+            </div>
+            <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#15171a;border-radius:18px;margin:6px 12px;padding:14px 18px">
+              <div style="display:flex;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:12px">
+                <sc-for list="{{ row.stats }}" as="s" hint-placeholder-count="6">
+                  <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">{{ s.label }}</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:{{ s.color }}">{{ s.value }}</span></span>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">{{ t.last5 }}</span>
+                <span style="display:flex;gap:4px">
+                  <sc-for list="{{ row.form }}" as="f" hint-placeholder-count="4">
+                    <span style="width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;background:{{ f.bg }};color:{{ f.color }};border:1.5px solid {{ f.border }}">{{ f.letter }}</span>
+                  </sc-for>
+                </span>
+              </div>
+              <div onClick="{{ row.onOpenClub }}" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07);cursor:pointer"><span style="font:600 13.5px/1 -apple-system,system-ui;color:#c8f25a">{{ row.openLabel }}</span><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#c8f25a" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+            </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:14px 20px 0">
+          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+            <span style="display:flex;align-items:center;gap:6px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b"><span style="width:12px;height:4px;border-radius:2px;display:block;background:{{ l.color }}"></span>{{ l.label }}</span>
+          </sc-for>
+        </div>
+        <div style="padding:14px 20px 0;font:400 12px/1.5 -apple-system,system-ui;color:#59626a;max-width:46ch">{{ t.tableFoot }}</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isClubs }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:6px 0 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px"><div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">{{ t.tabClubs }}</div><div onClick="{{ openAccount }}" style="width:36px;height:36px;border-radius:18px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 12px -apple-system,system-ui;color:#a3abb0;cursor:pointer">EM</div></div>
+        <div style="padding:0 20px 16px"><div style="height:40px;border-radius:12px;background:#15171a;display:flex;align-items:center;gap:9px;padding:0 13px"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2"><circle cx="9" cy="9" r="5.5"></circle><path d="M13.5 13.5L17 17"></path></svg><span style="font:400 14.5px/1 -apple-system,system-ui;color:#59626a">{{ t.search }}</span></div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 20px 10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#c8f25a">{{ t.subscribedLabel }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ stats.subs }}</span></div>
+        <div style="margin:0 12px 20px;background:#15171a;border-radius:20px;overflow:hidden">
+          <sc-for list="{{ subs }}" as="c" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid {{ c.rule }}">
+              {{ c.img }}
+              <div onClick="{{ c.onOpen }}" style="flex:1;min-width:0;cursor:pointer"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ c.name }}</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">{{ c.sub }}</div></div>
+              <span onClick="{{ c.onToggle }}" style="width:51px;height:31px;border-radius:16px;position:relative;display:block;cursor:pointer;background:{{ c.track }};border:1px solid {{ c.trackBorder }}"><span style="position:absolute;top:2px;width:27px;height:27px;border-radius:14px;display:block;left:{{ c.knobLeft }};right:{{ c.knobRight }};background:{{ c.knob }}"></span></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 20px 10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">{{ t.browseLaliga }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span></div>
+        <sc-for list="{{ browse }}" as="c" hint-placeholder-count="8">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+            {{ c.img }}
+            <div onClick="{{ c.onOpen }}" style="flex:1;min-width:0;cursor:pointer"><div style="font:600 14.5px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ c.name }}</div><div style="font:500 11.5px/1.4 -apple-system,system-ui;color:#7c858b">{{ c.city }}</div></div>
+            <div onClick="{{ c.onToggle }}" style="height:30px;padding:0 12px;border-radius:10px;display:flex;align-items:center;gap:6px;cursor:pointer;font:700 10px/1 -apple-system,system-ui;letter-spacing:.1em;background:{{ c.btnBg }};color:{{ c.btnColor }};border:1px solid {{ c.btnBorder }}">{{ c.btnLabel }}</div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isClub }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:2px 0 24px">
+        <div onClick="{{ goBack }}" style="display:flex;align-items:center;gap:6px;padding:0 20px 12px;color:#c8f25a;cursor:pointer"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l-6 6 6 6"></path></svg><span style="font:600 15px/1 -apple-system,system-ui">{{ cp.backLabel }}</span></div>
+        <div style="display:flex;align-items:center;gap:14px;padding:0 20px 16px">
+          {{ cp.img }}
+          <div style="min-width:0"><div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#59626a;margin-bottom:7px">{{ cp.league }}</div><div style="font:700 26px/1 -apple-system,system-ui;letter-spacing:-.03em">{{ cp.name }}</div><div style="font:500 12.5px/1 -apple-system,system-ui;color:#7c858b;margin-top:7px">{{ cp.place }}</div></div>
+        </div>
+        <div style="margin:0 20px 16px;background:#15171a;border-radius:22px;padding:16px">
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <div onClick="{{ cp.onAlerts }}" style="flex:1;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer;background:{{ cp.alertBg }};color:{{ cp.alertColor }};border:1px solid {{ cp.alertBorder }}"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3a4.5 4.5 0 00-4.5 4.5c0 4-1.5 5.5-1.5 5.5h12s-1.5-1.5-1.5-5.5A4.5 4.5 0 0010 3z"></path><path d="M8.2 16a2 2 0 003.6 0"></path></svg>{{ cp.alertLabel }}</div>
+            <div onClick="{{ cp.onCalendar }}" style="flex:1;height:46px;border-radius:14px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>{{ t.calendar }}</div>
+          </div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">{{ t.subscribeNote }}</div>
+        </div>
+        <div style="padding:0 20px 14px"><div style="display:flex;background:#15171a;border-radius:12px;padding:3px;gap:3px">
+          <div onClick="{{ cp.onFixturesTab }}" style="flex:1;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:600 13.5px -apple-system,system-ui;cursor:pointer;background:{{ cp.fxBg }};color:{{ cp.fxColor }}">{{ t.tabFixtures }}</div>
+          <div onClick="{{ cp.onPlayersTab }}" style="flex:1;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:600 13.5px -apple-system,system-ui;cursor:pointer;background:{{ cp.plBg }};color:{{ cp.plColor }}">{{ t.players }}</div>
+        </div></div>
+        <sc-if value="{{ cp.showFixtures }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <sc-if value="{{ cp.hasSchedule }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:6px 20px 0;position:relative">
+            <div style="position:absolute;left:66px;top:14px;bottom:10px;width:1px;background:rgba(255,255,255,.09)"></div>
+            <sc-for list="{{ cp.spine }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex;margin-bottom:14px;opacity:{{ s.opacity }}">
+                <div style="width:40px;text-align:right;font:700 11px/1.3 -apple-system,system-ui;color:{{ s.dateColor }}">{{ s.dow }}<br>{{ s.dm }}</div>
+                <div style="width:26px;display:flex;justify-content:center;padding-top:4px"><span style="width:{{ s.dotSize }};height:{{ s.dotSize }};border-radius:6px;display:block;background:{{ s.dotBg }};border:1.5px solid {{ s.dotBorder }};box-shadow:{{ s.dotGlow }}"></span></div>
+                <div style="flex:1;background:#15171a;border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:11px;border:1px solid {{ s.cardBorder }}">
+                  {{ s.img }}
+                  <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ s.opponent }}</div><div style="font:500 11px/1 -apple-system,system-ui;color:#59626a;margin-top:4px">{{ s.meta }}</div></div>
+                  <div style="display:flex;align-items:center;gap:7px"><span style="font:700 {{ s.rightSize }}/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:{{ s.rightColor }}">{{ s.right }}</span><span style="width:20px;height:20px;border-radius:6px;display:{{ s.chipShow }};align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;background:{{ s.chipBg }};color:{{ s.chipColor }};border:1.5px solid {{ s.chipBorder }}">{{ s.chip }}</span></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+          <sc-if value="{{ cp.noSchedule }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:0 20px;padding:24px 20px;background:#15171a;border-radius:20px">
+            <div style="font:600 16px/1.3 -apple-system,system-ui;letter-spacing:-.015em;margin-bottom:8px">{{ t.noScheduleTitle }}</div>
+            <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">{{ t.noScheduleBody }}</div>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+        <sc-if value="{{ cp.showPlayers }}" hint-placeholder-val="{{ false }}">
+        <div style="margin:0 20px;background:#15171a;border-radius:20px;overflow:hidden">
+          <sc-for list="{{ cp.squad }}" as="p" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid {{ p.rule }}">
+              <span style="width:26px;font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#7c858b;text-align:center">{{ p.no }}</span>
+              <span style="flex:1;font:600 14.5px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ p.name }}</span>
+              <span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ p.pos }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+    </div>
+
+    <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+      <div onClick="{{ goToday }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ tc.today }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabToday }}</span></div>
+      <div onClick="{{ goFixtures }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ tc.fixtures }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabMatchdays }}</span></div>
+      <div onClick="{{ goTable }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ tc.table }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabTable }}</span></div>
+      <div onClick="{{ goClubs }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ tc.clubs }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabClubs }}</span></div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ shAlerts }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:30;background:rgba(4,6,8,.62);display:flex;flex-direction:column;justify-content:flex-end">
+    <div onClick="{{ closeSheet }}" style="flex:1"></div>
+    <div style="background:#15171a;border-radius:28px 28px 0 0;padding:12px 20px 28px">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px"></div>
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">{{ cp.imgSm }}<span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">{{ cp.sheetEyebrow }}</span></div>
+      <div style="font:700 22px/1.15 -apple-system,system-ui;letter-spacing:-.025em;margin-bottom:10px">{{ t.alertsSheetTitle }}</div>
+      <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:16px;text-wrap:pretty">{{ t.alertsSheetBody }}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <sc-for list="{{ alertBullets }}" as="b" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:9px;background:rgba(200,242,90,.16);display:flex;align-items:center;justify-content:center;color:#c8f25a;flex:none"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="font:500 13.5px/1.35 -apple-system,system-ui;color:#e6ecec">{{ b.text }}</span></div>
+        </sc-for>
+      </div>
+      <div onClick="{{ cp.onConfirm }}" style="height:50px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:600 16px -apple-system,system-ui;letter-spacing:-.01em;margin-bottom:8px;cursor:pointer">{{ cp.confirmLabel }}</div>
+      <div onClick="{{ closeSheet }}" style="height:44px;display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0;cursor:pointer">{{ t.cancel }}</div>
+      <div style="font:400 11.5px/1.45 -apple-system,system-ui;color:#59626a;text-align:center;margin-top:6px">{{ t.alertsSheetFoot }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ shCal }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:30;background:rgba(4,6,8,.62);display:flex;flex-direction:column;justify-content:flex-end">
+    <div onClick="{{ closeSheet }}" style="flex:1"></div>
+    <div style="background:#15171a;border-radius:28px 28px 0 0;padding:12px 20px 28px">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px"></div>
+      <div style="font:700 22px/1.15 -apple-system,system-ui;letter-spacing:-.025em;margin-bottom:8px">{{ cp.calTitle }}</div>
+      <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:16px;text-wrap:pretty">{{ t.calBody }}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div onClick="{{ closeSheet }}" style="height:52px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Google Calendar<span style="flex:1"></span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        <div onClick="{{ closeSheet }}" style="height:52px;border-radius:15px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Apple Calendar<span style="flex:1"></span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        <div onClick="{{ closeSheet }}" style="height:52px;border-radius:15px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;color:#a3abb0;cursor:pointer"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3.5v9M6.5 9l3.5 3.5L13.5 9"></path><path d="M4.5 16h11"></path></svg>{{ t.icsSnapshot }}<span style="flex:1"></span></div>
+      </div>
+      <div style="margin-top:16px;padding:13px 14px;background:#1a1d21;border-radius:14px;font:500 11.5px/1.45 ui-monospace,Menlo,monospace;color:#7c858b;overflow:hidden;text-overflow:ellipsis">{{ cp.feedUrl }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ shMdCal }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:30;background:rgba(4,6,8,.62);display:flex;flex-direction:column;justify-content:flex-end">
+    <div onClick="{{ closeSheet }}" style="flex:1"></div>
+    <div style="background:#15171a;border-radius:28px 28px 0 0;padding:12px 20px 28px">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px"></div>
+      <div style="font:700 22px/1.15 -apple-system,system-ui;letter-spacing:-.025em;margin-bottom:8px">{{ mdc.title }}</div>
+      <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:16px;text-wrap:pretty">{{ mdc.body }}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div onClick="{{ closeSheet }}" style="height:52px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Google Calendar<span style="flex:1"></span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        <div onClick="{{ closeSheet }}" style="height:52px;border-radius:15px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Apple Calendar<span style="flex:1"></span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        <div onClick="{{ closeSheet }}" style="height:52px;border-radius:15px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;color:#a3abb0;cursor:pointer"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3.5v9M6.5 9l3.5 3.5L13.5 9"></path><path d="M4.5 16h11"></path></svg>{{ t.icsSnapshot }}<span style="flex:1"></span></div>
+      </div>
+      <div style="margin-top:16px;padding:13px 14px;background:#1a1d21;border-radius:14px;font:500 11.5px/1.45 ui-monospace,Menlo,monospace;color:#7c858b;overflow:hidden;text-overflow:ellipsis">{{ mdc.url }}</div>
+      <div style="font:400 11.5px/1.45 -apple-system,system-ui;color:#59626a;text-align:center;margin-top:12px;text-wrap:pretty">{{ t.mdCalFoot }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ shAccount }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:30;background:rgba(4,6,8,.62);display:flex;flex-direction:column;justify-content:flex-end">
+    <div onClick="{{ closeSheet }}" style="flex:1;min-height:44px"></div>
+    <div style="background:#15171a;border-radius:28px 28px 0 0;max-height:760px;overflow-y:auto">
+      <div style="padding:12px 20px 26px">
+        <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 16px"></div>
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px">
+          <div style="width:46px;height:46px;border-radius:23px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 15px -apple-system,system-ui;color:#c8f25a">EM</div>
+          <div style="flex:1;min-width:0"><div style="font:700 19px/1.2 -apple-system,system-ui;letter-spacing:-.02em">Ed Medina</div><div style="display:flex;align-items:center;gap:7px;margin-top:5px"><span style="font:500 12.5px/1 -apple-system,system-ui;color:#7c858b">ed@altagamafc.com</span><span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:99px;padding:3px 6px">{{ t.verified }}</span></div></div>
+          <div onClick="{{ closeSheet }}" style="width:30px;height:30px;border-radius:15px;background:#1e2126;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#a3abb0"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"></path></svg></div>
+        </div>
+
+        <div style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:10px">{{ t.alertTypes }}</div>
+        <div style="background:#1a1d21;border-radius:18px;overflow:hidden;margin-bottom:18px">
+          <sc-for list="{{ alertRows }}" as="a" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid {{ a.rule }};opacity:{{ a.opacity }}">
+              <span style="min-width:0"><span style="display:block;font:600 14.5px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ a.label }}</span><span style="font:500 12px/1.35 -apple-system,system-ui;color:#7c858b">{{ a.sub }}</span></span>
+              <span onClick="{{ a.onToggle }}" style="width:51px;height:31px;border-radius:16px;position:relative;display:block;flex:none;cursor:{{ a.cursor }};background:{{ a.track }};border:1px solid {{ a.trackBorder }}"><span style="position:absolute;top:2px;width:27px;height:27px;border-radius:14px;display:block;left:{{ a.knobLeft }};right:{{ a.knobRight }};background:{{ a.knob }}"></span></span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:10px">{{ t.preferences }}</div>
+        <div style="background:#1a1d21;border-radius:18px;overflow:hidden;margin-bottom:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.01em">{{ t.language }}</span>
+            <span style="display:flex;background:#242830;border-radius:9px;padding:2px">
+              <span onClick="{{ setEn }}" style="height:26px;padding:0 11px;border-radius:7px;display:flex;align-items:center;font:700 11.5px/1 -apple-system,system-ui;cursor:pointer;background:{{ lang.enBg }};color:{{ lang.enColor }}">EN</span>
+              <span onClick="{{ setEs }}" style="height:26px;padding:0 11px;border-radius:7px;display:flex;align-items:center;font:700 11.5px/1 -apple-system,system-ui;cursor:pointer;background:{{ lang.esBg }};color:{{ lang.esColor }}">ES</span>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.01em">{{ t.clock }}</span>
+            <span style="display:flex;background:#242830;border-radius:9px;padding:2px">
+              <span onClick="{{ set24 }}" style="height:26px;padding:0 11px;border-radius:7px;display:flex;align-items:center;font:700 11.5px/1 -apple-system,system-ui;cursor:pointer;background:{{ clk.h24Bg }};color:{{ clk.h24Color }}">24 h</span>
+              <span onClick="{{ set12 }}" style="height:26px;padding:0 11px;border-radius:7px;display:flex;align-items:center;font:700 11.5px/1 -apple-system,system-ui;cursor:pointer;background:{{ clk.h12Bg }};color:{{ clk.h12Color }}">12 h</span>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px">
+            <span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.01em">{{ t.timezone }}</span>
+            <span style="display:flex;align-items:center;gap:7px;font:500 13.5px/1 -apple-system,system-ui;color:#a3abb0">Madrid (CEST)<svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#59626a" stroke-width="2"><path d="M2.5 4.5L6 8l3.5-3.5"></path></svg></span>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px"><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a">{{ t.feeds }}</span><span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ stats.subs }}</span></div>
+        <div style="background:#1a1d21;border-radius:18px;overflow:hidden;margin-bottom:18px">
+          <sc-for list="{{ feeds }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid {{ f.rule }}">
+              {{ f.img }}
+              <span style="flex:1;min-width:0"><span style="display:block;font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">{{ f.name }}</span><span style="display:block;font:500 11px/1.3 ui-monospace,Menlo,monospace;color:#7c858b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.url }}</span></span>
+              <span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a">{{ t.copy }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div onClick="{{ restartOnb }}" style="height:46px;border-radius:14px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0;margin-bottom:8px;cursor:pointer">{{ t.replayOnb }}</div>
+        <div onClick="{{ closeSheet }}" style="height:46px;border-radius:14px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;margin-bottom:8px;cursor:pointer">{{ t.signOut }}</div>
+        <div onClick="{{ closeSheet }}" style="height:46px;border-radius:14px;border:1px solid rgba(255,92,71,.4);display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#ff5c47;cursor:pointer">{{ t.deleteAccount }}</div>
+        <div style="font:400 11.5px/1.45 -apple-system,system-ui;color:#59626a;text-align:center;margin-top:12px;text-wrap:pretty">{{ t.deleteNote }}</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div class="hi"></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;font:500 11.5px/1 -apple-system,system-ui;color:rgba(0,0,0,.42)"><span style="font:700 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:rgba(0,0,0,.5)">ALTAGAMA FC · iOS PROTOTYPE</span><span>Mock data · tabs, table rows, club pages, sheets and onboarding are live</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:460,&quot;height&quot;:960},
+&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;es&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'es'&quot;,&quot;section&quot;:&quot;Locale&quot;},
+&quot;clock&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;24h&quot;,&quot;12h&quot;],&quot;default&quot;:&quot;24h&quot;,&quot;tsType&quot;:&quot;'24h'|'12h'&quot;,&quot;section&quot;:&quot;Locale&quot;},
+&quot;matchState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;idle&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;'live'|'idle'&quot;,&quot;section&quot;:&quot;Board state&quot;},
+&quot;startOnboarding&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Board state&quot;}}">
+class Component extends DCLogic {
+  CR = {barcelona:'7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006',
+    'real-madrid':'4290c089c722beb802ae124d63c4287f1274f14fe093a0c39ecc3bc81e3bf858',
+    atletico:'08eeee63b3528d564505dfcec064d31600380c0c53a30ab95d7c37bb26b9707a',
+    athletic:'7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d',
+    villarreal:'dd4e531a6722f5526b8870d2f5febf3812e5a70fdc80740a39a4de2e424e1c63',
+    betis:'031f7dd63003b4b12e1bfd5834b821e2fb76cbd1e6001e6a4529492111b9d921',
+    sevilla:'187c6c09c22f7c3f09c57e8bcda2ae528237770ed30a63de38de7a5fd4d7e89a',
+    valencia:'f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5',
+    rayo:'681bb69bca062923424e79db1a9398e696a25ead4667ae19141f71a2c1bae9b3',
+    celta:'65ce11743027ab96a7193d7490403c4b43d200ae0d23ad8ee19116e3025ca9e7',
+    osasuna:'7f2d02469662b42632daa7f49123ec511cbbea7c23d1aab18382447d6af98553',
+    getafe:'f83b1f13181443f96193c3c8e77ace37d5de4801d6a4053aa369a7f2674f2252',
+    espanyol:'2a0bb68074176d128681cc91453365e0b073fdac7138a71735493b47347ef65c',
+    'real-sociedad':'6f0d19a078886eaa6f155247b0759caa47ca90a67184579844e9a516108c50a4',
+    alaves:'5b2dae24a0ea76cd51dc78481a752bfef6b3096961bde09d0b9e0a33ac5412f4',
+    elche:'9def8da16cc51e1f11eabab6f034daf5b9ec0134c7107a35bf92c0658b1c9883',
+    levante:'6cc26fb50d3c69c13099d524e17ae0be482f009ea2de233e13f20bd32e0b941a',
+    malaga:'4757b355704ca40444b8e72af33fbce9dfb6084e8b56b559482f7c2f29d830cb',
+    racing:'1ecb299106255c9100237c35979be3b97100d9621f2f2c4ad953fcfe3c675730',
+    deportivo:'c8094c935117ba5ada9a5381b30ab852c987861575690215859ed0ef9795a452'};
+
+  CLUBS = [
+    {id:'barcelona',name:'FC Barcelona',short:'Barcelona',city:'Barcelona',stadium:'Spotify Camp Nou'},
+    {id:'real-madrid',name:'Real Madrid',short:'R. Madrid',city:'Madrid',stadium:'Bernabéu'},
+    {id:'villarreal',name:'Villarreal CF',short:'Villarreal',city:'Vila-real',stadium:'Estadio de la Cerámica'},
+    {id:'atletico',name:'Atlético de Madrid',short:'Atlético',city:'Madrid',stadium:'Riyadh Air Metropolitano'},
+    {id:'valencia',name:'Valencia CF',short:'Valencia',city:'València',stadium:'Camp de Mestalla'},
+    {id:'athletic',name:'Athletic Club',short:'Athletic',city:'Bilbo',stadium:'Estadio San Mamés'},
+    {id:'betis',name:'Real Betis',short:'Betis',city:'Sevilla',stadium:'Estadio La Cartuja'},
+    {id:'celta',name:'Celta',short:'Celta',city:'Vigo',stadium:'ABANCA Balaídos'},
+    {id:'sevilla',name:'Sevilla FC',short:'Sevilla',city:'Sevilla',stadium:'Ramón Sánchez-Pizjuán'},
+    {id:'rayo',name:'Rayo Vallecano',short:'Rayo',city:'Madrid',stadium:'Estadio de Vallecas'},
+    {id:'osasuna',name:'CA Osasuna',short:'Osasuna',city:'Pamplona',stadium:'El Sadar'},
+    {id:'getafe',name:'Getafe CF',short:'Getafe',city:'Getafe',stadium:'Coliseum'},
+    {id:'espanyol',name:'RCD Espanyol',short:'Espanyol',city:'Cornellà',stadium:'RCDE Stadium'},
+    {id:'real-sociedad',name:'Real Sociedad',short:'R. Sociedad',city:'Donostia',stadium:'Anoeta'},
+    {id:'elche',name:'Elche CF',short:'Elche',city:'Elche',stadium:'Martínez Valero'},
+    {id:'alaves',name:'Deportivo Alavés',short:'Alavés',city:'Vitoria-Gasteiz',stadium:'Mendizorroza'},
+    {id:'deportivo',name:'RC Deportivo',short:'Deportivo',city:'A Coruña',stadium:'ABANCA-RIAZOR'},
+    {id:'racing',name:'R. Racing Club',short:'Racing',city:'Santander',stadium:'El Sardinero'},
+    {id:'levante',name:'Levante UD',short:'Levante',city:'València',stadium:'Ciutat de València'},
+    {id:'malaga',name:'Málaga CF',short:'Málaga',city:'Málaga',stadium:'La Rosaleda'}
+  ];
+
+  ROWS = [
+    ['barcelona',4,4,0,0,12,3,12,['W','W','W','W']],
+    ['real-madrid',4,3,1,0,9,3,10,['W','D','W','W']],
+    ['villarreal',4,3,1,0,7,4,10,['W','W','D','W']],
+    ['atletico',4,3,0,1,8,4,9,['W','L','W','W']],
+    ['valencia',4,3,0,1,7,3,9,['W','W','L','W']],
+    ['athletic',4,2,2,0,6,4,8,['D','W','D','W']],
+    ['betis',4,2,1,1,6,5,7,['W','D','L','W']],
+    ['celta',4,1,3,0,4,3,6,['D','D','W','D']],
+    ['sevilla',4,2,0,2,5,6,6,['W','L','W','L']],
+    ['rayo',4,1,2,1,4,4,5,['D','W','L','D']],
+    ['osasuna',4,1,2,1,3,4,5,['L','D','W','D']],
+    ['getafe',4,1,1,2,3,4,4,['W','L','D','L']],
+    ['espanyol',4,1,1,2,4,6,4,['L','W','D','L']],
+    ['real-sociedad',4,1,1,2,3,5,4,['D','L','W','L']],
+    ['elche',4,0,3,1,2,4,3,['D','D','L','D']],
+    ['alaves',4,1,0,3,3,6,3,['W','L','L','L']],
+    ['deportivo',4,1,0,3,2,5,3,['L','W','L','L']],
+    ['racing',4,0,2,2,3,6,2,['D','L','D','L']],
+    ['levante',4,0,2,2,2,6,2,['L','D','L','D']],
+    ['malaga',4,0,1,3,2,10,1,['L','L','D','L']]
+  ];
+
+  FIX = [
+    {club:'athletic',home:'athletic',away:'getafe',dow:['SAT','SÁB'],dom:'5',month:0,time:'18:30',md:4,live:true},
+    {club:'valencia',home:'valencia',away:'real-madrid',dow:['SAT','SÁB'],dom:'5',month:0,time:'21:00',md:4},
+    {club:'barcelona',home:'barcelona',away:'rayo',dow:['SUN','DOM'],dom:'6',month:0,time:'21:00',md:4},
+    {club:'athletic',home:'betis',away:'athletic',dow:['SAT','SÁB'],dom:'12',month:0,time:null,md:5},
+    {club:'valencia',home:'espanyol',away:'valencia',dow:['SUN','DOM'],dom:'13',month:0,time:null,md:5},
+    {club:'barcelona',home:'levante',away:'barcelona',dow:['SUN','DOM'],dom:'13',month:0,time:null,md:5},
+    {club:'athletic',home:'athletic',away:'real-sociedad',dow:['SAT','SÁB'],dom:'3',month:1,time:'14:00',md:6},
+    {club:'valencia',home:'valencia',away:'celta',dow:['SUN','DOM'],dom:'4',month:1,time:'18:30',md:6},
+    {club:'barcelona',home:'barcelona',away:'getafe',dow:['SUN','DOM'],dom:'4',month:1,time:'21:00',md:6}
+  ];
+
+  SPINE = {
+    barcelona:[
+      {opp:'elche',home:false,dow:['SUN','DOM'],dm:['23 AUG','23 AGO'],md:2,score:'5–0',res:'W'},
+      {opp:'levante',home:true,dow:['SAT','SÁB'],dm:['29 AUG','29 AGO'],md:3,score:'3–0',res:'W'},
+      {opp:'rayo',home:true,dow:['SUN','DOM'],dm:['6 SEP','6 SEP'],md:4,time:'21:00',next:true},
+      {opp:'levante',home:false,dow:['SUN','DOM'],dm:['13 SEP','13 SEP'],md:5,time:null},
+      {opp:'getafe',home:true,dow:['SUN','DOM'],dm:['4 OCT','4 OCT'],md:6,time:'21:00'}
+    ],
+    valencia:[
+      {opp:'celta',home:false,dow:['SAT','SÁB'],dm:['30 AUG','30 AGO'],md:3,score:'2–1',res:'W'},
+      {opp:'real-madrid',home:true,dow:['SAT','SÁB'],dm:['5 SEP','5 SEP'],md:4,time:'21:00',next:true},
+      {opp:'espanyol',home:false,dow:['SUN','DOM'],dm:['13 SEP','13 SEP'],md:5,time:null},
+      {opp:'celta',home:true,dow:['SUN','DOM'],dm:['4 OCT','4 OCT'],md:6,time:'18:30'}
+    ],
+    athletic:[
+      {opp:'osasuna',home:true,dow:['SUN','DOM'],dm:['30 AUG','30 AGO'],md:3,score:'1–1',res:'D'},
+      {opp:'getafe',home:true,dow:['SAT','SÁB'],dm:['5 SEP','5 SEP'],md:4,time:'18:30',next:true},
+      {opp:'betis',home:false,dow:['SAT','SÁB'],dm:['12 SEP','12 SEP'],md:5,time:null},
+      {opp:'real-sociedad',home:true,dow:['SAT','SÁB'],dm:['3 OCT','3 OCT'],md:6,time:'14:00'}
+    ]
+  };
+
+  SQUAD = [{no:1,name:'Iñaki Peña',pos:['GK','POR']},{no:4,name:'Ronald Araújo',pos:['DF','DEF']},{no:8,name:'Pedri',pos:['MF','CEN']},{no:19,name:'Lamine Yamal',pos:['FW','DEL']},{no:9,name:'Robert Lewandowski',pos:['FW','DEL']}];
+
+  I18N = {
+    en:{tabToday:'Today',tabFixtures:'Fixtures',tabTable:'Table',tabClubs:'Clubs',players:'Players',
+      boardTitle:'Board',inProgress:'IN PROGRESS',scoreChecked:'Score last checked 2h ago · updates roughly every 4h',
+      lastResult:'LAST RESULT',nextUp:'NEXT UP',kickoffIn:'KICKOFF IN',restOfRound:'REST OF THE ROUND',
+      resultsToday:'FINISHED TODAY',resultsFoot:'Full-time scores from every league we track. Settled a few minutes after the whistle.',
+      upcoming:'UPCOMING FROM YOUR CLUBS',ft:'FT',browseAll:'BROWSE ALL',
+      tabMatchdays:'Matchdays',matchdayLabel:'MATCHDAY',firstHalf:'FIRST HALF',secondHalf:'SECOND HALF',liveShort:'LIVE',
+      matchdayFoot:'A matchday is a published round, not a date range — rounds are not always in chronological order, and one can be published before its kickoffs are scheduled.',
+      mdCalBody:'The whole round in one go — no picking. Moved kickoffs update themselves.',
+      mdCalFoot:'A matchday feed is separate from a club subscription. Both can be on at once.',
+      followTitle:'Follow your favourite club and never miss a kickoff.',
+      followBody:'The whole season goes in at once. When a kickoff moves, the calendar entry moves with it and you get an alert the same minute.',
+      subscribedLabel:'SUBSCRIBED',inCalendar:'IN CALENDAR',club:'CLUB',pl:'PL',ptsShort:'PTS',last5:'LAST 4',
+      afterMd:'AFTER MD 4',clubsCount:'20 CLUBS',openClub:'Open',search:'Search 100 clubs',browseLaliga:'BROWSE LALIGA',
+      home:'H',away:'A',subscribe:'Subscribe',subscribed:'ON',calendar:'Calendar',matchAlerts:'Match alerts',alertsOnLabel:'Alerts on',
+      subscribeNote:'One subscription covers the whole season — kickoff moved, postponed, venue switched. There is no per-match option, by design.',
+      alertsSheetTitle:'Alerts for every match this season',
+      alertsSheetBody:'Push on this device plus email to the address on your account. Covers the whole season — you can\u2019t pick individual matches, and you don\u2019t have to.',
+      alertsSheetFoot:'Turn alerts off any time in Settings. Every email carries one-click unsubscribe.',
+      bullets:['Kickoff changes and reschedules','Postponements, abandonments, venue switches','Push here, email as backup'],
+      confirm:'Confirm and subscribe',unsubscribe:'Unsubscribe',cancel:'Cancel',
+      calBody:'One feed per club. New fixtures and moved kickoffs update themselves — nothing to re-add.',icsSnapshot:'Download .ics snapshot',
+      noScheduleTitle:'No full schedule for this club yet',noScheduleBody:'Only a handful of matches are known, so this would be a misleading list. Subscribe and it fills in on the next nightly sync.',
+      fixturesFoot:'Schedules updated nightly. Kickoff times marked --:-- are published but not yet scheduled.',
+      tableFoot:'Standings settle up to three hours after the last whistle. Qualification bands are league configuration, not position arithmetic.',
+      bandUcl:'CHAMPIONS',bandUel:'EUROPA',bandConf:'CONFERENCE',bandRel:'RELEGATION',
+      alReminder:'30 minutes before kickoff',alReminderSub:'For every club you follow',
+      alMoved:'When a kickoff moves',alMovedSub:'Your calendar updates itself too',
+      alPostponed:'Postponed or abandoned',alPostponedSub:'Rare, and always worth knowing',
+      alGoals:'Goals & final score',alGoalsSub:'Needs a live feed — not yet available',
+      alertTypes:'ALERT TYPES',preferences:'PREFERENCES',language:'Language',clock:'Clock',timezone:'Timezone',
+      feeds:'CALENDAR FEEDS',copy:'COPY',verified:'VERIFIED',signOut:'Sign out',deleteAccount:'Delete account',replayOnb:'Replay onboarding',
+      deleteNote:'Deleting removes your feeds and revokes their URLs. Subscribers stop receiving updates immediately.',
+      onbStep:'STEP 1 OF 2',onbPickTitle:'Who do you follow?',onbPickBody:'Pick as many clubs as you like. Fixtures and alerts follow your picks.',
+      onbAlertTitle:'Never miss a kickoff.',onbAlertBody:'Three alerts, off until you say yes. Change any of them later in Settings.',
+      onbCalNote:'Prefer your calendar? Every club can be subscribed as a feed instead — set it up any time from a club page.',
+      onbContinue:'Continue with',onbClubs:'clubs',onbAllow:'Allow notifications',onbNotNow:'Not now',onbBack:'Back',
+      zone:'CEST · YOUR TIME',tonight:'TONIGHT'},
+    es:{tabToday:'Hoy',tabFixtures:'Partidos',tabTable:'Clasificación',tabClubs:'Clubes',players:'Jugadores',
+      boardTitle:'Jornada',inProgress:'EN JUEGO',scoreChecked:'Resultado consultado hace 2 h · se actualiza cada ~4 h',
+      lastResult:'ÚLTIMO RESULTADO',nextUp:'PRÓXIMO',kickoffIn:'COMIENZA EN',restOfRound:'RESTO DE LA JORNADA',
+      resultsToday:'FINALIZADOS HOY',resultsFoot:'Resultados finales de todas las ligas que seguimos. Se consolidan pocos minutos después del pitido.',
+      upcoming:'PRÓXIMOS DE TUS CLUBES',ft:'FIN',browseAll:'VER TODOS',
+      tabMatchdays:'Jornadas',matchdayLabel:'JORNADA',firstHalf:'PRIMERA VUELTA',secondHalf:'SEGUNDA VUELTA',liveShort:'DIRECTO',
+      matchdayFoot:'Una jornada es una ronda publicada, no un rango de fechas: el orden no siempre es cronológico y una jornada puede publicarse antes de tener horarios.',
+      mdCalBody:'La jornada entera de una vez, sin elegir partidos. Los cambios de horario se actualizan solos.',
+      mdCalFoot:'El feed de una jornada es independiente de la suscripción a un club. Puedes tener los dos.',
+      followTitle:'Sigue a tu club y no te pierdas ningún inicio.',
+      followBody:'La temporada entera entra de una vez. Si cambia el horario, la entrada del calendario cambia con él y recibes un aviso al instante.',
+      subscribedLabel:'SUSCRITO',inCalendar:'EN CALENDARIO',club:'CLUB',pl:'PJ',ptsShort:'PTS',last5:'ÚLTIMOS 4',
+      afterMd:'TRAS LA J4',clubsCount:'20 CLUBES',openClub:'Abrir',search:'Buscar entre 100 clubes',browseLaliga:'EXPLORAR LALIGA',
+      home:'L',away:'V',subscribe:'Suscribirme',subscribed:'SÍ',calendar:'Calendario',matchAlerts:'Avisos',alertsOnLabel:'Avisos activos',
+      subscribeNote:'Una suscripción cubre toda la temporada — cambios de horario, aplazamientos y cambios de estadio. No hay opción por partido, y es a propósito.',
+      alertsSheetTitle:'Avisos de todos los partidos de la temporada',
+      alertsSheetBody:'Notificación en este dispositivo y correo a la dirección de tu cuenta. Cubre toda la temporada: no se eligen partidos sueltos, y no hace falta.',
+      alertsSheetFoot:'Puedes desactivarlos cuando quieras en Ajustes. Cada correo lleva baja con un clic.',
+      bullets:['Cambios de horario y reprogramaciones','Aplazamientos, suspensiones y cambios de estadio','Notificación aquí, correo de respaldo'],
+      confirm:'Confirmar y suscribirme',unsubscribe:'Darme de baja',cancel:'Cancelar',
+      calBody:'Un feed por club. Los partidos nuevos y los horarios cambiados se actualizan solos.',icsSnapshot:'Descargar .ics',
+      noScheduleTitle:'Aún no hay calendario completo',noScheduleBody:'Solo se conocen algunos partidos, así que la lista sería engañosa. Suscríbete y se completará en la próxima sincronización nocturna.',
+      fixturesFoot:'Calendarios actualizados cada noche. Los horarios con --:-- están publicados pero sin hora asignada.',
+      tableFoot:'La clasificación se consolida hasta tres horas después del último pitido. Las zonas son configuración de cada liga, no aritmética de posiciones.',
+      bandUcl:'CHAMPIONS',bandUel:'EUROPA',bandConf:'CONFERENCE',bandRel:'DESCENSO',
+      alReminder:'30 minutos antes del inicio',alReminderSub:'Para cada club que sigues',
+      alMoved:'Cuando cambia el horario',alMovedSub:'Tu calendario también se actualiza',
+      alPostponed:'Aplazado o suspendido',alPostponedSub:'Poco frecuente, siempre importante',
+      alGoals:'Goles y resultado final',alGoalsSub:'Requiere datos en directo — aún no disponible',
+      alertTypes:'TIPOS DE AVISO',preferences:'PREFERENCIAS',language:'Idioma',clock:'Reloj',timezone:'Zona horaria',
+      feeds:'FEEDS DE CALENDARIO',copy:'COPIAR',verified:'VERIFICADO',signOut:'Cerrar sesión',deleteAccount:'Eliminar cuenta',replayOnb:'Repetir el alta',
+      deleteNote:'Al eliminar la cuenta se borran tus feeds y se revocan sus URLs. Los suscriptores dejan de recibir actualizaciones.',
+      onbStep:'PASO 1 DE 2',onbPickTitle:'¿A quién sigues?',onbPickBody:'Elige los clubes que quieras. Los partidos y los avisos siguen tus elecciones.',
+      onbAlertTitle:'No te pierdas ningún inicio.',onbAlertBody:'Tres avisos, desactivados hasta que digas que sí. Cámbialos luego en Ajustes.',
+      onbCalNote:'¿Prefieres tu calendario? Cada club se puede suscribir como feed desde su página.',
+      onbContinue:'Continuar con',onbClubs:'clubes',onbAllow:'Permitir notificaciones',onbNotNow:'Ahora no',onbBack:'Atrás',
+      zone:'CEST · TU HORA',tonight:'HOY'}
+  };
+
+  state = {tab:'today',club:null,openRow:null,sheet:null,langO:null,clockO:null,liveO:null,league:'laliga',md:4,
+    subs:['barcelona','valencia','athletic'],picks:['valencia','athletic','barcelona'],
+    alerts:{reminder:true,moved:true,postponed:true},onbStep:1,onbDone:false,onbForce:null,clubTab:'fixtures',filter:'all'};
+
+  lang(){ return this.state.langO || this.props.lang || 'en'; }
+  li(){ return this.lang() === 'es' ? 1 : 0; }
+  clock(){ return this.state.clockO || this.props.clock || '24h'; }
+  isLive(){ return this.state.liveO !== null ? this.state.liveO : (this.props.matchState || 'live') === 'live'; }
+  crest(id){ return 'https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/' + this.CR[id] + '.png'; }
+  c(id){ return this.CLUBS.find(x => x.id === id) || this.CLUBS[0]; }
+  img(id, size){ return React.createElement('img', {src: this.crest(id), alt: '', style: {width: size, height: size, objectFit: 'contain', display: 'block', flexShrink: 0}}); }
+  markEl(src, h){ return React.createElement('img', {src, alt: '', style: {height: h, width: 'auto', display: 'block'}}); }
+  tile(abbr){ return React.createElement('span', {style: {width: 22, height: 22, borderRadius: 6, background: '#1e2126', border: '1px solid rgba(255,255,255,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 900, letterSpacing: '.02em', color: '#a3abb0', flexShrink: 0}}, abbr); }
+
+  LG = [
+    {id:'laliga', name:'LaLiga', mark:'leagues/laliga.png', markH:13, showLabel:false, label:'LALIGA', total:38,
+      range:['SAT 5 — MON 7 SEP 2026','SÁB 5 — LUN 7 SEP 2026'],
+      days:[
+        {label:['SAT 5 SEP','SÁB 5 SEP'], rows:[
+          {h:'elche', a:'betis', hs:0, as:2},
+          {h:'athletic', a:'getafe', hs:1, as:0, live:true},
+          {h:'valencia', a:'real-madrid', time:'21:00'}]},
+        {label:['SUN 6 SEP','DOM 6 SEP'], rows:[
+          {h:'osasuna', a:'espanyol', hs:1, as:1},
+          {h:'celta', a:'levante', time:'14:00'},
+          {h:'sevilla', a:'villarreal', time:'16:15'},
+          {h:'barcelona', a:'rayo', time:'21:00'}]},
+        {label:['MON 7 SEP','LUN 7 SEP'], rows:[
+          {h:'malaga', a:'racing', time:'19:00'},
+          {h:'atletico', a:'real-sociedad', time:'21:00'},
+          {h:'deportivo', a:'alaves', time:null}]}
+      ]},
+    {id:'premier', name:'Premier League', mark:'leagues/premier-league.png', markH:17, showLabel:false, label:'PREMIER LEAGUE', total:38,
+      range:['SAT 5 — SUN 6 SEP 2026','SÁB 5 — DOM 6 SEP 2026'],
+      days:[
+        {label:['SAT 5 SEP','SÁB 5 SEP'], rows:[
+          {hAbbr:'ARS', hName:'Arsenal', aAbbr:'BHA', aName:'Brighton', hs:2, as:0, venue:'Emirates Stadium · London'},
+          {hAbbr:'NEW', hName:'Newcastle United', aAbbr:'CHE', aName:'Chelsea', hs:1, as:2, venue:'St James’ Park · Newcastle'},
+          {hAbbr:'LIV', hName:'Liverpool', aAbbr:'EVE', aName:'Everton', time:'17:30', venue:'Anfield · Liverpool'}]},
+        {label:['SUN 6 SEP','DOM 6 SEP'], rows:[
+          {hAbbr:'AVL', hName:'Aston Villa', aAbbr:'FUL', aName:'Fulham', time:'14:00', venue:'Villa Park · Birmingham'},
+          {hAbbr:'MCI', hName:'Manchester City', aAbbr:'TOT', aName:'Tottenham', time:'16:30', venue:'Etihad Stadium · Manchester'}]}
+      ]},
+    {id:'bundesliga', name:'Bundesliga', mark:'leagues/bundesliga.png', markH:15, showLabel:true, label:'BUNDESLIGA', total:34,
+      range:['SAT 5 — SUN 6 SEP 2026','SÁB 5 — DOM 6 SEP 2026'],
+      days:[
+        {label:['SAT 5 SEP','SÁB 5 SEP'], rows:[
+          {hAbbr:'B04', hName:'Bayer Leverkusen', aAbbr:'WOB', aName:'Wolfsburg', hs:3, as:1, venue:'BayArena · Leverkusen'},
+          {hAbbr:'FCB', hName:'Bayern München', aAbbr:'SCF', aName:'Freiburg', time:'18:30', venue:'Allianz Arena · München'}]},
+        {label:['SUN 6 SEP','DOM 6 SEP'], rows:[
+          {hAbbr:'BVB', hName:'Borussia Dortmund', aAbbr:'RBL', aName:'RB Leipzig', time:'17:30', venue:'Signal Iduna Park · Dortmund'}]}
+      ]},
+    {id:'seriea', name:'Serie A', mark:null, markH:0, showLabel:true, label:'SERIE A', total:38,
+      range:['SAT 5 — SUN 6 SEP 2026','SÁB 5 — DOM 6 SEP 2026'],
+      days:[
+        {label:['SAT 5 SEP','SÁB 5 SEP'], rows:[
+          {hAbbr:'INT', hName:'Inter', aAbbr:'TOR', aName:'Torino', time:'20:45', venue:'San Siro · Milano'}]},
+        {label:['SUN 6 SEP','DOM 6 SEP'], rows:[
+          {hAbbr:'NAP', hName:'Napoli', aAbbr:'LAZ', aName:'Lazio', time:'18:00', venue:'Diego Armando Maradona · Napoli'},
+          {hAbbr:'MIL', hName:'Milan', aAbbr:'ROM', aName:'Roma', time:'20:45', venue:'San Siro · Milano'}]}
+      ]}
+  ];
+
+  RESULTS = [
+    {mark:'leagues/laliga.png', markH:11, showLabel:false, label:['LALIGA','LALIGA'], rows:[
+      {h:'elche', a:'betis', hs:0, as:2},
+      {h:'osasuna', a:'espanyol', hs:1, as:1}]},
+    {mark:'leagues/premier-league.png', markH:15, showLabel:false, label:['PREMIER LEAGUE','PREMIER LEAGUE'], rows:[
+      {hAbbr:'ARS', hName:'Arsenal', aAbbr:'BHA', aName:'Brighton', hs:2, as:0},
+      {hAbbr:'NEW', hName:'Newcastle', aAbbr:'CHE', aName:'Chelsea', hs:1, as:2}]},
+    {mark:'leagues/bundesliga.png', markH:14, showLabel:true, label:['BUNDESLIGA','BUNDESLIGA'], rows:[
+      {hAbbr:'B04', hName:'Leverkusen', aAbbr:'WOB', aName:'Wolfsburg', hs:3, as:1}]}
+  ];
+  time(t){
+    if (!t) return '--:--';
+    if (this.clock() === '24h') return t;
+    const [h,m] = t.split(':').map(Number);
+    return (((h + 11) % 12) + 1) + ':' + String(m).padStart(2,'0') + (h < 12 ? ' AM' : ' PM');
+  }
+  band(pos){
+    if (pos <= 4) return ['#c8f25a','bandUcl'];
+    if (pos <= 6) return ['#6fc9ff','bandUel'];
+    if (pos === 7) return ['#b79bff','bandConf'];
+    if (pos >= 18) return ['#ff6b5e','bandRel'];
+    return ['transparent',null];
+  }
+  sw(on){ return on
+    ? {track:'#c8f25a',trackBorder:'#c8f25a',knob:'#ffffff',knobLeft:'auto',knobRight:'2px'}
+    : {track:'#242830',trackBorder:'rgba(255,255,255,.12)',knob:'#59626a',knobLeft:'2px',knobRight:'auto'}; }
+  go(tab){ this.setState({tab, club:null, sheet:null}); }
+  openClub(id){ this.setState({club:id, sheet:null}); }
+  toggleSub(id){ this.setState(s => ({subs: s.subs.includes(id) ? s.subs.filter(x => x !== id) : s.subs.concat([id])})); }
+
+  renderVals(){
+    const t = this.I18N[this.lang()], i = this.li(), st = this.state;
+    const on = '#c8f25a', off = '#7c858b';
+    const onb = (st.onbForce !== null ? st.onbForce : false) || (this.props.startOnboarding && !st.onbDone && st.onbForce === null);
+    const clubId = st.club, isClub = !!clubId;
+    const monthNames = [['SEPTEMBER 2026','SEPTIEMBRE 2026'],['OCTOBER 2026','OCTUBRE 2026']];
+
+    const fixRow = (f, idx) => {
+      const other = f.home === f.club ? f.away : f.home;
+      const isHome = f.home === f.club;
+      return {
+        dow: f.dow[i], dom: f.dom, time: this.time(f.time), timeColor: f.time ? '#f4f6f6' : '#59626a',
+        crest: this.crest(f.club), img: this.img(f.club, 28), opponent: this.c(other).name,
+        tag: isHome ? t.home : t.away,
+        tagColor: isHome ? '#c8f25a' : '#59626a',
+        tagBorder: isHome ? 'rgba(200,242,90,.4)' : 'rgba(255,255,255,.14)',
+        venue: this.c(isHome ? f.home : other).stadium,
+        bg: f.live ? '#12161a' : 'transparent',
+        onOpen: () => this.openClub(f.club)
+      };
+    };
+    const visible = this.FIX.filter(f => st.filter === 'all' ? st.subs.includes(f.club) : f.club === st.filter);
+    const months = monthNames.map((mn, mi) => {
+      const rows = visible.filter(f => f.month === mi).map(fixRow);
+      return {label: mn[i], count: rows.length + ' ' + (i ? 'PARTIDOS' : 'MATCHES'), rows};
+    }).filter(m => m.rows.length);
+
+    const filters = [{id:'all',label:i ? 'Todos' : 'All'}].concat(st.subs.map(id => ({id, label:this.c(id).short})))
+      .map(f => ({label:f.label, bg: st.filter === f.id ? '#1e2126' : 'transparent',
+        color: st.filter === f.id ? '#f4f6f6' : '#7c858b', onPick: () => this.setState({filter:f.id})}));
+
+    const table = this.ROWS.map((r, idx) => {
+      const pos = idx + 1, [bandColor, bandKey] = this.band(pos), club = this.c(r[0]);
+      const gd = r[5] - r[6], open = st.openRow === pos, followed = st.subs.includes(r[0]);
+      return {pos, name: club.short, crest: this.crest(r[0]), img: this.img(r[0], 26), pld: r[1], pts: r[7],
+        band: bandColor, bg: followed ? '#12161a' : 'transparent', dot: followed ? 'block' : 'none', open,
+        stats: [{label:'W',value:r[2],color:'#f4f6f6'},{label:'D',value:r[3],color:'#f4f6f6'},{label:'L',value:r[4],color:'#f4f6f6'},
+          {label:'GF',value:r[5],color:'#f4f6f6'},{label:'GA',value:r[6],color:'#f4f6f6'},
+          {label:'GD',value:(gd > 0 ? '+' : '') + gd,color: gd > 0 ? '#c8f25a' : '#b0c0c4'}],
+        form: r[8].map(l => ({letter:l,
+          bg: l === 'W' ? '#c8f25a' : (l === 'D' ? '#3a4652' : 'transparent'),
+          color: l === 'W' ? '#101806' : '#edf3f4',
+          border: l === 'L' ? 'rgba(255,107,94,.7)' : 'transparent'})),
+        openLabel: t.openClub + ' ' + club.name,
+        onToggle: () => this.setState(s => ({openRow: s.openRow === pos ? null : pos})),
+        onOpenClub: () => this.openClub(r[0])};
+    });
+    const legend = [...new Set(this.ROWS.map((r, idx) => this.band(idx + 1)[1]).filter(Boolean))]
+      .map(k => ({color: k === 'bandUcl' ? '#c8f25a' : k === 'bandUel' ? '#6fc9ff' : k === 'bandConf' ? '#b79bff' : '#ff6b5e', label: t[k]}));
+
+    const liveFix = this.FIX.find(f => f.live);
+    const live = {minute:"67'", score:'1–0', homeImg:this.img(liveFix.home, 40), awayImg:this.img(liveFix.away, 40),
+      homeName:this.c(liveFix.home).short, awayName:this.c(liveFix.away).short};
+    const nx = this.FIX[1];
+    const next = {homeImg:this.img(nx.home, 46), awayImg:this.img(nx.away, 46), homeName:this.c(nx.home).short, awayName:this.c(nx.away).short,
+      time:this.time(nx.time), date: nx.dow[i] + ' 5 SEP', zone:t.zone, countdown: i ? '1 d 04 h 22 m' : '1d 04h 22m', venue:this.c(nx.home).stadium.toUpperCase()};
+    const last = {homeImg:this.img('barcelona', 34), awayImg:this.img('levante', 34), homeName:'Barcelona', awayName:'Levante',
+      score:'3–0', result: i ? 'V' : 'W', meta: (i ? 'J3 · SÁB 29 AGO' : 'MD 3 · SAT 29 AUG')};
+    const restSource = this.isLive() ? [this.FIX[1], this.FIX[2]] : [this.FIX[2], this.FIX[3]];
+    const rest = restSource.map((f, k) => {
+      const other = f.home === f.club ? f.away : f.home, isHome = f.home === f.club;
+      return {img:this.img(f.club, 32), opponent:this.c(other).name,
+        sub: this.c(isHome ? f.home : other).stadium + ' · ' + (isHome ? (i ? 'local' : 'home') : (i ? 'visitante' : 'away')),
+        subColor:'#7c858b', time:this.time(f.time), day: k === 0 ? t.tonight : f.dow[i],
+        dayColor: k === 0 ? '#c8f25a' : '#59626a', rule: k === restSource.length - 1 ? 'transparent' : 'rgba(255,255,255,.06)',
+        onOpen: () => this.openClub(f.club)};
+    });
+
+    const subs = st.subs.map((id, k) => {
+      const s = this.sw(true);
+      return {img:this.img(id, 34), name:this.c(id).name, sub:'LaLiga · ' + (i ? '38 partidos' : '38 matches'),
+        rule: k === st.subs.length - 1 ? 'transparent' : 'rgba(255,255,255,.06)',
+        track:s.track, trackBorder:s.trackBorder, knob:s.knob, knobLeft:s.knobLeft, knobRight:s.knobRight,
+        onOpen: () => this.openClub(id), onToggle: () => this.toggleSub(id)};
+    });
+    const browse = this.CLUBS.filter(c => !st.subs.includes(c.id)).map(c => ({
+      img:this.img(c.id, 30), name:c.name, city:c.city,
+      btnLabel: (i ? '+ SEGUIR' : '+ FOLLOW'), btnBg:'transparent', btnColor:'#c8f25a', btnBorder:'rgba(200,242,90,.4)',
+      onOpen: () => this.openClub(c.id), onToggle: () => this.toggleSub(c.id)}));
+
+    const cc = isClub ? this.c(clubId) : this.c('barcelona');
+    const subscribed = isClub && st.subs.includes(clubId);
+    const spineSrc = this.SPINE[clubId] || null;
+    const spine = (spineSrc || []).map(s => {
+      const past = !!s.score;
+      return {dow:s.dow[i], dm:s.dm[i], opacity: past ? '.62' : '1',
+        dateColor: s.next ? '#c8f25a' : '#7c858b',
+        dotSize: s.next ? '11px' : '7px', dotBg: s.next ? '#c8f25a' : (past ? '#3a4652' : 'transparent'),
+        dotBorder: s.next ? '#c8f25a' : (past ? '#3a4652' : '#3a4652'),
+        dotGlow: s.next ? '0 0 0 4px rgba(200,242,90,.16)' : 'none',
+        cardBorder: s.next ? 'rgba(200,242,90,.3)' : 'transparent',
+        img:this.img(s.opp, 28), opponent: (s.home ? '' : (i ? 'en ' : 'at ')) + this.c(s.opp).name,
+        meta: 'J' + s.md + ' · ' + this.c(s.home ? clubId : s.opp).stadium,
+        right: past ? s.score : this.time(s.time), rightSize: past ? '15px' : '13px',
+        rightColor: (!past && !s.time) ? '#7c858b' : '#f4f6f6',
+        chip: s.res || '', chipShow: s.res ? 'flex' : 'none',
+        chipBg: s.res === 'W' ? '#c8f25a' : (s.res === 'D' ? '#3a4652' : 'transparent'),
+        chipColor: s.res === 'W' ? '#101806' : '#edf3f4',
+        chipBorder: s.res === 'L' ? 'rgba(255,107,94,.7)' : 'transparent'};
+    });
+    const cp = {
+      name:cc.name, place: cc.city + ' · ' + cc.stadium, league:'LALIGA EA SPORTS', img:this.img(cc.id, 58), imgSm:this.img(cc.id, 30),
+      backLabel:'LaLiga', sheetEyebrow: cc.name.toUpperCase() + (i ? ' · 38 PARTIDOS' : ' · 38 MATCHES'),
+      alertLabel: subscribed ? t.alertsOnLabel : t.matchAlerts,
+      alertBg: subscribed ? 'rgba(200,242,90,.14)' : '#c8f25a',
+      alertColor: subscribed ? '#c8f25a' : '#101806',
+      alertBorder: subscribed ? 'rgba(200,242,90,.45)' : '#c8f25a',
+      confirmLabel: subscribed ? t.unsubscribe : t.confirm,
+      calTitle: (i ? 'La temporada del ' : '') + cc.short + (i ? ', en tu calendario' : '\u2019s season, in your calendar'),
+      feedUrl: 'webcal://crono-gol.com/cronogol/feed/' + cc.id + '.ics',
+      showFixtures: st.clubTab === 'fixtures', showPlayers: st.clubTab === 'players',
+      hasSchedule: !!spineSrc, noSchedule: !spineSrc, spine,
+      squad: this.SQUAD.map((p, k) => ({no:p.no, name:p.name, pos:p.pos[i], rule: k === this.SQUAD.length - 1 ? 'transparent' : 'rgba(255,255,255,.06)'})),
+      fxBg: st.clubTab === 'fixtures' ? '#1e2126' : 'transparent', fxColor: st.clubTab === 'fixtures' ? '#f4f6f6' : '#7c858b',
+      plBg: st.clubTab === 'players' ? '#1e2126' : 'transparent', plColor: st.clubTab === 'players' ? '#f4f6f6' : '#7c858b',
+      onAlerts: () => this.setState({sheet:'alerts'}), onCalendar: () => this.setState({sheet:'cal'}),
+      onFixturesTab: () => this.setState({clubTab:'fixtures'}), onPlayersTab: () => this.setState({clubTab:'players'}),
+      onConfirm: () => { this.toggleSub(cc.id); this.setState({sheet:null}); }
+    };
+
+    const alertDefs = [['reminder','alReminder','alReminderSub'],['moved','alMoved','alMovedSub'],['postponed','alPostponed','alPostponedSub']];
+    const alertRows = alertDefs.map(([k, lk, sk]) => {
+      const s = this.sw(st.alerts[k]);
+      return {label:t[lk], sub:t[sk], rule:'rgba(255,255,255,.06)', opacity:'1', cursor:'pointer',
+        track:s.track, trackBorder:s.trackBorder, knob:s.knob, knobLeft:s.knobLeft, knobRight:s.knobRight,
+        onToggle: () => this.setState(p => ({alerts: Object.assign({}, p.alerts, {[k]: !p.alerts[k]})}))};
+    });
+    const offSw = this.sw(false);
+    alertRows.push({label:t.alGoals, sub:t.alGoalsSub, rule:'transparent', opacity:'.5', cursor:'default',
+      track:offSw.track, trackBorder:offSw.trackBorder, knob:offSw.knob, knobLeft:offSw.knobLeft, knobRight:offSw.knobRight,
+      onToggle: () => {}});
+
+    const lang = this.lang();
+    const onbPick = st.onbStep === 1;
+    const onbClubs = this.CLUBS.slice(0, 9).map(c => {
+      const picked = st.picks.includes(c.id);
+      return {img:this.img(c.id, 38), short:c.short,
+        ring: picked ? 'rgba(200,242,90,.45)' : 'transparent',
+        checkShow: picked ? 'flex' : 'none', nameColor: picked ? '#f4f6f6' : '#a3abb0',
+        onPick: () => this.setState(s => ({picks: s.picks.includes(c.id) ? s.picks.filter(x => x !== c.id) : s.picks.concat([c.id])}))};
+    });
+
+    const hasSubs = st.subs.length > 0;
+    const lastGroup = this.RESULTS.length - 1;
+    const results = this.RESULTS.map((g, gi) => ({
+      mark: this.markEl(g.mark, g.markH), label: g.showLabel ? g.label[i] : '',
+      rows: g.rows.map((m, k) => ({
+        homeImg: m.h ? this.img(m.h, 22) : this.tile(m.hAbbr),
+        awayImg: m.a ? this.img(m.a, 22) : this.tile(m.aAbbr),
+        home: m.h ? this.c(m.h).short : m.hName,
+        away: m.a ? this.c(m.a).short : m.aName,
+        score: m.hs + '–' + m.as,
+        homeColor: m.hs >= m.as ? '#f4f6f6' : '#8fa0a6',
+        awayColor: m.as >= m.hs ? '#f4f6f6' : '#8fa0a6',
+        state: t.ft,
+        rule: (gi === lastGroup && k === g.rows.length - 1) ? 'transparent' : 'rgba(255,255,255,.05)'
+      }))
+    }));
+    const resultsCount = this.RESULTS.reduce((n, g) => n + g.rows.length, 0) + ' ' + (i ? 'PARTIDOS' : 'MATCHES');
+    const followClubs = ['real-madrid','barcelona','atletico','athletic','celta','deportivo'].map(id => ({
+      img: this.img(id, 26), name: this.c(id).name, onOpen: () => this.openClub(id)}));
+
+    const lg = this.LG.find(l => l.id === st.league) || this.LG[0];
+    const mdn = Math.min(st.md, lg.total);
+    const mdCount = lg.days.reduce((n, d) => n + d.rows.length, 0);
+    const leagues = this.LG.map(l => {
+      const act = l.id === st.league;
+      return {mark: l.mark ? this.markEl(l.mark, l.markH) : null,
+        label: l.showLabel ? l.label : '', labelShow: l.showLabel ? 'block' : 'none',
+        labelColor: act ? '#f4f6f6' : '#7c858b',
+        bg: act ? '#1e2126' : '#15171a', border: act ? 'rgba(200,242,90,.35)' : 'transparent',
+        opacity: act ? '1' : '.5', onPick: () => this.setState({league: l.id, md: Math.min(this.state.md, l.total)})};
+    });
+    const mdStrip = Array.from({length: lg.total}, (_, k) => k + 1).map(n => ({n,
+      bg: n === mdn ? '#c8f25a' : (n < mdn ? '#1e2126' : '#15171a'),
+      color: n === mdn ? '#101806' : (n < mdn ? '#a3abb0' : '#7c858b'),
+      onPick: () => this.setState({md: n})}));
+    const md = {
+      eyebrow: lg.name.toUpperCase() + ' 2026/27 · ' + (mdn <= lg.total / 2 ? t.firstHalf : t.secondHalf),
+      title: t.matchdayLabel.charAt(0) + t.matchdayLabel.slice(1).toLowerCase() + ' ' + mdn,
+      range: lg.range[i], meta: mdCount + (i ? ' PARTIDOS · CEST' : ' MATCHES · CEST'),
+      subscribeLabel: i ? ('Añadir la jornada · ' + mdCount + ' partidos') : ('Add all ' + mdCount + ' matches'),
+      onPrev: () => this.setState({md: Math.max(1, mdn - 1)}),
+      onNext: () => this.setState({md: Math.min(lg.total, mdn + 1)}),
+      onSubscribe: () => this.setState({sheet: 'mdcal'}),
+      days: lg.days.map(d => ({label: d.label[i], count: d.rows.length + (i ? ' PARTIDOS' : ' MATCHES'),
+        rows: d.rows.map(m => {
+          const done = m.hs !== undefined && m.hs !== null;
+          return {
+            homeImg: m.h ? this.img(m.h, 24) : this.tile(m.hAbbr),
+            awayImg: m.a ? this.img(m.a, 24) : this.tile(m.aAbbr),
+            home: m.h ? this.c(m.h).name : m.hName,
+            away: m.a ? this.c(m.a).name : m.aName,
+            homeColor: done && m.hs < m.as ? '#8fa0a6' : '#f4f6f6',
+            awayColor: done && m.as < m.hs ? '#8fa0a6' : '#f4f6f6',
+            venue: m.h ? (this.c(m.h).stadium + ' · ' + this.c(m.h).city) : m.venue,
+            status: done ? (m.hs + '–' + m.as) : this.time(m.time),
+            statusColor: (!done && !m.time) ? '#59626a' : '#f4f6f6',
+            state: m.live ? t.liveShort : (done ? t.ft : ''),
+            stateShow: (m.live || done) ? 'block' : 'none',
+            stateColor: m.live ? '#ff5c47' : '#59626a',
+            bg: m.live ? '#12161a' : 'transparent'};
+        })}))
+    };
+    const mdc = {title: i ? ('Jornada ' + mdn + ' en tu calendario') : ('Matchday ' + mdn + ', in your calendar'),
+      body: t.mdCalBody, url: 'webcal://crono-gol.com/cronogol/feed/jornada/' + lg.id + '/2026-27/' + mdn + '.ics'};
+
+    return {
+      t, isOnb:onb, isApp:!onb, hasSubs, noSubs: !hasSubs, results, resultsCount, followClubs,
+      leagues, mdStrip, md, mdc, isMatchdays: !isClub && st.tab === 'fixtures', shMdCal: st.sheet === 'mdcal',
+      isToday: !isClub && st.tab === 'today', isFixtures: !isClub && st.tab === 'fixtures',
+      isTable: !isClub && st.tab === 'table', isClubs: !isClub && st.tab === 'clubs', isClub,
+      tc: {today: st.tab === 'today' && !isClub ? on : off, fixtures: st.tab === 'fixtures' && !isClub ? on : off,
+        table: st.tab === 'table' && !isClub ? on : off, clubs: (st.tab === 'clubs' || isClub) ? on : off},
+      goToday: () => this.go('today'), goFixtures: () => this.go('fixtures'), goTable: () => this.go('table'),
+      goClubs: () => this.go('clubs'), goBack: () => this.setState({club:null, tab:'clubs'}),
+      board: {eyebrow: i ? 'SÁBADO · JORNADA 4' : 'SATURDAY · MATCHDAY 4'},
+      boardLive: hasSubs && this.isLive(), boardIdle: hasSubs && !this.isLive(), live, next, last, rest,
+      stats: {subs: st.subs.length, feeds: st.subs.length},
+      months, filters, table, legend, subs, browse, cp,
+      alertBullets: t.bullets.map(b => ({text:b})), alertRows,
+      feeds: st.subs.map((id, k) => ({img:this.img(id, 26), name:this.c(id).name,
+        url:'crono-gol.com/cronogol/feed/' + id + '.ics', rule: k === st.subs.length - 1 ? 'transparent' : 'rgba(255,255,255,.06)'})),
+      lang: {enBg: lang === 'en' ? '#c8f25a' : 'transparent', enColor: lang === 'en' ? '#101806' : '#a3abb0',
+        esBg: lang === 'es' ? '#c8f25a' : 'transparent', esColor: lang === 'es' ? '#101806' : '#a3abb0'},
+      clk: {h24Bg: this.clock() === '24h' ? '#c8f25a' : 'transparent', h24Color: this.clock() === '24h' ? '#101806' : '#a3abb0',
+        h12Bg: this.clock() === '12h' ? '#c8f25a' : 'transparent', h12Color: this.clock() === '12h' ? '#101806' : '#a3abb0'},
+      setEn: () => this.setState({langO:'en'}), setEs: () => this.setState({langO:'es'}),
+      set24: () => this.setState({clockO:'24h'}), set12: () => this.setState({clockO:'12h'}),
+      openAccount: () => this.setState({sheet:'account'}), closeSheet: () => this.setState({sheet:null}),
+      shAlerts: st.sheet === 'alerts', shCal: st.sheet === 'cal', shAccount: st.sheet === 'account',
+      restartOnb: () => this.setState({onbForce:true, onbStep:1, sheet:null}),
+      onb: {
+        title: onbPick ? t.onbPickTitle : t.onbAlertTitle,
+        body: onbPick ? t.onbPickBody : t.onbAlertBody,
+        isPick: onbPick, isAlerts: !onbPick,
+        primary: onbPick ? (t.onbContinue + ' ' + st.picks.length + ' ' + t.onbClubs) : t.onbAllow,
+        secondary: onbPick ? '' : t.onbNotNow,
+        onPrimary: onbPick
+          ? () => this.setState({onbStep:2})
+          : () => this.setState({onbForce:false, onbDone:true, subs:this.state.picks, tab:'today'}),
+        onSecondary: onbPick ? () => {} : () => this.setState({onbForce:false, onbDone:true, subs:this.state.picks, tab:'today'})
+      },
+      onbClubs
+    };
+  }
+}
+</script>
+</body>
+</html>

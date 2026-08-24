@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><style>
+body{margin:0;background:#f0eee9;font-family:-apple-system,system-ui,sans-serif}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 -apple-system,system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 -apple-system,system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-grp{flex-basis:100%;font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,.4);margin:16px 0 -8px}
+.dv-next{margin:24px 0 0;font:12px/1.5 -apple-system,system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.ph{width:393px;height:812px;background:#0a0b0c;border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column;color:#f4f6f6;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 26px 60px rgba(0,0,0,.42)}
+.sb{flex:none;height:56px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 9px;font:600 15px/1 -apple-system,system-ui;letter-spacing:-.01em}
+.scr{flex:1;overflow:hidden;position:relative}
+.hi{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.32);z-index:5}
+a{color:#2a78d6}a:hover{color:#1a5aa8}
+</style></helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Correction — one subscription per club, and real crests</span></div>
+<div class="dv-opts">
+<div style="flex-basis:100%;max-width:860px;font:14px/1.6 -apple-system,system-ui;color:rgba(0,0,0,.66);text-wrap:pretty;margin-bottom:2px">Turn 1 invented per-match affordances (swipe-to-add, a bell per row). The product doesn't work that way: a club is one email-alert subscription and one <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">.ics</span> feed covering its whole season. Fixed in <a class="dv-oid" href="#1a">1a</a>, <a class="dv-oid" href="#1d">1d</a>, <a class="dv-oid" href="#1e">1e</a> and <a class="dv-oid" href="#1i">1i</a>; below is the screen where subscribing actually happens, with crests from your own CDN and the site's <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">--:--</span> convention for unscheduled kickoffs.</div>
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Club page — the subscribe surface</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="overflow:hidden">
+    <div style="display:flex;align-items:center;gap:6px;padding:2px 20px 12px;color:#c8f25a"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l-6 6 6 6"></path></svg><span style="font:600 15px/1 -apple-system,system-ui">LaLiga</span></div>
+    <div style="display:flex;align-items:center;gap:14px;padding:0 20px 16px">
+      <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:58px;height:58px;object-fit:contain;display:block">
+      <div style="min-width:0"><div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#59626a;margin-bottom:7px">LALIGA EA SPORTS</div><div style="font:700 26px/1 -apple-system,system-ui;letter-spacing:-.03em">FC Barcelona</div><div style="font:500 12.5px/1 -apple-system,system-ui;color:#7c858b;margin-top:7px">Spotify Camp Nou · Barcelona</div></div>
+    </div>
+    <div style="margin:0 20px 16px;background:#15171a;border-radius:22px;padding:16px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="flex:1;height:46px;border-radius:14px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px -apple-system,system-ui;letter-spacing:-.01em"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3a4.5 4.5 0 00-4.5 4.5c0 4-1.5 5.5-1.5 5.5h12s-1.5-1.5-1.5-5.5A4.5 4.5 0 0010 3z"></path><path d="M8.2 16a2 2 0 003.6 0"></path></svg>Match alerts</div>
+        <div style="flex:1;height:46px;border-radius:14px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px -apple-system,system-ui;letter-spacing:-.01em"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Calendar</div>
+      </div>
+      <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">One subscription covers all 38 matches — kickoff moved, postponed, venue switched. There is no per-match option, by design.</div>
+    </div>
+    <div style="padding:0 20px 14px"><div style="display:flex;background:#15171a;border-radius:12px;padding:3px;gap:3px">
+      <div style="flex:1;height:32px;border-radius:9px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:600 13.5px -apple-system,system-ui">Fixtures</div>
+      <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;font:600 13.5px -apple-system,system-ui;color:#7c858b">Players</div>
+    </div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 12px">
+      <span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;background:#15171a;font:600 11.5px/1 -apple-system,system-ui;color:#a3abb0">Madrid (CEST)<svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#59626a" stroke-width="2"><path d="M2.5 4.5L6 8l3.5-3.5"></path></svg></span>
+      <span style="display:flex;background:#15171a;border-radius:9px;padding:2px"><span style="height:24px;padding:0 9px;border-radius:7px;background:#1e2126;display:flex;align-items:center;font:700 11px/1 -apple-system,system-ui">24 h</span><span style="height:24px;padding:0 9px;display:flex;align-items:center;font:700 11px/1 -apple-system,system-ui;color:#7c858b">12 h</span></span>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.07)">
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05);opacity:.72">
+        <div style="width:56px"><div style="font:700 12px/1.25 -apple-system,system-ui;letter-spacing:-.01em">SUN<br>23 AUG</div><div style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:4px">MD 2</div></div>
+        <div style="display:flex;align-items:center;gap:5px"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9def8da16cc51e1f11eabab6f034daf5b9ec0134c7107a35bf92c0658b1c9883.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"><span style="font:700 8px/1 -apple-system,system-ui;color:#59626a">V</span><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"></div>
+        <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Elche CF</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:2.5px 4px">A</span><span style="font:500 11px/1 -apple-system,system-ui;color:#7c858b">Martínez Valero</span></div></div>
+        <div style="font:700 17px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">5–0</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05);background:#12161a">
+        <div style="width:56px"><div style="font:700 12px/1.25 -apple-system,system-ui;letter-spacing:-.01em">THU<br>27 AUG</div><div style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;margin-top:4px">NEXT UP</div></div>
+        <div style="display:flex;align-items:center;gap:5px"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"><span style="font:700 8px/1 -apple-system,system-ui;color:#59626a">V</span><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"></div>
+        <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Athletic Club</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:3px;padding:2.5px 4px">H</span><span style="font:500 11px/1 -apple-system,system-ui;color:#7c858b">Camp Nou</span></div></div>
+        <div style="font:700 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">21:00</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+        <div style="width:56px"><div style="font:700 12px/1.25 -apple-system,system-ui;letter-spacing:-.01em">MON<br>31 AUG</div><div style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:4px">MD 3</div></div>
+        <div style="display:flex;align-items:center;gap:5px"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"><span style="font:700 8px/1 -apple-system,system-ui;color:#59626a">V</span><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/681bb69bca062923424e79db1a9398e696a25ead4667ae19141f71a2c1bae9b3.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"></div>
+        <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Rayo Vallecano</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:3px;padding:2.5px 4px">H</span><span style="font:500 11px/1 -apple-system,system-ui;color:#7c858b">Camp Nou</span></div></div>
+        <div style="font:700 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">21:30</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+        <div style="width:56px"><div style="font:700 12px/1.25 -apple-system,system-ui;letter-spacing:-.01em">SUN<br>6 SEP</div><div style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:4px">MD 4</div></div>
+        <div style="display:flex;align-items:center;gap:5px"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"><span style="font:700 8px/1 -apple-system,system-ui;color:#59626a">V</span><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"></div>
+        <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Valencia CF</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:2.5px 4px">A</span><span style="font:500 11px/1 -apple-system,system-ui;color:#7c858b">Mestalla</span></div></div>
+        <div style="font:700 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">16:15</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 20px">
+        <div style="width:56px"><div style="font:700 12px/1.25 -apple-system,system-ui;letter-spacing:-.01em">SUN<br>13 SEP</div><div style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:4px">MD 5</div></div>
+        <div style="display:flex;align-items:center;gap:5px"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6cc26fb50d3c69c13099d524e17ae0be482f009ea2de233e13f20bd32e0b941a.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"><span style="font:700 8px/1 -apple-system,system-ui;color:#59626a">V</span><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:24px;height:24px;object-fit:contain;display:block"></div>
+        <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Levante UD</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:2.5px 4px">A</span><span style="font:500 11px/1 -apple-system,system-ui;color:#7c858b">Ciutat de València</span></div></div>
+        <div style="font:700 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#59626a">--:--</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>The two subscribe sheets</div>
+<div style="width:393px;display:flex;flex-direction:column;gap:14px">
+  <div style="background:#0a0b0c;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="padding:16px 18px 10px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a">MATCH ALERTS — CONFIRM</div>
+    <div style="background:#15171a;border-radius:28px 28px 0 0;padding:12px 20px 24px">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px"></div>
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:30px;height:30px;object-fit:contain;display:block"><span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">FC BARCELONA · 38 MATCHES</span></div>
+      <div style="font:700 22px/1.15 -apple-system,system-ui;letter-spacing:-.025em;margin-bottom:10px">Alerts for every match<br>this season</div>
+      <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:16px;text-wrap:pretty">Sends to the email on your account. Covers the whole season — you can't pick individual matches, and you don't have to.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:9px;background:rgba(200,242,90,.16);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="font:500 13.5px/1.35 -apple-system,system-ui;color:#e6ecec">Kickoff changes and reschedules</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:9px;background:rgba(200,242,90,.16);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="font:500 13.5px/1.35 -apple-system,system-ui;color:#e6ecec">Postponements, abandonments, venue switches</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:9px;background:rgba(200,242,90,.16);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="font:500 13.5px/1.35 -apple-system,system-ui;color:#e6ecec">Push on this device, email as backup</span></div>
+      </div>
+      <div style="height:50px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:600 16px -apple-system,system-ui;letter-spacing:-.01em;margin-bottom:8px">Confirm and subscribe</div>
+      <div style="height:44px;display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0">Cancel</div>
+      <div style="font:400 11.5px/1.45 -apple-system,system-ui;color:#59626a;text-align:center;margin-top:6px">Turn alerts off any time in Settings. Every email carries one-click unsubscribe.</div>
+    </div>
+  </div>
+  <div style="background:#0a0b0c;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="padding:16px 18px 10px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a">ADD MATCHES TO</div>
+    <div style="background:#15171a;border-radius:28px 28px 0 0;padding:12px 20px 24px">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px"></div>
+      <div style="font:700 22px/1.15 -apple-system,system-ui;letter-spacing:-.025em;margin-bottom:8px">Barcelona's season,<br>in your calendar</div>
+      <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:16px">One feed per club. New fixtures and moved kickoffs update themselves — nothing to re-add.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="height:52px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Google Calendar<span style="flex:1"></span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        <div style="height:52px;border-radius:15px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Apple Calendar<span style="flex:1"></span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+        <div style="height:52px;border-radius:15px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:11px;padding:0 16px;font:600 15.5px -apple-system,system-ui;letter-spacing:-.01em;color:#a3abb0"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3.5v9M6.5 9l3.5 3.5L13.5 9"></path><path d="M4.5 16h11"></path></svg>Download .ics snapshot<span style="flex:1"></span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:16px;padding:13px 14px;background:#1a1d21;border-radius:14px"><span style="font:500 11.5px/1.45 -apple-system,system-ui;color:#7c858b;font-family:ui-monospace,Menlo,monospace">webcal://crono-gol.com/cronogol/feed/barcelona.ics</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "take <a class="dv-oid" href="#1a">1a</a> + <a class="dv-oid" href="#2a">2a</a> into a clickable prototype" · "put real crests through turn 1" · "show the unsubscribe / manage-clubs screen"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">AltaGama FC iOS — design language + first directions</span></div>
+<div class="dv-opts">
+
+<div style="flex-basis:100%;max-width:1240px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:26px 30px;display:flex;flex-wrap:wrap;gap:34px">
+  <div style="flex:1 1 340px;min-width:300px">
+    <div style="font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,.4);margin-bottom:10px">Where this starts</div>
+    <div style="font:600 19px/1.3 -apple-system,system-ui;letter-spacing:-.02em;color:#111;margin-bottom:12px">Identity carries. The web look doesn't.</div>
+    <p style="margin:0 0 10px;font:14px/1.6 -apple-system,system-ui;color:rgba(0,0,0,.66);text-wrap:pretty">Per your call and ADR&nbsp;0014, only two things cross over from Cronogol: the mark and the lime. Everything else is built for iOS — a graphite ground instead of the web's navy, SF&nbsp;Pro at native type sizes instead of Chivo/Bricolage, and platform controls (tab bar, sheets, segmented, swipe actions) rather than web chrome.</p>
+    <p style="margin:0;font:14px/1.6 -apple-system,system-ui;color:rgba(0,0,0,.66);text-wrap:pretty">System fonts also keep <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">expo-font</span> and typeface licensing out of v1 — the open question 0014 left.</p>
+  </div>
+  <div style="flex:1 1 300px;min-width:280px">
+    <div style="font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,.4);margin-bottom:12px">Tokens</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px">
+      <div><div style="height:40px;border-radius:6px;background:#0a0b0c"></div><div style="font:600 9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.5);margin-top:5px">base</div><div style="font:9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.35)">0a0b0c</div></div>
+      <div><div style="height:40px;border-radius:6px;background:#15171a"></div><div style="font:600 9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.5);margin-top:5px">card</div><div style="font:9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.35)">15171a</div></div>
+      <div><div style="height:40px;border-radius:6px;background:#1e2126"></div><div style="font:600 9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.5);margin-top:5px">raised</div><div style="font:9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.35)">1e2126</div></div>
+      <div><div style="height:40px;border-radius:6px;background:#c8f25a"></div><div style="font:600 9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.5);margin-top:5px">accent</div><div style="font:9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.35)">c8f25a</div></div>
+      <div><div style="height:40px;border-radius:6px;background:#ff5c47"></div><div style="font:600 9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.5);margin-top:5px">live</div><div style="font:9px ui-monospace,Menlo,monospace;color:rgba(0,0,0,.35)">ff5c47</div></div>
+    </div>
+    <div style="font:13px/1.7 -apple-system,system-ui;color:rgba(0,0,0,.6)">Ink <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px">#f4f6f6 / #a3abb0 / #7c858b / #59626a</span><br>Radii <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px">28 sheet · 24 card · 14 control · 10 chip · pill</span><br>Bands <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px">c8f25a · 6fc9ff · b79bff · ff6b5e</span></div>
+  </div>
+  <div style="flex:1 1 260px;min-width:250px">
+    <div style="font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,.4);margin-bottom:12px">Type — SF Pro, iOS scale</div>
+    <div style="font:700 34px/1.1 -apple-system,system-ui;letter-spacing:-.03em;color:#111">Large title 34/700</div>
+    <div style="font:600 22px/1.2 -apple-system,system-ui;letter-spacing:-.02em;color:#111;margin-top:6px">Title 22/600</div>
+    <div style="font:600 17px/1.3 -apple-system,system-ui;color:#111;margin-top:6px">Headline 17/600</div>
+    <div style="font:400 15px/1.4 -apple-system,system-ui;color:rgba(0,0,0,.7);margin-top:6px">Body 15/400 · Footnote 13</div>
+    <div style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:rgba(0,0,0,.45);margin-top:8px">Caption 10/700 · .16em</div>
+    <div style="font:700 28px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:#111;margin-top:10px">21:00 · 1d 04h · +4</div>
+    <div style="font:12px/1.5 -apple-system,system-ui;color:rgba(0,0,0,.5);margin-top:4px">Every number tabular. No exceptions.</div>
+  </div>
+</div>
+
+<div class="dv-grp">Today — three ideas about what the app opens on</div>
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Countdown hero — one match owns the screen</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="padding:6px 20px 0;overflow:hidden">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px">
+      <div><div style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#c8f25a;margin-bottom:8px">MATCHDAY 4 · LALIGA</div><div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">Today</div></div>
+      <div style="width:36px;height:36px;border-radius:18px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 12px -apple-system,system-ui;color:#a3abb0">EM</div>
+    </div>
+    <div style="background:#15171a;border-radius:24px;padding:18px 18px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">NEXT UP</span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">MESTALLA · VALENCIA</span></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px"><div style="width:52px;height:52px;border-radius:12px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 13px -apple-system,system-ui;color:#c8f25a">VAL</div><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em;text-align:center">Valencia CF</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a">HOME</div></div>
+        <div style="font:700 11px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">V</div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px"><div style="width:52px;height:52px;border-radius:12px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 13px -apple-system,system-ui;color:#a3abb0">RMA</div><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em;text-align:center">Real Madrid</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">AWAY</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:10px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.07)"><span style="font:700 44px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.035em">21:00</span><span style="font:700 12px/1.5 -apple-system,system-ui;letter-spacing:.1em;color:#a3abb0;padding-bottom:5px">SAT 5 SEP<br><span style="color:#59626a">CEST · YOUR TIME</span></span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0 16px"><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">KICKOFF IN</span><span style="font:700 22px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">1d 04h 22m</span></div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;height:46px;border-radius:14px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px -apple-system,system-ui;letter-spacing:-.01em"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="14" height="13" rx="3"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>Open Valencia CF</div>
+        <div style="width:46px;height:46px;border-radius:14px;background:#1e2126;border:1px solid #c8f25a;display:flex;align-items:center;justify-content:center;color:#c8f25a;position:relative"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 3a4.5 4.5 0 00-4.5 4.5c0 4-1.5 5.5-1.5 5.5h12s-1.5-1.5-1.5-5.5A4.5 4.5 0 0010 3z"></path><path d="M8.2 16a2 2 0 003.6 0"></path></svg><span style="position:absolute;top:9px;right:10px;width:6px;height:6px;border-radius:3px;background:#c8f25a;display:block"></span></div>
+      </div>
+      <div style="font:500 11px/1.4 -apple-system,system-ui;color:#59626a;margin-top:11px">Subscribed to Valencia CF — every fixture, alerts and calendar included.</div>
+    </div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin:24px 0 10px"><span style="font:600 17px/1 -apple-system,system-ui;letter-spacing:-.02em">Also this week</span><span style="font:600 13px/1 -apple-system,system-ui;color:#c8f25a">Fixtures</span></div>
+    <div style="background:#15171a;border-radius:20px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:34px;height:34px;border-radius:9px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">ATH</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Girona</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">Sun 6 Sep · Montilivi</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">18:30</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+        <div style="width:34px;height:34px;border-radius:9px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">SEV</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Osasuna</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">Sun 6 Sep · Sánchez-Pizjuán</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">16:15</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:#15171a;border-radius:20px;padding:14px 16px;margin-top:12px">
+      <div style="width:3px;height:34px;border-radius:2px;background:#c8f25a"></div>
+      <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#a3abb0;width:16px">4</div>
+      <div style="width:26px;height:26px;border-radius:7px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#c8f25a">VAL</div>
+      <div style="flex:1;font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.01em">Valencia CF</div>
+      <div style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">9</div>
+      <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">PTS</span>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Agenda stack — date-led, all clubs at once</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 20px 14px">
+      <div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">Up next</div>
+      <div style="width:36px;height:36px;border-radius:18px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 12px -apple-system,system-ui;color:#a3abb0">EM</div>
+    </div>
+    <div style="display:flex;gap:7px;padding:0 20px 18px;overflow:hidden">
+      <div style="flex:none;height:32px;padding:0 14px;border-radius:16px;background:#c8f25a;color:#101806;display:flex;align-items:center;gap:7px;font:600 13px -apple-system,system-ui"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3a4.5 4.5 0 00-4.5 4.5c0 4-1.5 5.5-1.5 5.5h12s-1.5-1.5-1.5-5.5A4.5 4.5 0 0010 3z"></path><path d="M8.2 16a2 2 0 003.6 0"></path></svg>3 subscribed</div>
+      <div style="flex:none;height:32px;padding:0 14px;border-radius:16px;background:#15171a;border:1px solid rgba(255,255,255,.09);color:#a3abb0;display:flex;align-items:center;font:600 13px -apple-system,system-ui">Valencia</div>
+      <div style="flex:none;height:32px;padding:0 14px;border-radius:16px;background:#15171a;border:1px solid rgba(255,255,255,.09);color:#a3abb0;display:flex;align-items:center;font:600 13px -apple-system,system-ui">Athletic</div>
+      <div style="flex:none;height:32px;padding:0 14px;border-radius:16px;background:#15171a;border:1px solid rgba(255,255,255,.09);color:#a3abb0;display:flex;align-items:center;font:600 13px -apple-system,system-ui">Sev</div>
+    </div>
+    <div style="padding:0 20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#c8f25a">TOMORROW</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">1 MATCH</span></div>
+      <div style="background:#15171a;border-radius:20px;padding:16px;margin-bottom:22px">
+        <div style="display:flex;align-items:center;gap:13px">
+          <div style="text-align:center;width:52px"><div style="font:700 20px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">18:30</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:5px">J4</div></div>
+          <div style="width:1px;height:38px;background:rgba(255,255,255,.08)"></div>
+          <div style="width:36px;height:36px;border-radius:10px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui;color:#c8f25a">ATH</div>
+          <div style="flex:1;min-width:0"><div style="font:600 16px/1.2 -apple-system,system-ui;letter-spacing:-.015em">Girona</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px"><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:3px 5px">AWAY</span><span style="font:500 12px/1 -apple-system,system-ui;color:#7c858b">Montilivi</span></div></div>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">SAT 5 SEP</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">2 MATCHES</span></div>
+      <div style="background:#15171a;border-radius:20px;overflow:hidden;margin-bottom:22px">
+        <div style="display:flex;align-items:center;gap:13px;padding:16px;border-bottom:1px solid rgba(255,255,255,.06)">
+          <div style="text-align:center;width:52px"><div style="font:700 20px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">16:15</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:5px">J4</div></div>
+          <div style="width:1px;height:38px;background:rgba(255,255,255,.08)"></div>
+          <div style="width:36px;height:36px;border-radius:10px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui;color:#a3abb0">SEV</div>
+          <div style="flex:1;min-width:0"><div style="font:600 16px/1.2 -apple-system,system-ui;letter-spacing:-.015em">Osasuna</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px"><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:4px;padding:3px 5px">HOME</span><span style="font:500 12px/1 -apple-system,system-ui;color:#7c858b">Sánchez-Pizjuán</span></div></div>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:13px;padding:16px">
+          <div style="text-align:center;width:52px"><div style="font:700 20px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">21:00</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;margin-top:5px">NEXT</div></div>
+          <div style="width:1px;height:38px;background:rgba(255,255,255,.08)"></div>
+          <div style="width:36px;height:36px;border-radius:10px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui;color:#c8f25a">VAL</div>
+          <div style="flex:1;min-width:0"><div style="font:600 16px/1.2 -apple-system,system-ui;letter-spacing:-.015em">Real Madrid</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px"><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:4px;padding:3px 5px">HOME</span><span style="font:500 12px/1 -apple-system,system-ui;color:#7c858b">Mestalla</span></div></div>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">SUN 13 SEP</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">J5</span></div>
+      <div style="background:#15171a;border-radius:20px;padding:16px;opacity:.72">
+        <div style="display:flex;align-items:center;gap:13px">
+          <div style="text-align:center;width:52px"><div style="font:700 20px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">TBC</div></div>
+          <div style="width:1px;height:38px;background:rgba(255,255,255,.08)"></div>
+          <div style="width:36px;height:36px;border-radius:10px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui;color:#a3abb0">VAL</div>
+          <div style="flex:1"><div style="font:600 16px/1.2 -apple-system,system-ui;letter-spacing:-.015em">at Rayo Vallecano</div><div style="font:500 12px/1 -apple-system,system-ui;color:#7c858b;margin-top:5px">Kickoff not yet scheduled</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Matchday board — honest about the 4-hour score feed</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="padding:6px 20px 0;overflow:hidden">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+      <div><div style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#7c858b;margin-bottom:8px">SATURDAY · MATCHDAY 4</div><div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">Board</div></div>
+      <div style="width:36px;height:36px;border-radius:18px;background:#1e2126;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font:700 12px -apple-system,system-ui;color:#a3abb0">EM</div>
+    </div>
+    <div style="border-radius:24px;padding:18px;background:#15171a;border:1px solid rgba(255,92,71,.35);margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <span style="display:flex;align-items:center;gap:7px;font:800 10px/1 -apple-system,system-ui;letter-spacing:.16em;color:#ff5c47"><span style="width:7px;height:7px;border-radius:4px;background:#ff5c47;display:inline-block"></span>IN PROGRESS</span>
+        <span style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#f4f6f6">67'</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1;display:flex;align-items:center;gap:11px"><div style="width:40px;height:40px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui;color:#c8f25a">ATH</div><div style="font:600 15px/1.15 -apple-system,system-ui;letter-spacing:-.015em">Athletic<br>Club</div></div>
+        <div style="font:700 40px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.04em">1–0</div>
+        <div style="flex:1;display:flex;align-items:center;gap:11px;justify-content:flex-end"><div style="font:600 15px/1.15 -apple-system,system-ui;letter-spacing:-.015em;text-align:right;color:#a3abb0">Getafe</div><div style="width:40px;height:40px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 10px -apple-system,system-ui;color:#a3abb0">GET</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2"><circle cx="10" cy="10" r="7.5"></circle><path d="M10 6v4.4l3 1.8"></path></svg>
+        <span style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">Score last checked 2h ago · updates roughly every 4h</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">REST OF THE ROUND</span><span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span></div>
+    <div style="background:#15171a;border-radius:20px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:32px;height:32px;border-radius:9px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9px -apple-system,system-ui;color:#c8f25a">VAL</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Real Madrid</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">Mestalla · home</div></div>
+        <div style="text-align:right"><div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">21:00</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;margin-top:4px">TONIGHT</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:32px;height:32px;border-radius:9px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9px -apple-system,system-ui;color:#a3abb0">SEV</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Osasuna</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:#7c858b">Sánchez-Pizjuán · home</div></div>
+        <div style="text-align:right"><div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">16:15</div><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-top:4px">SUN</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 16px">
+        <div style="width:32px;height:32px;border-radius:9px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9px -apple-system,system-ui;color:#a3abb0">RSO</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Real Sociedad</div><div style="font:500 12px/1.4 -apple-system,system-ui;color:#ff8f7f">Postponed · new date TBC</div></div>
+        <div style="width:26px;height:26px;border-radius:8px;background:rgba(255,92,71,.14);display:flex;align-items:center;justify-content:center;color:#ff5c47;font:800 12px -apple-system,system-ui">!</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:16px">
+      <div style="flex:1;background:#15171a;border-radius:18px;padding:14px 16px"><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;margin-bottom:8px">ALERTS ON</div><div style="font:700 22px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">12</div></div>
+      <div style="flex:1;background:#15171a;border-radius:18px;padding:14px 16px"><div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;margin-bottom:8px">IN CALENDAR</div><div style="font:700 22px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">38</div></div>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-grp">Fixtures — two list treatments</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Month list with swipe actions</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="overflow:hidden">
+    <div style="padding:6px 20px 12px"><div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">Fixtures</div></div>
+    <div style="padding:0 20px 14px"><div style="display:flex;background:#15171a;border-radius:12px;padding:3px;gap:3px">
+      <div style="flex:1;height:32px;border-radius:9px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:600 13px -apple-system,system-ui;color:#f4f6f6">All</div>
+      <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;font:600 13px -apple-system,system-ui;color:#7c858b">Valencia</div>
+      <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;font:600 13px -apple-system,system-ui;color:#7c858b">Athletic</div>
+      <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;font:600 13px -apple-system,system-ui;color:#7c858b">Sevilla</div>
+    </div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 8px;background:rgba(10,11,12,.96);border-bottom:1px solid rgba(255,255,255,.07)"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.2em;color:#a3abb0">SEPTEMBER 2026</span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">7 MATCHES</span></div>
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:46px"><div style="font:700 13px/1.1 -apple-system,system-ui;letter-spacing:-.01em">SAT<br>5</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:44px">21:00</div>
+        <div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8.5px -apple-system,system-ui;color:#c8f25a">VAL</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Real Madrid</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:3px;padding:2.5px 4px">H</span><span style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b">Mestalla</span></div></div>
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg>
+      </div>
+      <div style="display:flex;border-bottom:1px solid rgba(255,255,255,.06);background:#0a0b0c">
+        <div style="flex:1;display:flex;align-items:center;gap:12px;padding:15px 0 15px 20px;transform:translateX(-118px)">
+          <div style="width:46px"><div style="font:700 13px/1.1 -apple-system,system-ui;letter-spacing:-.01em">SUN<br>6</div></div>
+          <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:44px">18:30</div>
+          <div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8.5px -apple-system,system-ui;color:#a3abb0">ATH</div>
+          <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Girona</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:2.5px 4px">A</span><span style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b">Montilivi</span></div></div>
+        </div>
+        <div style="flex:none;width:118px;display:flex;transform:translateX(-118px)">
+          <div style="flex:1;background:#1e2126;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#f4f6f6"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 12.5V4M6.5 7L10 3.5 13.5 7"></path><path d="M4.5 12v4h11v-4"></path></svg><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.08em">SHARE</span></div>
+          <div style="flex:1;background:#c8f25a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#101806"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3.5l6 2.4v4.9c0 3.1-2.5 5.3-6 6.4-3.5-1.1-6-3.3-6-6.4V5.9l6-2.4z"></path></svg><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.08em">CLUB</span></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:46px"><div style="font:700 13px/1.1 -apple-system,system-ui;letter-spacing:-.01em">SUN<br>6</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:44px">16:15</div>
+        <div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8.5px -apple-system,system-ui;color:#a3abb0">SEV</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Osasuna</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:3px;padding:2.5px 4px">H</span><span style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b">Sánchez-Pizjuán</span></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:46px"><div style="font:700 13px/1.1 -apple-system,system-ui;letter-spacing:-.01em">SAT<br>13</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:44px;color:#7c858b">TBC</div>
+        <div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8.5px -apple-system,system-ui;color:#c8f25a">VAL</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Rayo Vallecano</div><div style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b;margin-top:3px">J5 · kickoff not scheduled</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="width:46px"><div style="font:700 13px/1.1 -apple-system,system-ui;letter-spacing:-.01em">SUN<br>21</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:44px">21:00</div>
+        <div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8.5px -apple-system,system-ui;color:#a3abb0">ATH</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Real Betis</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.4);border-radius:3px;padding:2.5px 4px">H</span><span style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b">San Mamés</span></div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 8px;background:rgba(10,11,12,.96);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.2em;color:#a3abb0">OCTOBER 2026</span><span style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">6 MATCHES</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 20px;opacity:.85">
+        <div style="width:46px"><div style="font:700 13px/1.1 -apple-system,system-ui;letter-spacing:-.01em">SAT<br>3</div></div>
+        <div style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:44px">14:00</div>
+        <div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8.5px -apple-system,system-ui;color:#a3abb0">SEV</div>
+        <div style="flex:1;min-width:0"><div style="font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Celta Vigo</div><div style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b;margin-top:3px">Balaídos</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="1e">
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Season spine — results behind you, fixtures ahead</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="overflow:hidden">
+    <div style="padding:6px 20px 6px;display:flex;align-items:flex-end;justify-content:space-between">
+      <div><div style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#c8f25a;margin-bottom:8px">VALENCIA CF · 2026/27</div><div style="font:700 30px/1 -apple-system,system-ui;letter-spacing:-.03em">Season</div></div>
+      <div style="font:700 10px/1.5 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;text-align:right">38 MATCHES<br>4 PLAYED</div>
+    </div>
+    <div style="padding:16px 20px 0;position:relative">
+      <div style="position:absolute;left:66px;top:24px;bottom:0;width:1px;background:rgba(255,255,255,.09)"></div>
+      <div style="display:flex;gap:0;margin-bottom:14px;opacity:.62">
+        <div style="width:40px;text-align:right;font:700 11px/1.3 -apple-system,system-ui;letter-spacing:.02em;color:#7c858b">SUN<br>30 AUG</div>
+        <div style="width:26px;display:flex;justify-content:center;padding-top:4px"><span style="width:7px;height:7px;border-radius:4px;background:#3a4652;display:block"></span></div>
+        <div style="flex:1;background:#15171a;border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:11px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#a3abb0">CEL</div>
+          <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Celta Vigo</div><div style="font:500 11px/1 -apple-system,system-ui;color:#59626a;margin-top:4px">J3 · Balaídos</div></div>
+          <div style="display:flex;align-items:center;gap:7px"><span style="font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">2–1</span><span style="width:20px;height:20px;border-radius:6px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui">W</span></div>
+        </div>
+      </div>
+      <div style="display:flex;margin-bottom:16px">
+        <div style="width:40px;text-align:right;font:700 11px/1.3 -apple-system,system-ui;letter-spacing:.02em;color:#c8f25a">SAT<br>5 SEP</div>
+        <div style="width:26px;display:flex;justify-content:center;padding-top:2px"><span style="width:11px;height:11px;border-radius:6px;background:#c8f25a;box-shadow:0 0 0 4px rgba(200,242,90,.16);display:block"></span></div>
+        <div style="flex:1;background:#15171a;border-radius:18px;padding:15px;border:1px solid rgba(200,242,90,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">NEXT · MATCHDAY 4</span><span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">HOME</span></div>
+          <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px">
+            <div style="width:34px;height:34px;border-radius:9px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 9px -apple-system,system-ui;color:#a3abb0">RMA</div>
+            <div style="flex:1"><div style="font:600 16px/1.2 -apple-system,system-ui;letter-spacing:-.015em">Real Madrid</div><div style="font:500 11.5px/1 -apple-system,system-ui;color:#7c858b;margin-top:4px">Mestalla, Valencia</div></div>
+            <div style="font:700 20px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">21:00</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)"><span style="width:22px;height:22px;border-radius:7px;background:rgba(200,242,90,.14);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="font:500 12px/1.4 -apple-system,system-ui;color:#8fa0a6">In your calendar with the rest of Valencia's season</span></div>
+        </div>
+      </div>
+      <div style="display:flex;margin-bottom:14px">
+        <div style="width:40px;text-align:right;font:700 11px/1.3 -apple-system,system-ui;letter-spacing:.02em;color:#7c858b">SAT<br>13 SEP</div>
+        <div style="width:26px;display:flex;justify-content:center;padding-top:4px"><span style="width:7px;height:7px;border-radius:4px;border:1.5px solid #3a4652;display:block"></span></div>
+        <div style="flex:1;background:#15171a;border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:11px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#a3abb0">RAY</div>
+          <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Rayo Vallecano</div><div style="font:500 11px/1 -apple-system,system-ui;color:#59626a;margin-top:4px">J5 · kickoff TBC</div></div>
+          <span style="font:700 11px/1 -apple-system,system-ui;letter-spacing:.06em;color:#7c858b">TBC</span>
+        </div>
+      </div>
+      <div style="display:flex;margin-bottom:14px">
+        <div style="width:40px;text-align:right;font:700 11px/1.3 -apple-system,system-ui;letter-spacing:.02em;color:#7c858b">SUN<br>21 SEP</div>
+        <div style="width:26px;display:flex;justify-content:center;padding-top:4px"><span style="width:7px;height:7px;border-radius:4px;border:1.5px solid #3a4652;display:block"></span></div>
+        <div style="flex:1;background:#15171a;border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:11px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#a3abb0">ATM</div>
+          <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Atlético Madrid</div><div style="font:500 11px/1 -apple-system,system-ui;color:#59626a;margin-top:4px">J6 · Mestalla</div></div>
+          <span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">18:30</span>
+        </div>
+      </div>
+      <div style="display:flex">
+        <div style="width:40px;text-align:right;font:700 11px/1.3 -apple-system,system-ui;letter-spacing:.02em;color:#7c858b">WED<br>24 SEP</div>
+        <div style="width:26px;display:flex;justify-content:center;padding-top:4px"><span style="width:7px;height:7px;border-radius:4px;border:1.5px solid #3a4652;display:block"></span></div>
+        <div style="flex:1;background:#15171a;border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:11px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#a3abb0">GET</div>
+          <div style="flex:1;min-width:0"><div style="font:600 14px/1.2 -apple-system,system-ui;letter-spacing:-.01em">at Getafe</div><div style="font:500 11px/1 -apple-system,system-ui;color:#59626a;margin-top:4px">J7 · Coliseum</div></div>
+          <span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">21:30</span>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:80px;background:linear-gradient(rgba(10,11,12,0),#0a0b0c)"></div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-grp">Table — the web's 14 columns don't fit 393px</div>
+
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Tap to expand — three columns, stats on demand</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="overflow:hidden">
+    <div style="padding:6px 20px 12px;display:flex;align-items:flex-end;justify-content:space-between">
+      <div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">Table</div>
+      <div style="font:700 10px/1.5 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;text-align:right">AFTER MD 4<br>20 CLUBS</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;padding:0 20px 14px">
+      <div style="height:36px;padding:0 14px;border-radius:11px;background:#1e2126;border:1px solid rgba(200,242,90,.35);display:flex;align-items:center"><img src="leagues/laliga.png" alt="LaLiga" style="height:15px;width:auto;display:block"></div>
+      <div style="height:36px;padding:0 14px;border-radius:11px;background:#15171a;display:flex;align-items:center;opacity:.5"><img src="leagues/premier-league.png" alt="Premier League" style="height:20px;width:auto;display:block"></div>
+      <div style="height:36px;padding:0 14px;border-radius:11px;background:#15171a;display:flex;align-items:center;opacity:.5"><img src="leagues/bundesliga.png" alt="Bundesliga" style="height:19px;width:auto;display:block"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:8px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <span></span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">#</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">CLUB</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;text-align:center">PL</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#f4f6f6;text-align:center">PTS</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+      <span style="width:3px;height:26px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">1</span>
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4290c089c722beb802ae124d63c4287f1274f14fe093a0c39ecc3bc81e3bf858.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Real Madrid</span></span>
+      <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">12</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+      <span style="width:3px;height:26px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">2</span>
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em">Barcelona</span></span>
+      <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">10</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+      <span style="width:3px;height:26px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">3</span>
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/dd4e531a6722f5526b8870d2f5febf3812e5a70fdc80740a39a4de2e424e1c63.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em">Villarreal</span></span>
+      <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">10</span>
+    </div>
+    <div style="background:#15171a;border-radius:18px;margin:6px 12px;padding:2px 8px 14px">
+      <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 8px">
+        <span style="width:3px;height:26px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">4</span>
+        <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em">Valencia CF</span><span style="font:700 8px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.45);border-radius:99px;padding:3px 6px">FOLLOWING</span></span>
+        <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">9</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 10px 14px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:12px">
+        <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">W</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">3</span></span>
+        <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">D</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">0</span></span>
+        <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">L</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">1</span></span>
+        <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">GF</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">7</span></span>
+        <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">GA</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">3</span></span>
+        <span style="text-align:center"><span style="display:block;font:800 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a;margin-bottom:6px">GD</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#c8f25a">+4</span></span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px">
+        <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">LAST 5</span>
+        <span style="display:flex;gap:4px">
+          <span style="width:20px;height:20px;border-radius:6px;background:#3a4652;display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui">D</span>
+          <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(255,107,94,.7);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui">L</span>
+          <span style="width:20px;height:20px;border-radius:6px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui">W</span>
+          <span style="width:20px;height:20px;border-radius:6px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui">W</span>
+          <span style="width:20px;height:20px;border-radius:6px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui">W</span>
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 10px 0;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)"><span style="font:600 13.5px/1 -apple-system,system-ui;color:#c8f25a">Open Valencia CF</span><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#c8f25a" stroke-width="2.2"><path d="M7.5 4l6 6-6 6"></path></svg></div>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+      <span style="width:3px;height:26px;border-radius:2px;background:#6fc9ff;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">5</span>
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em">Athletic Club</span><span style="width:5px;height:5px;border-radius:3px;background:#c8f25a;display:block;flex:none"></span></span>
+      <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">8</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.05)">
+      <span style="width:3px;height:26px;border-radius:2px;background:#6fc9ff;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">6</span>
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/031f7dd63003b4b12e1bfd5834b821e2fb76cbd1e6001e6a4529492111b9d921.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em">Real Betis</span></span>
+      <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">7</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3px 26px minmax(0,1fr) 34px 34px;gap:0 10px;align-items:center;padding:12px 20px">
+      <span style="width:3px;height:26px;border-radius:2px;background:#b79bff;display:block"></span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">7</span>
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/187c6c09c22f7c3f09c57e8bcda2ae528237770ed30a63de38de7a5fd4d7e89a.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;flex:none"><span style="font:600 14.5px/1 -apple-system,system-ui;letter-spacing:-.015em">Sevilla FC</span><span style="width:5px;height:5px;border-radius:3px;background:#c8f25a;display:block;flex:none"></span></span>
+      <span style="font:600 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6;text-align:center">4</span><span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;text-align:center">6</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:14px 20px 0">
+      <span style="display:flex;align-items:center;gap:6px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b"><span style="width:12px;height:4px;border-radius:2px;background:#c8f25a;display:block"></span>CHAMPIONS</span>
+      <span style="display:flex;align-items:center;gap:6px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b"><span style="width:12px;height:4px;border-radius:2px;background:#6fc9ff;display:block"></span>EUROPA</span>
+      <span style="display:flex;align-items:center;gap:6px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b"><span style="width:12px;height:4px;border-radius:2px;background:#b79bff;display:block"></span>CONFERENCE</span>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="1g">
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Pinned club column, columns scroll sideways</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="overflow:hidden">
+    <div style="padding:6px 20px 14px"><div style="font:700 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#c8f25a;margin-bottom:8px">LALIGA 2026/27 · AFTER MD 4</div><div style="font:700 30px/1 -apple-system,system-ui;letter-spacing:-.03em">Standings</div></div>
+    <div style="margin:0 12px;background:#15171a;border-radius:22px;overflow:hidden;position:relative">
+      <div style="display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.08)">
+        <div style="width:130px;display:flex;gap:10px"><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">#</span><span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">CLUB</span></div>
+        <div style="flex:1;display:flex;gap:0">
+          <span style="width:34px;text-align:center;font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#f4f6f6">PTS</span>
+          <span style="width:32px;text-align:center;font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">PL</span>
+          <span style="width:30px;text-align:center;font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">W</span>
+          <span style="width:30px;text-align:center;font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">D</span>
+          <span style="width:30px;text-align:center;font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">L</span>
+          <span style="width:34px;text-align:center;font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">GD</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">1</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#a3abb0">RMA</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Real Madrid</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">12</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">+9</span></div></div>
+      <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">2</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#a3abb0">BAR</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">Barcelona</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">10</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">3</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">1</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">+6</span></div></div>
+      <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">3</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#a3abb0">VIL</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">Villarreal</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">10</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">3</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">1</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">+4</span></div></div>
+      <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);background:#1a2027"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#c8f25a;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">4</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(200,242,90,.4);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#c8f25a">VAL</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">Valencia</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">9</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">3</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">1</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">+4</span></div></div>
+      <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#6fc9ff;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">5</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(200,242,90,.4);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#c8f25a">ATH</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">Athletic</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">8</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">2</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">2</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">+2</span></div></div>
+      <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#6fc9ff;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">6</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#a3abb0">BET</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">Real Betis</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">7</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">2</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">1</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">1</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">0</span></div></div>
+      <div style="display:flex;align-items:center;padding:12px 14px"><div style="width:130px;display:flex;align-items:center;gap:9px"><span style="width:3px;height:24px;border-radius:2px;background:#b79bff;display:block"></span><span style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;width:14px">7</span><span style="width:24px;height:24px;border-radius:7px;background:#1e2126;border:1px solid rgba(200,242,90,.4);display:flex;align-items:center;justify-content:center;font:900 7.5px -apple-system,system-ui;color:#c8f25a">SEV</span><span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">Sevilla</span></div><div style="flex:1;display:flex"><span style="width:34px;text-align:center;font:800 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">6</span><span style="width:32px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">4</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">2</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">0</span><span style="width:30px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#8fa0a6">2</span><span style="width:34px;text-align:center;font:600 12.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#b0c0c4">-1</span></div></div>
+      <div style="position:absolute;top:0;bottom:0;right:0;width:40px;background:linear-gradient(90deg,rgba(21,23,26,0),#15171a);pointer-events:none"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px 0"><span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">SWIPE COLUMNS FOR GF, GA, LAST 5</span><svg width="16" height="10" viewBox="0 0 20 12" fill="none" stroke="#59626a" stroke-width="1.8"><path d="M13 2l4 4-4 4M17 6H4"></path></svg></div>
+    <div style="margin:16px 20px 0;padding:14px 16px;background:#15171a;border-radius:16px;display:flex;gap:11px;align-items:flex-start">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#7c858b" stroke-width="1.9" style="flex:none;margin-top:1px"><circle cx="10" cy="10" r="7.5"></circle><path d="M10 6.4v.1M10 9v4.6"></path></svg>
+      <span style="font:400 12.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Standings settle up to three hours after the last whistle. Bands are league configuration, not position arithmetic.</span>
+    </div>
+  </div>
+  <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-grp">Notifications, Live Activity, widget</div>
+
+<div class="dv-opt" id="1h">
+<div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Lock screen — the three alerts you asked for</div>
+<div class="ph" style="background:#05070a">
+  <div style="position:absolute;inset:0;background:radial-gradient(120% 60% at 78% 8%,rgba(200,242,90,.12),rgba(5,7,10,0) 60%)"></div>
+  <div class="sb" style="position:relative"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="padding:0 14px;position:relative">
+    <div style="text-align:center;margin:14px 0 22px">
+      <div style="font:500 15px/1 -apple-system,system-ui;color:rgba(255,255,255,.8);letter-spacing:.01em">Saturday, 5 September</div>
+      <div style="font:200 74px/1 -apple-system,system-ui;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-top:6px">20:30</div>
+    </div>
+    <div style="background:rgba(28,32,36,.82);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:14px 15px;margin-bottom:9px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:5px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><img src="brand/mark-dark.svg" alt="AltaGama FC" style="width:14px;height:auto;display:block"></span><span style="font:600 11px/1 -apple-system,system-ui;letter-spacing:.04em;color:rgba(255,255,255,.62)">LIVE ACTIVITY</span></span>
+        <span style="display:flex;align-items:center;gap:6px;font:700 12px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#ff5c47"><span style="width:6px;height:6px;border-radius:3px;background:#ff5c47;display:inline-block"></span>67'</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;display:flex;align-items:center;gap:9px"><div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#c8f25a">ATH</div><span style="font:600 14px/1 -apple-system,system-ui;letter-spacing:-.01em">Athletic</span></div>
+        <span style="font:700 24px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.03em">1–0</span>
+        <div style="flex:1;display:flex;align-items:center;gap:9px;justify-content:flex-end"><span style="font:600 14px/1 -apple-system,system-ui;letter-spacing:-.01em;color:#a3abb0">Getafe</span><div style="width:30px;height:30px;border-radius:8px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 8px -apple-system,system-ui;color:#a3abb0">GET</div></div>
+      </div>
+      <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.12);margin:14px 0 8px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:74%;background:#c8f25a;border-radius:2px;display:block"></span></div>
+      <div style="font:500 10.5px/1 -apple-system,system-ui;color:rgba(255,255,255,.45)">Score checked 2h ago · San Mamés</div>
+    </div>
+    <div style="background:rgba(28,32,36,.82);border:1px solid rgba(200,242,90,.28);border-radius:20px;padding:13px 15px;margin-bottom:9px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px"><span style="display:flex;align-items:center;gap:8px"><span style="width:18px;height:18px;border-radius:5px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><img src="brand/mark-dark.svg" alt="AltaGama FC" style="width:13px;height:auto;display:block"></span><span style="font:600 11px/1 -apple-system,system-ui;letter-spacing:.04em;color:rgba(255,255,255,.62)">ALTAGAMA FC</span></span><span style="font:500 11px/1 -apple-system,system-ui;color:rgba(255,255,255,.42)">now</span></div>
+      <div style="font:600 14.5px/1.3 -apple-system,system-ui;letter-spacing:-.01em;margin-bottom:3px">Valencia v Real Madrid · 30 minutes</div>
+      <div style="font:400 13.5px/1.4 -apple-system,system-ui;color:rgba(255,255,255,.66)">Kicks off 21:00 at Mestalla. Matchday 4.</div>
+    </div>
+    <div style="background:rgba(28,32,36,.82);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:13px 15px;margin-bottom:9px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px"><span style="display:flex;align-items:center;gap:8px"><span style="width:18px;height:18px;border-radius:5px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><img src="brand/mark-dark.svg" alt="AltaGama FC" style="width:13px;height:auto;display:block"></span><span style="font:600 11px/1 -apple-system,system-ui;letter-spacing:.04em;color:rgba(255,255,255,.62)">ALTAGAMA FC</span></span><span style="font:500 11px/1 -apple-system,system-ui;color:rgba(255,255,255,.42)">2h ago</span></div>
+      <div style="font:600 14.5px/1.3 -apple-system,system-ui;letter-spacing:-.01em;margin-bottom:4px">Kickoff moved — Sevilla v Osasuna</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font:600 13.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.42);text-decoration:line-through">Sun 16:15</span><svg width="13" height="10" viewBox="0 0 16 10" fill="none" stroke="#c8f25a" stroke-width="1.8"><path d="M10 1.5L14 5l-4 3.5M14 5H2"></path></svg><span style="font:700 13.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#c8f25a">Sun 18:30</span></div>
+      <div style="font:400 13px/1.4 -apple-system,system-ui;color:rgba(255,255,255,.66)">Your calendar entry has already been updated.</div>
+    </div>
+    <div style="background:rgba(28,32,36,.82);border:1px solid rgba(255,92,71,.3);border-radius:20px;padding:13px 15px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px"><span style="display:flex;align-items:center;gap:8px"><span style="width:18px;height:18px;border-radius:5px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><img src="brand/mark-dark.svg" alt="AltaGama FC" style="width:13px;height:auto;display:block"></span><span style="font:600 11px/1 -apple-system,system-ui;letter-spacing:.04em;color:rgba(255,255,255,.62)">ALTAGAMA FC</span></span><span style="font:500 11px/1 -apple-system,system-ui;color:rgba(255,255,255,.42)">yesterday</span></div>
+      <div style="font:600 14.5px/1.3 -apple-system,system-ui;letter-spacing:-.01em;margin-bottom:3px">Postponed — Valencia at Real Sociedad</div>
+      <div style="font:400 13.5px/1.4 -apple-system,system-ui;color:rgba(255,255,255,.66)">Removed from your calendar. We'll alert you when a new date is set.</div>
+    </div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="1i">
+<div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Dynamic Island, widgets, alert settings</div>
+<div style="width:393px;display:flex;flex-direction:column;gap:14px">
+  <div style="background:#0a0b0c;border-radius:28px;padding:18px;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:14px">DYNAMIC ISLAND — COMPACT</div>
+    <div style="display:flex;justify-content:center;margin-bottom:20px"><div style="height:38px;border-radius:22px;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;padding:0 14px"><span style="width:20px;height:20px;border-radius:6px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:900 7px -apple-system,system-ui;color:#c8f25a">ATH</span><span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">1–0</span><span style="width:20px;height:20px;border-radius:6px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:900 7px -apple-system,system-ui;color:#a3abb0">GET</span><span style="width:1px;height:14px;background:rgba(255,255,255,.14);display:block"></span><span style="font:700 12px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#ff5c47">67'</span></div></div>
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:12px">EXPANDED</div>
+    <div style="background:#15171a;border-radius:22px;padding:15px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#c8f25a">MATCHDAY 4 · SAN MAMÉS</span><span style="display:flex;align-items:center;gap:6px;font:700 12px/1 -apple-system,system-ui;color:#ff5c47"><span style="width:6px;height:6px;border-radius:3px;background:#ff5c47;display:inline-block"></span>2ND HALF</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:center"><div style="width:36px;height:36px;border-radius:10px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 9px -apple-system,system-ui;color:#c8f25a">ATH</div><span style="font:600 12px/1 -apple-system,system-ui">Athletic</span></div><span style="font:700 30px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.035em">1–0</span><div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:center"><div style="width:36px;height:36px;border-radius:10px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 9px -apple-system,system-ui;color:#a3abb0">GET</div><span style="font:600 12px/1 -apple-system,system-ui;color:#a3abb0">Getafe</span></div></div>
+      <div style="font:500 10.5px/1 -apple-system,system-ui;color:#59626a;text-align:center;margin-top:14px">Checked 2h ago · no live feed yet (backend work)</div>
+    </div>
+  </div>
+  <div style="background:#0a0b0c;border-radius:28px;padding:18px;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:14px">HOME SCREEN WIDGETS</div>
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <div style="width:148px;height:148px;border-radius:24px;background:#15171a;padding:15px;display:flex;flex-direction:column;justify-content:space-between">
+        <div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px"><span style="font:800 8.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#c8f25a">NEXT · J4</span><img src="brand/mark-accent.svg" alt="AltaGama FC" style="width:17px;height:auto;display:block;opacity:.9"></div><div style="display:flex;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:6px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 7px -apple-system,system-ui;color:#c8f25a">VAL</span><span style="font:700 9px/1 -apple-system,system-ui;color:#59626a">V</span><span style="width:22px;height:22px;border-radius:6px;background:#1e2126;border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font:900 7px -apple-system,system-ui;color:#a3abb0">RMA</span></div></div>
+        <div><div style="font:700 24px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.03em">1d 04h</div><div style="font:500 11px/1 -apple-system,system-ui;color:#7c858b;margin-top:6px">Sat 21:00 · Mestalla</div></div>
+      </div>
+      <div style="flex:1;height:148px;border-radius:24px;background:#15171a;padding:15px;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px"><img src="brand/mark-accent.svg" alt="AltaGama FC" style="width:17px;height:auto;display:block;opacity:.9"><span style="font:800 8.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#c8f25a">YOUR WEEK</span><span style="flex:1"></span><span style="font:700 8.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#59626a">3 CLUBS</span></div>
+        <div style="display:flex;align-items:center;gap:8px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:20px;height:20px;border-radius:6px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:900 6.5px -apple-system,system-ui;color:#c8f25a">VAL</span><span style="flex:1;font:600 11.5px/1 -apple-system,system-ui">Real Madrid</span><span style="font:700 11.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">Sat 21:00</span></div>
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:20px;height:20px;border-radius:6px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:900 6.5px -apple-system,system-ui;color:#a3abb0">SEV</span><span style="flex:1;font:600 11.5px/1 -apple-system,system-ui">Osasuna</span><span style="font:700 11.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">Sun 16:15</span></div>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:9px"><span style="width:20px;height:20px;border-radius:6px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:900 6.5px -apple-system,system-ui;color:#a3abb0">ATH</span><span style="flex:1;font:600 11.5px/1 -apple-system,system-ui">at Girona</span><span style="font:700 11.5px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">Sun 18:30</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="background:#0a0b0c;border-radius:28px;padding:18px;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:14px">ALERT SETTINGS SHEET — PER CLUB, NOT PER MATCH</div>
+    <div style="background:#15171a;border-radius:22px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:11px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5.png" alt="" style="width:28px;height:28px;object-fit:contain;display:block"><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Valencia CF</span><span style="font:500 12.5px/1.3 -apple-system,system-ui;color:#7c858b">All 38 matches · one subscription</span></span><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#c8f25a;border:1px solid rgba(200,242,90,.45);border-radius:99px;padding:4px 8px">ON</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><span><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Kickoff reminder</span><span style="font:500 12.5px/1.3 -apple-system,system-ui;color:#7c858b">30 minutes before</span></span><span style="width:51px;height:31px;border-radius:16px;background:#c8f25a;position:relative;display:block"><span style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:14px;background:#fff;display:block"></span></span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><span><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Kickoff moved</span><span style="font:500 12.5px/1.3 -apple-system,system-ui;color:#7c858b">Time or date changes</span></span><span style="width:51px;height:31px;border-radius:16px;background:#c8f25a;position:relative;display:block"><span style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:14px;background:#fff;display:block"></span></span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><span><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Postponed or abandoned</span><span style="font:500 12.5px/1.3 -apple-system,system-ui;color:#7c858b">Always worth knowing</span></span><span style="width:51px;height:31px;border-radius:16px;background:#c8f25a;position:relative;display:block"><span style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:14px;background:#fff;display:block"></span></span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;opacity:.55"><span><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Goals &amp; final score</span><span style="font:500 12.5px/1.3 -apple-system,system-ui;color:#7c858b">Needs a live feed — not yet available</span></span><span style="width:51px;height:31px;border-radius:16px;background:#1e2126;border:1px solid rgba(255,255,255,.12);position:relative;display:block"><span style="position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:14px;background:#59626a;display:block"></span></span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-grp">Onboarding · tab bar</div>
+
+<div class="dv-opt" id="1j">
+<div class="dv-olabel"><a class="dv-oid" href="#1j">1j</a>Two screens to a working app — clubs, then alerts</div>
+<div style="display:flex;gap:20px">
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="padding:8px 20px 0;overflow:hidden">
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:16px">STEP 1 OF 2</div>
+    <div style="font:700 30px/1.05 -apple-system,system-ui;letter-spacing:-.03em;margin-bottom:8px">Who do you<br>follow?</div>
+    <div style="font:400 14.5px/1.45 -apple-system,system-ui;color:#8fa0a6;margin-bottom:18px;max-width:30ch">Pick as many clubs as you like. Fixtures and alerts follow your picks.</div>
+    <div style="height:40px;border-radius:12px;background:#15171a;display:flex;align-items:center;gap:9px;padding:0 13px;margin-bottom:14px"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#59626a" stroke-width="2"><circle cx="9" cy="9" r="5.5"></circle><path d="M13.5 13.5L17 17"></path></svg><span style="font:400 14.5px/1 -apple-system,system-ui;color:#59626a">Search 100 clubs</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div style="height:32px;padding:0 12px;border-radius:10px;background:#1e2126;border:1px solid rgba(200,242,90,.3);display:flex;align-items:center"><img src="leagues/laliga.png" alt="LaLiga" style="height:13px;width:auto;display:block"></div>
+      <div style="height:32px;padding:0 12px;border-radius:10px;background:#15171a;display:flex;align-items:center;opacity:.5"><img src="leagues/premier-league.png" alt="Premier League" style="height:17px;width:auto;display:block"></div>
+      <div style="height:32px;padding:0 12px;border-radius:10px;background:#15171a;display:flex;align-items:center;opacity:.5"><img src="leagues/bundesliga.png" alt="Bundesliga" style="height:16px;width:auto;display:block"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px;border:1px solid rgba(200,242,90,.45);position:relative"><span style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:9px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#101806" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(200,242,90,.4);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#c8f25a">VAL</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center">Valencia</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px;border:1px solid rgba(200,242,90,.45);position:relative"><span style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:9px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#101806" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(200,242,90,.4);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#c8f25a">ATH</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center">Athletic</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px;border:1px solid rgba(200,242,90,.45);position:relative"><span style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:9px;background:#c8f25a;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#101806" stroke-width="2.4"><path d="M2 6.2l2.6 2.6L10 3.4"></path></svg></span><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(200,242,90,.4);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#c8f25a">SEV</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center">Sevilla</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px"><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">RMA</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:#a3abb0">Real Madrid</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px"><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">BAR</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:#a3abb0">Barcelona</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px"><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">BET</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:#a3abb0">Real Betis</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px"><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">ATM</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:#a3abb0">Atlético</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px"><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">VIL</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:#a3abb0">Villarreal</span></div>
+      <div style="background:#15171a;border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:9px"><span style="width:38px;height:38px;border-radius:11px;background:#1e2126;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font:900 9.5px -apple-system,system-ui;color:#a3abb0">RSO</span><span style="font:600 11.5px/1.2 -apple-system,system-ui;text-align:center;color:#a3abb0">Real Soc.</span></div>
+    </div>
+  </div>
+  <div style="flex:none;padding:12px 20px 26px;background:linear-gradient(rgba(10,11,12,0),#0a0b0c 40%)">
+    <div style="height:50px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:600 16px -apple-system,system-ui;letter-spacing:-.01em">Continue with 3 clubs</div>
+  </div>
+  <div class="hi"></div>
+</div>
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+  <div class="scr" style="padding:8px 20px 0;overflow:hidden">
+    <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a;margin-bottom:16px">STEP 2 OF 2</div>
+    <div style="font:700 30px/1.05 -apple-system,system-ui;letter-spacing:-.03em;margin-bottom:8px">Never miss a<br>kickoff.</div>
+    <div style="font:400 14.5px/1.45 -apple-system,system-ui;color:#8fa0a6;margin-bottom:22px;max-width:32ch">Three alerts, off by default until you say yes. Change any of them later in Settings.</div>
+    <div style="background:#15171a;border-radius:20px;overflow:hidden;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:13px;padding:16px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:34px;height:34px;border-radius:10px;background:rgba(200,242,90,.14);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="10" cy="10.5" r="6.5"></circle><path d="M10 7.5v3.2l2.2 1.4"></path></svg></span><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">30 minutes before kickoff</span><span style="font:500 12.5px/1.35 -apple-system,system-ui;color:#7c858b">For every club you follow</span></span></div>
+      <div style="display:flex;align-items:center;gap:13px;padding:16px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:34px;height:34px;border-radius:10px;background:rgba(200,242,90,.14);display:flex;align-items:center;justify-content:center;color:#c8f25a"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h9M11 4.5L13.5 7 11 9.5M16 13H7M9 10.5L6.5 13 9 15.5"></path></svg></span><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">When a kickoff moves</span><span style="font:500 12.5px/1.35 -apple-system,system-ui;color:#7c858b">Your calendar updates itself too</span></span></div>
+      <div style="display:flex;align-items:center;gap:13px;padding:16px"><span style="width:34px;height:34px;border-radius:10px;background:rgba(255,92,71,.14);display:flex;align-items:center;justify-content:center;color:#ff5c47"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 3.5l7 12.5H3l7-12.5z"></path><path d="M10 8v3.4M10 13.6v.1"></path></svg></span><span style="flex:1"><span style="display:block;font:600 15px/1.2 -apple-system,system-ui;letter-spacing:-.01em">Postponed or abandoned</span><span style="font:500 12.5px/1.35 -apple-system,system-ui;color:#7c858b">Rare, and always worth knowing</span></span></div>
+    </div>
+    <div style="display:flex;gap:11px;align-items:flex-start;padding:14px 16px;background:#15171a;border-radius:18px">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#7c858b" stroke-width="1.9" style="flex:none;margin-top:1px"><rect x="3" y="4.5" width="14" height="13" rx="3.5"></rect><path d="M3 9h14M7.5 4.5v-2M12.5 4.5v-2"></path></svg>
+      <span style="font:400 12.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Prefer your calendar? Every fixture can be subscribed to instead — set it up any time from a club page.</span>
+    </div>
+  </div>
+  <div style="flex:none;padding:12px 20px 26px;display:flex;flex-direction:column;gap:9px;background:linear-gradient(rgba(10,11,12,0),#0a0b0c 40%)">
+    <div style="height:50px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;font:600 16px -apple-system,system-ui;letter-spacing:-.01em">Allow notifications</div>
+    <div style="height:44px;display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0">Not now</div>
+  </div>
+  <div class="hi"></div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1k">
+<div class="dv-olabel"><a class="dv-oid" href="#1k">1k</a>Tab bar — native blur vs floating pill</div>
+<div style="width:393px;display:flex;flex-direction:column;gap:14px">
+  <div style="background:#0a0b0c;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="padding:16px 18px 10px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a">A — NATIVE BLUR BAR, LABELLED</div>
+    <div style="height:78px;margin:0 0 0;background:#15171a;position:relative"><div style="position:absolute;left:18px;right:18px;top:16px;height:14px;border-radius:7px;background:rgba(255,255,255,.05)"></div><div style="position:absolute;left:18px;right:120px;top:42px;height:14px;border-radius:7px;background:rgba(255,255,255,.05)"></div></div>
+    <div style="height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+    </div>
+  </div>
+  <div style="background:#0a0b0c;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 48px rgba(0,0,0,.4);color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+    <div style="padding:16px 18px 10px;font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.18em;color:#59626a">B — FLOATING PILL, ICON ONLY</div>
+    <div style="height:78px;background:#15171a;position:relative"><div style="position:absolute;left:18px;right:18px;top:16px;height:14px;border-radius:7px;background:rgba(255,255,255,.05)"></div><div style="position:absolute;left:18px;right:120px;top:42px;height:14px;border-radius:7px;background:rgba(255,255,255,.05)"></div></div>
+    <div style="padding:14px 18px 22px;position:relative">
+      <div style="height:58px;border-radius:29px;background:rgba(30,33,38,.94);border:1px solid rgba(255,255,255,.09);display:grid;grid-template-columns:repeat(4,1fr);align-items:center">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;color:#c8f25a"><svg width="23" height="23" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="width:4px;height:4px;border-radius:2px;background:#c8f25a;display:block"></span></div>
+        <div style="display:flex;justify-content:center;color:#7c858b"><svg width="23" height="23" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg></div>
+        <div style="display:flex;justify-content:center;color:#7c858b"><svg width="23" height="23" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg></div>
+        <div style="display:flex;justify-content:center;color:#7c858b"><svg width="23" height="23" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg></div>
+      </div>
+      <div style="font:400 11.5px/1.4 -apple-system,system-ui;color:#59626a;margin-top:12px">Prettier, less legible, and off-pattern for iOS — <span style="color:#a3abb0">NativeTabs (ADR 0005) gives you A for free</span>, blur and haptics included.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "build out <a class="dv-oid" href="#1a">1a</a> with <a class="dv-oid" href="#1e">1e</a>'s fixtures as a clickable prototype" · "merge the live tile from <a class="dv-oid" href="#1c">1c</a> into <a class="dv-oid" href="#1a">1a</a>" · "more directions for the table"</p>
+</section>
+</x-dc>
+</body>
+</html>
