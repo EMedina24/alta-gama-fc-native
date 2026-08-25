@@ -1,9 +1,13 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { Colors } from '@/constants/theme';
+import { useI18n } from '@/lib/i18n/use-i18n';
 
 export default function TabsLayout() {
   const c = Colors.dark;
+  // ⚠ Tab labels are copy like any other string. They were hardcoded English
+  // and stayed English with the whole app in Spanish.
+  const { copy } = useI18n();
 
   return (
     <NativeTabs
@@ -14,24 +18,24 @@ export default function TabsLayout() {
         selected: { color: c.accent },
       }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{copy.tabs.today}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: 'smallcircle.filled.circle', selected: 'smallcircle.filled.circle.fill' }}
         />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="matchdays">
-        <NativeTabs.Trigger.Label>Matchdays</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{copy.tabs.matchdays}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="calendar" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="table">
-        <NativeTabs.Trigger.Label>Table</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{copy.tabs.table}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="clubs">
-        <NativeTabs.Trigger.Label>Clubs</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{copy.tabs.clubs}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'shield', selected: 'shield.fill' }} />
       </NativeTabs.Trigger>
     </NativeTabs>

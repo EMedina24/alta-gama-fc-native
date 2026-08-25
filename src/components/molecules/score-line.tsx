@@ -30,9 +30,24 @@ export interface ScoreLineProps {
   /** `board` is the Today hero; `row` is a list line. */
   size?: 'board' | 'row';
   noScoreLabel: string;
+  /**
+   * Replaces the score between the crests.
+   *
+   * ⚠ The NEXT-fixture card uses this to show the kickoff time (SPEC §3.1). An
+   * unplayed match has no score, and rendering the null-score dash there is both
+   * cramped between two long names and says nothing — the kickoff is the fact
+   * the reader came for.
+   */
+  center?: string;
 }
 
-export function ScoreLine({ home, away, size = 'board', noScoreLabel }: ScoreLineProps) {
+export function ScoreLine({
+  home,
+  away,
+  size = 'board',
+  noScoreLabel,
+  center,
+}: ScoreLineProps) {
   const crestSize = size === 'board' ? Size.crestCard : Size.crestRow;
   const nameVariant = size === 'board' ? 'title3' : 'bodyStrong';
   const scoreVariant = size === 'board' ? 'scoreLarge' : 'numeral';
@@ -42,17 +57,22 @@ export function ScoreLine({ home, away, size = 'board', noScoreLabel }: ScoreLin
     <View style={styles.row}>
       <View style={[styles.side, styles.left]}>
         <Crest src={home.crest} fallback={home.abbr} size={crestSize} filled={!home.crest} />
-        <Text variant={nameVariant} color={home.muted ? 'textDim' : 'text'} numberOfLines={1}>
+        <Text
+          variant={nameVariant}
+          color={home.muted ? 'textDim' : 'text'}
+          numberOfLines={1}
+          style={styles.name}>
           {home.name}
         </Text>
       </View>
 
       <Text
-        variant={scoreVariant}
+        variant={center ? 'title3' : scoreVariant}
         tabular
-        color={played ? 'text' : 'textFaint'}
-        accessibilityLabel={played ? undefined : noScoreLabel}>
-        {played ? `${home.goals}–${away.goals}` : '–'}
+        color={center || played ? 'text' : 'textFaint'}
+        style={styles.score}
+        accessibilityLabel={!center && !played ? noScoreLabel : undefined}>
+        {center ?? (played ? `${home.goals}–${away.goals}` : '–')}
       </Text>
 
       <View style={[styles.side, styles.right]}>
@@ -60,7 +80,7 @@ export function ScoreLine({ home, away, size = 'board', noScoreLabel }: ScoreLin
           variant={nameVariant}
           color={away.muted ? 'textDim' : 'text'}
           numberOfLines={1}
-          style={styles.awayName}>
+          style={[styles.name, styles.awayName]}>
           {away.name}
         </Text>
         <Crest src={away.crest} fallback={away.abbr} size={crestSize} filled={!away.crest} />
@@ -71,8 +91,12 @@ export function ScoreLine({ home, away, size = 'board', noScoreLabel }: ScoreLin
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  // ⚠ The score never shrinks and the names always can. Without this a long
+  // pairing ("Real Madrid" v "Real Sociedad") pushes the name over the score.
+  score: { flexShrink: 0 },
+  name: { flexShrink: 1 },
   side: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minWidth: 0 },
   left: { justifyContent: 'flex-start' },
   right: { justifyContent: 'flex-end' },
-  awayName: { textAlign: 'right', flexShrink: 1 },
+  awayName: { textAlign: 'right' },
 });

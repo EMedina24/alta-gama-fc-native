@@ -98,6 +98,10 @@ export interface Copy {
     finished: string;
     settleNote: string;
     upcoming: string;
+    /** The next card's own meta — a date, not the section name. */
+    nextUp: string;
+    /** ⚠ Says whose clock the kickoff is in. */
+    yourTime: string;
     followTitle: string;
     followBody: string;
     browseAll: string;
@@ -263,6 +267,8 @@ export const esCopy: Copy = {
     settleNote:
       'Resultados finales de todas las ligas que seguimos. Se confirman unos minutos después del pitido.',
     upcoming: 'Próximos de tus clubes',
+    nextUp: 'Siguiente partido',
+    yourTime: 'tu hora',
     followTitle: 'Sigue a tu club y no te pierdas ningún partido.',
     followBody:
       'La temporada entera entra de una vez. Si cambia un horario, la entrada del calendario cambia contigo y recibes un aviso.',
@@ -443,6 +449,8 @@ export const enCopy: Copy = {
     settleNote:
       'Full-time scores from every league we track. Settled a few minutes after the whistle.',
     upcoming: 'Upcoming from your clubs',
+    nextUp: 'Next up',
+    yourTime: 'your time',
     followTitle: 'Follow your favourite club and never miss a kickoff.',
     followBody:
       'The whole season goes in at once. When a kickoff moves, the calendar entry moves with it and you get an alert the same minute.',

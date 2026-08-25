@@ -14,9 +14,9 @@
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Pill, Text } from '@/components/atoms';
+import { Crest, Pill, Text } from '@/components/atoms';
 import { Countdown, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface MatchBoardProps {
   /** A match in play at the last sweep, if any. */
@@ -38,6 +38,13 @@ export interface MatchBoardProps {
     kickoffUtc: string;
     kickoffTbd: boolean;
     meta: string;
+    /** Already formatted in the reader's zone and clock. `--:--` when TBD. */
+    kickoffLabel: string;
+    /** "SAT 5 SEP" — the reader's own day. */
+    dateLabel: string;
+    /** "CEST · YOUR TIME" — states WHOSE clock this is. */
+    zoneLabel: string;
+    venue: string | null;
   } | null;
   copy: {
     inProgress: string;
@@ -78,18 +85,75 @@ export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
       ) : null}
 
       {next ? (
+        /**
+         * ⚠ STACKED, not a row. Names sit UNDER their crest so each gets half the
+         * card's width — a row layout truncated both sides of Real Madrid v Real
+         * Sociedad to "Real…" against "Real…", which names neither club.
+         */
         <View style={[styles.card, styles.nextCard]}>
-          <Text variant="eyebrowSm" color="accent">
-            {next.meta}
-          </Text>
-          <ScoreLine home={next.home} away={next.away} noScoreLabel={copy.noScore} />
+          <View style={styles.headRow}>
+            <Text variant="eyebrowSm" color="accent">
+              {next.meta}
+            </Text>
+            {next.venue ? (
+              <Text variant="eyebrowSm" color="textFaint" numberOfLines={1} style={styles.venue}>
+                {next.venue}
+              </Text>
+            ) : null}
+          </View>
+
+          <View style={styles.pair}>
+            <View style={styles.pairSide}>
+              <Crest
+                src={next.home.crest}
+                fallback={next.home.abbr}
+                size={Size.crestCard}
+                filled={!next.home.crest}
+              />
+              <Text variant="bodyStrong" center numberOfLines={1}>
+                {next.home.name}
+              </Text>
+            </View>
+            <Text variant="callout" color="textFaint" style={styles.versus}>
+              v
+            </Text>
+            <View style={styles.pairSide}>
+              <Crest
+                src={next.away.crest}
+                fallback={next.away.abbr}
+                size={Size.crestCard}
+                filled={!next.away.crest}
+              />
+              <Text variant="bodyStrong" center numberOfLines={1}>
+                {next.away.name}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.kickoffRow}>
+            <Text variant="kickoff" tabular>
+              {next.kickoffLabel}
+            </Text>
+            <View style={styles.kickoffMeta}>
+              <Text variant="eyebrowSm" color="textSecondary">
+                {next.dateLabel}
+              </Text>
+              {/* ⚠ States whose clock this is. Every time on screen is the
+                  reader's own zone, and saying so is what stops "9:00 PM" being
+                  read as the stadium's local time. */}
+              <Text variant="eyebrowSm" color="textFaint">
+                {next.zoneLabel}
+              </Text>
+            </View>
+          </View>
+
           <View style={styles.rule} />
           {next.kickoffTbd ? (
             <Text variant="footnote" color="textFaint">
               {copy.tbd}
             </Text>
           ) : (
-            <View style={styles.countdown}>
+            <View style={styles.countdownRow}>
               <Text variant="eyebrowSm" color="textFaint">
                 {copy.kickoffIn}
               </Text>
@@ -116,5 +180,11 @@ const styles = StyleSheet.create({
   nextCard: { borderColor: Colors.dark.accentRing },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.hairlineMid },
-  countdown: { gap: Spacing.one },
+  venue: { flexShrink: 1, textAlign: 'right' },
+  pair: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
+  pairSide: { flex: 1, alignItems: 'center', gap: Spacing.two },
+  versus: { marginTop: Size.crestCard / 2 - 8 },
+  kickoffRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
+  kickoffMeta: { flex: 1, gap: Spacing.half, paddingBottom: Spacing.two },
+  countdownRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

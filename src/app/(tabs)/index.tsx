@@ -18,7 +18,8 @@ import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaf
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
-import { formatWeekdayLong } from '@/lib/format';
+import { formatFixtureDate, formatKickoffTime, formatWeekdayLong } from '@/lib/format';
+import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTeams } from '@/queries/use-teams';
 import { useFinishedToday, useUpcoming } from '@/queries/use-today';
@@ -31,7 +32,7 @@ export default function TodayScreen() {
   const router = useRouter();
   const { copy, phrases } = useI18n();
   const zone = useZone();
-  const { followed } = usePreferences();
+  const { followed, clock } = usePreferences();
 
   const finished = useFinishedToday(zone);
   const upcoming = useUpcoming(zone);
@@ -90,7 +91,15 @@ export default function TodayScreen() {
             away: side(next.awayTeam, null, false),
             kickoffUtc: next.kickoffUtc,
             kickoffTbd: next.kickoffTbd,
-            meta: copy.today.upcoming,
+            // ⚠ Its OWN label, not the section header's — the card sat directly
+            // above a section with the identical title.
+            meta: copy.today.nextUp,
+            kickoffLabel: next.kickoffTbd
+              ? '--:--'
+              : formatKickoffTime(next.kickoffUtc, zone, clock),
+            dateLabel: formatFixtureDate(next.kickoffUtc, zone, phrases),
+            zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
+            venue: next.venue,
           }}
           copy={copy.today}
         />
