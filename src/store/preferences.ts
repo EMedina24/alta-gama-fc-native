@@ -59,6 +59,23 @@ export interface Preferences {
   /** `null` = follow the device locale. */
   lang: Locale | null;
   onboarded: boolean;
+  /**
+   * Alert types.
+   *
+   * ⚠ **Global, not per club** — the design and the backend agree on this. Per
+   * club there is only on/off, which is `followed`.
+   *
+   * ⚠ `reminder` is APP-OWNED: the server never sends a kickoff reminder, by
+   * design. The app schedules it locally from fixture data. The other two become
+   * `alertMoved` / `alertPostponed` on `PUT /cronogol/push/device` unchanged, so
+   * this shape is the wire shape and stays that way.
+   *
+   * There is deliberately no `goals`: that type does not exist and is not coming
+   * without a live feed. Its switch is drawn disabled with its reason.
+   */
+  alertReminder: boolean;
+  alertMoved: boolean;
+  alertPostponed: boolean;
 }
 
 const DEFAULTS: Preferences = {
@@ -68,6 +85,9 @@ const DEFAULTS: Preferences = {
   clock: '24',
   lang: null,
   onboarded: false,
+  alertReminder: true,
+  alertMoved: true,
+  alertPostponed: true,
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -93,6 +113,10 @@ function parse(raw: string | null): Preferences {
       clock: data.clock === '12' ? '12' : '24',
       lang: isLocale(data.lang) ? data.lang : null,
       onboarded: data.onboarded === true,
+      // Default ON: a follower who has not opened settings wants to be told.
+      alertReminder: data.alertReminder !== false,
+      alertMoved: data.alertMoved !== false,
+      alertPostponed: data.alertPostponed !== false,
     };
   } catch {
     return DEFAULTS;
@@ -105,6 +129,9 @@ function same(a: Preferences, b: Preferences): boolean {
     a.clock === b.clock &&
     a.lang === b.lang &&
     a.onboarded === b.onboarded &&
+    a.alertReminder === b.alertReminder &&
+    a.alertMoved === b.alertMoved &&
+    a.alertPostponed === b.alertPostponed &&
     a.followed.length === b.followed.length &&
     a.followed.every((slug, i) => slug === b.followed[i])
   );
@@ -206,6 +233,25 @@ export function setLanguage(lang: Locale | null) {
 
 export function setOnboarded(onboarded: boolean) {
   update({ onboarded });
+}
+
+export function setAlert(
+  key: 'alertReminder' | 'alertMoved' | 'alertPostponed',
+  value: boolean,
+) {
+  update({ [key]: value });
+}
+
+/**
+ * Unfollow everything on this device.
+ *
+ * ⚠ This is the anonymous v1 stand-in for "delete account" (ADR 0019). It clears
+ * local follow state and, once push exists, calls `DELETE /cronogol/push/device`.
+ * It CANNOT remove a calendar the user already subscribed to — no server can. The
+ * confirmation copy has to say so.
+ */
+export function clearFollows() {
+  update({ followed: [] });
 }
 
 /* ── resolved reads ───────────────────────────────────────────────────── */

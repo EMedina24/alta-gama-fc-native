@@ -49,6 +49,14 @@ export const es = {
 
   justNow: 'ahora mismo',
   kickoffTbd: 'hora de inicio por confirmar',
+
+  /** Prefixes an away fixture: "en el Bernabéu" → "at ...". */
+  at: 'en',
+  /**
+   * ⚠ Stands in for an opponent the API sends as null. Never an invented name
+   * and never a derived monogram — a made-up club is worse than a visible gap.
+   */
+  unknownOpponent: '?',
 };
 
 export const en: Phrases = {
@@ -73,6 +81,9 @@ export const en: Phrases = {
 
   justNow: 'just now',
   kickoffTbd: 'kickoff time to be confirmed',
+
+  at: 'at',
+  unknownOpponent: '?',
 };
 
 /** Spanish is the shape-defining locale: Spain is the primary market. */

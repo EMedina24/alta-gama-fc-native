@@ -5,6 +5,7 @@ export { FormStrip } from './form-strip';
 export { HomeAwayTag } from './home-away-tag';
 export { LeagueSwitch, type LeagueOption } from './league-switch';
 export { ListRow } from './list-row';
+export { MatchdayStrip } from './matchday-strip';
 export { ScoreLine, type ScoreSide } from './score-line';
 export { SectionHeader } from './section-header';
 export { StatRow } from './stat-row';

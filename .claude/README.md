@@ -8,7 +8,9 @@ Documentation Claude Code (and humans) should read before working in this repo.
 | [PROJECT.md](./PROJECT.md) | The stack, the layout, how to run it |
 | [ECOSYSTEM.md](./ECOSYSTEM.md) | **The other repos** — backend, web app, API contract, brand and domain rules |
 | [CONVENTIONS.md](./CONVENTIONS.md) | Code conventions in force (naming, imports, theming, platform splits) |
-| [settings.json](./settings.json) | Grants read access to the sibling repos; denies the deprecated one |
+| [GO-LIVE.md](./GO-LIVE.md) | **What to do when the Apple Developer account lands** — the licence-gated checklist |
+| [PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md) | Backend push + account-deletion hookup guide |
+| [settings.json](./settings.json) | Grants read access to the sibling repos |
 | [decisions/](./decisions/) | Decision log — one file per decision, newest number highest |
 
 ## Rule: every decision gets written down

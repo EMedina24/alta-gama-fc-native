@@ -1,5 +1,5 @@
 /**
- * The button, in four tones.
+ * The button, in five tones.
  *
  * ⚠ Accent is for ONE thing per screen (SPEC §2): "if two things on a screen are
  * lime, one is wrong". A screen with two `primary` buttons is a design bug.
@@ -9,7 +9,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './text';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
-export type ButtonTone = 'primary' | 'secondary' | 'quiet' | 'danger';
+export type ButtonTone = 'primary' | 'secondary' | 'outline' | 'quiet' | 'danger';
 
 export interface ButtonProps {
   label: string;
@@ -62,6 +62,8 @@ export function Button({
 const LABEL_COLOR = {
   primary: 'onAccent',
   secondary: 'text',
+  /** Accent ring + accent label, no fill — the design's `Add all N matches`. */
+  outline: 'accent',
   quiet: 'textSecondary',
   danger: 'danger',
 } as const;
@@ -83,6 +85,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.raised,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.dark.hairlineStrong,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.dark.accentRing,
   },
   quiet: { backgroundColor: 'transparent' },
   danger: {

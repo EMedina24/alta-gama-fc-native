@@ -19,6 +19,7 @@
 import type {
   FixtureWindowView,
   JornadaView,
+  LeagueRef,
   SeasonJornadasView,
   ScoreboardDayView,
   StandingsView,
@@ -175,6 +176,23 @@ export async function getTeamSquad(slug: string): Promise<TeamSquadView | null> 
     `/cronogol/teams/${encodeURIComponent(slug)}/squad`,
     toQuery({}),
   );
+}
+
+/**
+ * Every competition we hold fixtures for — artwork and tints, keyed by slug.
+ *
+ * ⚠ `name` is the PROVIDER's display copy (`LALIGA EA SPORTS`), not a label to
+ * key on. Key on `slug`, always — it is operator-assigned and permanent.
+ *
+ * ⚠ `accentColor` is null and stays null on Serie A and segunda. Keep a neutral
+ * fallback; do not assume a league competition carries a tint.
+ *
+ * ⚠ `logoUrls` here is keyed SEMANTICALLY (`primary`/`icon`/`wordmark`/`onDark`),
+ * the opposite of `TeamView.logoUrls`' size keys. Picking wrong is a layout
+ * mistake, not a resolution one.
+ */
+export async function getLeagues(): Promise<LeagueRef[]> {
+  return get<LeagueRef[]>('/cronogol/leagues', toQuery({}));
 }
 
 // ---------------------------------------------------------------- jornadas

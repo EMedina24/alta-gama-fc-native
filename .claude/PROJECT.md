@@ -1,9 +1,10 @@
 # alta-gama-fc — Project Overview
 
-**Status:** greenfield *scaffold*, mature *product*. The repo is still an
-unmodified `create-expo-app` starter (Expo SDK 57) — no domain screens or data
-layer yet — but the product, API, and brand it plugs into already exist and are
-settled.
+**Status:** Phase 1 (foundation) and Phase 2 (read-only screens) complete. The
+starter is gone; the design system, the ported data layer and all five screens —
+Today, Matchdays, Table, Clubs and the club page — run against production data on
+an iOS simulator. Follows are device-local and inert; push, calendar and
+onboarding are Phase 3–4.
 
 **What it is:** the native (iOS/Android) surface of **AltaGama FC** — the football
 fixtures/results/news product already shipping on the web as
@@ -38,20 +39,24 @@ Expo modules in use: `@expo/ui`, `expo-constants`, `expo-device`, `expo-font`,
 
 ```
 src/
-  app/                 expo-router routes (file = route)
-    _layout.tsx        root layout: ThemeProvider + splash overlay + AppTabs
-    index.tsx          Home tab
-    explore.tsx        Explore tab
-  components/          shared components; *.web.tsx for web-specific variants
-    ui/                lower-level UI primitives
-  constants/theme.ts   Colors (light/dark), Fonts, Spacing, layout constants
-  hooks/               use-color-scheme, use-theme (+ .web variants)
-  global.css           web-only CSS custom properties (font vars)
-assets/
-  images/              app icons, splash, tab icons (@2x/@3x)
-  expo.icon/           iOS icon composition source
-scripts/reset-project.js   starter-template reset helper (unused going forward)
+  app/                          routes only — no logic
+    _layout.tsx                 Stack + QueryClientProvider + preference hydration
+    (tabs)/_layout.tsx          NativeTabs — Today · Matchdays · Table · Clubs
+    (tabs)/{index,matchdays,table,clubs}.tsx
+    club/[slug].tsx             pushes over the tab bar
+    _debug/                     dev-only gate + molecule gallery (__DEV__ guarded)
+  components/
+    atoms/ (12)  molecules/ (11)  organisms/  templates/     ADR 0013
+  constants/theme.ts            design tokens — the handoff file (ADR 0015)
+  lib/cronogol/                 the ported data layer, path-mirrored (ADR 0018)
+  lib/{format,timezones}.ts  lib/i18n/{phrases,copy,use-i18n}
+  queries/                      React Query hooks + staleTime buckets (ADR 0017)
+  store/preferences.ts          device follows, language, clock, timezone
+assets/images/                  app icon, splash, adaptive icon
+handoff_AG-ios/                 the design handoff (SPEC, prototype, screenshots)
 ```
+
+Tab icons are **SF Symbols**, not assets (ADR 0016).
 
 Path aliases (`tsconfig.json`): `@/*` → `./src/*`, `@/assets/*` → `./assets/*`.
 
