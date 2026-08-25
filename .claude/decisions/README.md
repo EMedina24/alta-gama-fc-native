@@ -53,3 +53,4 @@ more words than one that's obvious once you see it.
 | [0018](./0018-ported-data-layer.md) | The ported `lib/cronogol/` layer mirrors the web app path for path | Accepted |
 | [0019](./0019-anonymous-v1.md) | Anonymous v1: follows are device-keyed, accounts designed-for | Accepted |
 | [0020](./0020-root-stack-wrapping-tabs.md) | Root layout is a `Stack` wrapping a `(tabs)` group | Accepted |
+| [0021](./0021-short-club-display-names.md) | Club names are shortened for display | Accepted |

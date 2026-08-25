@@ -3,16 +3,14 @@
  *
  * ⚠ The leading underscore does NOT keep this out of the production route tree:
  * expo-router only treats `_layout` specially, and `.expo/types/router.d.ts`
- * lists `/_debug` as a real, navigable href. So the guard below is what stops a
- * release build serving an internal diagnostics screen at a guessable URL —
- * removing it ships one.
+ * lists these as real, navigable hrefs. `_debug/_layout.tsx` carries the
+ * `__DEV__` guard that stops a release build serving them.
  *
  * Proves three things at once: the ported client reaches production and parses,
  * the derivations run on Hermes, and `Intl.formatToParts` honours a named IANA
  * zone across a DST boundary (the single assumption the whole date layer rests
  * on — see `lib/format.ts`).
  */
-import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -54,12 +52,7 @@ function intlSpike(): Line[] {
   ];
 }
 
-export default function DebugRoute() {
-  if (!__DEV__) return <Redirect href="/" />;
-  return <DebugScreen />;
-}
-
-function DebugScreen() {
+export default function DebugScreen() {
   const [lines, setLines] = useState<Line[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [error, setError] = useState<string | null>(null);

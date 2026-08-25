@@ -26,5 +26,13 @@ export function BandRail({ zone }: { zone: ZoneKind | null }) {
 }
 
 const styles = StyleSheet.create({
-  rail: { width: 3, alignSelf: 'stretch', borderRadius: Radius.rail },
+  /**
+   * ⚠ Inset vertically rather than stretched to the row.
+   *
+   * A full-height rail makes consecutive rows in the SAME zone merge into one
+   * unbroken bar — five Champions League places read as a single block and the
+   * row boundaries vanish. The design draws a short segment per row; the margin
+   * is what keeps them countable.
+   */
+  rail: { width: 3, alignSelf: 'stretch', marginVertical: 7, borderRadius: Radius.rail },
 });

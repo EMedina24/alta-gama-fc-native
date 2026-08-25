@@ -223,6 +223,34 @@ export function sortClubs<T extends { name: string }>(teams: readonly T[]): T[] 
   );
 }
 
+/**
+ * A club's name with its leading and trailing club-type tokens dropped, for
+ * places the design needs a short name: "FC Barcelona" → "Barcelona",
+ * "Villarreal CF" → "Villarreal", "RC Deportivo" → "Deportivo".
+ *
+ * ⚠ NOT in the web app — added here because the native table gives a club name
+ * ~150pt and the API's `name` has carried the legal prefix since 2026-07-29, so
+ * "RCD Espanyol de Barcelona" ellipsises to "RCD Espanyol de Ba…". The design
+ * mock shows short names throughout.
+ *
+ * ⚠ **Display only. Never a key, never persisted, never sent to the API.** Two
+ * clubs can share a shortened name (both Madrids shorten to "Madrid" only if
+ * "Real"/"Atlético" were noise, which they are not — but the risk is the point).
+ * `slug` is the identifier, always.
+ *
+ * ⚠ Never strips every word: a name that is entirely club-type tokens keeps the
+ * original, so nothing can render as an empty string.
+ */
+export function displayName(name: string): string {
+  const words = name.split(/\s+/).filter(Boolean);
+  let start = 0;
+  let end = words.length;
+  while (start < end - 1 && NOISE.has(words[start].toLowerCase())) start += 1;
+  while (end - 1 > start && NOISE.has(words[end - 1].toLowerCase())) end -= 1;
+  const kept = words.slice(start, end);
+  return kept.length > 0 ? kept.join(" ") : name;
+}
+
 export interface HomeGround {
   venue: string | null;
   city: string | null;

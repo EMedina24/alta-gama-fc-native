@@ -35,6 +35,21 @@ export interface CrestProps {
   filled?: boolean;
 }
 
+/**
+ * ⚠ The code is sized off the TILE, not off the type scale.
+ *
+ * A three-letter code at the `micro` step is ~24pt wide, which does not fit a
+ * 26pt row tile once the border is taken off — `OSA` rendered as `O…`. The ramp
+ * below plus `adjustsFontSizeToFit` is what guarantees three characters always
+ * fit, at every size the design uses (26 / 30 / 40 / 58).
+ */
+function codeSize(tile: number): number {
+  if (tile <= 26) return 9;
+  if (tile <= 30) return 10;
+  if (tile <= 40) return 12.5;
+  return 16;
+}
+
 export function Crest({ src, fallback, size, tone = 'default', filled = false }: CrestProps) {
   const [failed, setFailed] = useState(false);
   const box = { width: size, height: size };
@@ -50,10 +65,11 @@ export function Crest({ src, fallback, size, tone = 'default', filled = false }:
           tone === 'accent' && styles.accent,
         ]}>
         <Text
-          variant={size >= 40 ? 'caption' : 'micro'}
           color={tone === 'accent' ? 'accent' : tone === 'faint' ? 'textFaint' : 'textSecondary'}
-          style={styles.code}
-          numberOfLines={1}>
+          style={[styles.code, { fontSize: codeSize(size) }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}>
           {fallback}
         </Text>
       </View>
@@ -82,5 +98,5 @@ const styles = StyleSheet.create({
   },
   filled: { backgroundColor: Colors.dark.raised },
   accent: { borderColor: Colors.dark.accentRing },
-  code: { fontWeight: '800', letterSpacing: 0.2 },
+  code: { fontWeight: '800', letterSpacing: 0, textAlign: 'center' },
 });
