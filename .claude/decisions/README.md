@@ -46,4 +46,10 @@ more words than one that's obvious once you see it.
 | [0011](./0011-alta-gama-fc-repo-removed.md) | `alta-gama-fc` repo removed; deny rule dropped | Accepted |
 | [0012](./0012-native-ios-port-of-cronogol.md) | Native iOS app porting `cronogol`, for App Store release | Accepted |
 | [0013](./0013-atomic-design-components.md) | Atomic design for the component layer | Accepted |
-| [0014](./0014-app-specific-design-language.md) | App-specific design language (in progress) | Accepted |
+| [0014](./0014-app-specific-design-language.md) | App-specific design language (in progress) | Resolved by 0015 |
+| [0015](./0015-handoff-design-system-adopted.md) | Handoff design system adopted; theme module replaced | Accepted |
+| [0016](./0016-ios-only-v1.md) | Web target dropped; iOS-only v1 | Accepted |
+| [0017](./0017-react-query-data-layer.md) | React Query, with the web app's cache buckets as `staleTime` | Accepted |
+| [0018](./0018-ported-data-layer.md) | The ported `lib/cronogol/` layer mirrors the web app path for path | Accepted |
+| [0019](./0019-anonymous-v1.md) | Anonymous v1: follows are device-keyed, accounts designed-for | Accepted |
+| [0020](./0020-root-stack-wrapping-tabs.md) | Root layout is a `Stack` wrapping a `(tabs)` group | Accepted |

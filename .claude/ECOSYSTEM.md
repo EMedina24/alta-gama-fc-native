@@ -86,7 +86,14 @@ Public read: `/cronogol/teams`, `/cronogol/teams/{slug}/fixtures`,
 Calendar feeds: `/cronogol/feed/{slug}.ics`, `/cronogol/feed/jornada/{league}/{season}/{n}.ics`
 
 Account: `GET|PATCH /cronogol/me`, `POST /cronogol/me/email`,
-`GET|POST /cronogol/me/feeds`, `DELETE /cronogol/me/feeds/{token}`
+`GET|POST /cronogol/me/feeds`, `DELETE /cronogol/me/feeds/{token}`,
+`DELETE /cronogol/me` (account deletion — **added 2026-08-24 for this app**)
+
+Push (native-only, **added 2026-08-24 for this app**): `PUT|DELETE /cronogol/push/device`
+— device registration + per-club follow state. Full hookup guide, payload
+contract and the raw-APNs-token / sandbox-environment traps:
+[.claude/PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md). ⚠ The server sends
+nothing yet — dark behind a flag until the Apple Developer account exists.
 
 Admin/ops (not for this app): `/cronogol/admin/*`, `/cronogol/dashboard/*`
 
@@ -125,6 +132,7 @@ building a screen. The ones that bite hardest:
 | Backend conventions, brand rules | `senpai-backend/CLAUDE.md` |
 | Product history & decisions (12.7k lines) | `senpai-backend/CRONOGOL.md` |
 | Account/auth behavior | `senpai-backend/CRONOGOL-ACCOUNT-PAGE.md` |
+| Push registration, payloads, account deletion (this app) | [.claude/PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md) |
 | Deploy/infra | `senpai-backend/DEPLOY.md` |
 | Web app ground rules | `cronogol/AGENTS.md` |
 | Web feature/gotcha notes | `cronogol/docs/{features,gotchas,plans}/` |

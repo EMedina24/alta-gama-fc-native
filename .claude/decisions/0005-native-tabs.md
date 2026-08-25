@@ -1,7 +1,7 @@
 # 0005 — Tab navigation via `expo-router/unstable-native-tabs`
 
 - **Date:** 2026-08-24
-- **Status:** Accepted
+- **Status:** Accepted — revised by [0020](./0020-root-stack-wrapping-tabs.md) (root is now a `Stack` over a `(tabs)` group) and [0016](./0016-ios-only-v1.md) (SF Symbols, not PNG tab icons)
 - **Decided by:** Ed Medina (implicit in initial scaffold)
 
 ## Context

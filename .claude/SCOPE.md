@@ -42,8 +42,12 @@ how `cronogol` decomposes its components. See
 - **Feature scope for v1.** The web app covers fixtures, standings, squads, news
   and editorial, accounts, and `.ics` calendar feeds. Which land in v1?
 - **The native-only justification.** Push notifications for kickoffs and goals are
-  the obvious one — but the backend has **no live-score push** today
-  (`/cronogol/scores` refreshes every ~4h), so that is a backend project first.
+  the obvious one. **Partly resolved 2026-08-24:** the backend now has a full
+  fixture-change push subsystem (moved/postponed alerts, device registration —
+  see [PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md)), shipped dark until the
+  Apple Developer account exists. **Goal/live-score push remains absent** — the
+  backend has no live feed (`/cronogol/scores` refreshes every ~4h) and that is
+  still a backend project first.
 - **Accounts on day one?** (`/cronogol/me`, claimed feeds, passkeys.)
 - **Calendar:** subscribe natively to the existing `.ics` feeds, or integrate with
   the device calendar directly?

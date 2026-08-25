@@ -1,7 +1,7 @@
 # 0014 — App-specific design language (in progress — do not port the web look)
 
 - **Date:** 2026-08-24
-- **Status:** Accepted (the design itself is **in progress**)
+- **Status:** Accepted — the design landed 2026-08-24; see [0015](./0015-handoff-design-system-adopted.md)
 - **Decided by:** Ed Medina
 
 ## Context
