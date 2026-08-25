@@ -18,6 +18,8 @@
  * The selection is pure and is exercised by `_debug` today. Only `applyReminders`
  * needs the notifications API, and it no-ops until the licence lands (ADR 0023).
  */
+import * as Notifications from 'expo-notifications';
+
 import type { WindowFixtureView } from '@/lib/cronogol/types';
 import { PUSH_AVAILABLE } from './capability';
 
@@ -29,6 +31,12 @@ export const REMINDER_BUDGET = 60;
 
 export const REMINDER_LEAD_MS = 30 * 60 * 1000;
 
+/** Copy for a reminder. Passed in so this module never sees a language. */
+export interface ReminderCopy {
+  title: (home: string, away: string) => string;
+  body: (kickoff: string, venue: string | null) => string;
+}
+
 export interface PlannedReminder {
   fixtureId: string;
   clubSlug: string;
@@ -38,6 +46,8 @@ export interface PlannedReminder {
   homeName: string;
   awayName: string;
   venue: string | null;
+  /** Pre-formatted in the reader's zone — this module holds no clock preference. */
+  kickoffLabel: string;
 }
 
 /**
@@ -49,6 +59,7 @@ export function selectReminders(
   fixtures: readonly WindowFixtureView[],
   followed: readonly string[],
   now: Date,
+  formatKickoff: (iso: string) => string = () => '',
   budget: number = REMINDER_BUDGET,
 ): PlannedReminder[] {
   const horizon = now.getTime() + REMINDER_HORIZON_DAYS * 24 * 3600_000;
@@ -83,6 +94,7 @@ export function selectReminders(
       homeName: fixture.homeTeam?.name ?? '',
       awayName: fixture.awayTeam?.name ?? '',
       venue: fixture.venue,
+      kickoffLabel: formatKickoff(fixture.kickoffUtc),
     }));
 }
 
@@ -95,18 +107,52 @@ export function selectReminders(
  *
  * No-op until the licence lands.
  */
-export async function applyReminders(planned: readonly PlannedReminder[]): Promise<number> {
+export async function applyReminders(
+  planned: readonly PlannedReminder[],
+  copy: ReminderCopy,
+): Promise<number> {
   if (!PUSH_AVAILABLE) return 0;
-  // GO-LIVE step 3:
-  //   await Notifications.cancelAllScheduledNotificationsAsync();
-  //   for (const r of planned) {
-  //     await Notifications.scheduleNotificationAsync({
-  //       content: { title: `${r.homeName} v ${r.awayName} · 30 minutes`, body: …,
-  //                  data: { type: 'kickoff_reminder', fixtureId: r.fixtureId,
-  //                          deepLink: `altagamafc://club/${r.clubSlug}` },
-  //                  threadIdentifier: `fixture-${r.fixtureId}` },
-  //       trigger: { type: 'date', date: r.fireAt },
-  //     });
-  //   }
-  throw new Error('PUSH_AVAILABLE is true but applyReminders is not implemented');
+
+  try {
+    // ⚠ Cancel first, unconditionally. Without this every re-arm ADDS to the
+    // queue and the 64-slot budget is gone within a few launches.
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    let scheduled = 0;
+    for (const reminder of planned) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: copy.title(reminder.homeName, reminder.awayName),
+          body: copy.body(reminder.kickoffLabel, reminder.venue),
+          sound: 'default',
+          data: {
+            type: 'kickoff_reminder',
+            fixtureId: reminder.fixtureId,
+            clubSlug: reminder.clubSlug,
+            // ⚠ Same shape the SERVER sends, so one routing handler serves both.
+            deepLink: `altagamafc://club/${reminder.clubSlug}`,
+          },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: reminder.fireAt,
+        },
+        /**
+         * ⚠ **No `threadIdentifier`.** The server sets `thread-id` =
+         * `fixture-{uuid}` on its pushes so a re-scheduled kickoff collapses
+         * instead of stacking — but `NotificationContentInput` in SDK 57 exposes
+         * `threadIdentifier` as OUTPUT only, so a locally scheduled notification
+         * cannot join that thread. Consequence: a local reminder and a later
+         * server "kickoff moved" for the same fixture appear as two notifications,
+         * not one collapsed thread. Acceptable — they say different things — but
+         * it is a real divergence from the design's grouping rule.
+         */
+      });
+      scheduled += 1;
+    }
+    return scheduled;
+  } catch {
+    // Permission revoked mid-session, or the queue is full. Next launch re-arms.
+    return 0;
+  }
 }

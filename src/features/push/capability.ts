@@ -1,61 +1,91 @@
 /**
- * **THE SEAM.** Everything the Apple Developer account gates lives behind this
- * one file (ADR 0023).
+ * **THE SEAM.** Everything the Apple Developer account gated lives here
+ * (ADR 0023). The licence landed 2026-08-25 and this is now implemented; ADR 0024
+ * records what changed.
  *
- * Every other module — the registration builder, the reminder scheduler, the
- * sync effect — is written, wired and complete. They call the adapters below,
- * which currently answer "not available". When the licence lands, this file is
- * the ONLY one that changes; see `.claude/GO-LIVE.md` for the four-step recipe.
- *
- * ⚠ Do not scatter `if (pushAvailable)` through the app. A screen must never know
- * whether push exists — it changes preferences, and the sync effect decides
+ * ⚠ Do not scatter `if (PUSH_AVAILABLE)` through the app. A screen must never
+ * know whether push exists — it changes preferences, and `use-push-sync` decides
  * whether there is anywhere to send them.
  */
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
 /**
- * Whether this build can obtain an APNs token.
- *
- * `false` because `expo-notifications` is not installed and, more fundamentally,
- * the `aps-environment` entitlement needs a paid membership. Flipping this
- * without doing the rest of GO-LIVE.md just makes the adapters throw.
+ * ⚠ **Simulators cannot register for remote notifications**, so there is no APNs
+ * token to be had there — `getDevicePushTokenAsync()` rejects. Everything else
+ * (local reminders, routing, `xcrun simctl push`) works on a simulator; only
+ * registration needs real hardware.
  */
-export const PUSH_AVAILABLE = false;
+export const PUSH_AVAILABLE = true;
 
-/** Whether this build has a widget extension and an App Group to write into. */
+/** Flipped with the widget target. See GO-LIVE.md §4. */
 export const WIDGETS_AVAILABLE = false;
 
 export type PermissionOutcome = 'granted' | 'denied' | 'unavailable';
 
 /**
+ * How a notification behaves while the app is foregrounded.
+ *
+ * ⚠ Banners stay ON in the foreground. A kickoff reminder that arrives while the
+ * reader is looking at the club page is still the reminder they asked for, and
+ * silently swallowing it is how "I never got an alert" reports start.
+ */
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+/**
  * Ask for notification permission.
  *
  * ⚠ Asked AFTER the primer explains it, never on cold launch — iOS grants exactly
- * one system prompt and spending it before the reader knows what they are
- * agreeing to spends it badly.
+ * one system prompt per install and spending it before the reader knows what they
+ * are agreeing to spends it badly.
  *
- * Today: answers `unavailable` without prompting, so the primer can still record
- * intent honestly rather than pretending to have asked.
+ * ⚠ Re-asking after a denial does NOT re-prompt: iOS answers from the stored
+ * decision. `getPermissionsAsync` first means we can tell "not asked yet" from
+ * "asked and refused" and route the second to Settings rather than a dead button.
  */
 export async function requestPushPermission(): Promise<PermissionOutcome> {
-  if (!PUSH_AVAILABLE) return 'unavailable';
-  // GO-LIVE step 3:
-  //   const { status } = await Notifications.requestPermissionsAsync();
-  //   return status === 'granted' ? 'granted' : 'denied';
-  throw new Error('PUSH_AVAILABLE is true but requestPushPermission is not implemented');
+  try {
+    const existing = await Notifications.getPermissionsAsync();
+    if (existing.granted) return 'granted';
+    if (!existing.canAskAgain) return 'denied';
+
+    const { granted } = await Notifications.requestPermissionsAsync({
+      ios: { allowAlert: true, allowBadge: false, allowSound: true },
+    });
+    return granted ? 'granted' : 'denied';
+  } catch {
+    return 'unavailable';
+  }
 }
 
 /**
  * This device's RAW APNs token, or null.
  *
- * ⚠ `getDevicePushTokenAsync()`, **never** `getExpoPushTokenAsync()` — the
- * backend talks to APNs directly with its own p8 key and validates a 64-hex
- * string. An Expo push token is a different thing entirely and is a 400 here.
+ * ⚠ `getDevicePushTokenAsync()`, **never** `getExpoPushTokenAsync()`. The backend
+ * talks to APNs directly with its own p8 key and validates a 64-hex string; an
+ * Expo push token is a different thing entirely and is a 400 there.
+ *
+ * ⚠ Returns null rather than throwing on a simulator or without permission — the
+ * caller treats "no token" as "nothing to register", which is the truth.
  */
 export async function getDeviceToken(): Promise<string | null> {
-  if (!PUSH_AVAILABLE) return null;
-  // GO-LIVE step 3:
-  //   return (await Notifications.getDevicePushTokenAsync()).data;
-  throw new Error('PUSH_AVAILABLE is true but getDeviceToken is not implemented');
+  if (!Device.isDevice) return null;
+  try {
+    const { granted } = await Notifications.getPermissionsAsync();
+    if (!granted) return null;
+    const token = await Notifications.getDevicePushTokenAsync();
+    return typeof token.data === 'string' ? token.data : null;
+  } catch {
+    // No entitlement, no network at registration time, or a simulator.
+    return null;
+  }
 }
 
 /**
@@ -63,7 +93,8 @@ export async function getDeviceToken(): Promise<string | null> {
  *
  * ⚠ **Not `__DEV__`.** That is false in a release-configuration dev-client build,
  * which is precisely what an internal EAS build is — and registering such a build
- * as `production` means it receives nothing, silently. Read an EAS profile var.
+ * as `production` means it receives nothing, silently, with no error anywhere.
+ * Set per profile in `eas.json`.
  */
 export function apnsEnvironment(): 'sandbox' | 'production' {
   return process.env.EXPO_PUBLIC_APNS_ENV === 'production' ? 'production' : 'sandbox';
@@ -72,5 +103,5 @@ export function apnsEnvironment(): 'sandbox' | 'production' {
 /** Reload widget timelines after the snapshot changes. No-op without a target. */
 export async function reloadWidgets(): Promise<void> {
   if (!WIDGETS_AVAILABLE) return;
-  // GO-LIVE step 4: WidgetCenter.shared.reloadAllTimelines() via a tiny native module.
+  // GO-LIVE step 4: WidgetCenter.shared.reloadAllTimelines() via a native module.
 }

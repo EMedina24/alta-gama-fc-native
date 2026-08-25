@@ -31,6 +31,10 @@ export interface Copy {
     unsubscribeTitle: (club: string) => string;
     unsubscribeBody: string;
   };
+  reminders: {
+    title: (home: string, away: string) => string;
+    body: (kickoff: string, venue: string | null) => string;
+  };
   onboarding: {
     pickTitle: string;
     pickBody: string;
@@ -188,6 +192,12 @@ export const esCopy: Copy = {
     unsubscribeTitle: (club: string) => `¿Dejar de seguir al ${club}?`,
     unsubscribeBody:
       'Dejarás de recibir avisos. El calendario que ya añadiste sigue en tu app de calendario hasta que lo borres allí.',
+  },
+
+  reminders: {
+    title: (home: string, away: string) => `${home} v ${away} · 30 minutos`,
+    body: (kickoff: string, venue: string | null) =>
+      venue ? `Empieza a las ${kickoff} en ${venue}.` : `Empieza a las ${kickoff}.`,
   },
 
   onboarding: {
@@ -371,6 +381,12 @@ export const enCopy: Copy = {
     unsubscribeTitle: (club: string) => `Unfollow ${club}?`,
     unsubscribeBody:
       'Alerts stop. The calendar you already added stays in your calendar app until you delete it there.',
+  },
+
+  reminders: {
+    title: (home: string, away: string) => `${home} v ${away} · 30 minutes`,
+    body: (kickoff: string, venue: string | null) =>
+      venue ? `Kicks off ${kickoff} at ${venue}.` : `Kicks off ${kickoff}.`,
   },
 
   onboarding: {

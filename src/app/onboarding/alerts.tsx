@@ -6,19 +6,20 @@
  * gives an app exactly one system prompt, and spending it before the user knows
  * what they are agreeing to spends it badly.
  *
- * ⚠ Right now there is no prompt to spend. Push needs the **aps-environment**
- * entitlement, which needs the pending Apple Developer account (ADR 0023), so
- * `Allow` records the intent locally and the copy says alerts start when the app
- * ships. It does not pretend to have asked.
+ * ⚠ `Not now` does NOT ask. iOS grants one prompt per install, so an explicit
+ * decline must leave it unspent — the reader can still turn alerts on later from
+ * the account sheet and get the real prompt then.
  */
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Hairline, Text } from '@/components/atoms';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n/use-i18n';
-import { setOnboarded, usePreferences } from '@/store/preferences';
+import { requestPushPermission } from '@/features/push/capability';
+import { setAlert, setOnboarded, usePreferences } from '@/store/preferences';
 
 export default function OnboardingAlerts() {
   const router = useRouter();
@@ -26,9 +27,25 @@ export default function OnboardingAlerts() {
   const { copy } = useI18n();
   const prefs = usePreferences();
 
-  const done = () => {
+  const [asking, setAsking] = useState(false);
+
+  const finish = () => {
     setOnboarded(true);
     router.replace('/');
+  };
+
+  const allow = async () => {
+    setAsking(true);
+    const outcome = await requestPushPermission();
+    // ⚠ A refusal turns the switches off rather than leaving them on and silent:
+    // an account sheet showing three green switches that deliver nothing is the
+    // same dishonesty the score-age line exists to prevent.
+    if (outcome !== 'granted') {
+      setAlert('alertReminder', false);
+      setAlert('alertMoved', false);
+      setAlert('alertPostponed', false);
+    }
+    finish();
   };
 
   const rows = [
@@ -64,14 +81,13 @@ export default function OnboardingAlerts() {
           ))}
         </View>
 
-        <Text variant="footnote" color="textFaint">
-          {copy.onboarding.pendingNote}
-        </Text>
+
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
-        <Button label={copy.onboarding.allow} onPress={done} />
-        <Button label={copy.onboarding.notNow} tone="quiet" onPress={done} />
+        <Button label={copy.onboarding.allow} onPress={() => void allow()} loading={asking} />
+        {/* ⚠ Does not ask — see the header. The prompt stays unspent. */}
+        <Button label={copy.onboarding.notNow} tone="quiet" onPress={finish} />
       </View>
     </View>
   );

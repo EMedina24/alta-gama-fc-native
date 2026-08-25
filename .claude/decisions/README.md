@@ -55,4 +55,5 @@ more words than one that's obvious once you see it.
 | [0020](./0020-root-stack-wrapping-tabs.md) | Root layout is a `Stack` wrapping a `(tabs)` group | Accepted |
 | [0021](./0021-short-club-display-names.md) | Club names are shortened for display | Accepted |
 | [0022](./0022-finished-today-from-fixtures.md) | `FINISHED TODAY` is built from `/cronogol/fixtures`, not the scoreboard | Accepted |
-| [0023](./0023-phase-3-resequenced-no-apple-account.md) | Phase 3 resequenced around a pending Apple Developer account | Accepted |
+| [0023](./0023-phase-3-resequenced-no-apple-account.md) | Phase 3 resequenced around a pending Apple Developer account | Blocked half closed by 0024 |
+| [0024](./0024-push-enabled.md) | Push enabled; Live Activity deferred to v1.1 | Accepted |

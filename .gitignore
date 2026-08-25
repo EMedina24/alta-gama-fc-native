@@ -6,3 +6,13 @@ node_modules
 expo-env.d.ts
 # @end expo-cli
 .expo/
+
+# EAS local build artefacts
+*.ipa
+*.tar.gz
+
+# Apple signing secrets — NEVER commit. The .p8 downloads exactly once and
+# cannot be re-downloaded; an account is capped at 2 APNs keys.
+*.p8
+*.mobileprovision
+*.p12

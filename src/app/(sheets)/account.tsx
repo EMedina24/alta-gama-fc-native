@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 
 import { AccountSheet, type AccountFeed } from '@/components/organisms/account-sheet';
+import { disablePushForDevice } from '@/features/push/sync';
 import { displayName } from '@/lib/cronogol/derive';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
 import { useI18n } from '@/lib/i18n/use-i18n';
@@ -65,6 +66,9 @@ export default function AccountSheetRoute() {
       }}
       onTurnOffAlerts={() => {
         clearFollows();
+        // ⚠ Also tell the server. Clearing local follows alone would leave this
+        // device registered with its last club list and still receiving pushes.
+        void disablePushForDevice();
         router.back();
       }}
     />

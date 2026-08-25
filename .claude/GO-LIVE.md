@@ -1,9 +1,8 @@
-# Go-live: what to do when the Apple Developer account lands
+# Go-live
 
-Everything gated on the licence is already written and wired. The app builds,
-runs and behaves correctly today; the gated paths answer "not available" instead
-of throwing. See [decisions/0023](./decisions/0023-phase-3-resequenced-no-apple-account.md)
-for why it is split this way.
+**Licence approved 2026-08-25.** Sections 2 and 3 are **done** — see
+[decisions/0024](./decisions/0024-push-enabled.md). What remains is §1 (Apple
+portal, yours), §4 (widgets) and §5 (verify).
 
 **The seam is one file:** [src/features/push/capability.ts](../src/features/push/capability.ts).
 Nothing else in the app knows whether push exists.
@@ -25,7 +24,7 @@ Nothing else in the app knows whether push exists.
 sandbox probe plus an operator dry-run (`POST /cronogol/admin/push` with
 `{ "dryRun": true }`) before the cron is enabled.
 
-## 2 · Install and configure
+## 2 · Install and configure — ✅ DONE
 
 ```bash
 npx expo install expo-notifications
@@ -52,7 +51,7 @@ Set the environment per EAS profile in `eas.json`:
 ⚠ Installing `expo-notifications` **ends Expo Go**. From here every run is
 `npx expo run:ios` or an EAS dev build.
 
-## 3 · Flip the seam
+## 3 · Flip the seam — ✅ DONE
 
 In [capability.ts](../src/features/push/capability.ts):
 
