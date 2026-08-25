@@ -58,3 +58,4 @@ more words than one that's obvious once you see it.
 | [0023](./0023-phase-3-resequenced-no-apple-account.md) | Phase 3 resequenced around a pending Apple Developer account | Blocked half closed by 0024 |
 | [0024](./0024-push-enabled.md) | Push enabled; Live Activity deferred to v1.1 | Accepted |
 | [0025](./0025-widgets-deferred.md) | Widgets deferred; no native targets in the tree yet | Accepted — open work |
+| [0026](./0026-apns-environment-is-the-provisioning-profile.md) | The APNs environment follows the provisioning profile, not the build name | Accepted |

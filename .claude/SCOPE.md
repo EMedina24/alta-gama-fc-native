@@ -37,6 +37,15 @@ how `cronogol` decomposes its components. See
 | Android | Expo supports it for free; not a stated goal. Don't add iOS-only APIs without a fallback, but don't spend effort on Android polish yet. |
 | Web | **Out of scope** — `cronogol` already owns the web. The scaffold still builds it; see the open question below. |
 
+## Outstanding front-end work
+
+The five screens run on live data, but several designed states are unbuilt —
+most notably **the Today board's live and last-result cards**, whose organisms
+exist but are never passed data, which means the score-age honesty line has never
+rendered in the app.
+
+Full audited list: [HANDOFF.md § Front-end work outstanding](./HANDOFF.md).
+
 ## Open questions
 
 - **Feature scope for v1.** The web app covers fixtures, standings, squads, news

@@ -91,10 +91,22 @@ export async function getDeviceToken(): Promise<string | null> {
 /**
  * The APNs environment this build talks to.
  *
- * ⚠ **Not `__DEV__`.** That is false in a release-configuration dev-client build,
- * which is precisely what an internal EAS build is — and registering such a build
- * as `production` means it receives nothing, silently, with no error anywhere.
- * Set per profile in `eas.json`.
+ * ⚠ **This is decided by the PROVISIONING PROFILE, not by whether it is a "dev
+ * build".** The `aps-environment` entitlement is `development` only for a
+ * *Development* profile; **Ad Hoc and App Store profiles both carry
+ * `production`** — and EAS `distribution: "internal"` is ad-hoc. So an EAS
+ * `development` build issues a PRODUCTION token.
+ *
+ * Proven the hard way on 2026-08-25: a token from the `development` profile
+ * answered `400 BadDeviceToken` against APNs sandbox and reached production.
+ * `eas.json` now sets this to `production` for every non-simulator profile.
+ *
+ * ⚠ **Not `__DEV__`** either — that is false in a release-configuration
+ * dev-client build, which is exactly what an internal EAS build is.
+ *
+ * ⚠ Getting this wrong is SILENT: the device registers fine, the backend
+ * dispatches to the wrong host, and every push fails with no error surfaced
+ * anywhere in the app.
  */
 export function apnsEnvironment(): 'sandbox' | 'production' {
   return process.env.EXPO_PUBLIC_APNS_ENV === 'production' ? 'production' : 'sandbox';

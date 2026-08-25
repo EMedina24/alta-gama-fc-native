@@ -72,8 +72,14 @@ documented at the code that handles them; this is the index.
    dot, no ticking. Every score states its age. **Never remove those lines.**
 9. **The APNs token must be lowercased** — the backend rejects uppercase hex with
    a 400 on *every* registration. Verified against production.
-10. **`environment` must not be `__DEV__`.** It is false in a
-    release-configuration dev-client build. Read the EAS profile var.
+10. **The APNs environment follows the PROVISIONING PROFILE, not the build
+    name.** EAS `distribution: internal` is **ad-hoc**, and ad-hoc carries
+    `aps-environment: production` — so an EAS build called `development` issues a
+    **production** token. Cost a debugging round; see
+    [0026](./decisions/0026-apns-environment-is-the-provisioning-profile.md).
+    ⚠ This failure is **silent**: the device registers fine and every push fails
+    at APNs with nothing surfaced in the app. Also not `__DEV__` — that is false
+    in a release-configuration dev-client build.
 11. **iOS caps pending local notifications at 64.** `selectReminders` uses a
     rolling window of 60 and never schedules a `kickoffTbd` fixture (stored at
     midnight-UTC, so "30 min before" fires at 01:30 for a 21:00 match).
@@ -91,13 +97,18 @@ documented at the code that handles them; this is the index.
 ### Done and verified
 - Phases 1–3 of the plan: foundation, all read-only screens, follows, sheets,
   onboarding, both languages.
-- Push: registration, local reminders, deep-link routing. **Verified on EAS
-  simulator build `7f90c3d6`** — see [GO-LIVE.md §5](./GO-LIVE.md) for the table.
+- Push: registration, local reminders, deep-link routing — verified on the
+  simulator build `7f90c3d6`, then **end-to-end on a physical device**
+  (build `9a8ca060`): real APNs token obtained, registered, and a push from
+  `senpai-backend`'s probe **delivered to the phone**. See
+  [GO-LIVE.md §5](./GO-LIVE.md).
 - The production push contract, exercised with a synthetic token that was deleted
   afterwards: 200 / uppercase 400 / unknown slug 404 / DELETE 204.
 
 ### Open — in priority order
 
+0. **Front-end gaps** — see the section below. The Today board's live and
+   last-result states are the biggest: both organisms exist, neither is wired.
 1. **Widgets** — [0025](./decisions/0025-widgets-deferred.md). Both sizes, full
    build. App Group already declared and registered. Strongest Guideline 4.2
    argument; do it before submission.
@@ -106,8 +117,9 @@ documented at the code that handles them; this is the index.
    existing `.p8`** — the account is capped at 2 APNs keys and one is used.
    A real APNs token cannot be obtained on a simulator, at all.
 3. **Backend push cron** — `CRONOGOL_PUSH_CRON_ENABLED` is still `'false'`.
-   ⚠ `node scripts/probe-apns.mjs` **with no arguments** validates the `.p8`,
-   Key ID and Team ID with no device and no build. Do that first.
+   ⚠ **This is the last thing between here and real alerts.** The probe sends
+   directly and works; the app's own alerts (kickoff moved, postponed) do not
+   dispatch until this flips. Credentials and delivery are already proven.
 4. **Live Activity** — deferred to v1.1 ([0024](./decisions/0024-push-enabled.md)).
    SPEC §4's version needs a minute the API cannot supply, an ActivityKit token
    the push DTO rejects, and a push-to-start the dark cron cannot send.
@@ -118,6 +130,79 @@ documented at the code that handles them; this is the index.
    backend does not support — a backend project.
 6. **App Store prep** — privacy nutrition labels must say what is actually
    collected: an APNs token and followed club slugs, device-keyed, **no account**.
+
+
+---
+
+## Front-end work outstanding
+
+The five screens are built and running on live data, but several designed states
+are unbuilt or stubbed. Audited 2026-08-25 against `handoff_AG-ios/SPEC.md`.
+Ordered by what a user would notice first.
+
+### 1 · The Today board is missing two of its three lead states ⚠
+
+`organisms/match-board.tsx` implements **live**, **last result** and **next** —
+but `(tabs)/index.tsx` only ever passes `next`. So the in-progress card and the
+last-result card never render.
+
+That makes this the highest-value item, and it is mostly wiring rather than new
+components. It also means **the score-age line has never appeared in the app** —
+"Score last checked 2h ago · updates roughly every 4h" is the honesty centrepiece
+of the whole design (SPEC §3.1, and the handoff says twice not to remove it), and
+today there is no code path that shows it.
+
+Needs: `useScoreboard()` (already written in `queries/use-today.ts`, currently
+unused) wired to a live row, and the most recent finished fixture of a followed
+club for the last-result card.
+
+### 2 · Loading states are a literal `…`
+
+Six screens render `<Text>…</Text>` while pending: Today, Table, Matchdays, Clubs
+and the club page (twice). The `Skeleton` / `SkeletonRows` atoms exist, are
+designed for exactly this, and are used **only** in `_debug`.
+
+### 3 · Matchdays header is incomplete (SPEC §3.2)
+
+- **Prev/next pager** — 34pt raised squares flanking the title. Only the strip
+  exists. ⚠ They must drive the same clamped state as the strip, not a second one.
+- **Date range + count** — right-aligned `SAT 5 — MON 7 SEP 2026` over
+  `10 MATCHES · CEST`. ⚠ Gate the range on `kickoffsConfirmed`; provisional dates
+  would print a range that moves.
+
+### 4 · Today's stat tiles (SPEC §3.1 item 4)
+
+Two tiles under the upcoming section — subscribed count → Clubs, feed count →
+account sheet. Not built.
+
+### 5 · The account avatar exists on one screen
+
+`AvatarButton` is only on Today, and it renders **empty initials** (`initials=""`).
+The design puts it in every tab header. In an anonymous v1 there is no name to
+derive initials from — so this needs a product answer, not just wiring: a glyph, a
+mark, or the club crest of the first followed club.
+
+### 6 · Onboarding club picker is 2-up, SPEC §3.7 says 3-up
+
+Cosmetic, but it changes how many clubs are visible without scrolling, which is
+the whole job of that screen.
+
+### 7 · Accessibility pass
+
+- ⚠ `Skeleton` pulses unconditionally — must honour **Reduce Motion**. It is the
+  only always-on animation in the app, and the design says motion is platform
+  defaults plus the accent ring, nothing else.
+- Dynamic Type is inherited (system font, no `expo-font`) but has not been tested
+  at large sizes; the table's fixed column widths are the likely first casualty.
+- Hit targets were built to 44pt but not audited.
+
+### 8 · Polish
+
+- `expo-haptics` is **not installed**. The design calls for a haptic on
+  follow/unfollow. `NativeTabs` already gives tab haptics free.
+- The Today eyebrow reads only a weekday. The design pairs it with a matchday —
+  deliberately not built, because the board spans four leagues and no single
+  matchday is true of all of them. **Needs a product call**, not a fix.
 
 ### Known gaps, deliberately
 - **Serie A has no mark** — text label, don't invent artwork.

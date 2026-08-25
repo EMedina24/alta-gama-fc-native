@@ -1,10 +1,12 @@
 # alta-gama-fc — Project Overview
 
-**Status:** Phase 1 (foundation) and Phase 2 (read-only screens) complete. The
-starter is gone; the design system, the ported data layer and all five screens —
-Today, Matchdays, Table, Clubs and the club page — run against production data on
-an iOS simulator. Follows are device-local and inert; push, calendar and
-onboarding are Phase 3–4.
+**Status:** Phases 1–3 complete. The design system, the ported data layer, all
+five screens, four sheets and onboarding run against production data, and **push
+is verified end-to-end on a physical device**.
+
+**Not done:** widgets ([0025](./decisions/0025-widgets-deferred.md)), the backend
+push cron (`CRONOGOL_PUSH_CRON_ENABLED` is still `'false'`), and a set of
+front-end gaps — see [HANDOFF.md](./HANDOFF.md), which is the read-this-first doc.
 
 **What it is:** the native (iOS/Android) surface of **AltaGama FC** — the football
 fixtures/results/news product already shipping on the web as

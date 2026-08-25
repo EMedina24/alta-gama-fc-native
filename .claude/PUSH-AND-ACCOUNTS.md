@@ -58,13 +58,20 @@ await Notifications.getExpoPushTokenAsync();
 
 The route rejects anything that is not 64 lowercase hex with a 400.
 
-### ⚠ `environment` — a dev build must say `"sandbox"`
+### ⚠ `environment` — the PROVISIONING PROFILE decides (ADR 0026)
 
-A debug/dev-client build's token is only reachable through Apple's **sandbox**
-APNs host, and the server routes each send by this field, per device. A dev
-build that registers as `production` (the default) simply never receives
-anything, with no error anywhere. Wire it to the build type
-(`__DEV__` / release channel), not to a hardcoded value.
+The server routes each send by this field, per device, and a wrong value is
+silence with no error anywhere. The rule, proven live 2026-08-25
+([ADR 0026](./decisions/0026-apns-environment-is-the-provisioning-profile.md)):
+
+- **Every EAS device build is `"production"`** — `distribution: "internal"`
+  signs ad-hoc, and ad-hoc carries `aps-environment: production`. Dev-client
+  included. `eas.json` sets the var accordingly on every non-simulator profile.
+- **`"sandbox"` is only a local `npx expo run:ios` device run** (Xcode
+  development signing) — which reads no EAS env, so `apnsEnvironment()`'s
+  sandbox default labels it correctly.
+- `__DEV__` and the build configuration are both the wrong signal; neither
+  reflects the provisioning.
 
 ### Account linking semantics
 

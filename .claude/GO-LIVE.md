@@ -36,17 +36,26 @@ npx expo install expo-notifications
 ```
 Leave that flag **false** — nothing in v1 needs a silent push.
 
-Set the environment per EAS profile in `eas.json`:
+Set the environment per EAS profile in `eas.json` — **corrected 2026-08-25,
+[ADR 0026](./decisions/0026-apns-environment-is-the-provisioning-profile.md)**:
 ```json
-"development": { "env": { "EXPO_PUBLIC_APNS_ENV": "sandbox" } },
-"preview":     { "env": { "EXPO_PUBLIC_APNS_ENV": "sandbox" } },
+"development": { "env": { "EXPO_PUBLIC_APNS_ENV": "production" } },
+"preview":     { "env": { "EXPO_PUBLIC_APNS_ENV": "production" } },
+"simulator":   { "env": { "EXPO_PUBLIC_APNS_ENV": "sandbox" } },
 "production":  { "env": { "EXPO_PUBLIC_APNS_ENV": "production" } }
 ```
 
-> ⚠ **Never wire `environment` to `__DEV__`.** It is `false` in a
-> release-configuration dev-client build — exactly what an internal EAS build is —
-> and a dev build registered as `production` receives nothing, silently, with no
-> error anywhere. `apnsEnvironment()` already reads the profile var.
+> ⚠ **The provisioning profile decides the token's environment, not the build
+> name.** EAS `distribution: "internal"` is AD-HOC, and ad-hoc carries
+> `aps-environment: production` — so every EAS device build, dev-client
+> included, mints a PRODUCTION token (proven live: the first real token
+> answered `400 BadDeviceToken` on sandbox). Sandbox tokens come only from a
+> local `npx expo run:ios` device run (Xcode development signing), which reads
+> no EAS profile env — `apnsEnvironment()`'s sandbox default covers it.
+>
+> ⚠ **Never wire `environment` to `__DEV__`** — still true, and still not
+> enough: the signal is the provisioning, which neither `__DEV__` nor the
+> build configuration reflects.
 
 ⚠ Installing `expo-notifications` **ends Expo Go**. From here every run is
 `npx expo run:ios` or an EAS dev build.
@@ -113,10 +122,26 @@ end-to-end delivery remain, and both need hardware plus the backend cron.
 | Device token | `null` with its reason — ⚠ correct: simulators cannot register for remote notifications |
 | `PUT /cronogol/push/device` (production, synthetic token) | 200 echoing slugs · uppercase 400 · unknown slug 404 · DELETE 204 |
 
-⚠ **Not yet proven, and neither can be on a simulator:** a real APNs token, and
-an actual push arriving from `senpai-backend`. The first needs a physical device
-(`--profile development`); the second additionally needs
-`CRONOGOL_PUSH_CRON_ENABLED='true'` and a passing `probe-apns`.
+**Device pass — done 2026-08-25** (`development` profile, EAS build `9a8ca060`,
+physical iPhone).
+
+| Check | Result |
+| --- | --- |
+| Real APNs token | **obtained** — 64 lowercase hex, valid against the backend's regex |
+| Registration | `PUT` landed; `/_debug/push` shows the followed clubs |
+| `probe-apns --production` | **push delivered to the device** |
+| Credential set | proven — garbage token answers `400 BadDeviceToken` |
+
+⚠ Two environment mismatches were found and fixed on the way; both were **silent**
+(device registers fine, every push dies at APNs). See
+[decisions/0026](./decisions/0026-apns-environment-is-the-provisioning-profile.md):
+EAS internal distribution is **ad-hoc**, which is `aps-environment: production`,
+and the first APNs key was scoped **Sandbox-only** and had to be replaced (the
+environment is immutable after creation — it cannot be edited).
+
+**Still open:** `CRONOGOL_PUSH_CRON_ENABLED` is `'false'`, so the probe can push
+directly but the app's own alerts — a moved kickoff, a postponement — do not
+dispatch yet.
 
 > ⚠ **`node scripts/probe-apns.mjs` with NO arguments validates the `.p8`, Key ID
 > and Team ID today** — no device, no build. A garbage token with good auth

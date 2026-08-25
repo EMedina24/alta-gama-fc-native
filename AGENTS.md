@@ -37,9 +37,9 @@ Brand: **AltaGama FC** (no space) reader-facing · *Alta Gama FC* is RETIRED ·
 
 # Read the project docs first
 
-- **[.claude/HANDOFF.md](.claude/HANDOFF.md) — START HERE.** State of play, open
-  work, and the traps that have already bitten. Every entry in its trap list is a
-  bug that shipped or nearly shipped in this repo.
+- **[.claude/HANDOFF.md](.claude/HANDOFF.md) — START HERE.** State of play, the
+  front-end backlog, and the traps that have already bitten. Every entry in its
+  trap list is a bug that shipped or nearly shipped in this repo.
 - [.claude/SCOPE.md](.claude/SCOPE.md) — purpose, platform targets, what's out of scope
 - [.claude/PROJECT.md](.claude/PROJECT.md) — stack, layout, commands
 - [.claude/ECOSYSTEM.md](.claude/ECOSYSTEM.md) — backend, web app, API contract, brand, domains
