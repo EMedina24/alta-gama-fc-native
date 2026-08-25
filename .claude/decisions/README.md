@@ -57,3 +57,4 @@ more words than one that's obvious once you see it.
 | [0022](./0022-finished-today-from-fixtures.md) | `FINISHED TODAY` is built from `/cronogol/fixtures`, not the scoreboard | Accepted |
 | [0023](./0023-phase-3-resequenced-no-apple-account.md) | Phase 3 resequenced around a pending Apple Developer account | Blocked half closed by 0024 |
 | [0024](./0024-push-enabled.md) | Push enabled; Live Activity deferred to v1.1 | Accepted |
+| [0025](./0025-widgets-deferred.md) | Widgets deferred; no native targets in the tree yet | Accepted — open work |

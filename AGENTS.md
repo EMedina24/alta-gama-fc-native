@@ -4,7 +4,8 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 
 # What this is
 
-The **native iOS app for AltaGama FC**, aimed at the **Apple App Store**.
+The **native iOS app for AltaGama FC**, aimed at the **Apple App Store**. It is a
+working app — five screens on live data, push wired — not a scaffold.
 Functionality is **ported from `cronogol`**; data comes from **`senpai-backend`**;
 the **design is new and app-specific — do not port the web look**
 ([.claude/SCOPE.md](.claude/SCOPE.md)).
@@ -36,6 +37,9 @@ Brand: **AltaGama FC** (no space) reader-facing · *Alta Gama FC* is RETIRED ·
 
 # Read the project docs first
 
+- **[.claude/HANDOFF.md](.claude/HANDOFF.md) — START HERE.** State of play, open
+  work, and the traps that have already bitten. Every entry in its trap list is a
+  bug that shipped or nearly shipped in this repo.
 - [.claude/SCOPE.md](.claude/SCOPE.md) — purpose, platform targets, what's out of scope
 - [.claude/PROJECT.md](.claude/PROJECT.md) — stack, layout, commands
 - [.claude/ECOSYSTEM.md](.claude/ECOSYSTEM.md) — backend, web app, API contract, brand, domains

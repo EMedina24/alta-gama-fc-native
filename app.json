@@ -15,6 +15,9 @@
         "com.apple.security.application-groups": [
           "group.com.altagamafc.app"
         ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -48,6 +51,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4177e45a-30e3-4341-8d61-8d3f74d040fd"
+      }
+    },
+    "owner": "emedina24s-team"
   }
 }

@@ -73,7 +73,12 @@ the 64-notification rolling window are all already correct.
       explanation, never on cold launch.
 - [ ] Point the account sheet's destructive action at `disablePushForDevice()`.
 
-## 4 · Widgets and Live Activity
+## 4 · Widgets and Live Activity — ⏸ DEFERRED
+
+**Paused 2026-08-25** — see [decisions/0025](./decisions/0025-widgets-deferred.md)
+for the pick-up steps, and [0024](./decisions/0024-push-enabled.md) for why Live
+Activity is a separate, later decision. The checklist below stands as written.
+
 
 - [ ] `npx create-target widget` (`@bacons/apple-targets`) — Swift lives in
       `targets/`, outside `ios/`, so CNG survives. Requires Xcode 16 / macOS 15.
@@ -92,6 +97,32 @@ The reduced version — crest pair, venue, a SwiftUI `Text(timerInterval:)` that
 ticks with no data at all, and an honest footer — needs none of that.
 
 ## 5 · Verify
+
+**Simulator pass — done 2026-08-25** (`simulator` profile, EAS build
+`7f90c3d6`). Everything the APP owns is proven; only a real APNs token and
+end-to-end delivery remain, and both need hardware plus the backend cron.
+
+| Check | Result |
+| --- | --- |
+| `PUSH_AVAILABLE` / environment | `true` / `sandbox` — matches the probe's host |
+| Permission prompt | requested after the primer, **granted** |
+| `simctl push` · `kickoff_moved` | delivered, rendered as a foreground banner |
+| `simctl push` · `fixture_postponed` | delivered, title and body intact |
+| Deep link `altagamafc://…` | routes through expo-router |
+| Local reminders | **2 pending in iOS's own queue** — 1 followed club × 2 upcoming fixtures |
+| Device token | `null` with its reason — ⚠ correct: simulators cannot register for remote notifications |
+| `PUT /cronogol/push/device` (production, synthetic token) | 200 echoing slugs · uppercase 400 · unknown slug 404 · DELETE 204 |
+
+⚠ **Not yet proven, and neither can be on a simulator:** a real APNs token, and
+an actual push arriving from `senpai-backend`. The first needs a physical device
+(`--profile development`); the second additionally needs
+`CRONOGOL_PUSH_CRON_ENABLED='true'` and a passing `probe-apns`.
+
+> ⚠ **`node scripts/probe-apns.mjs` with NO arguments validates the `.p8`, Key ID
+> and Team ID today** — no device, no build. A garbage token with good auth
+> answers `400 BadDeviceToken`; bad auth answers `403 InvalidProviderToken`. Run
+> that before anything else.
+
 
 - [ ] `eas build --profile development --platform ios`
 - [ ] Following a club produces a `PUT` whose 200 echoes the **exact** `clubSlugs`

@@ -4,6 +4,7 @@ Documentation Claude Code (and humans) should read before working in this repo.
 
 | File | What it holds |
 | --- | --- |
+| [HANDOFF.md](./HANDOFF.md) | **Start here** — state of play, open work, and the traps that have already bitten |
 | [SCOPE.md](./SCOPE.md) | **What we're building and why** — purpose, platform targets, what's out of scope |
 | [PROJECT.md](./PROJECT.md) | The stack, the layout, how to run it |
 | [ECOSYSTEM.md](./ECOSYSTEM.md) | **The other repos** — backend, web app, API contract, brand and domain rules |
