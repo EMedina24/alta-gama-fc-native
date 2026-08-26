@@ -60,10 +60,26 @@ export function normaliseToken(raw: string): string | null {
   return HEX64.test(cleaned) ? cleaned : null;
 }
 
-async function send<T>(method: 'PUT' | 'DELETE', path: string, body: unknown): Promise<T> {
+/**
+ * ⚠ **A bearer here is OPTIONAL, but a STALE one is fatal.**
+ *
+ * The route accepts anonymous callers — onboarding registers before any account
+ * exists — but an expired token is a **401 anyway**, deliberately: optional means
+ * a MISSING credential is acceptable, not a bad one. So this must be handed a
+ * freshly-resolved token or none at all. Never a cached string.
+ */
+async function send<T>(
+  method: 'PUT' | 'DELETE',
+  path: string,
+  body: unknown,
+  token: string | null,
+): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method,
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(10_000),
   });
@@ -85,9 +101,17 @@ async function send<T>(method: 'PUT' | 'DELETE', path: string, body: unknown): P
  *
  * ⚠ 429 at 20/min. Debounce follow toggles; a reader scrolling the club browser
  * hits that trivially.
+ *
+ * ⚠ **A bearer LINKS this row to the account, and the link is one-way.**
+ * Re-registering anonymously afterwards KEEPS it — there is no unlink operation,
+ * so signing out changes nothing server-side. Only registering while signed in as
+ * a different user moves it. `linked` in the response says whether, never whose.
  */
-export function registerDevice(body: PushRegistration): Promise<PushRegistrationView> {
-  return send<PushRegistrationView>('PUT', '/cronogol/push/device', body);
+export function registerDevice(
+  body: PushRegistration,
+  token: string | null = null,
+): Promise<PushRegistrationView> {
+  return send<PushRegistrationView>('PUT', '/cronogol/push/device', body, token);
 }
 
 /**
@@ -95,5 +119,8 @@ export function registerDevice(body: PushRegistration): Promise<PushRegistration
  * Touches no account, no feed and no other device; a later register revives it.
  */
 export function unregisterDevice(token: string): Promise<void> {
-  return send<void>('DELETE', '/cronogol/push/device', { token });
+  // ⚠ Anonymous on purpose. The APNs token in the body is the whole authority —
+  // this turns off THIS device and touches no account, so a bearer would add a
+  // way to fail (an expired one is a 401) for nothing it needs.
+  return send<void>('DELETE', '/cronogol/push/device', { token }, null);
 }

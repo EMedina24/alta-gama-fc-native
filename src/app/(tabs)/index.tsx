@@ -15,6 +15,7 @@ import { SectionHeader, UpcomingRow } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { MatchBoard } from '@/components/organisms/match-board';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import {
   boardOutcome,
@@ -44,6 +45,7 @@ export default function TodayScreen() {
   const router = useRouter();
   const { copy, phrases } = useI18n();
   const zone = useZone();
+  const initials = useIdentityInitials();
   const { followed, clock } = usePreferences();
 
   const finished = useFinishedToday(zone);
@@ -124,7 +126,7 @@ export default function TodayScreen() {
     <ScreenScaffold
       title={copy.today.title}
       eyebrow={copy.today.eyebrow(formatWeekdayLong(new Date().toISOString(), zone, phrases))}
-      accessory={<AvatarButton initials="" onPress={() => router.push('/(sheets)/account')} />}
+      accessory={<AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />}
       onRefresh={() => {
         void finished.refetch();
         void upcoming.refetch();

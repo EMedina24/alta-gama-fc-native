@@ -5,18 +5,31 @@ import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
+import { AUTH_REQUIRED } from '@/features/auth/capability';
 import { usePushSync } from '@/features/push/use-push-sync';
+import { watchAppStateForRefresh } from '@/lib/supabase/client';
 import { queryClient } from '@/queries/client';
 import { hydratePreferences, usePreferences } from '@/store/preferences';
+import { hydrateSession, useSession } from '@/store/session';
 
 export default function RootLayout() {
   // AsyncStorage is async, so preferences arrive after first paint. Holding the
   // tree back for one read avoids every screen having to distinguish "follows
   // nothing" from "we have not looked yet" — the two render very differently.
+  //
+  // ⚠ The stored SESSION is awaited alongside it, for the same reason and one
+  // more: without it the account sheet paints its signed-out slot — Sign in
+  // button and all — for a frame before the session lands, at somebody who is
+  // already signed in.
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    hydratePreferences().finally(() => setReady(true));
+    Promise.all([hydratePreferences(), hydrateSession()]).finally(() => setReady(true));
   }, []);
+
+  // ⚠ Token refresh follows the foreground. Left to `autoRefreshToken` alone it
+  // keeps firing while the app is suspended, waking to spend requests nobody is
+  // waiting on.
+  useEffect(watchAppStateForRefresh, []);
 
   if (!ready) return null;
 
@@ -25,6 +38,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <StatusBar style="light" />
         <OnboardingGate />
+        <AuthGate />
         <PushSync />
         <Stack
           screenOptions={{
@@ -34,6 +48,14 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           {/* ⚠ The sheets are declared HERE, in the stack that PRESENTS them (ADR 0030). */}
           <Stack.Screen name="(sheets)/account" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+          {/* ⚠ Declared HERE like every other sheet (ADR 0030) — a `(sheets)/_layout`
+              silently renders it as a full-screen card. `fitToContents`: it is two
+              buttons and a paragraph, and a 0.6 detent would leave half a sheet of
+              dead space under them. */}
+          <Stack.Screen
+            name="(sheets)/sign-in"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
           <Stack.Screen name="(sheets)/alerts" options={sheet} />
           <Stack.Screen name="(sheets)/calendar" options={sheet} />
           <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />
@@ -77,6 +99,43 @@ const sheet: NativeStackNavigationOptions = {
  */
 function PushSync() {
   usePushSync();
+  return null;
+}
+
+/**
+ * Sends a signed-out reader to sign in — **when sign-in is mandatory, which it is
+ * not yet**.
+ *
+ * ⚠ Inert while `AUTH_REQUIRED` is false, which is the point: v1.1 ships sign-in
+ * as an optional upgrade (ADR 0038), and this is the seam that makes requiring it
+ * later a constant change rather than a retrofit.
+ *
+ * ⚠ Modelled on `OnboardingGate` and **not** on `PushSync` — a redirect effect
+ * that depends on `[router]` alone can fire before the navigator has mounted and
+ * be silently dropped (HANDOFF open item 3). `useSegments()` re-runs once routing
+ * is live, so this cannot lose its redirect the same way.
+ *
+ * ⚠ Ordered AFTER `OnboardingGate`: a first run must still pick clubs first, and
+ * both gates bail out while the reader is inside the other's flow.
+ *
+ * ⚠ Turning this on also makes Guideline 5.1.1(v) unavoidable and turns the
+ * sign-in sheet into a blocking screen — it would need its own `Close`-less
+ * presentation, not just this flag.
+ */
+function AuthGate() {
+  const router = useRouter();
+  const segments = useSegments();
+  const session = useSession();
+  const { onboarded } = usePreferences();
+
+  useEffect(() => {
+    if (!AUTH_REQUIRED || session) return;
+    if (!onboarded) return;
+    if (segments[0] === 'onboarding' || segments[0] === '_debug') return;
+    if (segments[1] === 'sign-in') return;
+    router.push('/(sheets)/sign-in');
+  }, [session, onboarded, segments, router]);
+
   return null;
 }
 

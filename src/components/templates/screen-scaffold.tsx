@@ -69,7 +69,20 @@ export function ScreenScaffold({
 }
 
 /** The circular initials button that opens the account sheet. */
-export function AvatarButton({ initials, onPress }: { initials: string; onPress: () => void }) {
+/**
+ * The account entry point.
+ *
+ * ⚠ `initials` is nullable and `null` is the SIGNED-OUT state, not a missing
+ * prop — it draws a neutral mark. An empty string would render an empty circle,
+ * which is what this shipped as while there was no account to name (HANDOFF §5).
+ */
+export function AvatarButton({
+  initials,
+  onPress,
+}: {
+  initials: string | null;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
@@ -77,8 +90,11 @@ export function AvatarButton({ initials, onPress }: { initials: string; onPress:
       accessibilityLabel="Account"
       hitSlop={8}
       style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.7 }]}>
-      <Text variant="caption" color="textSecondary">
-        {initials}
+      <Text variant={initials ? 'caption' : 'body'} color="textSecondary">
+        {/* ⚠ A bullet, not an SF Symbol: `expo-symbols` is a dependency this app
+            does not otherwise use, and the circle is 36pt — a glyph at that size
+            reads as a smudge next to the initials it alternates with. */}
+        {initials ?? '·'}
       </Text>
     </Pressable>
   );

@@ -11,7 +11,9 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_APNS_ENV": "production"
+        "EXPO_PUBLIC_APNS_ENV": "production",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://altagamafc.crono-gol.com",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_pE57YqszjUFl1pU0fXjc2A_1ha8EQri"
       }
     },
     "simulator": {
@@ -21,19 +23,25 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_APNS_ENV": "sandbox"
+        "EXPO_PUBLIC_APNS_ENV": "sandbox",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://altagamafc.crono-gol.com",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_pE57YqszjUFl1pU0fXjc2A_1ha8EQri"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_APNS_ENV": "production"
+        "EXPO_PUBLIC_APNS_ENV": "production",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://altagamafc.crono-gol.com",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_pE57YqszjUFl1pU0fXjc2A_1ha8EQri"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_APNS_ENV": "production"
+        "EXPO_PUBLIC_APNS_ENV": "production",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://altagamafc.crono-gol.com",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_pE57YqszjUFl1pU0fXjc2A_1ha8EQri"
       }
     }
   },

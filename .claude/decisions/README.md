@@ -51,7 +51,7 @@ more words than one that's obvious once you see it.
 | [0016](./0016-ios-only-v1.md) | Web target dropped; iOS-only v1 | Accepted |
 | [0017](./0017-react-query-data-layer.md) | React Query, with the web app's cache buckets as `staleTime` | Accepted |
 | [0018](./0018-ported-data-layer.md) | The ported `lib/cronogol/` layer mirrors the web app path for path | Accepted |
-| [0019](./0019-anonymous-v1.md) | Anonymous v1: follows are device-keyed, accounts designed-for | Accepted |
+| [0019](./0019-anonymous-v1.md) | Anonymous v1: follows are device-keyed, accounts designed-for | Superseded by 0038 |
 | [0020](./0020-root-stack-wrapping-tabs.md) | Root layout is a `Stack` wrapping a `(tabs)` group | Accepted — sheets revised by 0030 |
 | [0021](./0021-short-club-display-names.md) | Club names are shortened for display | Accepted |
 | [0022](./0022-finished-today-from-fixtures.md) | `FINISHED TODAY` is built from `/cronogol/fixtures`, not the scoreboard | Accepted |
@@ -70,3 +70,5 @@ more words than one that's obvious once you see it.
 | [0035](./0035-jornada-rows-show-in-play-scores.md) | Jornada rows: 40pt `v` crest pairing, a clock-split timing column, and an in-play score captioned `In play`, never `LIVE` | Accepted |
 | [0036](./0036-app-icon-appearance-variants.md) | The app icon is three 1024s wired through `ios.icon`'s variant object; the tinted variant must be opaque | Accepted |
 | [0037](./0037-rich-notifications-server-composed-crests.md) | Rich notifications: the backend composes every crest; the app grows a service and a content extension | Accepted — verified on device |
+| [0038](./0038-accounts-apple-and-google.md) | Accounts: Apple and Google, sign-in optional | Accepted |
+| [0039](./0039-auth-goes-direct-to-supabase.md) | Auth goes direct to Supabase `/auth/v1`; the backend stays the only *data* gateway | Accepted — waypoint, proxied auth intended |

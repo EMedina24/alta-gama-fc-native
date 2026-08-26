@@ -119,9 +119,20 @@ export interface AccountView {
    * right during the hour after a confirmed email change, while the access
    * token still carries the old address. Never render `session.user.email`
    * instead: for that hour the two disagree and this one is correct.
+   *
+   * ⚠ **May be a `@privaterelay.appleid.com` address** since Sign in with Apple
+   * shipped (ADR 0038) — real and forwarding, but not one the reader recognises.
+   * Copy must never imply they would.
    */
   email: string | null;
-  /** null until the user sets one; an email/password signup starts with none. */
+  /**
+   * null until the user sets one; an email/password signup starts with none.
+   *
+   * ⚠ **Apple supplies a name on the FIRST authorization only**, ever, per Apple
+   * ID per app — and the identity token carries no name claim, so nothing
+   * downstream can recover it. `features/auth/apple.ts` writes it here on that
+   * one call; miss it and the account stays nameless (ADR 0038).
+   */
   displayName: string | null;
   timeZone: string | null;
   /**

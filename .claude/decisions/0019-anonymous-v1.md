@@ -1,7 +1,7 @@
 # 0019 — Anonymous v1: follows are device-keyed, accounts designed-for
 
 - **Date:** 2026-08-24
-- **Status:** Accepted
+- **Status:** Superseded by [0038](./0038-accounts-apple-and-google.md)
 - **Decided by:** Ed Medina
 
 ## Context
