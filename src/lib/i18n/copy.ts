@@ -34,6 +34,8 @@ export interface Copy {
   reminders: {
     title: (home: string, away: string) => string;
     body: (kickoff: string, venue: string | null) => string;
+    /** The one notification ACTION button (ADR 0036). iOS truncates hard. */
+    openClub: string;
   };
   onboarding: {
     pickTitle: string;
@@ -259,6 +261,7 @@ export const esCopy: Copy = {
     title: (home: string, away: string) => `${home} v ${away} · 30 minutos`,
     body: (kickoff: string, venue: string | null) =>
       venue ? `Empieza a las ${kickoff} en ${venue}.` : `Empieza a las ${kickoff}.`,
+    openClub: 'Abrir club',
   },
 
   onboarding: {
@@ -480,6 +483,7 @@ export const enCopy: Copy = {
     title: (home: string, away: string) => `${home} v ${away} · 30 minutes`,
     body: (kickoff: string, venue: string | null) =>
       venue ? `Kicks off ${kickoff} at ${venue}.` : `Kicks off ${kickoff}.`,
+    openClub: 'Open club',
   },
 
   onboarding: {

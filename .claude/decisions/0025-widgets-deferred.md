@@ -4,6 +4,12 @@
 - **Status:** Accepted — **open work, not abandoned**
 - **Decided by:** Ed Medina
 
+> **Update, 2026-08-25:** [0037](./0037-rich-notifications-server-composed-crests.md)
+> installed `@bacons/apple-targets` and added two notification targets under
+> `targets/`, so steps 1 and 2 below are done and the App Group has a real
+> consumer. **The widgets themselves are still open** — nothing here is
+> superseded.
+
 ## Context
 [0024](./0024-push-enabled.md) chose "widgets: both sizes, full build" and put
 push first. Push is now landed and verified on a simulator build. Widgets are the

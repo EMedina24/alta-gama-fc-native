@@ -14,6 +14,7 @@ import { useUpcoming } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
 import { useRouter } from 'expo-router';
 
+import { registerNotificationCategories } from './categories';
 import { applyReminders, selectReminders } from './reminders';
 import { initialRoute, onNotificationTap } from './routing';
 import { schedulePushSync, syncPushRegistration } from './sync';
@@ -38,6 +39,17 @@ export function usePushSync(): void {
   useEffect(() => {
     schedulePushSync(prefs, locale);
   }, [prefs.followed, prefs.alertMoved, prefs.alertPostponed, locale, prefs]);
+
+  // Categories — the long-look card and the action button both key off these.
+  // ⚠ Re-runs on a language change: iOS caches a category by identifier, so a
+  // registration made in Spanish keeps a Spanish button until it is replaced.
+  // ⚠ Ordering against the re-arm below does NOT matter: iOS resolves a
+  // `categoryIdentifier` when the notification is DISPLAYED, not when it is
+  // scheduled. A reminder scheduled a moment before this lands still gets its
+  // card, because the soonest one is minutes away at best.
+  useEffect(() => {
+    void registerNotificationCategories(copy.reminders.openClub);
+  }, [copy]);
 
   // Notification taps, cold and warm. ⚠ Both, or cold-start taps are lost.
   useEffect(() => {

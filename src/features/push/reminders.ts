@@ -20,8 +20,16 @@
  */
 import * as Notifications from 'expo-notifications';
 
+import { abbreviate } from '@/lib/cronogol/derive';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
 import { PUSH_AVAILABLE } from './capability';
+import { CATEGORY_REMINDER } from './categories';
+import {
+  attachmentCopy,
+  crestPairFile,
+  pruneCrestCache,
+  warmLongLookCrests,
+} from './crest-cache';
 
 /** How far ahead to schedule. Beyond this, a later launch re-arms. */
 export const REMINDER_HORIZON_DAYS = 21;
@@ -30,6 +38,17 @@ export const REMINDER_HORIZON_DAYS = 21;
 export const REMINDER_BUDGET = 60;
 
 export const REMINDER_LEAD_MS = 30 * 60 * 1000;
+
+/**
+ * How many reminders get crest artwork.
+ *
+ * ⚠ **The re-arm runs on every foreground**, not just on a data change
+ * (`use-push-sync.ts`). Fetching a plate for all 60 would put sixty round-trips
+ * on every resume from the app switcher. The soonest few are the ones a reader
+ * will actually see today; the rest inherit artwork on a later re-arm as they
+ * climb the queue. Cached hits are free, so a settled queue costs nothing.
+ */
+export const REMINDER_ARTWORK_BUDGET = 12;
 
 /** Copy for a reminder. Passed in so this module never sees a language. */
 export interface ReminderCopy {
@@ -48,6 +67,17 @@ export interface PlannedReminder {
   venue: string | null;
   /** Pre-formatted in the reader's zone — this module holds no clock preference. */
   kickoffLabel: string;
+  /**
+   * ⚠ The four fields below exist for the LONG LOOK, not for the banner.
+   *
+   * The content extension runs in its own process and can read nothing but the
+   * payload — not this app's store, not its API client, not `copy.ts`. Anything
+   * the card draws has to be sitting in `data` before the notification is
+   * scheduled (ADR 0036).
+   */
+  round: string | null;
+  homeAbbr: string;
+  awayAbbr: string;
 }
 
 /**
@@ -95,7 +125,49 @@ export function selectReminders(
       awayName: fixture.awayTeam?.name ?? '',
       venue: fixture.venue,
       kickoffLabel: formatKickoff(fixture.kickoffUtc),
+      round: fixture.round,
+      // ⚠ `shortName` is nullable and NOT unique — `abbreviate` is the same
+      // guard the club pages use, never a raw `shortName` read.
+      homeAbbr: fixture.homeTeam
+        ? abbreviate(fixture.homeTeam.name, fixture.homeTeam.slug, fixture.homeTeam.shortName)
+        : '',
+      awayAbbr: fixture.awayTeam
+        ? abbreviate(fixture.awayTeam.name, fixture.awayTeam.slug, fixture.awayTeam.shortName)
+        : '',
     }));
+}
+
+/**
+ * Fetch the composed crest plate for the soonest few, in parallel.
+ *
+ * ⚠ Returns a map, not a mutated list, so `selectReminders` stays pure and the
+ * whole selection is still exercisable in a plain-JS harness.
+ *
+ * A miss is expected and cheap: the entry is simply absent and that reminder is
+ * scheduled without artwork.
+ */
+async function artworkFor(
+  planned: readonly PlannedReminder[],
+): Promise<Map<string, string>> {
+  const attachments = new Map<string, string>();
+
+  const head = planned.slice(0, REMINDER_ARTWORK_BUDGET);
+  await Promise.all(
+    head.map(async (reminder) => {
+      const cached = await crestPairFile(reminder.fixtureId);
+      if (!cached) return;
+
+      // ⚠ A COPY. iOS MOVES an attachment into its own store — handing over the
+      // cached file would empty the cache on every fire. See `crest-cache.ts`.
+      const copyUri = await attachmentCopy(cached, reminder.fixtureId);
+      if (copyUri) attachments.set(reminder.fixtureId, copyUri);
+
+      // The long look needs the two crests separately, in the App Group.
+      await warmLongLookCrests(reminder.fixtureId);
+    }),
+  );
+
+  return attachments;
 }
 
 /**
@@ -104,8 +176,6 @@ export function selectReminders(
  * ⚠ Wholesale replace, not incremental. A moved kickoff changes the fire time of
  * a notification we cannot address individually without tracking ids across
  * launches — and re-arming from scratch is cheap and cannot drift.
- *
- * No-op until the licence lands.
  */
 export async function applyReminders(
   planned: readonly PlannedReminder[],
@@ -114,23 +184,71 @@ export async function applyReminders(
   if (!PUSH_AVAILABLE) return 0;
 
   try {
+    // ⚠ Artwork BEFORE the cancel. The downloads are the slow part, and a queue
+    // emptied first would leave the reader with no reminders at all for however
+    // long the network takes.
+    const attachments = await artworkFor(planned);
+
     // ⚠ Cancel first, unconditionally. Without this every re-arm ADDS to the
     // queue and the 64-slot budget is gone within a few launches.
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     let scheduled = 0;
     for (const reminder of planned) {
+      const attachment = attachments.get(reminder.fixtureId);
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title: copy.title(reminder.homeName, reminder.awayName),
           body: copy.body(reminder.kickoffLabel, reminder.venue),
           sound: 'default',
+          /**
+           * ⚠ This is what makes the long look appear, and it has to match the
+           * extension's `UNNotificationExtensionCategory` exactly — see the
+           * three-way contract documented in `categories.ts`.
+           */
+          categoryIdentifier: CATEGORY_REMINDER,
+          /**
+           * ⚠ `active`, NOT `timeSensitive`. Time Sensitive needs the
+           * `com.apple.developer.usernotifications.time-sensitive` entitlement,
+           * which this app does not declare — asking for the level without the
+           * entitlement gets it silently downgraded, so declaring `active` is
+           * the honest version of the same delivery.
+           */
+          interruptionLevel: 'active',
+          ...(attachment
+            ? {
+                attachments: [
+                  {
+                    identifier: 'crest',
+                    url: attachment,
+                    // ⚠ `type` is read-only on the way OUT — SDK 57 requires the
+                    // key on the input record but never sends it to iOS
+                    // (`NotificationRecords.swift`). `typeHint` is the one that
+                    // travels, and without it iOS cannot type the file and drops
+                    // the attachment silently.
+                    type: null,
+                    typeHint: 'public.png',
+                  },
+                ],
+              }
+            : {}),
           data: {
             type: 'kickoff_reminder',
             fixtureId: reminder.fixtureId,
             clubSlug: reminder.clubSlug,
             // ⚠ Same shape the SERVER sends, so one routing handler serves both.
             deepLink: `altagamafc://club/${reminder.clubSlug}`,
+            // ⚠ Everything below is for the CONTENT EXTENSION, which can read
+            // nothing else. Dropping a key here blanks a row on the card.
+            homeName: reminder.homeName,
+            awayName: reminder.awayName,
+            homeAbbr: reminder.homeAbbr,
+            awayAbbr: reminder.awayAbbr,
+            venue: reminder.venue,
+            round: reminder.round,
+            kickoffUtc: reminder.kickoffUtc,
+            kickoffLabel: reminder.kickoffLabel,
           },
         },
         trigger: {
@@ -150,6 +268,11 @@ export async function applyReminders(
       });
       scheduled += 1;
     }
+
+    // ⚠ LAST, never first. Pruning ahead of the schedule would delete the very
+    // files the loop above just attached.
+    pruneCrestCache(planned.map((reminder) => reminder.fixtureId));
+
     return scheduled;
   } catch {
     // Permission revoked mid-session, or the queue is full. Next launch re-arms.

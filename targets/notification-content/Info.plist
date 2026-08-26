@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<!--
+			  ⚠⚠ THE THREE-WAY CONTRACT. These strings must match, exactly:
+			    · `setNotificationCategoryAsync` in src/features/push/categories.ts
+			    · `categoryIdentifier` on every locally scheduled reminder
+			    · `aps.category` sent by senpai-backend
+			  A mismatch shows no error anywhere — the card simply never appears.
+
+			  ⚠ `kickoff_reminder` is DEVICE-LOCAL and is never sent by the server.
+			  It belongs here because the card is the same card.
+			-->
+			<key>UNNotificationExtensionCategory</key>
+			<array>
+				<string>kickoff_reminder</string>
+				<string>kickoff_moved</string>
+				<string>fixture_postponed</string>
+			</array>
+			<!--
+			  The card draws its own header, crests and copy, so the system's
+			  title/body rows underneath would repeat everything.
+			-->
+			<key>UNNotificationExtensionDefaultContentHidden</key>
+			<true/>
+			<!--
+			  Height as a fraction of width, before the view lays out. The card is
+			  wide and short; SwiftUI corrects it after the first layout pass, and
+			  this only avoids the jump on the way in.
+			-->
+			<key>UNNotificationExtensionInitialContentSizeRatio</key>
+			<real>0.55</real>
+			<!--
+			  ⚠ false, deliberately. The card is a READ, not a control surface —
+			  the action button below it is system-drawn from the category, and
+			  making the card itself interactive would swallow the tap that opens
+			  the club.
+			-->
+			<key>UNNotificationExtensionUserInteractionEnabled</key>
+			<false/>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.usernotifications.content-extension</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).NotificationViewController</string>
+	</dict>
+</dict>
+</plist>

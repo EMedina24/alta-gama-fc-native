@@ -36,6 +36,16 @@ const dark = {
   liveWash: 'rgba(255,92,71,0.14)',
   danger: '#ff5c47',
 
+  // Notification alert types (ADR 0036). ⚠ `moved` is the same hex as `bandUel`
+  // and that is a coincidence, not a relationship — one means "Europa League
+  // qualification", the other means "this kickoff shifted". Aliasing them would
+  // make a band recolour silently repaint a lock-screen eyebrow.
+  moved: '#6fc9ff',
+  movedWash: 'rgba(111,201,255,0.14)',
+  postponed: '#ff8f6b',
+  postponedWash: 'rgba(255,143,107,0.14)',
+  postponedRing: 'rgba(255,143,107,0.36)',
+
   // Qualification bands (per-league CONFIG, never position arithmetic)
   bandUcl: '#c8f25a',
   bandUel: '#6fc9ff',

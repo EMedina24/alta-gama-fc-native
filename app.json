@@ -14,6 +14,7 @@
         "tinted": "./assets/images/icon-tinted.png"
       },
       "bundleIdentifier": "com.altagamafc.app",
+      "appleTeamId": "8Q5L5A2M62",
       "supportsTablet": false,
       "entitlements": {
         "com.apple.security.application-groups": [
@@ -45,6 +46,7 @@
       ],
       "expo-font",
       "expo-localization",
+      "@bacons/apple-targets",
       [
         "expo-notifications",
         {

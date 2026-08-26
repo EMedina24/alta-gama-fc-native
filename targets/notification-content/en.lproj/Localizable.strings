@@ -1,0 +1,26 @@
+/*
+  The long-look card's own strings.
+
+  ⚠⚠ A SECOND SOURCE OF TRUTH. This extension is a separate binary and cannot
+  read `src/lib/i18n/copy.ts`. Adding a string to the card means adding it here
+  AND in es.lproj — there is no fallback that would make a missing translation
+  visible, iOS just prints the key.
+
+  ⚠ Nothing here is notification COPY. The title and body come from
+  `copy.reminders` (local) or `senpai-backend` (push) and are suppressed on this
+  card by `UNNotificationExtensionDefaultContentHidden`. These are labels on the
+  card's own furniture.
+*/
+
+"KICKOFF IN 30" = "KICKOFF IN 30";
+"KICKOFF MOVED" = "KICKOFF MOVED";
+"POSTPONED" = "POSTPONED";
+
+"TODAY" = "TODAY";
+"TOMORROW" = "TOMORROW";
+"WAS" = "WAS";
+"NOW" = "NOW";
+"NO NEW DATE" = "NO NEW DATE";
+
+"Calendar entry moved for you" = "Calendar entry moved for you";
+"Removed from your calendar" = "Removed from your calendar";

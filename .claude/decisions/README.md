@@ -69,3 +69,4 @@ more words than one that's obvious once you see it.
 | [0034](./0034-next-up-card-live-seconds-countdown.md) | The next-up card leads with its crests and an accent versus ring; its countdown ticks per second, torn down while backgrounded | Accepted |
 | [0035](./0035-jornada-rows-show-in-play-scores.md) | Jornada rows: 40pt `v` crest pairing, a clock-split timing column, and an in-play score captioned `In play`, never `LIVE` | Accepted |
 | [0036](./0036-app-icon-appearance-variants.md) | The app icon is three 1024s wired through `ios.icon`'s variant object; the tinted variant must be opaque | Accepted |
+| [0037](./0037-rich-notifications-server-composed-crests.md) | Rich notifications: the backend composes every crest; the app grows a service and a content extension | Accepted — verified on device |

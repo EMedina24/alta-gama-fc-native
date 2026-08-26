@@ -1,0 +1,20 @@
+/*
+  Las cadenas propias de la tarjeta ampliada. Ver en.lproj/Localizable.strings.
+
+  ⚠ Los micro-rótulos van en MAYÚSCULAS y muy espaciados — el diseño los usa
+  como etiqueta, no como frase. `EMPIEZA EN 30` es deliberadamente más corto que
+  el inglés: a 9.5pt con .14em de tracking, el ancho es el límite real.
+*/
+
+"KICKOFF IN 30" = "EMPIEZA EN 30";
+"KICKOFF MOVED" = "CAMBIO DE HORARIO";
+"POSTPONED" = "APLAZADO";
+
+"TODAY" = "HOY";
+"TOMORROW" = "MAÑANA";
+"WAS" = "ANTES";
+"NOW" = "AHORA";
+"NO NEW DATE" = "SIN FECHA";
+
+"Calendar entry moved for you" = "Tu calendario ya está actualizado";
+"Removed from your calendar" = "Eliminado de tu calendario";

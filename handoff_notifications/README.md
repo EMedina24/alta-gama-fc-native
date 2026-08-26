@@ -7,7 +7,7 @@ Lock-screen designs for the three alerts the app sends: **kickoff reminder**,
 part of this that costs engineering time — read §"Crests" before estimating.
 
 Scope is notifications only. The rest of the app (tabs, club pages, sheets, Live
-Activity, widgets) ships in `design_handoff_altagama_ios/`.
+Activity, widgets) ships in `handoff_AG-ios/`.
 
 ## About the design file
 
@@ -173,7 +173,9 @@ at 0.5px · **Ink** `#fff` / 78% / 62% / 52% / 45% white.
 12/500 app name and time · 9.5/700 +.14em type eyebrow · 8.5/700 +.14em micro-label.
 26/700 kickoff, 19/600–700 times — **all tabular**.
 
-Full token set: `theme.ts` in `design_handoff_altagama_ios/`.
+Full token set: `theme.ts` in `handoff_AG-ios/`. ⚠ That file has drifted from
+`src/constants/theme.ts`, which is the live one — and neither carried `#6fc9ff`
+as an alert colour or `#ff8f6b` at all until ADR 0037 added both.
 
 ## Assets
 

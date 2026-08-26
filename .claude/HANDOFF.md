@@ -93,10 +93,43 @@ documented at the code that handles them; this is the index.
 11. **iOS caps pending local notifications at 64.** `selectReminders` uses a
     rolling window of 60 and never schedules a `kickoffTbd` fixture (stored at
     midnight-UTC, so "30 min before" fires at 01:30 for a 21:00 match).
-12. **An `_`-prefixed route is NOT private.** Only `_layout` is special. `/_debug`
+12. **Notification crests cannot be drawn on the device — for two leagues, not
+    ever.** Bundesliga clubs publish `svg` and nothing else; Serie A crests are
+    WebP. `UNNotificationAttachment` takes neither and Swift decodes neither, so
+    `senpai-backend` composites every crest and the lettered fallback tile
+    ([0037](./decisions/0037-rich-notifications-server-composed-crests.md)).
+    ⚠ The tile is the DESIGN for those clubs, not a degradation. Never hot-link
+    a provider to "fix" it.
+13. **`UNNotificationAttachment` MOVES the file it is handed** into the
+    notification's own store. Attaching a cached file empties the cache on every
+    fire; `crest-cache.ts` hands over a copy, and `attachmentCopy` exists for
+    exactly this. ⚠ It also needs `typeHint: 'public.png'` — iOS types the
+    attachment from that and silently drops an untyped file.
+14. **A notification category identifier is a THREE-WAY contract that nothing
+    validates**: `categories.ts`, the wire (`aps.category` from the backend and
+    `categoryIdentifier` on every local reminder), and the content extension's
+    `UNNotificationExtensionCategory`. A mismatch produces no error anywhere —
+    the long-look card simply never appears.
+15. **The long-look card is a second source of truth, twice over.** An app
+    extension is a separate binary: `targets/notification-content/Tokens.swift`
+    copies `theme.ts` by hand, and `en.lproj`/`es.lproj` copy nothing from
+    `copy.ts` because the extension cannot read the JS bundle. Both will drift
+    and nothing will catch it.
+16. **Reminder artwork is capped at the soonest 12** (`REMINDER_ARTWORK_BUDGET`),
+    because the re-arm runs on **every foreground**, not just on a data change.
+    Lifting the cap puts 60 downloads on every resume from the app switcher.
+17. **A `Directory`'s `uri` ends in a slash; a `File`'s does not.**
+    `FileSystemPath.init` standardises through
+    `appendingPathComponent(_:isDirectory:)`, so `entry.uri.split('/').pop()`
+    yields `''` for every directory. `pruneCrestCache` walked a directory of
+    directories that way and would have deleted the whole App Group crest cache
+    on every re-arm — the long-look card showing lettered tiles for clubs that
+    HAVE a crest, and re-downloading all of them on every foreground. ⚠ Caught
+    by reading the native source, not by `tsc` and not by any test.
+18. **An `_`-prefixed route is NOT private.** Only `_layout` is special. `/_debug`
     would have shipped; it is guarded by a `__DEV__` redirect in
     `_debug/_layout.tsx`.
-13. **`presentation: 'formSheet'` in a nested `_layout.tsx` does NOTHING.** A
+19. **`presentation: 'formSheet'` in a nested `_layout.tsx` does NOTHING.** A
     group with a layout is a nested stack, and its first route is that stack's
     root — no navigator presents it, so it rendered full-screen with no grabber,
     no swipe-to-dismiss and (with `headerShown: false`) no way back. All four
@@ -107,10 +140,10 @@ documented at the code that handles them; this is the index.
     laid out at its content's height, so a `flex: 1` wrapper paints its children
     on top of each other. A pinned header there is `stickyHeaderIndices`, not a
     sibling above the scroll.
-14. **Bands are per-league CONFIG, never position arithmetic.** `bandsApply` also
+20. **Bands are per-league CONFIG, never position arithmetic.** `bandsApply` also
     suppresses them on an incomplete or unplayed table — banding a zero-point
     table painted three clubs into relegation on the web app.
-15. **The countdown's `AppState` listener is load-bearing.** `countdown.tsx`
+21. **The countdown's `AppState` listener is load-bearing.** `countdown.tsx`
     ticks once a second and tears the timer down whenever the app leaves
     `active`. iOS suspends JS timers in the background anyway, so dropping the
     listener does not save the wake — it just means the card comes back from a
@@ -118,7 +151,7 @@ documented at the code that handles them; this is the index.
     on `active` is the whole fix. Each tick also schedules to the next WALL
     second, not a fixed period, or the digit drifts from whenever the card
     mounted. See [0034](./decisions/0034-next-up-card-live-seconds-countdown.md).
-16. **`expo prebuild` FLATTENS the tinted app icon onto solid WHITE.**
+22. **`expo prebuild` FLATTENS the tinted app icon onto solid WHITE.**
     `withIosIcons` generates every variant with
     `removeTransparency: appearance !== 'dark'` and `backgroundColor: '#ffffff'`
     — only `dark` keeps its alpha. A tinted export drawn the usual way (a pale
@@ -130,7 +163,7 @@ documented at the code that handles them; this is the index.
     Brightness → **Tinted** on a real build. Re-exporting that asset without
     re-flattening reverts it. See
     [0036](./decisions/0036-app-icon-appearance-variants.md).
-17. **A hand-authored `AppIcon.appiconset` in the repo does NOTHING.** This is a
+23. **A hand-authored `AppIcon.appiconset` in the repo does NOTHING.** This is a
     CNG project — `prebuild` regenerates `Images.xcassets/AppIcon.appiconset`
     from `app.json` and overwrites it. A complete, correct seventeen-file
     appiconset sat at `icons/` unread from `924828a` until 0036. The icon is
@@ -157,6 +190,34 @@ documented at the code that handles them; this is the index.
   simulator switching LaLiga → Premier League. ⚠ Search stays global and hides
   the row; only the browse list waits on the roster, or switching league blanks
   the screen under the reader's finger.
+- **Rich notifications — the whole of `handoff_notifications/`, both directions**
+  ([0037](./decisions/0037-rich-notifications-server-composed-crests.md)),
+  built and verified on hardware 2026-08-26 (build `cdb69968`).
+  - **`1a`, the composed crest thumbnail.** `senpai-backend` draws every crest
+    (`GET /cronogol/fixtures/{id}/crest.png?slot=pair|home|away`) because ⚠ half
+    our leagues cannot be rasterised on the device at all — Bundesliga publishes
+    SVG only, Serie A publishes WebP. Server pushes get it through a Notification
+    Service Extension; the local reminder attaches a file cached at schedule
+    time, since ⚠ a local notification can never invoke an NSE.
+  - **`1b`, the long-look card.** A Notification Content Extension, all three
+    variants: reminder, moved (`was → now`), postponed (`NO NEW DATE`). The NSE
+    leaves both crests in the App Group and the card reads them off disk.
+  - `@bacons/apple-targets` adopted, Swift in `targets/` and ⚠ **never** a
+    committed `ios/` ([0025](./decisions/0025-widgets-deferred.md)). Three bundle
+    IDs now; `ios.appleTeamId` is `8Q5L5A2M62`.
+  - Proven on device: the attachment on both a real-crest and a lettered-tile
+    fixture, the App Group hand-off between two processes, `ALTAGAMA FC`,
+    a derived `TOMORROW`, the `Open club` action, and ⚠ **`apns-collapse-id`
+    REPLACING rather than stacking** — one current card for a fixture that moves
+    twice, which is what stops a wobbling kickoff from spamming a reader.
+  - ⚠ **Nothing about APNs changed.** Same `.p8`, same device token, same
+    `apns-topic: com.altagamafc.app` — extensions never appear on the wire, iOS
+    invokes them locally. No second APNs key was created (the account caps at 2).
+  - ⚠ One bug found and deliberately deferred: **a tapped notification lands on
+    Today**, open item 3 below.
+- **The push cron is ON** (2026-08-26, Render dashboard; `render.yaml:91` agrees).
+  ⚠ It dispatches only what the ~3h sync newly detects, so silence is the normal
+  state. Every notification seen on 2026-08-26 was hand-sent.
 
 ### Open — in priority order
 
@@ -165,23 +226,59 @@ documented at the code that handles them; this is the index.
 1. **Widgets** — [0025](./decisions/0025-widgets-deferred.md). Both sizes, full
    build. App Group already declared and registered. Strongest Guideline 4.2
    argument; do it before submission.
-2. **Device build** — `eas build --profile development --platform ios`.
-   Interactive: registers the iPhone, asks for credentials. ⚠ **Upload the
-   existing `.p8`** — the account is capped at 2 APNs keys and one is used.
-   A real APNs token cannot be obtained on a simulator, at all.
-3. **Backend push cron** — `CRONOGOL_PUSH_CRON_ENABLED` is still `'false'`.
-   ⚠ **This is the last thing between here and real alerts.** The probe sends
-   directly and works; the app's own alerts (kickoff moved, postponed) do not
-   dispatch until this flips. Credentials and delivery are already proven.
-4. **Live Activity** — deferred to v1.1 ([0024](./decisions/0024-push-enabled.md)).
+2. ~~**Device build**~~ — DONE 2026-08-26. `development` profile, ad-hoc, so a
+   **production** token ([0026](./decisions/0026-apns-environment-is-the-provisioning-profile.md)).
+   ⚠ The two extension targets each needed their own provisioning profile; the
+   existing `.p8` was reused and **no second APNs key was created** (the account
+   caps at 2 and one is spent). `ios.appleTeamId` is now `8Q5L5A2M62`.
+3. 🐛 **BUG — tapping a notification lands on Today, not the club page.**
+   Reproduced on device 2026-08-26, build `cdb69968`: tapping `Open club` on a
+   `kickoff_moved` push opens the app on the Today tab. `deepLink` in that
+   payload was `altagamafc://club/barcelona`. **Deferred to a later session by
+   decision, not overlooked.**
+
+   Ruled out, with evidence:
+   - **Not the `actionIdentifier` filter.** `wantsRoute` accepts `open_club` and
+     `DEFAULT_ACTION_IDENTIFIER`, and `NotificationRecords.swift:457` maps iOS's
+     `UNNotificationDefaultActionIdentifier` onto exactly the string the JS
+     constant holds. Both branches pass.
+   - **Not `routeFor`.** Its regex matches `altagamafc://club/{slug}` and it is
+     harness-proven across nine payload shapes ([0024](./decisions/0024-push-enabled.md)).
+   - **Not `OnboardingGate`.** It only redirects while `!onboarded`, and this
+     device is onboarded with a followed club.
+
+   ⚠ **Leading hypothesis: the navigation is fired before the navigator is
+   ready, and silently dropped.** `<PushSync />` is a SIBLING of `<Stack>` and is
+   declared *before* it (`_layout.tsx:28`), so its effect runs before the
+   navigator mounts its screens. `OnboardingGate` gets away with the same
+   position only because `useSegments()` re-runs it once routing exists;
+   `usePushSync`'s tap effect depends on `[router]` alone and fires once, on
+   mount. A cold-start tap resolves `initialRoute()` into a `router.push` that
+   has nothing to push onto, and the app settles on its default route — Today.
+
+   To settle it: log inside the `.then` and inside `onNotificationTap`, then
+   compare a COLD tap (app killed) against a WARM one (app backgrounded). If
+   warm works and cold does not, it is the race above and the fix is to defer
+   until routing is live — not to change `routeFor`.
+4. ~~**Backend push cron**~~ — **ON since 2026-08-26**, set in the Render
+   dashboard; `render.yaml:91` already reads `'true'`, so the two agree and a
+   Blueprint sync will not revert it.
+   ⚠ **"On" does not mean alerts are imminent.** The pass dispatches only what
+   the ~3h fixture sync has newly detected — a kickoff moved, postponed,
+   confirmed, TBD or reinstated. Those are genuinely rare, so days can pass with
+   nothing sent, and that is the system working. Every push seen so far this
+   session was hand-sent; the cron removes the last manual step, it does not
+   create traffic.
+   ⚠ Cadence is `:15` and `:45`, offset so it never stacks on the hour crons.
+5. **Live Activity** — deferred to v1.1 ([0024](./decisions/0024-push-enabled.md)).
    SPEC §4's version needs a minute the API cannot supply, an ActivityKit token
    the push DTO rejects, and a push-to-start the dark cron cannot send.
-5. **Accounts** — v1 is anonymous by design
+6. **Accounts** — v1 is anonymous by design
    ([0019](./decisions/0019-anonymous-v1.md)). ⚠ Reinstalling loses the follow
    list; that is the strongest argument for adding auth in v1.1. ⚠ Adding Google
    sign-in triggers Guideline **4.8** (needs Sign in with Apple), which the
    backend does not support — a backend project.
-6. **App Store prep** — privacy nutrition labels must say what is actually
+7. **App Store prep** — privacy nutrition labels must say what is actually
    collected: an APNs token and followed club slugs, device-keyed, **no account**.
 
 
