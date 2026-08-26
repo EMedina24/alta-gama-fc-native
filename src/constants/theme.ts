@@ -142,6 +142,10 @@ export const Size = {
    * width only 12-hour readers need, and the row cannot spare it: at 40pt crests
    * the 24pt difference is `Espanyol de Barcelona` fitting or truncating. The
    * default clock is `24`.
+   *
+   * ⚠ What sets the 24-hour number is the CAPTION, not the time: `21:00` is
+   * ~52pt but `EN JUEGO` is ~59pt. Measured on the simulator. Shrinking this to
+   * fit the clock alone wraps the in-play caption in Spanish.
    */
   timingColumn: 64,
   timingColumn12: 88,

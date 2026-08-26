@@ -67,4 +67,4 @@ more words than one that's obvious once you see it.
 | [0032](./0032-clubs-browse-by-league.md) | Clubs browses one league at a time, behind the Matchdays filter row; search stays global | Accepted |
 | [0033](./0033-player-detail-sheet.md) | Tapping a squad row opens a player sheet, read from the cached squad payload; a null keeps its label and blanks its cell | Accepted |
 | [0034](./0034-next-up-card-live-seconds-countdown.md) | The next-up card leads with its crests and an accent versus ring; its countdown ticks per second, torn down while backgrounded | Accepted |
-| [0035](./0035-jornada-rows-show-in-play-scores.md) | Jornada rows: horizontal `v` crest pairing, and an in-play score captioned `In play`, never `LIVE` | Accepted |
+| [0035](./0035-jornada-rows-show-in-play-scores.md) | Jornada rows: 40pt `v` crest pairing, a clock-split timing column, and an in-play score captioned `In play`, never `LIVE` | Accepted |

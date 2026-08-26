@@ -124,9 +124,9 @@ export function FixtureList({
             </Text>
           </View>
 
-          {group.items.map((fixture, i) => {
+          {group.items.map((fixture) => {
             const played = fixture.status === 'finished';
-            const inPlay = fixture.status === 'live' || i === 0; // PROBE
+            const inPlay = fixture.status === 'live';
             const dim = emphasis(fixture.goalsHome, fixture.goalsAway);
             const place = [fixture.venue, fixture.venueCity].filter(Boolean).join(' · ');
 
@@ -135,11 +135,11 @@ export function FixtureList({
                 <FixtureTiming
                   kickoffUtc={fixture.kickoffUtc}
                   kickoffTbd={fixture.kickoffTbd}
-                  status={i === 0 ? 'live' : fixture.status}
+                  status={fixture.status}
                   goalsHome={fixture.goalsHome}
                   goalsAway={fixture.goalsAway}
                   zone={zone}
-                  clock={'24'}
+                  clock={clock}
                   tbdLabel={phrases.kickoffTbd}
                   caption={inPlay ? inProgressLabel : played ? finishedLabel : null}
                   captionTone={inPlay ? 'live' : 'textFaint'}

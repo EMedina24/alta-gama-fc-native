@@ -52,12 +52,22 @@ whether the app can show one without claiming a feed it does not have.
 - `Type.numeralLg` (19pt/700) is a new token for the row's score/kickoff. `Type.numeral`
   (16pt/800) stays exactly where it is — `ScoreLine size='row'`, `UpcomingRow` and
   `SeasonSpine` are all sized against it.
-- `Size.timingColumn` goes 76 → **88**, measured on the simulator rather than reasoned
-  about. The binding case is a 12-hour `11:00 am` at 19pt (~83pt wide): at 76 it pushed
-  the crest pair and the entire name column right **on that one row**, which is the exact
-  reflow the fixed column exists to prevent. `IN PLAY` beneath it is only ~47pt and never
-  binds. A 24-hour `21:00` fits either width — so this token looks safe to tidy back down
-  and breaks only for readers on a 12-hour clock.
+- **The crests are `Size.crestCard` (40), not `Size.crestRow` (26).** 26 read as too small
+  against a 19pt score and three lines of text. `crestRow` could not simply be raised — the
+  standings row, FINISHED TODAY, `ScoreLine` and the player sheet all share it — and 40 is
+  the size ADR 0034 records as "the row and list size", already used by `UpcomingRow` for
+  the same two-crest pairing. The artwork cut moves `xsmall` → `small` with it:
+  `CREST_KEYS.xsmall` is documented for 40–76px slots, and 40pt is a 120px box at @3x.
+- **`Size.timingColumn` splits in two: `64` (24-hour) and `timingColumn12: 88`.** The
+  column stays fixed *within* a format — every row on screen shares one `clock`, so the
+  pairing column still aligns and no row reflows against its neighbours. Both numbers are
+  measured on the simulator:
+  - 88 is set by a 12-hour `11:00 am` at 19pt (~83pt). At 76 it pushed the crest pair and
+    the whole name column right **on that one row** — the exact reflow the fixed column
+    exists to prevent.
+  - 64 is set by the **caption, not the clock**: `21:00` is ~52pt but `EN JUEGO` is ~59pt.
+  One token at 88 charged every reader for a width only 12-hour readers need, and after the
+  crests grew the row could not spare it.
 - The row bleeds `-Spacing.five` and pads it back, the same technique the day header
   uses. The trailing `<Hairline />` after each group goes: every row now carries its
   own full-bleed rule and the next day header brings its own darker ground.
@@ -72,11 +82,17 @@ whether the app can show one without claiming a feed it does not have.
   footnote alone would leave a bare in-play score, which is the failure this reverses
   into. The gate is in `matchdays.tsx`, commented.
 - `copy.matchdays.inProgress` is short (`In play`, not the board's `In progress`)
-  because it renders uppercase at eyebrow tracking inside the timing column.
-- The name column loses ~50pt to the horizontal pairing and the wider timing column, so
-  the venue footnote truncates earlier than it did — `Ramón Sánchez-Pizjuán · Se…`. That
-  line is the designated shrink (`numberOfLines={1}`); the club names above it still fit,
-  including `Espanyol de Barcelona`. Verified on a 402pt screen.
+  because it renders uppercase at eyebrow tracking inside the timing column — and in the
+  24-hour case it is that caption, not the time, that sets the column's width.
+- The name column pays for both the horizontal pairing and the 40pt crests, so the row's
+  inter-column gap drops `Spacing.three` → `Spacing.two`. Those 8pt are load-bearing: at
+  40pt crests on a 12-hour clock they are the difference between `Espanyol de Barcelona`
+  fitting and truncating. **A club name truncating is the failure ADR 0029 names** — "Real…"
+  against "Real…" identifies neither club — which is why the width was clawed back from the
+  gaps and the timing column rather than taken out of the names.
+- The venue footnote truncates earlier than it did — `Ramón Sánchez-Pizjuán · Se…`. That
+  line is the designated shrink (`numberOfLines={1}`) and it absorbs what is left over.
+  Verified on a 402pt screen in both clock formats.
 - `emphasis()` is unchanged — still score-driven and status-agnostic — so an in-play row
   dims the side that is behind. That was already the behaviour; the score now makes it
   legible instead of arbitrary.
@@ -98,3 +114,10 @@ whether the app can show one without claiming a feed it does not have.
 - **A `Size` token for the crest column.** Unnecessary — two fixed-size crests and one
   glyph give the pair a constant intrinsic width, and a club with no artwork falls back
   to a monogram tile at the same size, so the name column aligns on its own.
+- **A narrower timing column, as the mock draws it.** The mock's is ~48pt, which works
+  because it only ever shows a 24-hour `21:00` and no caption under it.
+- **Raising `Size.crestRow` from 26 to 40.** It would have resized the standings row,
+  FINISHED TODAY, `ScoreLine` and the player sheet at the same time — four surfaces that
+  did not ask for it, and the same reasoning ADR 0034 used to refuse `crestHero`.
+- **Keeping the `xsmall` cut at 40pt.** It resolves for every club, so nothing would look
+  broken — it would just be soft, which is the failure nobody files a bug about.
