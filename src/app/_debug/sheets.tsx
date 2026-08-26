@@ -49,6 +49,21 @@ export default function DebugSheets() {
         onSetAlert={setAlert}
         onSetLanguage={setLanguage}
         onSetClock={setClock}
+        /**
+         * ⚠ `?which=account-in` previews the SIGNED-IN sheet with a stub identity.
+         * The two states differ by an identity block, a Sign in row and two footer
+         * buttons, and the signed-in one is the harder to reach by hand — it needs a
+         * real Apple ID and a real first authorization.
+         */
+        account={
+          which === 'account-in' ? { name: 'Alicia Álvarez', email: 'fan@example.com' } : null
+        }
+        canSignIn
+        onSignIn={() => {}}
+        onSignOut={() => {}}
+        onDeleteAccount={() => {}}
+        deletingAccount={false}
+        deleteAccountError={null}
         onReplayOnboarding={() => {}}
         onTurnOffAlerts={() => {}}
         onClose={() => router.back()}

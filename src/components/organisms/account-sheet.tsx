@@ -1,15 +1,22 @@
 /**
  * The account sheet.
  *
- * ⚠ Anonymous v1 (ADR 0019): there is no identity, no sign-out and no
- * "Delete account". The shape is the designed one so auth drops in as a fill —
- * identity slot, alert types, preferences, feeds, destructive action — but the
- * identity slot says what is true, and the destructive action is "turn off alerts
- * on this device".
+ * ⚠ The identity slot and the destructive action are BOTH conditional on
+ * `account` (ADR 0038). This is the fill ADR 0019 designed the shape for, and it
+ * stayed a fill: signed out, every row renders exactly as it did in the anonymous
+ * v1, plus a Sign in row.
  *
- * ⚠ Apple's Guideline 5.1.1(v) deletion requirement binds only on apps that
- * support account CREATION. Shipping a "Delete account" button that deletes
- * nothing would be worse than shipping none.
+ * ⚠ **Signed out, the destructive action is still "turn off alerts on this
+ * device" — not a disabled "Delete account".** There is no account to delete, and
+ * turning off alerts remains the only destructive thing a signed-out reader can do.
+ *
+ * ⚠ Apple's Guideline 5.1.1(v) binds the moment account CREATION ships, which is
+ * now. Signed in, "Delete account" must be reachable in-app and must really
+ * delete — it is a two-step confirm because the server has no undo.
+ *
+ * ⚠ The design's `VERIFIED` pill is deliberately NOT drawn. Nothing in
+ * `GET /cronogol/me` reports verification, and a pill asserting it from a
+ * provider guess is worse than no pill.
  *
  * ⚠ **The goals switch is drawn disabled WITH its reason and the reason stays.**
  * That type does not exist and is not coming without a live feed.
@@ -45,6 +52,16 @@ export interface AccountFeed {
   url: string;
 }
 
+/** The signed-in identity. `null` renders the signed-out slot. */
+export interface AccountIdentity {
+  /** ⚠ May be null — Apple gives a name only on the first authorization ever. */
+  name: string | null;
+  /** ⚠ From `GET /cronogol/me`, never from the JWT: the token's copy goes stale
+   *  for up to an hour after a confirmed email change. May be a
+   *  `@privaterelay.appleid.com` address for a Hide-My-Email signup. */
+  email: string | null;
+}
+
 export interface AccountSheetProps {
   copy: Copy;
   locale: Locale;
@@ -58,6 +75,21 @@ export interface AccountSheetProps {
   onReplayOnboarding: () => void;
   onTurnOffAlerts: () => void;
   onClose: () => void;
+  /** `null` when signed out — the identity slot and the footer both branch on it. */
+  account: AccountIdentity | null;
+  /** Whether sign-in can be offered at all (env vars present). */
+  canSignIn: boolean;
+  onSignIn: () => void;
+  onSignOut: () => void;
+  /** ⚠ Fires only on the SECOND press. The first arms the confirm. */
+  onDeleteAccount: () => void;
+  deletingAccount: boolean;
+  /**
+   * ⚠ Localised already. Non-null means the account is **still alive** — the
+   * reader stays signed in and the sheet stays open, because signing them out on
+   * a failed delete would tell them it worked.
+   */
+  deleteAccountError: string | null;
 }
 
 function Row({
@@ -124,8 +156,21 @@ export function AccountSheet({
   onReplayOnboarding,
   onTurnOffAlerts,
   onClose,
+  account,
+  canSignIn,
+  onSignIn,
+  onSignOut,
+  onDeleteAccount,
+  deletingAccount,
+  deleteAccountError,
 }: AccountSheetProps) {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  /**
+   * ⚠ Step one of the two-step delete. Local to the render on purpose: dismissing
+   * the sheet disarms it, so a confirm cannot survive out of sight of the warning
+   * that explains what it does.
+   */
+  const [armed, setArmed] = useState(false);
   const a = copy.account;
 
   return (
@@ -140,11 +185,34 @@ export function AccountSheet({
       </View>
 
       <View style={styles.identity}>
-        <Text variant="title3">{a.notSignedIn}</Text>
-        <Text variant="footnote" color="textDim">
-          {a.notSignedInBody}
-        </Text>
+        {account ? (
+          <>
+            {/* ⚠ Name falls back to the email, then to a neutral label — an Apple
+                account whose one naming chance was missed has neither, and an
+                empty heading reads as a broken sheet. */}
+            <Text variant="title3">{account.name ?? account.email ?? a.someone}</Text>
+            {account.email ? (
+              <Text variant="footnote" color="textDim">
+                {account.email}
+              </Text>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <Text variant="title3">{a.notSignedIn}</Text>
+            <Text variant="footnote" color="textDim">
+              {canSignIn ? a.signInBody : a.notSignedInBody}
+            </Text>
+          </>
+        )}
       </View>
+
+      {/* ⚠ Signed out and configurable only. Drawn here, directly under the
+          identity it changes, rather than in the footer beside the destructive
+          actions. */}
+      {!account && canSignIn ? (
+        <Button label={a.signIn} tone="outline" onPress={onSignIn} />
+      ) : null}
 
       <SectionHeader title={a.alertTypes} />
       <View style={styles.group}>
@@ -249,10 +317,44 @@ export function AccountSheet({
 
       <View style={styles.footer}>
         <Button label={a.replayOnboarding} tone="quiet" onPress={onReplayOnboarding} />
+
+        {/* ⚠ Stays for a signed-in reader too. Alerts are DEVICE state: they
+            survive both signing out and deleting the account, so this is the only
+            control that stops them and it must not disappear behind an identity. */}
         <Button label={a.turnOffAlerts} tone="danger" onPress={onTurnOffAlerts} />
         <Text variant="footnote" color="textFaint">
           {a.turnOffAlertsNote}
         </Text>
+
+        {account ? (
+          <>
+            <Button label={a.signOut} tone="quiet" onPress={onSignOut} />
+            <Button
+              label={armed ? a.deleteAccountConfirm : a.deleteAccount}
+              tone="danger"
+              loading={deletingAccount}
+              onPress={() => {
+                if (!armed) {
+                  setArmed(true);
+                  return;
+                }
+                onDeleteAccount();
+              }}
+            />
+            {deleteAccountError ? (
+              <Text variant="footnote" color="danger">
+                {deleteAccountError}
+              </Text>
+            ) : null}
+            {/* ⚠ The note is drawn only once armed, and it is what makes the
+                second press informed consent rather than a double tap. */}
+            {armed ? (
+              <Text variant="footnote" color="textFaint">
+                {a.deleteAccountNote}
+              </Text>
+            ) : null}
+          </>
+        ) : null}
       </View>
     </ScrollView>
   );

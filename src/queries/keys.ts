@@ -15,5 +15,10 @@ export const keys = {
   jornada: (leagueApiSlug: string, season: number, matchweek: number) =>
     ['jornada', leagueApiSlug, season, matchweek] as const,
   standings: (leagueApiSlug?: string) => ['standings', leagueApiSlug ?? 'all'] as const,
+  /**
+   * ⚠ Keyed on the USER ID, so signing out evicts the previous account rather
+   * than serving its name to whoever signs in next.
+   */
+  account: (userId: string) => ['account', userId] as const,
   fixtureWindow: (from: string, to: string) => ['fixture-window', from, to] as const,
 } as const;

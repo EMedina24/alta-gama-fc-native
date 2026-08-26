@@ -12,6 +12,7 @@ import { formatKickoffTime } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useUpcoming } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
+import { useSession } from '@/store/session';
 import { useRouter } from 'expo-router';
 
 import { registerNotificationCategories } from './categories';
@@ -27,6 +28,7 @@ export function usePushSync(): void {
   const zone = useZone();
   const { copy } = useI18n();
   const upcoming = useUpcoming(zone);
+  const session = useSession();
 
   // Cold launch: tokens rotate on restore and reinstall, so always re-assert.
   useEffect(() => {
@@ -39,6 +41,18 @@ export function usePushSync(): void {
   useEffect(() => {
     schedulePushSync(prefs, locale);
   }, [prefs.followed, prefs.alertMoved, prefs.alertPostponed, locale, prefs]);
+
+  // Signed in, or switched accounts: re-register so the row links to the account.
+  // ⚠ Debounced through the same path, so this cannot stack with the effect above
+  // when a sign-in and a follow land together.
+  // ⚠ Keyed on the user id, not the session object — that identity changes on
+  // every hourly token refresh, and re-registering on a timer would eat the
+  // 20/min budget for nothing.
+  useEffect(() => {
+    if (!session) return;
+    schedulePushSync(prefs, locale);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.userId]);
 
   // Categories — the long-look card and the action button both key off these.
   // ⚠ Re-runs on a language change: iOS caches a category by identifier, so a

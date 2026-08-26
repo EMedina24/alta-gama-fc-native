@@ -20,10 +20,13 @@ import type { Locale } from '@/lib/i18n/phrases';
 import type { Preferences } from '@/store/preferences';
 import {
   clearLastRegistration,
+  readLastLinkedUser,
   readLastRegistration,
   registrationChanged,
+  writeLastLinkedUser,
   writeLastRegistration,
 } from '@/store/registration';
+import { getAccessToken, getSessionUserId } from '@/store/session';
 import { apnsEnvironment, getDeviceToken } from './capability';
 
 /**
@@ -84,14 +87,36 @@ export async function syncPushRegistration(
   const body = buildRegistration(prefs, locale, token);
   if (!body) return 'failed';
 
+  /**
+   * ⚠ **Only a NEW sign-in is worth a re-register — not a sign-out.**
+   *
+   * A bearer links the row to the account, and the link is permanent: there is no
+   * unlink, and an anonymous re-register keeps it. So going signed-in → signed-out
+   * changes nothing the server would record, and firing a call for it would spend
+   * one of 20/min to tell it something it already knows. Signing IN, or switching
+   * accounts, is the case that must not be missed.
+   */
+  const userId = getSessionUserId();
+  const linkChanged = userId !== null && userId !== (await readLastLinkedUser());
+
   const previous = await readLastRegistration();
-  if (!registrationChanged(previous, body)) return 'unchanged';
+  if (!registrationChanged(previous, body) && !linkChanged) return 'unchanged';
+
+  /**
+   * ⚠ Resolved HERE, per call, never cached. `getAccessToken` refreshes an
+   * expired token; a stale one would be a 401 even though this route accepts
+   * anonymous callers, and push would fail silently for that device.
+   */
+  const bearer = userId ? await getAccessToken() : null;
 
   try {
-    const view = await registerDevice(body);
+    const view = await registerDevice(body, bearer);
     // ⚠ Persist what the SERVER echoed, not what we sent: it collapses duplicate
     // slugs, so trusting our own array would re-send forever.
     await writeLastRegistration({ ...body, clubSlugs: view.clubSlugs });
+    // ⚠ Recorded from the RESPONSE's `linked`, so a bearer the server rejected
+    // does not leave us believing the row is linked and never retrying.
+    if (userId && view.linked) await writeLastLinkedUser(userId);
     return 'sent';
   } catch {
     // Never throw into a render. A failed write retries on the next change or launch.

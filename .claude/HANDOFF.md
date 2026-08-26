@@ -170,6 +170,34 @@ documented at the code that handles them; this is the index.
     configured in `app.json`, nowhere else. ⚠ `prebuild` also rewrites
     `package.json`'s `ios`/`android` scripts to `expo run:*` — revert that; the
     run command is still `npx expo start --dev-client --ios`.
+24. **Signing out must never touch `followed`.** It is device state, this device's
+    array IS the follow state, and nothing on the server can rebuild it
+    ([0019](./decisions/0019-anonymous-v1.md) survives 0038 on this point). A
+    sign-out that clears it silently unsubscribes the reader from every alert they
+    have. `store/session.ts` clears the session and nothing else, deliberately.
+25. **Apple hands over the user's name EXACTLY ONCE** — the first authorization
+    ever for that Apple ID and this app — and the identity token carries no name
+    claim, so Supabase never sees it either. `features/auth/apple.ts` writes it to
+    `PATCH /cronogol/me` in the same function. Miss it and the account is nameless
+    forever, short of the user revoking the app in Settings → Apple ID.
+26. **An expired bearer is a 401 even on `@OptionalAuth()` routes.** "Optional"
+    means a MISSING credential is acceptable, not a bad one — so
+    `PUT /cronogol/push/device` must carry a freshly-resolved token or none at
+    all. A cached one breaks push registration entirely and silently. Never store
+    an access token anywhere; call `getAccessToken()`, which refreshes.
+27. **There is no unlink.** A bearer links a device row to an account permanently;
+    an anonymous re-register KEEPS the link, and signing out changes nothing
+    server-side. Push therefore re-registers on sign-IN only — firing on sign-out
+    would spend one of 20/min to tell the server what it already knows.
+28. **`AUTH_STORAGE_KEY` can never change.** Unset, `supabase-js` derives it from
+    the hostname; `cronogol` is pinned to a stale project ref forever because
+    moving to the custom domain silently renamed its key and presented as "the app
+    forgot me after a deploy", with no error anywhere.
+29. **React Native's `URL` and `URLSearchParams` corrupt credentials silently.**
+    `URL.hash` is `match(/#([^/]*)/)` — it stops at the first `/`. `URLSearchParams`
+    does `pair.split('=')` and takes two elements, cutting any value containing
+    `=`. Both truncate rather than throw. `features/auth/google.ts` parses the
+    OAuth redirect by hand for exactly this reason — do not "simplify" it back.
 
 ---
 
@@ -273,16 +301,89 @@ documented at the code that handles them; this is the index.
 5. **Live Activity** — deferred to v1.1 ([0024](./decisions/0024-push-enabled.md)).
    SPEC §4's version needs a minute the API cannot supply, an ActivityKit token
    the push DTO rejects, and a push-to-start the dark cron cannot send.
-6. **Accounts** — v1 is anonymous by design
-   ([0019](./decisions/0019-anonymous-v1.md)). ⚠ Reinstalling loses the follow
-   list; that is the strongest argument for adding auth in v1.1. ⚠ Adding Google
-   sign-in triggers Guideline **4.8** (needs Sign in with Apple), which the
-   backend does not support — a backend project.
-7. **App Store prep** — privacy nutrition labels must say what is actually
-   collected: an APNs token and followed club slugs, device-keyed, **no account**.
+6. ~~**Accounts**~~ — **shipped 2026-08-26**, Apple + Google, sign-in optional
+   ([0038](./decisions/0038-accounts-apple-and-google.md),
+   [0039](./decisions/0039-auth-goes-direct-to-supabase.md)). Guideline **4.8**
+   turned out not to be a backend project at all: the backend authenticates
+   nobody, and native-only Apple needs no Services ID or `.p8`.
+   ⚠ **Not yet verified on a device** — Apple Sign In is a new entitlement, so the
+   existing dev build cannot run it. See the verification list below.
+   ⚠ **Reinstalling still loses the follow list.** Signing in does NOT sync
+   follows: the backend has no follows endpoint, and the web derives them from
+   claimed feeds, which 0019 excluded and 0038 did not add back.
+   ⚠ **`AUTH_REQUIRED`** in `features/auth/capability.ts` is the seam for making
+   sign-in mandatory. Flipping it also makes 5.1.1(v) unavoidable and needs the
+   sign-in sheet re-presented without its `Close`.
+7. **App Store prep** — privacy nutrition labels. ⚠ **This changed with 0038** and
+   the old answer is now wrong: it is no longer "device-keyed, **no account**".
+   Collected: an APNs token and followed club slugs (device-keyed), **plus email
+   and display name linked to an account** for readers who sign in. Sign in with
+   Apple's Hide My Email means some of those addresses are
+   `@privaterelay.appleid.com`.
+
+   **Before the first build that ships auth:**
+   - Enable **Sign In with Apple** on `com.altagamafc.app` in the Apple Developer
+     portal, and rebuild — the entitlement changes the provisioning profile.
+   - Supabase → Providers → **Apple** → enable, add `com.altagamafc.app` to
+     *Client IDs*. Leave Services ID and Secret Key empty.
+   - Supabase → URL Configuration → **Redirect URLs** → add `altagamafc://auth-callback`.
+     ⚠ An unlisted value does not error — Supabase falls back to the Site URL, so
+     Google sign-in lands on the website and the app never hears back.
+     `/_debug/auth` prints the exact string to paste.
+   - The Apple Sign In **entitlement is verified to generate correctly** — a
+     `prebuild` on 2026-08-26 produced `com.apple.developer.applesignin` alongside
+     the existing App Group, and the `altagamafc` URL scheme the Google redirect
+     needs. ⚠ That proves the CONFIG, not the account: the capability still has to
+     be enabled on the App ID or the build fails to sign.
+
+   **Then verify on a PHYSICAL device** (Apple Sign In is unreliable in the
+   simulator, and push already needs one — `getDeviceToken()` returns `null` on
+   `!Device.isDevice`). `/_debug/auth` drives all of this:
+   1. **Apple, first ever sign-in** — an Apple ID that has never authorized this
+      app. ⚠ This is the ONLY chance to test the name-capture path without
+      revoking the app in Settings → Apple ID → Sign in with Apple. Confirm the
+      name reaches `GET /cronogol/me`, not just the screen.
+   2. **Apple, second sign-in** — sign out, sign in again. `fullName` is `null`
+      now; the name must still render, read back from `/cronogol/me`.
+   3. **Hide My Email** — check the identity slot does not overflow.
+   4. **Google** — the browser sheet returns to the app. ⚠ Landing on the website
+      instead means the redirect URL is missing from Supabase, not broken code.
+   5. **Push linking** — `PUT /cronogol/push/device` must answer `linked: true`.
+   6. **Cancel paths** — dismiss the Apple sheet and the Google browser. Both must
+      land back signed-out silently, with no error banner.
+   7. **Follows survive sign-out** — follow three clubs, sign in, sign out. All
+      three must still be there. This is trap 24 and the one that would ship broken.
+   8. **Delete account** — two-step confirm → 204 → signed out. Re-run the same
+      `DELETE`; it must 204 again.
+   9. **Token expiry** — background past the ~1h access-token lifetime, foreground,
+      confirm `/cronogol/me` still resolves rather than bouncing to signed-out.
 
 
 ---
+
+## ⚠ `npm run lint` now works — and it has never run before
+
+`eslint.config.js` has been in the repo since the start, but neither `eslint` nor
+`eslint-config-expo` was ever installed, so `expo lint` only ever answered
+`Cannot find module 'eslint'`. Both were added as devDependencies on 2026-08-26.
+
+It immediately earned it. `tsc` had passed on a **duplicate `export interface
+AccountView`** in `lib/cronogol/types.ts` — TypeScript *merges* same-named
+interface declarations rather than erroring, so a second one appended to that file
+silently widened the first instead of failing. Lint caught it as
+`import/export`. ⚠ Worth remembering generally: `tsc --noEmit` is not a
+duplicate-declaration check.
+
+**6 errors remain, all pre-existing and none in auth code.** Left alone
+deliberately — they are unrelated to accounts and each deserves its own look:
+
+- `components/molecules/feed-age.tsx:30` and two spots in `_debug/gallery.tsx` —
+  `Date.now()` called during render (`react-hooks/purity`). The one in
+  `feed-age.tsx` is on a real screen, not a debug one.
+- `(tabs)/matchdays.tsx:60`, `_debug/push.tsx:59`, `_debug/skip-onboarding.tsx:12`
+  — `setState` synchronously inside an effect (`react-hooks/set-state-in-effect`).
+
+Plus 9 warnings (unused vars, duplicate imports). `--fix` handles 2.
 
 ## Front-end work outstanding
 
@@ -336,10 +437,12 @@ claim "tonight" for a match with no kickoff.)
 
 ### 5 · The account avatar exists on one screen
 
-`AvatarButton` is only on Today, and it renders **empty initials** (`initials=""`).
-The design puts it in every tab header. In an anonymous v1 there is no name to
-derive initials from — so this needs a product answer, not just wiring: a glyph, a
-mark, or the club crest of the first followed club.
+**Half done 2026-08-26.** The product answer arrived with accounts
+([0038](./decisions/0038-accounts-apple-and-google.md)): `useIdentityInitials()`
+derives them from `displayName`, falling back to the email's local part, and
+`AvatarButton` now takes `string | null` and draws a neutral mark when signed out.
+⚠ **Still only on Today.** The design puts it in every tab header, and that part
+is unchanged — it is now plain wiring, with no product question left in it.
 
 ### 6 · Onboarding club picker is 2-up, SPEC §3.7 says 3-up
 

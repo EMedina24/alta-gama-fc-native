@@ -15,7 +15,7 @@ sections) and wins on any disagreement.
 | Server actually SENDING pushes | **Dark.** Ships behind `CRONOGOL_PUSH_CRON_ENABLED='false'` until the APNs sandbox probe + an operator dry-run pass — both gated on the Apple Developer account (which also gates the push entitlement for dev builds). **No push will arrive on any device until then.** Build and register anyway; nothing breaks. |
 | Kickoff reminders | **Never sent by the server, by design.** The app schedules them locally from fixture data (handoff SPEC §4 payload 1). |
 | Goal / score pushes | **Do not exist and are not coming with this** — no live feed. The type is reserved. Keep the goal switch drawn disabled with its reason (handoff rule). |
-| Sign in with Apple | Still absent. Google + email/password via Supabase Auth, unchanged. |
+| Sign in with Apple | **Live in the app since 2026-08-26** ([0038](./decisions/0038-accounts-apple-and-google.md)). ⚠ It needed **no backend change** — `SupabaseUserGuard` verifies any Supabase JWT through JWKS whatever provider minted it, and native-only Apple needs no Services ID or `.p8`, only the bundle id under the Supabase Apple provider's *Client IDs*. The four backend docs saying it will never exist are now wrong. Google is the browser hop; email/password is deliberately not built here. |
 
 ## Registering a device
 

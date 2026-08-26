@@ -74,6 +74,33 @@ export interface Copy {
     replayOnboarding: string;
     turnOffAlerts: string;
     turnOffAlertsNote: string;
+    /** ⚠ Accounts (ADR 0038). Everything below is drawn only when signed in,
+     *  except `signIn`, which replaces the identity block when signed out. */
+    signIn: string;
+    signInBody: string;
+    signOut: string;
+    /** Fallback heading when the provider gave us no name — Apple, second
+     *  sign-in onwards, if the first one was ever missed. */
+    someone: string;
+    deleteAccount: string;
+    /** ⚠ Step two of two. The server has no undo. */
+    deleteAccountConfirm: string;
+    deleteAccountNote: string;
+    deleteAccountFailed: string;
+  };
+  auth: {
+    title: string;
+    body: string;
+    /** ⚠ Apple's own button draws its own label; this is its accessibility name. */
+    apple: string;
+    google: string;
+    legal: string;
+    /** ⚠ Chosen from an `AuthFailure`, never echoed from Supabase (which
+     *  writes English prose, in an app that ships in two languages). */
+    errorRejected: string;
+    errorRateLimited: string;
+    errorUnavailable: string;
+    errorUnknown: string;
   };
   sheets: {
     calendarTitle: (club: string) => string;
@@ -302,6 +329,27 @@ export const esCopy: Copy = {
     turnOffAlerts: 'Desactivar avisos en este dispositivo',
     turnOffAlertsNote:
       'Deja de seguir a todos los clubes en este dispositivo. Los calendarios ya añadidos siguen en tu app de calendario hasta que los borres allí.',
+    signIn: 'Iniciar sesión',
+    signInBody: 'Guarda tu cuenta para tenerla en cualquier dispositivo.',
+    signOut: 'Cerrar sesión',
+    someone: 'Tu cuenta',
+    deleteAccount: 'Eliminar cuenta',
+    deleteAccountConfirm: 'Eliminar definitivamente',
+    deleteAccountNote:
+      'No se puede deshacer. Los calendarios que compartiste dejarán de actualizarse y quedarán vacíos, y seguirán en tu app de calendario hasta que los borres allí. Los avisos de este dispositivo siguen activos.',
+    deleteAccountFailed: 'No se pudo eliminar la cuenta. Sigue activa — inténtalo de nuevo.',
+  },
+
+  auth: {
+    title: 'Tu cuenta de AltaGama FC',
+    body: 'Para tener tus clubes y calendarios en cualquier dispositivo. Puedes seguir usando la app sin cuenta.',
+    apple: 'Continuar con Apple',
+    google: 'Continuar con Google',
+    legal: 'Solo guardamos tu nombre y tu correo. Puedes eliminar la cuenta cuando quieras.',
+    errorRejected: 'No se pudo iniciar sesión. Inténtalo de nuevo.',
+    errorRateLimited: 'Demasiados intentos. Espera un momento.',
+    errorUnavailable: 'Sin conexión con el servicio de cuentas. Inténtalo en un momento.',
+    errorUnknown: 'Algo salió mal. Inténtalo de nuevo.',
   },
 
   sheets: {
@@ -524,6 +572,27 @@ export const enCopy: Copy = {
     turnOffAlerts: 'Turn off alerts on this device',
     turnOffAlertsNote:
       'Unfollows every club on this device. Calendars you already added stay in your calendar app until you delete them there.',
+    signIn: 'Sign in',
+    signInBody: 'Keep your account on every device.',
+    signOut: 'Sign out',
+    someone: 'Your account',
+    deleteAccount: 'Delete account',
+    deleteAccountConfirm: 'Delete permanently',
+    deleteAccountNote:
+      'This cannot be undone. Calendars you shared stop updating and go empty, and stay in your calendar app until you delete them there. Alerts on this device keep working.',
+    deleteAccountFailed: 'Could not delete your account. It is still active — try again.',
+  },
+
+  auth: {
+    title: 'Your AltaGama FC account',
+    body: 'Keeps your clubs and calendars on every device. The app works fine without one.',
+    apple: 'Continue with Apple',
+    google: 'Continue with Google',
+    legal: 'We store your name and email, nothing else. You can delete your account at any time.',
+    errorRejected: 'Could not sign you in. Try again.',
+    errorRateLimited: 'Too many attempts. Wait a moment.',
+    errorUnavailable: 'Could not reach the account service. Try again shortly.',
+    errorUnknown: 'Something went wrong. Try again.',
   },
 
   sheets: {
