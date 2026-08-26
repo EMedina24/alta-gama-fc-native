@@ -14,13 +14,14 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, SkeletonRows, Text } from '@/components/atoms';
-import { SectionHeader } from '@/components/molecules';
+import { LeagueSwitch, SectionHeader } from '@/components/molecules';
 import { ClubBrowser } from '@/components/organisms/club-browser';
 import { ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
-import { DEFAULT_LEAGUE } from '@/lib/cronogol/leagues';
+import { DEFAULT_LEAGUE, findLeague, leagueOptions } from '@/lib/cronogol/leagues';
 import { foldAccents } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
+import { useLeagueArtwork } from '@/queries/use-leagues';
 import { useTeams } from '@/queries/use-teams';
 import { followClub, unfollowClub, usePreferences } from '@/store/preferences';
 
@@ -40,7 +41,14 @@ export default function ClubsScreen() {
    * clubs", and a reader looking for Arsenal from the LaLiga tab should find it.
    */
   const teams = useTeams();
-  const browse = useTeams(DEFAULT_LEAGUE.apiSlug);
+  /**
+   * The league being browsed. Screen state, not a preference: it is a place in
+   * a list, and the Matchdays switcher forgets its league the same way.
+   */
+  const [leagueSlug, setLeagueSlug] = useState(DEFAULT_LEAGUE.slug);
+  const league = findLeague(leagueSlug) ?? DEFAULT_LEAGUE;
+  const browse = useTeams(league.apiSlug);
+  const artwork = useLeagueArtwork();
   const [query, setQuery] = useState('');
 
   const all = teams.data ?? [];
@@ -89,7 +97,7 @@ export default function ClubsScreen() {
           <Text color="textSecondary">{copy.clubs.error}</Text>
           <Button label={copy.clubs.retry} tone="secondary" onPress={() => void teams.refetch()} />
         </View>
-      ) : teams.isPending || browse.isPending ? (
+      ) : teams.isPending ? (
         <SkeletonRows count={8} height={Size.rowSkeleton} />
       ) : (
         <>
@@ -113,9 +121,24 @@ export default function ClubsScreen() {
             </>
           ) : null}
 
-          <SectionHeader title={query ? copy.clubs.title : copy.clubs.browse(DEFAULT_LEAGUE.name)} />
+          {/* ⚠ Hidden while searching: search spans EVERY tracked club, so a
+              league filter sitting over those results would claim a scope the
+              list does not have (ADR 0032). */}
+          {query ? null : (
+            <LeagueSwitch
+              leagues={leagueOptions(artwork.data)}
+              active={league.slug}
+              onSelect={setLeagueSlug}
+            />
+          )}
 
-          {results.length === 0 ? (
+          <SectionHeader title={query ? copy.clubs.title : copy.clubs.browse(league.name)} />
+
+          {/* ⚠ Only the browse list waits on the league's roster. Gating the
+              screen on it would take the switcher off-screen mid-tap. */}
+          {browse.isPending && !query ? (
+            <SkeletonRows count={8} height={Size.rowSkeleton} />
+          ) : results.length === 0 ? (
             <Text color="textSecondary">{copy.clubs.noResults}</Text>
           ) : (
             <ClubBrowser

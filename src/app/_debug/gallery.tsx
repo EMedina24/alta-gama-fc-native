@@ -40,7 +40,7 @@ function Case({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function GalleryScreen() {
-  const { phrases } = useI18n();
+  const { copy, phrases } = useI18n();
   const [on, setOn] = useState(true);
 
   return (
@@ -91,7 +91,7 @@ export default function GalleryScreen() {
           </View>
         ))}
       </View>
-      <Case label="live → falls through to the kickoff. No LIVE caption, by design.">
+      <Case label="live → the score under IN PLAY in `live`. Never the word LIVE (ADR 0035).">
         <FixtureTiming
           kickoffUtc="2026-09-06T19:00:00Z"
           kickoffTbd={false}
@@ -101,6 +101,22 @@ export default function GalleryScreen() {
           zone={ZONE}
           clock="24"
           tbdLabel={phrases.kickoffTbd}
+          caption={copy.matchdays.inProgress}
+          captionTone="live"
+        />
+      </Case>
+      <Case label="live with no goals yet → still falls through to the kickoff.">
+        <FixtureTiming
+          kickoffUtc="2026-09-06T19:00:00Z"
+          kickoffTbd={false}
+          status="live"
+          goalsHome={null}
+          goalsAway={null}
+          zone={ZONE}
+          clock="24"
+          tbdLabel={phrases.kickoffTbd}
+          caption={copy.matchdays.inProgress}
+          captionTone="live"
         />
       </Case>
 
@@ -121,7 +137,7 @@ export default function GalleryScreen() {
       </Case>
 
       <SectionHeader title="Countdown · feed age" />
-      <Case label="ticks per minute, never per second">
+      <Case label="ticks per second, paused while backgrounded">
         <Countdown kickoffUtc={SOON} />
       </Case>
       <Case label="score age — required wherever a score appears">

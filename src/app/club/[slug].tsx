@@ -134,6 +134,11 @@ export default function ClubScreen() {
                 players={squad.data?.players ?? []}
                 bandLabels={copy.club.bandLabels}
                 emptyLabel={copy.club.squadEmpty}
+                // ⚠ The PERSON id, never the shirt — a Premier League squad can
+                // carry two players wearing the same number.
+                onSelectPlayer={(id) =>
+                  router.push({ pathname: '/(sheets)/player', params: { slug, id } })
+                }
               />
             )}
           </>

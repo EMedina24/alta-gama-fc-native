@@ -194,6 +194,32 @@ export function byEditorialOrder(a: League, b: League): number {
   return a.order - b.order;
 }
 
+/**
+ * The league catalogue as a filter row's options, in editorial order.
+ *
+ * ⚠ `LeagueRef.logoUrls` is keyed SEMANTICALLY (`primary`/`icon`/`wordmark`),
+ * the opposite of `TeamView`'s size keys. `icon` is the icon-only cut and is
+ * LaLiga's alone today; `primary` is the full lockup, which carries its own
+ * wordmark. Picking wrong is a layout mistake, not a resolution one — so the
+ * order lives here once rather than at each screen that draws the row.
+ *
+ * Artwork is optional: a league with none renders as its name (ADR 0031), and
+ * the row is still usable while `useLeagueArtwork` is in flight.
+ */
+export function leagueOptions(
+  artwork: Record<string, { logoUrl?: string | null; logoUrls?: Record<string, string> | null }>
+    | undefined,
+): { slug: string; name: string; logoUrl: string | null }[] {
+  return [...LEAGUES].sort(byEditorialOrder).map((league) => {
+    const art = artwork?.[league.apiSlug];
+    return {
+      slug: league.slug,
+      name: league.name,
+      logoUrl: art?.logoUrls?.icon ?? art?.logoUrls?.primary ?? art?.logoUrl ?? null,
+    };
+  });
+}
+
 /** `2026` → `"2026/27"`. */
 export function seasonLabel(season: number): string {
   return `${season}/${String((season + 1) % 100).padStart(2, '0')}`;

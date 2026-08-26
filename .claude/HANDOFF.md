@@ -68,8 +68,18 @@ documented at the code that handles them; this is the index.
 7. **`/cronogol/scores` is a WORLD scoreboard** with no crosswalk to our clubs
    (Liga Argentina, friendlies). It cannot serve FINISHED TODAY — that comes from
    `/cronogol/fixtures`. See [0022](./decisions/0022-finished-today-from-fixtures.md).
-8. **Nothing is live.** Scores sweep ~4h, standings lag ~3h. No minute, no pulsing
-   dot, no ticking. Every score states its age. **Never remove those lines.**
+8. **No DATA is live.** Scores sweep ~4h, standings lag ~3h. No minute, no
+   pulsing dot, nothing that animates a *score* into looking current. Every score
+   states its age. **Never remove those lines.** ⚠ The next-up countdown is the
+   one exception and is not a counter-example: it is arithmetic on the device
+   clock against a kickoff timestamp the API already gave us, so it cannot go
+   stale — see [0034](./decisions/0034-next-up-card-live-seconds-countdown.md).
+   ⚠ An in-play SCORE may now be shown, and only in the shape
+   [0035](./decisions/0035-jornada-rows-show-in-play-scores.md) sets: the score,
+   a caption that says *in play* (never "live"), and the cadence sentence beside
+   it. Drop any one of the three and you are back to the claim this trap exists
+   to stop. `statusText` in `scores.ts` still returns null for `live` — that
+   guard is for `/cronogol/scores`, which no UI reads.
 9. **The APNs token must be lowercased** — the backend rejects uppercase hex with
    a 400 on *every* registration. Verified against production.
 10. **The APNs environment follows the PROVISIONING PROFILE, not the build
@@ -100,6 +110,14 @@ documented at the code that handles them; this is the index.
 14. **Bands are per-league CONFIG, never position arithmetic.** `bandsApply` also
     suppresses them on an incomplete or unplayed table — banding a zero-point
     table painted three clubs into relegation on the web app.
+15. **The countdown's `AppState` listener is load-bearing.** `countdown.tsx`
+    ticks once a second and tears the timer down whenever the app leaves
+    `active`. iOS suspends JS timers in the background anyway, so dropping the
+    listener does not save the wake — it just means the card comes back from a
+    resume showing the number it was suspended on, and re-reading `Date.now()`
+    on `active` is the whole fix. Each tick also schedules to the next WALL
+    second, not a fixed period, or the digit drifts from whenever the card
+    mounted. See [0034](./decisions/0034-next-up-card-live-seconds-countdown.md).
 
 ---
 
@@ -115,6 +133,11 @@ documented at the code that handles them; this is the index.
   [GO-LIVE.md §5](./GO-LIVE.md).
 - The production push contract, exercised with a synthetic token that was deleted
   afterwards: 200 / uppercase 400 / unknown slug 404 / DELETE 204.
+- Clubs browses every league behind the Matchdays filter row
+  ([0032](./decisions/0032-clubs-browse-by-league.md)) — verified on the
+  simulator switching LaLiga → Premier League. ⚠ Search stays global and hides
+  the row; only the browse list waits on the roster, or switching league blanks
+  the screen under the reader's finger.
 
 ### Open — in priority order
 

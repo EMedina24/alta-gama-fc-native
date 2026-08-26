@@ -9,13 +9,17 @@
  *
  * ⚠ A null shirt number sorts LAST, not as zero — and an absent field renders as
  * an empty cell, never `—`, `0` or "Unknown".
+ *
+ * ⚠ Rows key and select on `player.id`, the stable PERSON id, never on the shirt:
+ * a Premier League squad can carry two players wearing the same number (Arsenal
+ * has two #39s), and its list runs 31–64 deep, academy included.
  */
 import { Fragment, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Hairline, Text } from '@/components/atoms';
+import { Hairline, PlayerPhoto, Text } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
-import { Spacing } from '@/constants/theme';
+import { Colors, Size, Spacing } from '@/constants/theme';
 import type { SquadPlayerView, SquadPosition } from '@/lib/cronogol/types';
 
 const BANDS: readonly SquadPosition[] = ['GK', 'DEF', 'MID', 'FWD'];
@@ -24,9 +28,11 @@ export interface SquadListProps {
   players: readonly SquadPlayerView[];
   bandLabels: Record<SquadPosition, string>;
   emptyLabel: string;
+  /** ⚠ Receives the PERSON id, not the shirt. Omit to render inert rows. */
+  onSelectPlayer?: (id: string) => void;
 }
 
-export function SquadList({ players, bandLabels, emptyLabel }: SquadListProps) {
+export function SquadList({ players, bandLabels, emptyLabel, onSelectPlayer }: SquadListProps) {
   const grouped = useMemo(
     () =>
       BANDS.map((band) => ({
@@ -60,14 +66,11 @@ export function SquadList({ players, bandLabels, emptyLabel }: SquadListProps) {
         <Fragment key={group.band}>
           <SectionHeader title={bandLabels[group.band]} meta={String(group.players.length)} />
           {group.players.map((player) => (
-            <View key={player.id} style={styles.row}>
-              <Text variant="numeral" tabular color="textFaint" style={styles.shirt}>
-                {player.shirt ?? ''}
-              </Text>
-              <Text variant="bodyStrong" numberOfLines={1} style={styles.name}>
-                {player.name}
-              </Text>
-            </View>
+            <Row
+              key={player.id}
+              player={player}
+              onPress={onSelectPlayer ? () => onSelectPlayer(player.id) : undefined}
+            />
           ))}
           <Hairline />
         </Fragment>
@@ -76,9 +79,57 @@ export function SquadList({ players, bandLabels, emptyLabel }: SquadListProps) {
   );
 }
 
+/**
+ * ⚠ The portrait and the chevron are the only thing telling a reader the row
+ * opens — a bare row with a press handler is an invisible affordance.
+ *
+ * ⚠ The accessibility label omits a null shirt rather than reading "null" or
+ * "zero", the same rule the visible cell follows.
+ */
+function Row({ player, onPress }: { player: SquadPlayerView; onPress?: () => void }) {
+  const body = (
+    <>
+      <Text variant="numeral" tabular color="textFaint" style={styles.shirt}>
+        {player.shirt ?? ''}
+      </Text>
+      <PlayerPhoto src={player.photoUrl} variant="row" />
+      <Text variant="bodyStrong" numberOfLines={1} style={styles.name}>
+        {player.name}
+      </Text>
+      {onPress ? (
+        <Text variant="body" color="textFaint" style={styles.chevron}>
+          ›
+        </Text>
+      ) : null}
+    </>
+  );
+
+  if (!onPress) return <View style={styles.row}>{body}</View>;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={
+        player.shirt === null ? player.name : `${player.name}, ${player.shirt}`
+      }
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+      {body}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.two },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.two },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    paddingVertical: Spacing.two,
+    minHeight: Size.minTouch,
+  },
+  rowPressed: { backgroundColor: Colors.dark.rowActive },
   shirt: { width: 28, textAlign: 'right' },
   name: { flex: 1 },
+  chevron: { paddingLeft: Spacing.one },
 });

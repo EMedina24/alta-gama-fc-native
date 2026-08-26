@@ -143,6 +143,31 @@ export interface Copy {
     roundPrefix: string;
     notFound: string;
   };
+  /**
+   * The player sheet.
+   *
+   * ⚠ `positionNames` is SINGULAR and is NOT `club.bandLabels` — the list groups
+   * "Goalkeepers", the sheet describes one "Goalkeeper".
+   *
+   * ⚠ There is no key for a missing value, deliberately. A null renders an EMPTY
+   * cell under its label; `note` is what explains the blank.
+   */
+  player: {
+    done: string;
+    age: string;
+    nationality: string;
+    height: string;
+    weight: string;
+    foot: string;
+    registered: string;
+    heightValue: (cm: number) => string;
+    weightValue: (kg: number) => string;
+    positionNames: Record<'GK' | 'DEF' | 'MID' | 'FWD', string>;
+    footValues: Record<'left' | 'right' | 'both', string>;
+    notFound: string;
+    /** ⚠ Not a disclaimer to trim — see the note in the sheet organism. */
+    note: string;
+  };
   clubs: {
     title: string;
     search: (n: number) => string;
@@ -174,6 +199,18 @@ export interface Copy {
     next: string;
     missing: (n: number) => string;
     finished: string;
+    /**
+     * The caption under an in-play score, in `live`. ⚠ Means "as of the last
+     * check" and must never become the word "live" — the fixture sweep is ~3h
+     * (ADR 0035). Kept short: it renders uppercase inside `Size.timingColumn`.
+     */
+    inProgress: string;
+    /**
+     * ⚠ Required beside the list whenever an in-play score is on screen, and
+     * never removed to tidy the screen. States both facts in one sentence: the
+     * score is as of the last check, and the check runs roughly every 3h.
+     */
+    inPlayNote: string;
     empty: string;
     error: string;
     retry: string;
@@ -335,6 +372,22 @@ export const esCopy: Copy = {
     notFound: 'No encontramos este club.',
   },
 
+  player: {
+    done: 'Listo',
+    age: 'Edad',
+    nationality: 'Nacionalidad',
+    height: 'Altura',
+    weight: 'Peso',
+    foot: 'Pie',
+    registered: 'Inscrito',
+    heightValue: (cm: number) => `${(cm / 100).toFixed(2)} m`,
+    weightValue: (kg: number) => `${kg} kg`,
+    positionNames: { GK: 'Portero', DEF: 'Defensa', MID: 'Centrocampista', FWD: 'Delantero' },
+    footValues: { left: 'Izquierdo', right: 'Derecho', both: 'Ambos' },
+    notFound: 'No encontramos a este jugador.',
+    note: 'De la plantilla inscrita en la liga, sincronizada cada semana. Las casillas vacías son datos que la liga no publica: en esta ruta no hay partidos jugados ni goles.',
+  },
+
   clubs: {
     title: 'Clubes',
     search: (n: number) => `Buscar entre ${n} clubes`,
@@ -365,6 +418,10 @@ export const esCopy: Copy = {
     next: 'Jornada siguiente',
     missing: (n: number) => `Faltan ${n} partidos por publicar`,
     finished: 'FIN',
+    // ⚠ Dice "en juego", nunca "en directo": el barrido corre cada ~3 h.
+    inProgress: 'En juego',
+    inPlayNote:
+      'En juego en la última comprobación. Se actualiza cada ~3 h; todavía no hay marcador en vivo.',
     empty: 'Esta jornada aún no tiene partidos publicados.',
     error: 'No se ha podido cargar la jornada.',
     retry: 'Reintentar',
@@ -535,6 +592,22 @@ export const enCopy: Copy = {
     notFound: 'We could not find this club.',
   },
 
+  player: {
+    done: 'Done',
+    age: 'Age',
+    nationality: 'Nationality',
+    height: 'Height',
+    weight: 'Weight',
+    foot: 'Foot',
+    registered: 'Registered',
+    heightValue: (cm: number) => `${(cm / 100).toFixed(2)} m`,
+    weightValue: (kg: number) => `${kg} kg`,
+    positionNames: { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' },
+    footValues: { left: 'Left', right: 'Right', both: 'Both' },
+    notFound: 'We could not find this player.',
+    note: "From the league's registered squad, synced weekly. Blank cells are fields the league does not publish — no appearance or goal data is available on this route.",
+  },
+
   clubs: {
     title: 'Clubs',
     search: (n: number) => `Search ${n} clubs`,
@@ -564,6 +637,11 @@ export const enCopy: Copy = {
     next: 'Next matchday',
     missing: (n: number) => `${n} matches not published yet`,
     finished: 'FT',
+    // ⚠ "In play", never "live" — and shorter than the board's "In progress",
+    // which does not fit the timing column at eyebrow tracking.
+    inProgress: 'In play',
+    inPlayNote:
+      'In play as of the last check. Updates roughly every 3h — there is no live score feed yet.',
     empty: 'No matches published for this matchday yet.',
     error: 'Could not load the matchday.',
     retry: 'Try again',

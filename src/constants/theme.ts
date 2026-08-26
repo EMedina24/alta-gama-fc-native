@@ -13,6 +13,7 @@ const dark = {
   raised: '#1e2126',            // segmented selection, avatar, secondary button
   raisedAlt: '#242830',         // control track inside a card (sheet segmenteds)
   rowActive: '#12161a',         // row of a subscribed club / live fixture
+  glyph: '#39404a',             // the player silhouette, on `raisedAlt`
 
   // Hairlines
   hairline: 'rgba(255,255,255,0.05)',      // row separators in a list
@@ -78,21 +79,72 @@ export const Type = {
   /** Uppercase eyebrows / column heads. Always with letterSpacing. */
   eyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1.8, textTransform: 'uppercase' },
   eyebrowSm: { fontSize: 9.5, fontWeight: '800', letterSpacing: 1.3, textTransform: 'uppercase' },
+  /**
+   * The one eyebrow meant to be READ, not scanned: the next-up card's date and
+   * zone lines. At `eyebrowSm` they were 9.5pt beside a 32pt time and lost the
+   * comparison — and the zone line is the sentence that stops a kickoff being
+   * read as the stadium's local time (ADR 0034).
+   */
+  eyebrowLg: { fontSize: 12.5, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
   /** Scores, kickoff times, countdowns. */
   scoreLarge: { fontSize: 38, fontWeight: '700', letterSpacing: -1.5 },
-  kickoff: { fontSize: 40, fontWeight: '700', letterSpacing: -1.4 },
+  kickoff: { fontSize: 32, fontWeight: '700', letterSpacing: -1.1 },
+  /**
+   * The countdown's digits and its unit letters. Smaller than `kickoff` because
+   * the row carries four groups (`1d 18h 04m 12s`), not one time (ADR 0034).
+   */
+  countdownNum: { fontSize: 26, fontWeight: '700', letterSpacing: -0.8 },
+  countdownUnit: { fontSize: 12, fontWeight: '800', letterSpacing: 0.4 },
   numeral: { fontSize: 16, fontWeight: '800', letterSpacing: -0.3 },
+  /**
+   * The jornada row's score/kickoff (ADR 0035). At `numeral` the number sat at
+   * the same weight as the two club names beside it and the row had no anchor;
+   * 19pt against 15pt names makes the number the thing you scan down. Lighter
+   * than `numeral` (700 vs 800) because it is bigger — the two read the same.
+   *
+   * ⚠ `numeral` stays at 16: `ScoreLine size='row'`, `UpcomingRow` and
+   * `SeasonSpine` are all sized against it.
+   */
+  numeralLg: { fontSize: 19, fontWeight: '700', letterSpacing: -0.5 },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
 export const Size = {
   minTouch: 44, rowSkeleton: 44, pill: 34, switchW: 51, switchH: 31, switchKnob: 27,
   crestRow: 26, crestList: 30, crestCard: 40, crestHero: 58,
+  /**
+   * The next-up card's pairing. Deliberately larger than `crestCard` — that
+   * one is the list/row size and stays where it is (ADR 0034). `versusBadge`
+   * is the accent ring that sits between the two.
+   */
+  crestNext: 64, versusBadge: 34,
   tabIcon: 22, avatar: 36, sheetGrabber: 38,
+  /**
+   * Player portraits. ⚠ The SOURCE aspect ratio varies by league — 256×278
+   * (LaLiga), 110×140 (Premier League), and an operator stopgap has no
+   * guaranteed size at all. These are the FRAME; the image is fitted inside
+   * it, never stretched to it.
+   */
+  playerThumb: 34, playerPhotoW: 104, playerPhotoH: 116,
   /** League filter tiles: artwork only, four across inside the screen gutter. */
   leagueTileW: 80, leagueTileH: 56, leagueMarkW: 52, leagueMarkH: 28,
-  /** The time column. Fixed so switching 12/24h never reflows a row. */
-  timingColumn: 76,
+  /**
+   * The time column, per clock format. Fixed *within* a format so no single row
+   * reflows against its neighbours — every row on screen shares one `clock`, so
+   * one of these two is in force at a time and the pairing column always aligns.
+   *
+   * ⚠ The 12-hour number is measured, not guessed (ADR 0035): `11:00 am` at
+   * `Type.numeralLg` is ~83pt, and at 76 it pushed the crest pair and the whole
+   * name column right on that ONE row. `IN PLAY` beneath it is ~47pt and never
+   * binds.
+   *
+   * ⚠ They are two tokens rather than one because 88 charged every reader for a
+   * width only 12-hour readers need, and the row cannot spare it: at 40pt crests
+   * the 24pt difference is `Espanyol de Barcelona` fitting or truncating. The
+   * default clock is `24`.
+   */
+  timingColumn: 64,
+  timingColumn12: 88,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

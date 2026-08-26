@@ -37,6 +37,13 @@ export default function RootLayout() {
           <Stack.Screen name="(sheets)/alerts" options={sheet} />
           <Stack.Screen name="(sheets)/calendar" options={sheet} />
           <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />
+          {/* ⚠ `fitToContents` rather than a fraction: the player sheet is one
+              fixed block, and a 0.6 detent would either clip its Done button or
+              leave dead space under the footnote. */}
+          <Stack.Screen
+            name="(sheets)/player"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>

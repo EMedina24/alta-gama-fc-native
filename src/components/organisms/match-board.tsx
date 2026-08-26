@@ -20,7 +20,7 @@
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Crest, Pill, Text } from '@/components/atoms';
+import { Crest, Pill, Text, VersusBadge } from '@/components/atoms';
 import { Countdown, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
@@ -115,26 +115,31 @@ export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
             ) : null}
           </View>
 
-          <View style={styles.pair}>
+          {/* One VoiceOver stop for the whole pairing, as UpcomingRow already
+              does — otherwise it reads as four: crest, name, "V", name. */}
+          <View
+            style={styles.pair}
+            accessible
+            accessibilityLabel={`${next.home.name} v ${next.away.name}`}>
             <View style={styles.pairSide}>
               <Crest
                 src={next.home.crest}
                 fallback={next.home.abbr}
-                size={Size.crestCard}
+                size={Size.crestNext}
                 filled={!next.home.crest}
               />
               <Text variant="bodyStrong" center numberOfLines={1}>
                 {next.home.name}
               </Text>
             </View>
-            <Text variant="callout" color="textFaint" style={styles.versus}>
-              v
-            </Text>
+            <View style={styles.versus}>
+              <VersusBadge />
+            </View>
             <View style={styles.pairSide}>
               <Crest
                 src={next.away.crest}
                 fallback={next.away.abbr}
-                size={Size.crestCard}
+                size={Size.crestNext}
                 filled={!next.away.crest}
               />
               <Text variant="bodyStrong" center numberOfLines={1}>
@@ -148,13 +153,14 @@ export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
               {next.kickoffLabel}
             </Text>
             <View style={styles.kickoffMeta}>
-              <Text variant="eyebrowSm" color="textSecondary">
+              <Text variant="eyebrowLg" color="textSecondary">
                 {next.dateLabel}
               </Text>
               {/* ⚠ States whose clock this is. Every time on screen is the
                   reader's own zone, and saying so is what stops "9:00 PM" being
-                  read as the stadium's local time. */}
-              <Text variant="eyebrowSm" color="textFaint">
+                  read as the stadium's local time — which is why it is set to
+                  be read rather than skimmed. */}
+              <Text variant="eyebrowLg" color="textFaint">
                 {next.zoneLabel}
               </Text>
             </View>
@@ -194,10 +200,24 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.hairlineMid },
   venue: { flexShrink: 1, textAlign: 'right' },
-  pair: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
+  pair: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.three },
   pairSide: { flex: 1, alignItems: 'center', gap: Spacing.two },
-  versus: { marginTop: Size.crestCard / 2 - 8 },
+  /** Centres the ring on the crest line — derived, so a crest resize follows. */
+  versus: { marginTop: (Size.crestNext - Size.versusBadge) / 2 },
   kickoffRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
-  kickoffMeta: { flex: 1, gap: Spacing.half, paddingBottom: Spacing.two },
-  countdownRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  kickoffMeta: { flex: 1, gap: Spacing.one, paddingBottom: Spacing.one },
+  /**
+   * ⚠ WRAPS rather than shrinks. `1d 18h 04m 12s` is four rigid groups, and at
+   * the largest Dynamic Type sizes squeezing them slid every digit over its own
+   * unit letter. Given the room it drops to its own line instead, which is the
+   * one failure mode here that stays readable.
+   */
+  countdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    columnGap: Spacing.three,
+    rowGap: Spacing.two,
+  },
 });

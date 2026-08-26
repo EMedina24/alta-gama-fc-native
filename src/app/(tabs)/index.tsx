@@ -110,6 +110,16 @@ export default function TodayScreen() {
     muted,
   });
 
+  /**
+   * The next-up pairing. Its own helper because the crest renders at
+   * `Size.crestNext` — `side()` asks for `xsmall`, which is the row weight and
+   * blurs at 56pt (ADR 0034).
+   */
+  const nextSide = (team: WindowFixtureView['homeTeam']) => ({
+    ...side(team, null, false),
+    crest: crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'small'),
+  });
+
   return (
     <ScreenScaffold
       title={copy.today.title}
@@ -153,8 +163,8 @@ export default function TodayScreen() {
           next={
             next
               ? {
-                  home: side(next.homeTeam, null, false),
-                  away: side(next.awayTeam, null, false),
+                  home: nextSide(next.homeTeam),
+                  away: nextSide(next.awayTeam),
                   kickoffUtc: next.kickoffUtc,
                   kickoffTbd: next.kickoffTbd,
                   // ⚠ Its OWN label, not the section header's — the card sat

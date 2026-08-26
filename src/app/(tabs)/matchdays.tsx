@@ -30,7 +30,7 @@ import { FixtureList } from '@/components/organisms/fixture-list';
 import { ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { currentMatchweek, isIda, isMidweek } from '@/lib/cronogol/jornada';
-import { LEAGUES, SEASON, seasonLabel } from '@/lib/cronogol/leagues';
+import { LEAGUES, SEASON, leagueOptions, seasonLabel } from '@/lib/cronogol/leagues';
 import { formatDateRange } from '@/lib/format';
 import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
@@ -86,16 +86,7 @@ export default function MatchdaysScreen() {
     return (n: number) => done.has(n);
   }, [index.data]);
 
-  const options: LeagueOption[] = LEAGUES.map((l) => {
-    const art = artwork.data?.[l.apiSlug];
-    return {
-      slug: l.slug,
-      name: l.name,
-      // ⚠ `icon` is the icon-only cut and is LaLiga's alone today; `primary`
-      // is the full lockup. The tiles carry no text label (ADR 0031).
-      logoUrl: art?.logoUrls?.icon ?? art?.logoUrls?.primary ?? art?.logoUrl ?? null,
-    };
-  });
+  const options: LeagueOption[] = leagueOptions(artwork.data);
 
   const summary = index.data?.matchweeks.find((w) => w.matchweek === matchweek) ?? null;
   const half = league.hasHalves && matchweek !== null
@@ -216,12 +207,26 @@ export default function MatchdaysScreen() {
             </Text>
           ) : null}
 
+          {/**
+           * ⚠ The age disclosure that has to accompany any in-play score. One
+           * calm sentence in the footnote slot rather than the board's
+           * `FeedAge` + note pair: `/cronogol/fixtures` carries no per-row
+           * stamp, so `FeedAge` would print null hours on every row, and a
+           * per-row age line in a ten-row list is noise (ADR 0035).
+           */}
+          {data.fixtures.some((fixture) => fixture.status === 'live') ? (
+            <Text variant="footnote" color="textFaint">
+              {copy.matchdays.inPlayNote}
+            </Text>
+          ) : null}
+
           <FixtureList
             fixtures={data.fixtures}
             zone={zone}
             clock={clock}
             phrases={phrases}
             finishedLabel={copy.matchdays.finished}
+            inProgressLabel={copy.matchdays.inProgress}
           />
         </>
       ) : null}
