@@ -18,6 +18,7 @@ import { signInWithGoogle, GOOGLE_REDIRECT_URL } from '@/features/auth/google';
 import { syncPushRegistration } from '@/features/push/sync';
 import { getAccount } from '@/lib/cronogol/account';
 import { useLocale, usePreferences } from '@/store/preferences';
+import { readLastLinkedUser } from '@/store/registration';
 import { getAccessToken, signOut, useSession } from '@/store/session';
 
 export default function DebugAuth() {
@@ -74,6 +75,27 @@ export default function DebugAuth() {
           label="PUT push/device (want linked)"
           tone="outline"
           onPress={() => void probe('push', () => syncPushRegistration(prefs, locale))}
+        />
+        {/**
+         * ⚠ Read this whenever the button above answers `unchanged`.
+         *
+         * `unchanged` is ambiguous on its own: it means the diff found nothing to
+         * send, which is the CORRECT answer once sign-in has already triggered an
+         * auto-registration — but it looks identical to a link that never
+         * happened. This resolves it, because the linked id is persisted ONLY
+         * when the server's response says `linked: true`.
+         */}
+        <Button
+          label="Linked to this account?"
+          tone="outline"
+          onPress={() =>
+            void probe('linked', async () => {
+              const stored = await readLastLinkedUser();
+              if (!stored) return 'NO — never linked';
+              if (stored !== session?.userId) return `NO — linked to a different account (${stored})`;
+              return 'YES — server confirmed linked:true for this account';
+            })
+          }
         />
         <Button label="Sign out" tone="danger" onPress={() => void probe('signOut', signOut)} />
       </View>

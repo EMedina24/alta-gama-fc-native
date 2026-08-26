@@ -13,7 +13,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { digestStringAsync, CryptoDigestAlgorithm, randomUUID } from 'expo-crypto';
 
 import { supabase } from '@/lib/supabase/client';
-import { patchAccount } from '@/lib/cronogol/account';
+import { getAccount, patchAccount } from '@/lib/cronogol/account';
 
 /**
  * Apple's name parts, as one string.
@@ -77,17 +77,47 @@ export async function signInWithApple(): Promise<void> {
    * the worse outcome, and the sheet reads the account back from
    * `GET /cronogol/me` regardless.
    *
-   * ⚠ `notifyFixtureChanges: false` is required rather than chosen — the DTO
-   * rejects a body without it. `false` is the server's own default for a new
-   * profile, so a first-authorization write cannot flip an existing opt-in: this
-   * branch only runs when Apple hands us a name, which is once, at creation.
+   * ⚠⚠ **The account is READ FIRST, and that is not a nicety.**
+   *
+   * "First authorization" is once per Apple ID **per app** — NOT once per
+   * account. Anyone who signed up on `altagamafc.com` and then signs in here for
+   * the first time lands in this branch against an account that is months old,
+   * because Supabase links the Apple identity to the existing user by matching
+   * verified email. Confirmed on device 2026-08-26: the first real Apple sign-in
+   * returned a profile carrying a `timeZone` this app never writes.
+   *
+   * Two things follow, and both are silent data loss if you skip the read:
+   *
+   * - `notifyFixtureChanges` is REQUIRED by the DTO (an absent one is a 400), so
+   *   a value must be sent. Sending `false` blind switches off the fixture-change
+   *   emails a web user had opted into, invisibly, from a sign-in they expected
+   *   to change nothing. It must be echoed back, never assumed.
+   * - A `displayName` the user already chose is **theirs** — the backend stops
+   *   re-deriving it from the provider precisely so it survives later sign-ins.
+   *   Overwriting it with Apple's version would undo that.
+   *
+   * ⚠ On a read failure this writes NOTHING and the name is lost for good. That
+   * is the deliberate side to fail on: a lost name is visible and the user can
+   * live with it, whereas a silently disabled notification opt-in is neither.
+   *
+   * ⚠ Deliberately NOT awaited into the sign-in's failure path. The session is
+   * already valid at this point; failing the whole sign-in over a name would be
+   * the worse outcome, and the sheet reads the account back from
+   * `GET /cronogol/me` regardless.
    */
   const name = fullName(credential.fullName);
-  if (name) {
-    try {
-      await patchAccount({ notifyFixtureChanges: false, displayName: name });
-    } catch {
-      // Nothing to retry against — the credential is spent either way.
-    }
+  if (!name) return;
+
+  try {
+    const account = await getAccount();
+    // Already named — by the user, or by a previous provider sign-in. Leave it.
+    if (account.displayName) return;
+
+    await patchAccount({
+      notifyFixtureChanges: account.notifyFixtureChanges,
+      displayName: name,
+    });
+  } catch {
+    // See the read-failure note above: losing the name beats corrupting the opt-in.
   }
 }
