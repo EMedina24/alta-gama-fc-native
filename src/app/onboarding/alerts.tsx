@@ -49,7 +49,17 @@ export default function OnboardingAlerts() {
   };
 
   const rows = [
-    { title: copy.account.reminder, note: copy.account.reminderNote, on: prefs.alertReminder },
+    {
+      title: copy.account.reminder,
+      /**
+       * ⚠ Reads the ACTUAL lead times rather than naming 30 in prose (ADR 0040).
+       * The primer runs before anything has been chosen, so this shows the
+       * default — but a reader replaying onboarding from the account sheet has
+       * their own picks, and a hardcoded "30 minutes" would be wrong for them.
+       */
+      note: prefs.reminderLeads.map((lead) => copy.account.leads[lead]).join(' · '),
+      on: prefs.alertReminder,
+    },
     { title: copy.account.moved, note: copy.account.movedNote, on: prefs.alertMoved },
     { title: copy.account.postponed, note: copy.account.postponedNote, on: prefs.alertPostponed },
   ];

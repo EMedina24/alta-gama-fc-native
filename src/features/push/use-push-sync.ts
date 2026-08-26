@@ -83,6 +83,7 @@ export function usePushSync(): void {
       const planned = selectReminders(
         upcoming.data.fixtures,
         prefs.followed,
+        prefs.reminderLeads,
         new Date(),
         (iso) => formatKickoffTime(iso, zone, prefs.clock),
       );
@@ -97,5 +98,16 @@ export function usePushSync(): void {
       if (state === 'active') rearm();
     });
     return () => subscription.remove();
-  }, [upcoming.data, prefs.followed, prefs.alertReminder, prefs.clock, zone, copy]);
+    // ⚠ `reminderLeads` is in the deps: changing a lead changes the whole pending
+    // queue, and without it a toggled lead would not take effect until the next
+    // foreground.
+  }, [
+    upcoming.data,
+    prefs.followed,
+    prefs.alertReminder,
+    prefs.reminderLeads,
+    prefs.clock,
+    zone,
+    copy,
+  ]);
 }

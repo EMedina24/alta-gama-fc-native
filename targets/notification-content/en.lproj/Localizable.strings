@@ -12,7 +12,11 @@
   card's own furniture.
 */
 
+/* ⚠ One per lead time (ADR 0040) — see `MatchCard.eyebrowText`. Adding a lead
+   to `REMINDER_LEAD_OPTIONS` means adding a line here and in es.lproj. */
+"KICKOFF IN 1 HOUR" = "KICKOFF IN 1 HOUR";
 "KICKOFF IN 30" = "KICKOFF IN 30";
+"KICKOFF IN 15" = "KICKOFF IN 15";
 "KICKOFF MOVED" = "KICKOFF MOVED";
 "POSTPONED" = "POSTPONED";
 

@@ -4,7 +4,14 @@ import { CalendarSheet } from '@/components/organisms/calendar-sheet';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { zoneLabel } from '@/lib/timezones';
-import { setAlert, setClock, setLanguage, usePreferences, useZone } from '@/store/preferences';
+import {
+  setAlert,
+  setClock,
+  setLanguage,
+  setReminderLead,
+  usePreferences,
+  useZone,
+} from '@/store/preferences';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
@@ -41,12 +48,14 @@ export default function DebugSheets() {
           reminder: prefs.alertReminder,
           moved: prefs.alertMoved,
           postponed: prefs.alertPostponed,
+          leads: prefs.reminderLeads,
         }}
         feeds={[
           { slug: 'barcelona', name: 'Barcelona', url: clubFeedUrl('barcelona') },
           { slug: 'valencia', name: 'Valencia', url: clubFeedUrl('valencia') },
         ]}
         onSetAlert={setAlert}
+        onSetReminderLead={setReminderLead}
         onSetLanguage={setLanguage}
         onSetClock={setClock}
         /**

@@ -6,7 +6,9 @@
   el inglés: a 9.5pt con .14em de tracking, el ancho es el límite real.
 */
 
+"KICKOFF IN 1 HOUR" = "EMPIEZA EN 1 HORA";
 "KICKOFF IN 30" = "EMPIEZA EN 30";
+"KICKOFF IN 15" = "EMPIEZA EN 15";
 "KICKOFF MOVED" = "CAMBIO DE HORARIO";
 "POSTPONED" = "APLAZADO";
 

@@ -71,6 +71,12 @@ export default function DebugPush() {
       <Row label="status" value={status} />
       <Row label="last registered slugs" value={lastSent} />
       <Row label="local reminders" value={scheduled} />
+      {/* ⚠ The pending count above only makes sense next to this: three leads on
+          means one match costs three of the 60 slots (ADR 0040). */}
+      <Row
+        label="reminder leads"
+        value={prefs.alertReminder ? `${prefs.reminderLeads.join(', ')} min` : 'off'}
+      />
       <Row label="followed clubs" value={String(prefs.followed.length)} />
 
       <Text variant="eyebrowSm" color="textFaint">

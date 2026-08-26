@@ -21,7 +21,8 @@ import { StyleSheet, View } from 'react-native';
 import { Button, SkeletonRows, Text } from '@/components/atoms';
 import { LeagueSwitch, type LeagueOption } from '@/components/molecules';
 import { StandingsTable } from '@/components/organisms/standings-table';
-import { ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Size, Spacing } from '@/constants/theme';
 import { LEAGUES, byEditorialOrder, findLeagueByApiSlug, roundCount } from '@/lib/cronogol/leagues';
 import { completedMatchweek } from '@/lib/cronogol/standings';
@@ -31,6 +32,7 @@ import { usePreferences } from '@/store/preferences';
 
 export default function TableScreen() {
   const router = useRouter();
+  const initials = useIdentityInitials();
   const { copy, phrases } = useI18n();
   const { followed } = usePreferences();
   const standings = useStandings();
@@ -78,6 +80,9 @@ export default function TableScreen() {
   return (
     <ScreenScaffold
       title={copy.table.title}
+      accessory={
+        <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
+      }
       eyebrow={eyebrow}
       onRefresh={() => void standings.refetch()}
       refreshing={standings.isRefetching}

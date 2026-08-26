@@ -44,7 +44,11 @@ import { SectionHeader } from '@/components/molecules';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import type { Copy } from '@/lib/i18n/copy';
 import type { Locale } from '@/lib/i18n/phrases';
-import type { ClockFormat } from '@/store/preferences';
+import {
+  REMINDER_LEAD_OPTIONS,
+  type ClockFormat,
+  type ReminderLead,
+} from '@/store/preferences';
 
 export interface AccountFeed {
   slug: string;
@@ -67,9 +71,17 @@ export interface AccountSheetProps {
   locale: Locale;
   clock: ClockFormat;
   zoneLabel: string;
-  alerts: { reminder: boolean; moved: boolean; postponed: boolean };
+  alerts: {
+    reminder: boolean;
+    moved: boolean;
+    postponed: boolean;
+    /** ⚠ Minutes before kickoff, subordinate to `reminder` (ADR 0040). Never
+     *  empty while `reminder` is true — the store keeps the two coupled. */
+    leads: readonly ReminderLead[];
+  };
   feeds: readonly AccountFeed[];
   onSetAlert: (key: 'alertReminder' | 'alertMoved' | 'alertPostponed', value: boolean) => void;
+  onSetReminderLead: (lead: ReminderLead, value: boolean) => void;
   onSetLanguage: (lang: Locale) => void;
   onSetClock: (clock: ClockFormat) => void;
   onReplayOnboarding: () => void;
@@ -118,6 +130,47 @@ function Row({
   );
 }
 
+/**
+ * One lead time, nested under the reminder master.
+ *
+ * ⚠ Indented and drawn at `callout` rather than `bodyStrong` — the indent is the
+ * only thing saying "this belongs to the row above", since the group has no
+ * nesting affordance of its own.
+ *
+ * ⚠ `disabled` is real, not cosmetic. While the master is off these deliver
+ * nothing, and a live switch that changes nothing visible is the same lie the
+ * disabled goals row exists to avoid.
+ */
+function LeadRow({
+  title,
+  value,
+  disabled,
+  onValueChange,
+}: {
+  title: string;
+  value: boolean;
+  disabled: boolean;
+  onValueChange: (value: boolean) => void;
+}) {
+  return (
+    <View style={[styles.row, styles.leadRow]}>
+      <Text
+        variant="callout"
+        color={disabled ? 'textFaint' : 'textSecondary'}
+        style={styles.rowText}
+      >
+        {title}
+      </Text>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        accessibilityLabel={title}
+      />
+    </View>
+  );
+}
+
 function Segmented<T extends string>({
   options,
   value,
@@ -151,6 +204,7 @@ export function AccountSheet({
   alerts,
   feeds,
   onSetAlert,
+  onSetReminderLead,
   onSetLanguage,
   onSetClock,
   onReplayOnboarding,
@@ -223,6 +277,18 @@ export function AccountSheet({
             accessibilityLabel={a.reminder}
           />
         </Row>
+        {/* ⚠ No `Hairline` above these — they read as part of the row they sit
+            under, and a rule would cut them off from it. The next one is below
+            the last lead, where the nesting actually ends. */}
+        {REMINDER_LEAD_OPTIONS.map((lead) => (
+          <LeadRow
+            key={lead}
+            title={a.leads[lead]}
+            value={alerts.leads.includes(lead)}
+            disabled={!alerts.reminder}
+            onValueChange={(v) => onSetReminderLead(lead, v)}
+          />
+        ))}
         <Hairline />
         <Row title={a.moved} note={a.movedNote}>
           <Switch
@@ -387,6 +453,9 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   rowText: { flex: 1, gap: Spacing.half, minWidth: 0 },
+  // The indent is the nesting cue; the shorter row keeps three of them from
+  // outweighing the master above.
+  leadRow: { paddingLeft: Spacing.seven, paddingVertical: Spacing.two, minHeight: 44 },
   url: { fontFamily: 'Menlo' },
   segmented: {
     flexDirection: 'row',

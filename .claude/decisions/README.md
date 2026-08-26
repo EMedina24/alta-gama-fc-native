@@ -72,3 +72,4 @@ more words than one that's obvious once you see it.
 | [0037](./0037-rich-notifications-server-composed-crests.md) | Rich notifications: the backend composes every crest; the app grows a service and a content extension | Accepted — verified on device |
 | [0038](./0038-accounts-apple-and-google.md) | Accounts: Apple and Google, sign-in optional | Accepted |
 | [0039](./0039-auth-goes-direct-to-supabase.md) | Auth goes direct to Supabase `/auth/v1`; the backend stays the only *data* gateway | Accepted — waypoint, proxied auth intended |
+| [0040](./0040-kickoff-reminder-lead-times.md) | Kickoff reminders offer 1 h / 30 min / 15 min lead times; the notification budget counts notifications, not fixtures | Accepted — not yet on a device |

@@ -77,13 +77,18 @@ export async function crestPairFile(fixtureId: string): Promise<string | null> {
  *
  * ⚠ See the header: the attachment is MOVED, not read. Never pass a cache path
  * to `scheduleNotificationAsync` directly.
+ *
+ * ⚠ `key` is per NOTIFICATION, not per fixture (`PlannedReminder.key`). A reader
+ * with three lead times gets three notifications for one match, and each needs
+ * its own copy — the first one scheduled consumes the file, and iOS drops an
+ * attachment it cannot read without saying so (ADR 0040).
  */
-export async function attachmentCopy(cachedUri: string, fixtureId: string): Promise<string | null> {
+export async function attachmentCopy(cachedUri: string, key: string): Promise<string | null> {
   try {
     const source = new File(cachedUri);
     if (!source.exists) return null;
 
-    const target = new File(dir(ATTACH_DIR), `${fixtureId}.png`);
+    const target = new File(dir(ATTACH_DIR), `${key}.png`);
     await source.copy(target, { overwrite: true });
     return target.uri;
   } catch {
@@ -119,15 +124,24 @@ export async function warmLongLookCrests(fixtureId: string): Promise<void> {
 }
 
 /**
- * Drop every cached crest for a fixture no longer in the reminder queue.
+ * Drop every cached crest and attachment copy no longer in the reminder queue.
  *
  * ⚠ Called at the END of a re-arm, never at the start — pruning first would
  * throw away exactly the files the re-arm is about to attach.
+ *
+ * ⚠ **TWO keep-lists, because the three directories are keyed differently.** The
+ * plate cache and the App Group are per FIXTURE; the attachment directory is per
+ * NOTIFICATION (`${fixtureId}-${lead}`). Sweeping the attachments against fixture
+ * ids would match nothing and delete every copy on every re-arm (ADR 0040).
  */
-export function pruneCrestCache(keep: readonly string[]): void {
-  const wanted = new Set(keep);
+export function pruneCrestCache(
+  keepFixtures: readonly string[],
+  keepAttachments: readonly string[],
+): void {
+  const wantedFixtures = new Set(keepFixtures);
+  const wantedAttachments = new Set(keepAttachments);
 
-  const sweep = (directory: Directory, idOf: (name: string) => string) => {
+  const sweep = (directory: Directory, wanted: Set<string>, idOf: (name: string) => string) => {
     if (!directory.exists) return;
     for (const entry of directory.list()) {
       // ⚠ **A `Directory`'s `uri` ends in a slash and a `File`'s does not.**
@@ -145,11 +159,13 @@ export function pruneCrestCache(keep: readonly string[]): void {
   };
 
   try {
-    sweep(new Directory(Paths.cache, CACHE_DIR), (name) => name.replace(/\.png$/, ''));
-    sweep(new Directory(Paths.cache, ATTACH_DIR), (name) => name.replace(/\.png$/, ''));
+    const stem = (name: string) => name.replace(/\.png$/, '');
+
+    sweep(new Directory(Paths.cache, CACHE_DIR), wantedFixtures, stem);
+    sweep(new Directory(Paths.cache, ATTACH_DIR), wantedAttachments, stem);
 
     const container = Paths.appleSharedContainers[APP_GROUP];
-    if (container) sweep(new Directory(container, GROUP_DIR), (name) => name);
+    if (container) sweep(new Directory(container, GROUP_DIR), wantedFixtures, (name) => name);
   } catch {
     // A cache that will not prune is a disk-space problem, not a correctness one.
   }

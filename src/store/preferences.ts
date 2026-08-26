@@ -25,8 +25,14 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/phrases';
 
 const STORAGE_KEY = 'altagama:preferences';
 
-/** Bump when the stored SHAPE changes. */
-const SCHEMA_VERSION = 1;
+/**
+ * Bump when the stored SHAPE changes.
+ *
+ * ⚠ 2 added `reminderLeads` (ADR 0040). Bumping is safe precisely because
+ * `FOLLOWED_RULE_VERSION` did NOT move — that separation is what stops a shape
+ * bump from emptying every reader's follow list.
+ */
+const SCHEMA_VERSION = 2;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -41,6 +47,28 @@ const SCHEMA_VERSION = 1;
 const FOLLOWED_RULE_VERSION = 1;
 
 export type ClockFormat = '24' | '12';
+
+/**
+ * How long before kickoff a reminder can fire, in minutes.
+ *
+ * ⚠ **A CLOSED set, ordered earliest-first.** It is not a range and not a
+ * free-text minute count: every value here costs a slot out of iOS's hard 64
+ * (see `features/push/reminders.ts`), and each one needs its own line of
+ * notification copy in both languages plus its own eyebrow string in the content
+ * extension's two `.lproj` files. Adding a fourth is a four-file change, not a
+ * number.
+ *
+ * ⚠ The order is load-bearing: `setReminderLead` filters this constant rather
+ * than sorting the stored array, so the persisted list is always earliest-first
+ * with no sort anywhere.
+ */
+export const REMINDER_LEAD_OPTIONS = [60, 30, 15] as const;
+
+export type ReminderLead = (typeof REMINDER_LEAD_OPTIONS)[number];
+
+export function isReminderLead(value: unknown): value is ReminderLead {
+  return REMINDER_LEAD_OPTIONS.includes(value as ReminderLead);
+}
 
 export interface Preferences {
   v: number;
@@ -76,6 +104,23 @@ export interface Preferences {
   alertReminder: boolean;
   alertMoved: boolean;
   alertPostponed: boolean;
+  /**
+   * Which lead times a kickoff reminder fires at (ADR 0040).
+   *
+   * ⚠ **`alertReminder` is still the master and this list is subordinate to it.**
+   * Leads off means no reminders whatever this holds; the list survives so that
+   * turning the master back on restores the reader's picks rather than resetting
+   * them to 30.
+   *
+   * ⚠ **This can never be empty while `alertReminder` is true.** A green switch
+   * that delivers nothing is the same dishonesty the score-age lines exist to
+   * prevent, so `setReminderLead` and `setAlert` keep the two coupled — do not
+   * write either field through `update` directly.
+   *
+   * ⚠ Device-local, exactly like `alertReminder`: the server never sends a
+   * kickoff reminder and this never reaches `PUT /cronogol/push/device`.
+   */
+  reminderLeads: readonly ReminderLead[];
 }
 
 const DEFAULTS: Preferences = {
@@ -88,6 +133,7 @@ const DEFAULTS: Preferences = {
   alertReminder: true,
   alertMoved: true,
   alertPostponed: true,
+  reminderLeads: [30],
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -117,10 +163,28 @@ function parse(raw: string | null): Preferences {
       alertReminder: data.alertReminder !== false,
       alertMoved: data.alertMoved !== false,
       alertPostponed: data.alertPostponed !== false,
+      // ⚠ Absent on every v1 payload, which had one hardcoded 30-minute lead.
+      // Migrating to `[30]` UNCONDITIONALLY — including when the master is off —
+      // is what makes turning it back on behave as it did before the upgrade.
+      reminderLeads: parseLeads(data.reminderLeads),
     };
   } catch {
     return DEFAULTS;
   }
+}
+
+/**
+ * ⚠ Rebuilt by FILTERING `REMINDER_LEAD_OPTIONS`, never by sorting the stored
+ * array: that dedupes, drops anything unknown (a value from a build that offered
+ * a fourth lead), and pins the order in one place.
+ */
+function parseLeads(raw: unknown): readonly ReminderLead[] {
+  if (!Array.isArray(raw)) return [30];
+  return REMINDER_LEAD_OPTIONS.filter((lead) => raw.includes(lead));
+}
+
+function sameLeads(a: readonly ReminderLead[], b: readonly ReminderLead[]): boolean {
+  return a.length === b.length && a.every((lead, i) => lead === b[i]);
 }
 
 function same(a: Preferences, b: Preferences): boolean {
@@ -132,6 +196,7 @@ function same(a: Preferences, b: Preferences): boolean {
     a.alertReminder === b.alertReminder &&
     a.alertMoved === b.alertMoved &&
     a.alertPostponed === b.alertPostponed &&
+    sameLeads(a.reminderLeads, b.reminderLeads) &&
     a.followed.length === b.followed.length &&
     a.followed.every((slug, i) => slug === b.followed[i])
   );
@@ -235,11 +300,42 @@ export function setOnboarded(onboarded: boolean) {
   update({ onboarded });
 }
 
+/**
+ * The master switch for a whole alert type.
+ *
+ * ⚠ `alertReminder` is COUPLED to `reminderLeads` (ADR 0040): switching it on
+ * while the lead list is empty restores the 30-minute default, because an alert
+ * type that is on and delivers nothing is worse than one that is off. Every
+ * other key is a plain write.
+ */
 export function setAlert(
   key: 'alertReminder' | 'alertMoved' | 'alertPostponed',
   value: boolean,
 ) {
+  if (key === 'alertReminder' && value && snapshot.reminderLeads.length === 0) {
+    update({ alertReminder: true, reminderLeads: [30] });
+    return;
+  }
   update({ [key]: value });
+}
+
+/**
+ * Turn one lead time on or off.
+ *
+ * ⚠ Turning off the LAST lead turns the master off too, rather than leaving a
+ * green switch above three empty ones. Turning one on turns the master on, which
+ * the account sheet cannot reach today (the rows are disabled while the master is
+ * off) but which keeps the store honest on its own.
+ */
+export function setReminderLead(lead: ReminderLead, on: boolean) {
+  const next = on
+    ? REMINDER_LEAD_OPTIONS.filter(
+        (option) => option === lead || snapshot.reminderLeads.includes(option),
+      )
+    : snapshot.reminderLeads.filter((option) => option !== lead);
+
+  if (sameLeads(next, snapshot.reminderLeads)) return;
+  update({ reminderLeads: next, alertReminder: next.length > 0 });
 }
 
 /**

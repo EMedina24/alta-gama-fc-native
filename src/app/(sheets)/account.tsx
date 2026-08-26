@@ -19,6 +19,7 @@ import {
   setClock,
   setLanguage,
   setOnboarded,
+  setReminderLead,
   usePreferences,
   useZone,
 } from '@/store/preferences';
@@ -64,9 +65,11 @@ export default function AccountSheetRoute() {
         reminder: prefs.alertReminder,
         moved: prefs.alertMoved,
         postponed: prefs.alertPostponed,
+        leads: prefs.reminderLeads,
       }}
       feeds={feeds}
       onSetAlert={setAlert}
+      onSetReminderLead={setReminderLead}
       onSetLanguage={setLanguage}
       onSetClock={setClock}
       /**

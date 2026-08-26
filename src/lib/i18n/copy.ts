@@ -32,7 +32,10 @@ export interface Copy {
     unsubscribeBody: string;
   };
   reminders: {
-    title: (home: string, away: string) => string;
+    /** ⚠ The lead is IN the banner title. With three leads on, a reader gets
+     *  three notifications for one match and this is the only thing that tells
+     *  them apart (ADR 0040). */
+    title: (home: string, away: string, leadMinutes: number) => string;
     body: (kickoff: string, venue: string | null) => string;
     /** The one notification ACTION button (ADR 0036). iOS truncates hard. */
     openClub: string;
@@ -58,6 +61,10 @@ export interface Copy {
     alertTypes: string;
     reminder: string;
     reminderNote: string;
+    /** The three lead rows, nested under the reminder master (ADR 0040).
+     *  ⚠ Drawn DIM and non-interactive while the master is off — three live
+     *  switches under a dead one is a lie about what will be delivered. */
+    leads: Readonly<Record<60 | 30 | 15, string>>;
     moved: string;
     movedNote: string;
     postponed: string;
@@ -152,6 +159,18 @@ export interface Copy {
      */
     homeWord: string;
     awayWord: string;
+    /**
+     * The two stat tiles under the upcoming section (SPEC §3.1 item 4).
+     *
+     * ⚠ **Both counts are the SAME NUMBER today, and that is not a bug.** In an
+     * account-less-follow model (ADR 0019/0038) a calendar feed is derived 1:1
+     * from a followed club, so "3 clubs" and "3 calendars" are two true
+     * statements about one set. The labels are what distinguishes them; the
+     * destinations differ (Clubs tab vs the account sheet). They only diverge
+     * the day claimed or subset feeds exist.
+     */
+    tileClubs: string;
+    tileFeeds: string;
     followTitle: string;
     followBody: string;
     browseAll: string;
@@ -285,7 +304,8 @@ export const esCopy: Copy = {
   },
 
   reminders: {
-    title: (home: string, away: string) => `${home} v ${away} · 30 minutos`,
+    title: (home: string, away: string, leadMinutes: number) =>
+      `${home} v ${away} · ${leadMinutes === 60 ? '1 hora' : `${leadMinutes} minutos`}`,
     body: (kickoff: string, venue: string | null) =>
       venue ? `Empieza a las ${kickoff} en ${venue}.` : `Empieza a las ${kickoff}.`,
     openClub: 'Abrir club',
@@ -311,8 +331,9 @@ export const esCopy: Copy = {
     notSignedIn: 'Sin cuenta',
     notSignedInBody: 'Tus avisos y calendarios están guardados en este dispositivo.',
     alertTypes: 'Tipos de aviso',
-    reminder: '30 minutos antes del partido',
+    reminder: 'Antes del partido',
     reminderNote: 'Para cada club que sigues',
+    leads: { 60: '1 hora antes', 30: '30 minutos antes', 15: '15 minutos antes' },
     moved: 'Si cambia la hora',
     movedNote: 'Tu calendario se actualiza solo también',
     postponed: 'Aplazado o suspendido',
@@ -399,6 +420,8 @@ export const esCopy: Copy = {
     tomorrow: 'Mañana',
     homeWord: 'en casa',
     awayWord: 'a domicilio',
+    tileClubs: 'Clubes',
+    tileFeeds: 'Calendarios',
     followTitle: 'Sigue a tu club y no te pierdas ningún partido.',
     followBody:
       'La temporada entera entra de una vez. Si cambia un horario, la entrada del calendario cambia contigo y recibes un aviso.',
@@ -528,7 +551,8 @@ export const enCopy: Copy = {
   },
 
   reminders: {
-    title: (home: string, away: string) => `${home} v ${away} · 30 minutes`,
+    title: (home: string, away: string, leadMinutes: number) =>
+      `${home} v ${away} · ${leadMinutes === 60 ? '1 hour' : `${leadMinutes} minutes`}`,
     body: (kickoff: string, venue: string | null) =>
       venue ? `Kicks off ${kickoff} at ${venue}.` : `Kicks off ${kickoff}.`,
     openClub: 'Open club',
@@ -554,8 +578,9 @@ export const enCopy: Copy = {
     notSignedIn: 'Not signed in',
     notSignedInBody: 'Your alerts and calendars are saved on this device.',
     alertTypes: 'Alert types',
-    reminder: '30 minutes before kickoff',
+    reminder: 'Before kickoff',
     reminderNote: 'For every club you follow',
+    leads: { 60: '1 hour before', 30: '30 minutes before', 15: '15 minutes before' },
     moved: 'When a kickoff moves',
     movedNote: 'Your calendar updates itself too',
     postponed: 'Postponed or abandoned',
@@ -641,6 +666,8 @@ export const enCopy: Copy = {
     tomorrow: 'Tomorrow',
     homeWord: 'at home',
     awayWord: 'away',
+    tileClubs: 'Clubs',
+    tileFeeds: 'Calendars',
     followTitle: 'Follow your favourite club and never miss a kickoff.',
     followBody:
       'The whole season goes in at once. When a kickoff moves, the calendar entry moves with it and you get an alert the same minute.',

@@ -16,7 +16,8 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Button, SkeletonRows, Text } from '@/components/atoms';
 import { LeagueSwitch, SectionHeader } from '@/components/molecules';
 import { ClubBrowser } from '@/components/organisms/club-browser';
-import { ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { DEFAULT_LEAGUE, findLeague, leagueOptions } from '@/lib/cronogol/leagues';
 import { foldAccents } from '@/lib/format';
@@ -27,6 +28,7 @@ import { followClub, unfollowClub, usePreferences } from '@/store/preferences';
 
 export default function ClubsScreen() {
   const router = useRouter();
+  const initials = useIdentityInitials();
   const { copy } = useI18n();
   const { followed } = usePreferences();
   /**
@@ -75,6 +77,9 @@ export default function ClubsScreen() {
   return (
     <ScreenScaffold
       title={copy.clubs.title}
+      accessory={
+        <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
+      }
       onRefresh={() => {
         void teams.refetch();
         void browse.refetch();

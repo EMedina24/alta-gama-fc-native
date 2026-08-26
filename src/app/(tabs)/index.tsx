@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
-import { SectionHeader, UpcomingRow } from '@/components/molecules';
+import { SectionHeader, StatTile, UpcomingRow } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { MatchBoard } from '@/components/organisms/match-board';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
@@ -255,6 +255,40 @@ export default function TodayScreen() {
         </>
       ) : null}
 
+      {/**
+       * The two stat tiles (SPEC §3.1 item 4).
+       *
+       * ⚠ Gated on `hasClubs` ALONE, not on the upcoming section above it. A
+       * reader who follows clubs but has no fixtures in the window — an
+       * international break, or the gap between seasons — still follows those
+       * clubs, and the tiles are how they get back to them. Tying these to
+       * `mine.length` would make the shortcuts vanish exactly when the screen is
+       * emptiest and they are most useful.
+       *
+       * ⚠ **Both tiles show the SAME NUMBER, deliberately.** A calendar feed is
+       * derived 1:1 from a followed club here (ADR 0019/0038) — there are no
+       * claimed or subset feeds — so the counts cannot disagree. The tiles earn
+       * their place on their DESTINATIONS, not on the arithmetic. If that ever
+       * reads as a bug to a real user, drop the second one rather than inventing
+       * a number for it.
+       */}
+      {hasClubs ? (
+        <View style={styles.tiles}>
+          <StatTile
+            value={followed.length}
+            label={copy.today.tileClubs}
+            accessibilityLabel={`${followed.length} ${copy.today.tileClubs}`}
+            onPress={() => router.push('/clubs')}
+          />
+          <StatTile
+            value={followed.length}
+            label={copy.today.tileFeeds}
+            accessibilityLabel={`${followed.length} ${copy.today.tileFeeds}`}
+            onPress={() => router.push('/(sheets)/account')}
+          />
+        </View>
+      ) : null}
+
       {/* ⚠ The no-subscriptions state: the follow card REPLACES the board. */}
       {!hasClubs ? (
         <View style={styles.follow}>
@@ -295,6 +329,9 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: Colors.dark.card, borderRadius: Radius.group, overflow: 'hidden' },
+  // ⚠ The gap is the only thing separating the two tiles — they share a fill
+  // colour, so a zero gap reads as one wide tile with two numbers in it.
+  tiles: { flexDirection: 'row', gap: Spacing.two },
   follow: {
     backgroundColor: Colors.dark.card,
     borderRadius: Radius.card,

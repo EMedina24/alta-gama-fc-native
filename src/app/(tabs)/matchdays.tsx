@@ -27,7 +27,8 @@ import {
   type LeagueOption,
 } from '@/components/molecules';
 import { FixtureList } from '@/components/organisms/fixture-list';
-import { ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { currentMatchweek, isIda, isMidweek } from '@/lib/cronogol/jornada';
 import { LEAGUES, SEASON, leagueOptions, seasonLabel } from '@/lib/cronogol/leagues';
@@ -40,6 +41,7 @@ import { useZone, usePreferences } from '@/store/preferences';
 
 export default function MatchdaysScreen() {
   const router = useRouter();
+  const initials = useIdentityInitials();
   const { copy, phrases } = useI18n();
   const zone = useZone();
   const { clock } = usePreferences();
@@ -132,6 +134,9 @@ export default function MatchdaysScreen() {
   return (
     <ScreenScaffold
       title={matchweek === null ? '' : copy.matchdays.title(matchweek)}
+      accessory={
+        <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
+      }
       eyebrow={copy.matchdays.eyebrow(league.name, seasonLabel(SEASON), half)}
       onRefresh={() => void jornada.refetch()}
       refreshing={jornada.isRefetching}

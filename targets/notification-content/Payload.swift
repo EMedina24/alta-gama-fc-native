@@ -33,6 +33,14 @@ struct Payload {
   /// ⚠ Present on local reminders only — a server push has no idea what clock
   /// the reader chose, so the card formats from the instant instead.
   let kickoffLabel: String?
+  /// How far before kickoff this reminder fires, in minutes.
+  ///
+  /// ⚠ **Defaulted to 30, never required.** Reminders scheduled by a pre-0040
+  /// build are still sitting in iOS's queue with no such key, and they were all
+  /// 30-minute ones — so the default is the correct reading of an old payload,
+  /// not a fallback. ⚠ Meaningless on `.moved` and `.postponed`, which the
+  /// server sends and which carry no lead at all.
+  let leadMinutes: Int
 
   init?(_ info: [AnyHashable: Any]) {
     guard
@@ -49,6 +57,10 @@ struct Payload {
     venue = (info["venue"] as? String).flatMap { $0.isEmpty ? nil : $0 }
     round = (info["round"] as? String).flatMap { $0.isEmpty ? nil : $0 }
     kickoffLabel = info["kickoffLabel"] as? String
+    // ⚠ `as? Int` alone is not enough: JSON round-trips through
+    // `NSNumber`/`Double` depending on how the payload was written, and a
+    // `Double` bridged value fails an `Int` cast silently.
+    leadMinutes = (info["leadMinutes"] as? NSNumber)?.intValue ?? 30
     kickoffUtc = Payload.instant(info["kickoffUtc"])
     oldKickoffUtc = Payload.instant(info["oldKickoffUtc"])
     newKickoffUtc = Payload.instant(info["newKickoffUtc"])

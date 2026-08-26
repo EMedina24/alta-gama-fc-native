@@ -93,6 +93,18 @@ documented at the code that handles them; this is the index.
 11. **iOS caps pending local notifications at 64.** `selectReminders` uses a
     rolling window of 60 and never schedules a `kickoffTbd` fixture (stored at
     midnight-UTC, so "30 min before" fires at 01:30 for a 21:00 match).
+    ⚠ **That window counts NOTIFICATIONS, not fixtures** — a reader can pick up
+    to three lead times (1 h / 30 / 15) and one match then costs three slots, so
+    three leads buy ~20 fixtures of horizon where one buys 60. The selection
+    expands fixtures × leads and sorts the whole expansion by FIRE TIME, so the
+    nearest match is always fully covered and the horizon is what shortens. Going
+    back to counting fixtures schedules 180 and hands the cap to iOS's silent
+    truncation — which looks fine in testing, because nobody testing follows
+    enough clubs to cross 64. See
+    [0040](./decisions/0040-kickoff-reminder-lead-times.md).
+    ⚠ The cutoff is tested PER LEAD: a match kicking off in 20 minutes has no
+    60- or 30-minute reminder left but its 15-minute one is still ahead.
+    ⚠ And an attachment file is per NOTIFICATION, not per fixture — see trap 13.
 12. **Notification crests cannot be drawn on the device — for two leagues, not
     ever.** Bundesliga clubs publish `svg` and nothing else; Serie A crests are
     WebP. `UNNotificationAttachment` takes neither and Swift decodes neither, so
@@ -105,6 +117,13 @@ documented at the code that handles them; this is the index.
     fire; `crest-cache.ts` hands over a copy, and `attachmentCopy` exists for
     exactly this. ⚠ It also needs `typeHint: 'public.png'` — iOS types the
     attachment from that and silently drops an untyped file.
+    ⚠ **One copy PER NOTIFICATION, keyed `${fixtureId}-${lead}`.** Three lead
+    times on one match are three notifications; sharing one copy between them
+    means the first one scheduled consumes the file and the other two are handed
+    a path with nothing at it — dropped silently, as above. This is also why
+    `pruneCrestCache` takes TWO keep-lists: the plate cache and the App Group are
+    per fixture, the attachment directory is per notification, and sweeping the
+    latter against fixture ids deletes every copy on every re-arm (0040).
 14. **A notification category identifier is a THREE-WAY contract that nothing
     validates**: `categories.ts`, the wire (`aps.category` from the backend and
     `categoryIdentifier` on every local reminder), and the content extension's
@@ -114,7 +133,10 @@ documented at the code that handles them; this is the index.
     extension is a separate binary: `targets/notification-content/Tokens.swift`
     copies `theme.ts` by hand, and `en.lproj`/`es.lproj` copy nothing from
     `copy.ts` because the extension cannot read the JS bundle. Both will drift
-    and nothing will catch it.
+    and nothing will catch it. ⚠ 0040 widened this: the card's eyebrow now
+    branches on `leadMinutes`, so **a lead added to `REMINDER_LEAD_OPTIONS` needs
+    a `case` in `MatchCard.eyebrowText` AND a line in both `.lproj` files** or iOS
+    prints the raw key on the card.
 16. **Reminder artwork is capped at the soonest 12** (`REMINDER_ARTWORK_BUDGET`),
     because the re-arm runs on **every foreground**, not just on a data change.
     Lifting the cap puts 60 downloads on every resume from the app switcher.
@@ -193,7 +215,26 @@ documented at the code that handles them; this is the index.
     the hostname; `cronogol` is pinned to a stale project ref forever because
     moving to the custom domain silently renamed its key and presented as "the app
     forgot me after a deploy", with no error anywhere.
-29. **React Native's `URL` and `URLSearchParams` corrupt credentials silently.**
+29. **EAS checks that a provisioning profile is ACTIVE, not that it COVERS your
+    entitlements.** Adding a capability to `app.json` and enabling it on the App
+    ID is **not enough** — an already-issued profile does not gain it, and EAS
+    happily prints *"All credentials are ready to build"* while handing Xcode a
+    profile that cannot sign the app. It cost three failed builds on 2026-08-26.
+    The error, if you hit it:
+    `Provisioning profile "…" doesn't include the Sign In with Apple capability`.
+    **The fix is to make Apple mint a NEW profile:**
+    `eas credentials -p ios` → the build profile → the MAIN target → *Provisioning
+    Profile: Delete one from your project*, then *All: Set up all the required
+    credentials*. ⚠ When it asks *"All your registered devices are present… reuse
+    the profile?"* answer **No, let me choose devices again** — "Yes" re-imports
+    the same stale profile from Apple and nothing changes. Confirm success by the
+    **Developer Portal ID changing** and `Updated` reading seconds rather than
+    hours; the ID alone is the only reliable tell.
+    ⚠ `--refresh-ad-hoc-provisioning-profile` is the non-interactive equivalent,
+    but it is **non-interactive ONLY** and needs an **App Store Connect API key**,
+    which this account does not have. ⚠ An APNs `.p8` is NOT one — different
+    console, different service, different issuer claim, not interchangeable.
+30. **React Native's `URL` and `URLSearchParams` corrupt credentials silently.**
     `URL.hash` is `match(/#([^/]*)/)` — it stops at the first `/`. `URLSearchParams`
     does `pair.split('=')` and takes two elements, cutting any value containing
     `=`. Both truncate rather than throw. `features/auth/google.ts` parses the
@@ -306,8 +347,9 @@ documented at the code that handles them; this is the index.
    [0039](./decisions/0039-auth-goes-direct-to-supabase.md)). Guideline **4.8**
    turned out not to be a backend project at all: the backend authenticates
    nobody, and native-only Apple needs no Services ID or `.p8`.
-   ⚠ **Not yet verified on a device** — Apple Sign In is a new entitlement, so the
-   existing dev build cannot run it. See the verification list below.
+   ⚠ **Built successfully 2026-08-26** with the Sign In with Apple entitlement
+   ([build efdb732c](https://expo.dev/accounts/emedina24s-team/projects/alta-gama-fc/builds/efdb732c-94ed-4430-aa4a-efee47a59b1e)),
+   but **not yet exercised on a device**. The nine checks below are still open.
    ⚠ **Reinstalling still loses the follow list.** Signing in does NOT sync
    follows: the backend has no follows endpoint, and the web derives them from
    claimed feeds, which 0019 excluded and 0038 did not add back.
@@ -339,16 +381,37 @@ documented at the code that handles them; this is the index.
    **Then verify on a PHYSICAL device** (Apple Sign In is unreliable in the
    simulator, and push already needs one — `getDeviceToken()` returns `null` on
    `!Device.isDevice`). `/_debug/auth` drives all of this:
-   1. **Apple, first ever sign-in** — an Apple ID that has never authorized this
-      app. ⚠ This is the ONLY chance to test the name-capture path without
-      revoking the app in Settings → Apple ID → Sign in with Apple. Confirm the
-      name reaches `GET /cronogol/me`, not just the screen.
+   **Progress 2026-08-26** (build `efdb732c`, one iPhone). Items 1–5 partly done;
+   **6–9 are untouched and 7 is the one that would ship broken.**
+
+   1. ~~**Apple, first ever sign-in**~~ — **PASSED**, and it found a bug.
+      `displayName: "Edgardo Medina"` reached `GET /cronogol/me`. But the response
+      also carried `timeZone: "America/New_York"`, which **this app never
+      writes** — so the account already existed on `altagamafc.com` and Supabase
+      linked the Apple identity to it by matching verified email.
+      ⚠ **That is the general case, not an edge case:** "first authorization" is
+      once per Apple ID **per APP**, so every web user signing in here for the
+      first time hits it against an established account. `apple.ts` was sending
+      `notifyFixtureChanges: false` unconditionally and silently switching off
+      their fixture-change emails. Fixed in `7b3e09a` — reads the account first,
+      echoes the flag back, writes `displayName` only when there is none.
+      ⚠ **Re-test needs a revoke:** Settings → Apple ID → Sign in with Apple →
+      AltaGama FC → Stop Using. Otherwise `fullName` is null and the branch never
+      runs. **Still unproven: the true new-account path** (no prior web account).
+      ⚠ Ed's own `notifyFixtureChanges` reads `false` and may have been clobbered
+      by the old code — re-enable on the web if it was on. There is no UI here.
    2. **Apple, second sign-in** — sign out, sign in again. `fullName` is `null`
       now; the name must still render, read back from `/cronogol/me`.
    3. **Hide My Email** — check the identity slot does not overflow.
    4. **Google** — the browser sheet returns to the app. ⚠ Landing on the website
       instead means the redirect URL is missing from Supabase, not broken code.
-   5. **Push linking** — `PUT /cronogol/push/device` must answer `linked: true`.
+   5. **Push linking** — ⚠ **INCONCLUSIVE, needs re-checking.** The device
+      answered `push → "unchanged"`, which is what a diff with nothing to send
+      says — and that is the CORRECT answer once the sign-in effect has already
+      auto-registered. But it is indistinguishable from a link that never
+      happened. `/_debug/auth` grew a **`Linked to this account?`** button
+      (`7b3e09a`) that settles it: the linked id is persisted ONLY when the
+      server's response says `linked: true`.
    6. **Cancel paths** — dismiss the Apple sheet and the Google browser. Both must
       land back signed-out silently, with no error banner.
    7. **Follows survive sign-out** — follow three clubs, sign in, sign out. All
@@ -357,6 +420,16 @@ documented at the code that handles them; this is the index.
       `DELETE`; it must 204 again.
    9. **Token expiry** — background past the ~1h access-token lifetime, foreground,
       confirm `/cronogol/me` still resolves rather than bouncing to signed-out.
+
+   Also verified in passing: `AUTH_AVAILABLE true` / `AUTH_REQUIRED false`, an
+   access token present, the Google redirect rendering as
+   `altagamafc://auth-callback`, and `GET /cronogol/me` correctly throwing
+   `NotSignedInError` while signed out.
+
+   ⚠ **Not on the list but worth a look while testing:** the account sheet signed
+   IN — the identity block, Sign out, and the two-step Delete account — has only
+   been seen in `/_debug/sheets?which=account-in` with a stub, never against a
+   real account.
 
 
 ---

@@ -59,9 +59,26 @@ struct MatchCard: View {
     .padding(.horizontal, 18)
   }
 
+  /// ⚠⚠ **One key PER LEAD, not a formatted number** (ADR 0040). These are
+  /// micro-labels at 9.5pt with .14em tracking, where width is the real limit and
+  /// each language sets its own — Spanish is deliberately shorter than English —
+  /// so an interpolated `String(format:)` would take that choice away from the
+  /// translator. ⚠ A lead added to `REMINDER_LEAD_OPTIONS` needs a case here AND
+  /// a line in both `.lproj` files, or iOS prints the raw key on the card.
+  ///
+  /// ⚠ The 60 case names its unit and the other two do not. Deliberate:
+  /// `KICKOFF IN 60` reads as a minute count nobody thinks in.
   private var eyebrowText: String {
     switch payload.kind {
-    case .reminder: String(localized: "KICKOFF IN 30")
+    case .reminder:
+      switch payload.leadMinutes {
+      case 60: String(localized: "KICKOFF IN 1 HOUR")
+      case 15: String(localized: "KICKOFF IN 15")
+      // ⚠ `default`, not `case 30`: an unrecognised lead — a payload from a build
+      // that offered one this binary does not know — still gets a card rather
+      // than a compile error the extension cannot report at runtime.
+      default: String(localized: "KICKOFF IN 30")
+      }
     case .moved: String(localized: "KICKOFF MOVED")
     case .postponed: String(localized: "POSTPONED")
     }
