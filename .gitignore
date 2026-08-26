@@ -16,3 +16,8 @@ expo-env.d.ts
 *.p8
 *.mobileprovision
 *.p12
+
+# Native projects — this is a CNG app; `expo prebuild` regenerates these from
+# app.json, which is the source of truth. Never commit them.
+/ios
+/android

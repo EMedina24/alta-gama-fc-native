@@ -4,11 +4,15 @@
     "slug": "alta-gama-fc",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon-light.png",
     "scheme": "altagamafc",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": {
+        "light": "./assets/images/icon-light.png",
+        "dark": "./assets/images/icon-dark.png",
+        "tinted": "./assets/images/icon-tinted.png"
+      },
       "bundleIdentifier": "com.altagamafc.app",
       "supportsTablet": false,
       "entitlements": {
@@ -35,8 +39,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#0a0b0c",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "image": "./assets/images/icon-dark.png",
+          "imageWidth": 184
         }
       ],
       "expo-font",

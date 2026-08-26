@@ -54,7 +54,7 @@ src/
   lib/{format,timezones}.ts  lib/i18n/{phrases,copy,use-i18n}
   queries/                      React Query hooks + staleTime buckets (ADR 0017)
   store/preferences.ts          device follows, language, clock, timezone
-assets/images/                  app icon, splash, adaptive icon
+assets/images/                  icon-{light,dark,tinted}.png (ADR 0036) + Android adaptive
 handoff_AG-ios/                 the design handoff (SPEC, prototype, screenshots)
 ```
 
@@ -65,10 +65,11 @@ Path aliases (`tsconfig.json`): `@/*` → `./src/*`, `@/assets/*` → `./assets/
 ## App config highlights (`app.json`)
 
 - `scheme: altagamafc` — deep-link scheme.
-- `userInterfaceStyle: automatic` — follows system light/dark.
+- `userInterfaceStyle: dark` — the app is dark-only; it does not follow the system.
 - `experiments.typedRoutes: true` — route names are type-checked.
 - `experiments.reactCompiler: true` — React Compiler enabled.
-- Splash: `#208AEF` background, 76pt icon.
+- Splash: `#0a0b0c` ground, 184pt canvas, reusing the **dark app icon**
+  (`assets/images/icon-dark.png`) as its image (ADR 0036).
 - Web: `output: "static"`.
 
 ## Commands

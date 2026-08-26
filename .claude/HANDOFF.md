@@ -118,6 +118,25 @@ documented at the code that handles them; this is the index.
     on `active` is the whole fix. Each tick also schedules to the next WALL
     second, not a fixed period, or the digit drifts from whenever the card
     mounted. See [0034](./decisions/0034-next-up-card-live-seconds-countdown.md).
+16. **`expo prebuild` FLATTENS the tinted app icon onto solid WHITE.**
+    `withIosIcons` generates every variant with
+    `removeTransparency: appearance !== 'dark'` and `backgroundColor: '#ffffff'`
+    — only `dark` keeps its alpha. A tinted export drawn the usual way (a pale
+    glyph on transparency) comes out white-on-white, and since iOS 18 maps
+    *luminance* to the user's tint, the home-screen tile renders as flat colour
+    with **no mark in it**. `assets/images/icon-tinted.png` is therefore
+    pre-composited over **opaque black**. ⚠ This fails silently: nothing errors,
+    `expo-doctor` passes, and it is visible only under Settings → Display &
+    Brightness → **Tinted** on a real build. Re-exporting that asset without
+    re-flattening reverts it. See
+    [0036](./decisions/0036-app-icon-appearance-variants.md).
+17. **A hand-authored `AppIcon.appiconset` in the repo does NOTHING.** This is a
+    CNG project — `prebuild` regenerates `Images.xcassets/AppIcon.appiconset`
+    from `app.json` and overwrites it. A complete, correct seventeen-file
+    appiconset sat at `icons/` unread from `924828a` until 0036. The icon is
+    configured in `app.json`, nowhere else. ⚠ `prebuild` also rewrites
+    `package.json`'s `ios`/`android` scripts to `expo run:*` — revert that; the
+    run command is still `npx expo start --dev-client --ios`.
 
 ---
 
