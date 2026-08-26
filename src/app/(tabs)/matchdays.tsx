@@ -16,16 +16,23 @@
  * on most leagues. It renders as one calm sentence, never a banner or a spinner.
  */
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Text } from '@/components/atoms';
-import { LeagueSwitch, MatchdayStrip, type LeagueOption } from '@/components/molecules';
+import { Button, Eyebrow, SkeletonRows, Text } from '@/components/atoms';
+import {
+  LeagueSwitch,
+  MatchdayPager,
+  MatchdayStrip,
+  type LeagueOption,
+} from '@/components/molecules';
 import { FixtureList } from '@/components/organisms/fixture-list';
 import { ScreenScaffold } from '@/components/templates/screen-scaffold';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { currentMatchweek, isIda, isMidweek } from '@/lib/cronogol/jornada';
 import { LEAGUES, SEASON, seasonLabel } from '@/lib/cronogol/leagues';
+import { formatDateRange } from '@/lib/format';
+import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useJornada, useSeasonJornadas } from '@/queries/use-jornada';
 import { useLeagueArtwork } from '@/queries/use-leagues';
@@ -57,6 +64,15 @@ export default function MatchdaysScreen() {
     });
   }, [index.data]);
 
+  /**
+   * ⚠ The ONE setter the strip and the pager share, clamped to this league's
+   * count. A second state for the arrows is how they drift from the strip.
+   */
+  const goTo = useCallback(
+    (n: number) => setMatchweek(total === null ? n : Math.min(Math.max(n, 1), total)),
+    [total],
+  );
+
   const jornada = useJornada(league, matchweek);
 
   /** Rounds whose last kickoff has passed, for the strip's played styling. */
@@ -75,9 +91,9 @@ export default function MatchdaysScreen() {
     return {
       slug: l.slug,
       name: l.name,
-      logoUrl: art?.logoUrls?.primary ?? art?.logoUrl ?? null,
-      // Only LaLiga and the Premier League ship artwork carrying their own name.
-      hasWordmark: l.slug === 'la-liga' || l.slug === 'premier-league',
+      // ⚠ `icon` is the icon-only cut and is LaLiga's alone today; `primary`
+      // is the full lockup. The tiles carry no text label (ADR 0031).
+      logoUrl: art?.logoUrls?.icon ?? art?.logoUrls?.primary ?? art?.logoUrl ?? null,
     };
   });
 
@@ -91,6 +107,30 @@ export default function MatchdaysScreen() {
   const midweek = summary
     ? isMidweek(summary.firstKickoffUtc, summary.kickoffsConfirmed, league.apiSlug)
     : false;
+
+  // ⚠ Gated on `kickoffsConfirmed`: provisional dates print a range that moves.
+  // The zone goes with the range — an abbreviation for times that do not exist
+  // yet says nothing — and is read AT the round's kickoff, so CET/CEST is right.
+  const rangeConfirmed =
+    summary !== null &&
+    summary.kickoffsConfirmed &&
+    summary.firstKickoffUtc !== null &&
+    summary.lastKickoffUtc !== null;
+  const rangeLabel =
+    rangeConfirmed && summary.firstKickoffUtc && summary.lastKickoffUtc
+      ? formatDateRange(summary.firstKickoffUtc, summary.lastKickoffUtc, zone, phrases)
+      : copy.matchdays.datesPending;
+  const rangeMeta = summary
+    ? [
+        phrases.matches(summary.count),
+        rangeConfirmed && summary.firstKickoffUtc
+          ? zoneAbbreviation(zone, new Date(summary.firstKickoffUtc))
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+        .toUpperCase()
+    : '';
 
   const data = jornada.data;
   const missing =
@@ -106,14 +146,31 @@ export default function MatchdaysScreen() {
       refreshing={jornada.isRefetching}
       sticky={
         <View style={styles.controls}>
+          {total !== null && matchweek !== null && summary ? (
+            <MatchdayPager
+              canPrev={matchweek > 1}
+              canNext={matchweek < total}
+              onPrev={() => goTo(matchweek - 1)}
+              onNext={() => goTo(matchweek + 1)}
+              prevLabel={copy.matchdays.previous}
+              nextLabel={copy.matchdays.next}
+              primary={rangeLabel}
+              primaryTone={rangeConfirmed ? 'textSecondary' : 'textFaint'}
+              secondary={rangeMeta}
+            />
+          ) : null}
           <LeagueSwitch leagues={options} active={league.slug} onSelect={setLeagueSlug} />
           {total !== null && matchweek !== null ? (
-            <MatchdayStrip
-              total={total}
-              current={matchweek}
-              played={played}
-              onSelect={setMatchweek}
-            />
+            <View style={styles.strip}>
+              <Eyebrow small>{copy.matchdays.stripLabel}</Eyebrow>
+              <MatchdayStrip
+                total={total}
+                current={matchweek}
+                played={played}
+                onSelect={goTo}
+                label={copy.matchdays.title}
+              />
+            </View>
           ) : null}
         </View>
       }>
@@ -129,7 +186,7 @@ export default function MatchdaysScreen() {
           <Button label={copy.matchdays.retry} tone="secondary" onPress={() => void jornada.refetch()} />
         </View>
       ) : jornada.isPending || matchweek === null ? (
-        <Text color="textFaint">…</Text>
+        <SkeletonRows count={6} height={Size.rowSkeleton} />
       ) : data && data.fixtures.length === 0 ? (
         <Text color="textSecondary">{copy.matchdays.empty}</Text>
       ) : data ? (
@@ -174,6 +231,7 @@ export default function MatchdaysScreen() {
 
 const styles = StyleSheet.create({
   controls: { gap: Spacing.three },
+  strip: { gap: Spacing.two },
   addAll: { borderRadius: Radius.control, borderColor: Colors.dark.accentRing },
   state: { gap: Spacing.four, paddingVertical: Spacing.six },
 });

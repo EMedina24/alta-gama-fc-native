@@ -14,11 +14,11 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text } from '@/components/atoms';
+import { SkeletonRows, Text } from '@/components/atoms';
 import { ClubHeader } from '@/components/organisms/club-header';
 import { SeasonSpine } from '@/components/organisms/season-spine';
 import { SquadList } from '@/components/organisms/squad-list';
-import { BottomTabInset, Colors, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { hasCompleteSchedule } from '@/lib/cronogol/derive';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubFixtures, useClubSquad } from '@/queries/use-club';
@@ -67,7 +67,7 @@ export default function ClubScreen() {
           { paddingTop: insets.top + 44, paddingBottom: BottomTabInset },
         ]}>
         {fixtures.isPending ? (
-          <Text color="textFaint">…</Text>
+          <SkeletonRows count={8} height={Size.rowSkeleton} />
         ) : !data ? (
           <Text color="textSecondary">{copy.club.notFound}</Text>
         ) : (
@@ -128,7 +128,7 @@ export default function ClubScreen() {
                 </View>
               )
             ) : squad.isPending ? (
-              <Text color="textFaint">…</Text>
+              <SkeletonRows count={6} height={Size.rowSkeleton} />
             ) : (
               <SquadList
                 players={squad.data?.players ?? []}

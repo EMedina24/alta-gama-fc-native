@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, type NativeStackNavigationOptions } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -32,11 +32,35 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: Colors.dark.background },
           }}>
           <Stack.Screen name="(tabs)" />
+          {/* ⚠ The sheets are declared HERE, in the stack that PRESENTS them (ADR 0030). */}
+          <Stack.Screen name="(sheets)/account" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+          <Stack.Screen name="(sheets)/alerts" options={sheet} />
+          <Stack.Screen name="(sheets)/calendar" options={sheet} />
+          <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>
   );
 }
+
+/**
+ * The modal-sheet options, shared by every route in `(sheets)/`.
+ *
+ * ⚠ `presentation: 'formSheet'` only takes effect on a screen its PARENT
+ * navigator presents. Setting it in a `(sheets)/_layout.tsx` did nothing — the
+ * group's first route is that nested stack's ROOT, so it rendered as a
+ * full-screen card: no grabber, no swipe-to-dismiss, and content under the status
+ * bar (ADR 0030).
+ *
+ * ⚠ `sheetGrabberVisible` draws the grabber, so a sheet presented this way must
+ * NOT also render the `Grabber` atom — that gives you two.
+ */
+const sheet: NativeStackNavigationOptions = {
+  presentation: 'formSheet',
+  sheetGrabberVisible: true,
+  sheetAllowedDetents: [0.6],
+  contentStyle: { backgroundColor: Colors.dark.card },
+};
 
 /**
  * Holds the device registration and local reminders in step.

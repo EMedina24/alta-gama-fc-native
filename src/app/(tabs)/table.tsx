@@ -18,11 +18,11 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Text } from '@/components/atoms';
+import { Button, SkeletonRows, Text } from '@/components/atoms';
 import { LeagueSwitch, type LeagueOption } from '@/components/molecules';
 import { StandingsTable } from '@/components/organisms/standings-table';
 import { ScreenScaffold } from '@/components/templates/screen-scaffold';
-import { Spacing } from '@/constants/theme';
+import { Size, Spacing } from '@/constants/theme';
 import { LEAGUES, byEditorialOrder, findLeagueByApiSlug, roundCount } from '@/lib/cronogol/leagues';
 import { completedMatchweek } from '@/lib/cronogol/standings';
 import { useI18n } from '@/lib/i18n/use-i18n';
@@ -60,9 +60,9 @@ export default function TableScreen() {
   const options: LeagueOption[] = tables.map(({ table, league: l }) => ({
     slug: l.slug,
     name: l.name,
-    logoUrl: table.league.logoUrls?.primary ?? table.league.logoUrl ?? null,
-    // Only LaLiga and the Premier League ship artwork carrying their own name.
-    hasWordmark: l.slug === 'la-liga' || l.slug === 'premier-league',
+    // ⚠ `icon` is the icon-only cut and is LaLiga's alone today; `primary`
+    // is the full lockup. The tiles carry no text label (ADR 0031).
+    logoUrl: table.league.logoUrls?.icon ?? table.league.logoUrls?.primary ?? table.league.logoUrl ?? null,
   }));
 
   const eyebrow = useMemo(() => {
@@ -87,7 +87,7 @@ export default function TableScreen() {
         ) : null
       }>
       {standings.isPending ? (
-        <Text color="textFaint">…</Text>
+        <SkeletonRows count={10} height={Size.rowSkeleton} />
       ) : standings.isError ? (
         <View style={styles.state}>
           <Text color="textSecondary">{copy.table.error}</Text>

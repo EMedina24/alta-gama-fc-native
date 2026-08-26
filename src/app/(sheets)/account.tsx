@@ -71,6 +71,7 @@ export default function AccountSheetRoute() {
         void disablePushForDevice();
         router.back();
       }}
+      onClose={() => router.back()}
     />
   );
 }

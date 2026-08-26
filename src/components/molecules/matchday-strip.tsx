@@ -18,22 +18,22 @@ import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
-const PILL = 34;
-
 export interface MatchdayStripProps {
   total: number;
   current: number;
   /** Rounds whose last kickoff has passed — drawn `raised` rather than `card`. */
   played: (n: number) => boolean;
   onSelect: (n: number) => void;
+  /** The accessibility label for pill n — `copy.matchdays.title`, so it speaks the reader's language. */
+  label: (n: number) => string;
 }
 
-export function MatchdayStrip({ total, current, played, onSelect }: MatchdayStripProps) {
+export function MatchdayStrip({ total, current, played, onSelect, label }: MatchdayStripProps) {
   const scroller = useRef<ScrollView>(null);
 
   // Keep the active round in view when it changes from the pager or a league switch.
   useEffect(() => {
-    const x = Math.max(0, (current - 1) * (PILL + Spacing.two) - PILL * 2);
+    const x = Math.max(0, (current - 1) * (Size.pill + Spacing.two) - Size.pill * 2);
     scroller.current?.scrollTo({ x, animated: true });
   }, [current]);
 
@@ -51,7 +51,7 @@ export function MatchdayStrip({ total, current, played, onSelect }: MatchdayStri
             onPress={() => onSelect(n)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`Matchday ${n}`}
+            accessibilityLabel={label(n)}
             hitSlop={6}
             style={({ pressed }) => [
               styles.pill,
@@ -72,9 +72,9 @@ export function MatchdayStrip({ total, current, played, onSelect }: MatchdayStri
 const styles = StyleSheet.create({
   track: { gap: Spacing.two, paddingRight: Spacing.five },
   pill: {
-    width: PILL,
-    height: PILL,
-    minWidth: PILL,
+    width: Size.pill,
+    height: Size.pill,
+    minWidth: Size.pill,
     borderRadius: Radius.chip,
     backgroundColor: Colors.dark.card,
     alignItems: 'center',

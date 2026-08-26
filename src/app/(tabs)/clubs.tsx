@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Text } from '@/components/atoms';
+import { Button, SkeletonRows, Text } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
 import { ClubBrowser } from '@/components/organisms/club-browser';
 import { ScreenScaffold } from '@/components/templates/screen-scaffold';
@@ -90,7 +90,7 @@ export default function ClubsScreen() {
           <Button label={copy.clubs.retry} tone="secondary" onPress={() => void teams.refetch()} />
         </View>
       ) : teams.isPending || browse.isPending ? (
-        <Text color="textFaint">…</Text>
+        <SkeletonRows count={8} height={Size.rowSkeleton} />
       ) : (
         <>
           {subscribed.length > 0 && !query ? (

@@ -20,7 +20,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/atoms';
-import { Spacing } from '@/constants/theme';
+import { Size, Spacing } from '@/constants/theme';
 import type { FixtureStatus } from '@/lib/cronogol/types';
 import { formatKickoffTime } from '@/lib/format';
 import type { ClockFormat } from '@/store/preferences';
@@ -87,6 +87,6 @@ export function FixtureTiming({
 
 const styles = StyleSheet.create({
   // Fixed width so switching 12/24h does not reflow the row.
-  cell: { minWidth: 76, gap: Spacing.half },
+  cell: { minWidth: Size.timingColumn, gap: Spacing.half },
   right: { alignItems: 'flex-end' },
 });

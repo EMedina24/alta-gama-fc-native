@@ -5,13 +5,14 @@ import { clubFeedUrl } from '@/lib/cronogol/feed';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { zoneLabel } from '@/lib/timezones';
 import { setAlert, setClock, setLanguage, usePreferences, useZone } from '@/store/preferences';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
 export default function DebugSheets() {
   const { which } = useLocalSearchParams<{ which?: string }>();
+  const router = useRouter();
   const { copy, locale } = useI18n();
   const zone = useZone();
   const prefs = usePreferences();
@@ -50,6 +51,7 @@ export default function DebugSheets() {
         onSetClock={setClock}
         onReplayOnboarding={() => {}}
         onTurnOffAlerts={() => {}}
+        onClose={() => router.back()}
       />
     </View>
   );

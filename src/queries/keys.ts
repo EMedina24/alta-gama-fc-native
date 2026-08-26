@@ -16,5 +16,4 @@ export const keys = {
     ['jornada', leagueApiSlug, season, matchweek] as const,
   standings: (leagueApiSlug?: string) => ['standings', leagueApiSlug ?? 'all'] as const,
   fixtureWindow: (from: string, to: string) => ['fixture-window', from, to] as const,
-  scores: (days: number) => ['scores', days] as const,
 } as const;

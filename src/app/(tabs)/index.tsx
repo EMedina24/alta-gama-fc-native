@@ -10,19 +10,31 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Crest, Text } from '@/components/atoms';
-import { SectionHeader } from '@/components/molecules';
+import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
+import { SectionHeader, UpcomingRow } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { MatchBoard } from '@/components/organisms/match-board';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
-import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
+import {
+  boardOutcome,
+  involvesFollowed,
+  lastResult,
+  liveFixture,
+  upcomingRow,
+} from '@/lib/cronogol/board';
+import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
-import { formatFixtureDate, formatKickoffTime, formatWeekdayLong } from '@/lib/format';
+import {
+  formatFixtureDate,
+  formatKickoffTime,
+  formatRelativeDay,
+  formatWeekdayLong,
+} from '@/lib/format';
 import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTeams } from '@/queries/use-teams';
-import { useFinishedToday, useUpcoming } from '@/queries/use-today';
+import { useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
 import { usePreferences, useZone } from '@/store/preferences';
 
 /** The six clubs offered in the follow card's grid. */
@@ -36,34 +48,59 @@ export default function TodayScreen() {
 
   const finished = useFinishedToday(zone);
   const upcoming = useUpcoming(zone);
+  const recent = useRecent(zone);
   const teams = useTeams();
 
   const hasClubs = followed.length > 0;
 
+  /**
+   * The in-play match of a followed club, as of the last sweep. Read from the
+   * fixture route, never the scoreboard — it is the only feed that knows which
+   * club is yours (ADR 0027). Today's window is the fresher of the two that
+   * contain it, so it is asked first.
+   */
+  const live = useMemo(() => {
+    if (!hasClubs) return null;
+    return (
+      liveFixture(finished.data?.fixtures ?? [], followed) ??
+      liveFixture(recent.data?.fixtures ?? [], followed)
+    );
+  }, [hasClubs, finished.data, recent.data, followed]);
+
+  /** The most recent finished match of a followed club, with a score. */
+  const last = useMemo(() => {
+    if (!hasClubs || !recent.data) return null;
+    return lastResult(recent.data.fixtures, followed);
+  }, [hasClubs, recent.data, followed]);
+  const lastOutcome = last ? boardOutcome(last, followed) : null;
+  const lastMatchday = last ? matchday(last.round) : null;
+
   /** The soonest upcoming match involving a followed club. */
   const next = useMemo(() => {
     if (!hasClubs || !upcoming.data) return null;
-    return (
-      upcoming.data.fixtures.find(
-        (f) =>
-          (f.homeTeam && followed.includes(f.homeTeam.slug)) ||
-          (f.awayTeam && followed.includes(f.awayTeam.slug)),
-      ) ?? null
-    );
+    return upcoming.data.fixtures.find((f) => involvesFollowed(f, followed)) ?? null;
   }, [hasClubs, upcoming.data, followed]);
 
   const mine = useMemo(() => {
     if (!hasClubs || !upcoming.data) return [];
-    return upcoming.data.fixtures
-      .filter(
-        (f) =>
-          (f.homeTeam && followed.includes(f.homeTeam.slug)) ||
-          (f.awayTeam && followed.includes(f.awayTeam.slug)),
-      )
-      .slice(0, 6);
+    return upcoming.data.fixtures.filter((f) => involvesFollowed(f, followed)).slice(0, 6);
   }, [hasClubs, upcoming.data, followed]);
 
   const picks = useMemo(() => (teams.data ?? []).slice(0, FOLLOW_PICKS), [teams.data]);
+
+  /** Read once per render so every upcoming row is dated off the same instant. */
+  const now = new Date();
+
+  /** The losing side recedes; a draw or a missing score mutes nobody. */
+  const loses = (mine: number | null, theirs: number | null) =>
+    mine !== null && theirs !== null && mine < theirs;
+
+  /** A crest and its monogram for the upcoming pairing. Names go to the label. */
+  const upcomingSide = (team: WindowFixtureView['homeTeam']) => ({
+    crest: crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'small'),
+    abbr: team ? abbreviate(team.name, team.slug, team.shortName) : phrases.unknownOpponent,
+    name: team ? displayName(team.name) : '—',
+  });
 
   const side = (team: WindowFixtureView['homeTeam'], goals: number | null, muted: boolean) => ({
     name: team ? displayName(team.name) : '—',
@@ -81,26 +118,57 @@ export default function TodayScreen() {
       onRefresh={() => {
         void finished.refetch();
         void upcoming.refetch();
+        void recent.refetch();
       }}
-      refreshing={finished.isRefetching || upcoming.isRefetching}>
-      {/* The lead pairing only exists once there is a club to lead with. */}
-      {hasClubs && next ? (
+      refreshing={finished.isRefetching || upcoming.isRefetching || recent.isRefetching}>
+      {/* The lead cards only exist once there is a club to lead with. */}
+      {hasClubs && (live || last || next) ? (
         <MatchBoard
-          next={{
-            home: side(next.homeTeam, null, false),
-            away: side(next.awayTeam, null, false),
-            kickoffUtc: next.kickoffUtc,
-            kickoffTbd: next.kickoffTbd,
-            // ⚠ Its OWN label, not the section header's — the card sat directly
-            // above a section with the identical title.
-            meta: copy.today.nextUp,
-            kickoffLabel: next.kickoffTbd
-              ? '--:--'
-              : formatKickoffTime(next.kickoffUtc, zone, clock),
-            dateLabel: formatFixtureDate(next.kickoffUtc, zone, phrases),
-            zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
-            venue: next.venue,
-          }}
+          live={
+            live
+              ? {
+                  home: side(live.homeTeam, live.goalsHome, loses(live.goalsHome, live.goalsAway)),
+                  away: side(live.awayTeam, live.goalsAway, loses(live.goalsAway, live.goalsHome)),
+                  // ⚠ The fixture route carries no per-row stamp. Null, never
+                  // our own fetch time — that would understate the age.
+                  lastUpdateAt: null,
+                }
+              : null
+          }
+          last={
+            last
+              ? {
+                  home: side(last.homeTeam, last.goalsHome, loses(last.goalsHome, last.goalsAway)),
+                  away: side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome)),
+                  meta: [
+                    lastMatchday !== null ? copy.today.md(lastMatchday) : null,
+                    formatFixtureDate(last.kickoffUtc, zone, phrases),
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
+                  outcome: lastOutcome ? phrases.formLetters[lastOutcome] : null,
+                }
+              : null
+          }
+          next={
+            next
+              ? {
+                  home: side(next.homeTeam, null, false),
+                  away: side(next.awayTeam, null, false),
+                  kickoffUtc: next.kickoffUtc,
+                  kickoffTbd: next.kickoffTbd,
+                  // ⚠ Its OWN label, not the section header's — the card sat
+                  // directly above a section with the identical title.
+                  meta: copy.today.nextUp,
+                  kickoffLabel: next.kickoffTbd
+                    ? '--:--'
+                    : formatKickoffTime(next.kickoffUtc, zone, clock),
+                  dateLabel: formatFixtureDate(next.kickoffUtc, zone, phrases),
+                  zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
+                  venue: next.venue,
+                }
+              : null
+          }
           copy={copy.today}
         />
       ) : null}
@@ -115,7 +183,7 @@ export default function TodayScreen() {
       />
 
       {finished.isPending ? (
-        <Text color="textFaint">…</Text>
+        <SkeletonRows count={3} height={Size.rowSkeleton} />
       ) : finished.data && finished.data.fixtures.some((f) => f.status === 'finished') ? (
         <>
           <FinishedToday window={finished.data} finishedLabel={copy.today.finished} />
@@ -131,26 +199,46 @@ export default function TodayScreen() {
 
       {hasClubs && mine.length > 0 ? (
         <>
-          <SectionHeader title={copy.today.upcoming} meta={String(mine.length)} tone="accent" />
+          {/* ⚠ Plain, no count: the accent in this section belongs to the day
+              word on today's row, and the count restates six visible rows. */}
+          <SectionHeader title={copy.today.upcoming} />
           <View style={styles.card}>
-            {mine.map((fixture) => (
-              <Pressable
-                key={fixture.id}
-                onPress={() => {
-                  const slug =
-                    fixture.homeTeam && followed.includes(fixture.homeTeam.slug)
-                      ? fixture.homeTeam.slug
-                      : fixture.awayTeam?.slug;
-                  if (slug) router.push({ pathname: '/club/[slug]', params: { slug } });
-                }}
-                style={styles.mineRow}>
-                <Text variant="bodyStrong" numberOfLines={1} style={styles.mineName}>
-                  {fixture.homeTeam ? displayName(fixture.homeTeam.name) : '—'}
-                  {' v '}
-                  {fixture.awayTeam ? displayName(fixture.awayTeam.name) : '—'}
-                </Text>
-              </Pressable>
-            ))}
+            {/* ⚠ One `now` for the whole card: read per row, a render that
+                straddles midnight would date two rows off different days. */}
+            {mine.map((fixture, index) => {
+              // The row is read from the followed club's bench (ADR 0029) —
+              // for the tap target and the home/away fallback, not the order:
+              // the crests stay home-first, the way the match is named.
+              const row = upcomingRow(fixture, followed);
+              if (!row) return null;
+              // ⚠ `venue` is null on plenty of rows. Where the ground is
+              // unknown, saying which end of it you are on is still a fact.
+              const location =
+                fixture.venue ?? (row.isHome ? copy.today.homeWord : copy.today.awayWord);
+              // ⚠ A TBD kickoff is stored as midnight UTC. It never says
+              // "tonight" — it shows its calendar date, faint.
+              const day = fixture.kickoffTbd
+                ? { label: formatFixtureDate(fixture.kickoffUtc, zone, phrases), tone: 'faint' as const }
+                : formatRelativeDay(fixture.kickoffUtc, zone, now, copy.today, phrases);
+
+              return (
+                <UpcomingRow
+                  key={fixture.id}
+                  home={upcomingSide(fixture.homeTeam)}
+                  away={upcomingSide(fixture.awayTeam)}
+                  kickoffLabel={
+                    fixture.kickoffTbd ? '--:--' : formatKickoffTime(fixture.kickoffUtc, zone, clock)
+                  }
+                  dayLabel={day.label}
+                  dayTone={day.tone}
+                  venue={location}
+                  divided={index > 0}
+                  onPress={() =>
+                    router.push({ pathname: '/club/[slug]', params: { slug: row.club.slug } })
+                  }
+                />
+              );
+            })}
           </View>
         </>
       ) : null}
@@ -195,13 +283,6 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: Colors.dark.card, borderRadius: Radius.group, overflow: 'hidden' },
-  mineRow: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.dark.hairline,
-  },
-  mineName: { flex: 1 },
   follow: {
     backgroundColor: Colors.dark.card,
     borderRadius: Radius.card,

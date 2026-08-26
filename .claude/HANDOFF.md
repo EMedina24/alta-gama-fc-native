@@ -86,7 +86,18 @@ documented at the code that handles them; this is the index.
 12. **An `_`-prefixed route is NOT private.** Only `_layout` is special. `/_debug`
     would have shipped; it is guarded by a `__DEV__` redirect in
     `_debug/_layout.tsx`.
-13. **Bands are per-league CONFIG, never position arithmetic.** `bandsApply` also
+13. **`presentation: 'formSheet'` in a nested `_layout.tsx` does NOTHING.** A
+    group with a layout is a nested stack, and its first route is that stack's
+    root — no navigator presents it, so it rendered full-screen with no grabber,
+    no swipe-to-dismiss and (with `headerShown: false`) no way back. All four
+    sheets shipped like that. They are declared in the ROOT stack now; a new
+    sheet route needs a `Stack.Screen` line there or it silently reverts to a
+    card. See [0030](./decisions/0030-sheets-are-presented-by-the-root-stack.md).
+    ⚠ And inside a `formSheet`, **`flex: 1` collapses to zero** — the screen is
+    laid out at its content's height, so a `flex: 1` wrapper paints its children
+    on top of each other. A pinned header there is `stickyHeaderIndices`, not a
+    sibling above the scroll.
+14. **Bands are per-league CONFIG, never position arithmetic.** `bandsApply` also
     suppresses them on an incomplete or unplayed table — banding a zero-point
     table painted three clubs into relegation on the web app.
 
@@ -107,8 +118,8 @@ documented at the code that handles them; this is the index.
 
 ### Open — in priority order
 
-0. **Front-end gaps** — see the section below. The Today board's live and
-   last-result states are the biggest: both organisms exist, neither is wired.
+0. **Front-end gaps** — see the section below. The Today board's lead states
+   are now wired (0027); loading skeletons are the next most visible.
 1. **Widgets** — [0025](./decisions/0025-widgets-deferred.md). Both sizes, full
    build. App Group already declared and registered. Strongest Guideline 4.2
    argument; do it before submission.
@@ -140,40 +151,49 @@ The five screens are built and running on live data, but several designed states
 are unbuilt or stubbed. Audited 2026-08-25 against `handoff_AG-ios/SPEC.md`.
 Ordered by what a user would notice first.
 
-### 1 · The Today board is missing two of its three lead states ⚠
+### 1 · ~~The Today board is missing two of its three lead states~~ — DONE 2026-08-25
 
-`organisms/match-board.tsx` implements **live**, **last result** and **next** —
-but `(tabs)/index.tsx` only ever passes `next`. So the in-progress card and the
-last-result card never render.
+Wired in [0027](./decisions/0027-board-lead-cards-from-fixtures.md): both the
+live and last-result cards read `/cronogol/fixtures` (a 14-day `recentBounds`
+window plus today's), selected by `lib/cronogol/board.ts` — pure, harness-proven.
+`useScoreboard` is gone; **the app's UI no longer reads `/cronogol/scores`**.
+⚠ The score-age line now says "as of the last check · roughly every 3h" — the
+fixture route has no per-row stamp, and our own fetch time would understate it.
+Last-result card verified on the simulator (Elche 0–5 Barcelona, `V` pill); the
+live card has not been seen against production yet — no fixture was in play.
 
-That makes this the highest-value item, and it is mostly wiring rather than new
-components. It also means **the score-age line has never appeared in the app** —
-"Score last checked 2h ago · updates roughly every 4h" is the honesty centrepiece
-of the whole design (SPEC §3.1, and the handoff says twice not to remove it), and
-today there is no code path that shows it.
+### 2 · ~~Loading states are a literal `…`~~ — DONE 2026-08-25
 
-Needs: `useScoreboard()` (already written in `queries/use-today.ts`, currently
-unused) wired to a live row, and the most recent finished fixture of a followed
-club for the last-result card.
+All six sites render `SkeletonRows` at `Size.rowSkeleton`. `Skeleton` now honours
+Reduce Motion (`useReducedMotion` → steady opacity), which closes that bullet of
+item 7 too.
 
-### 2 · Loading states are a literal `…`
+### 3 · ~~Matchdays header is incomplete~~ — DONE 2026-08-25
 
-Six screens render `<Text>…</Text>` while pending: Today, Table, Matchdays, Clubs
-and the club page (twice). The `Skeleton` / `SkeletonRows` atoms exist, are
-designed for exactly this, and are used **only** in `_debug`.
+Built as `molecules/matchday-pager.tsx` ([0028](./decisions/0028-matchday-pager.md)):
+prev/next squares on their own row under the title, range + count right-aligned.
+The screen owns ONE clamped `goTo(n)` that the strip and both arrows call — there
+is no second state. The range is gated on `kickoffsConfirmed`; a provisional round
+prints `datesPending` and drops the zone with it. `formatDateRange` collapses
+shared parts to the right and is harness-proven (same day / same month / cross
+month / cross year, EN + ES).
 
-### 3 · Matchdays header is incomplete (SPEC §3.2)
+Verified on the simulator: jornada 1 `SÁB 15 — JUE 27 AGO 2026` (the deferred-opener
+span), jornada 5 `FECHAS POR CONFIRMAR · 10 PARTIDOS`, prev disabled on 1, next
+disabled on 38. ⚠ Not yet seen in English or at large Dynamic Type.
 
-- **Prev/next pager** — 34pt raised squares flanking the title. Only the strip
-  exists. ⚠ They must drive the same clamped state as the strip, not a second one.
-- **Date range + count** — right-aligned `SAT 5 — MON 7 SEP 2026` over
-  `10 MATCHES · CEST`. ⚠ Gate the range on `kickoffsConfirmed`; provisional dates
-  would print a range that moves.
+Picked up on the way: `Size.pill` now holds the 34pt square for the strip and the
+pager, and the strip's accessibility label is localised (it was hardcoded English).
 
 ### 4 · Today's stat tiles (SPEC §3.1 item 4)
 
 Two tiles under the upcoming section — subscribed count → Clubs, feed count →
-account sheet. Not built.
+account sheet. Not built. (The upcoming section itself is done —
+[0029](./decisions/0029-upcoming-rows-read-from-the-followed-club.md): the
+both crests either side of a `vs`, over `kickoff · day · venue` — a relative day
+word, accent on today only. Names live on the accessibility label, not the row.
+⚠ `formatRelativeDay` must never see a `kickoffTbd` row — midnight-UTC would
+claim "tonight" for a match with no kickoff.)
 
 ### 5 · The account avatar exists on one screen
 
@@ -189,9 +209,7 @@ the whole job of that screen.
 
 ### 7 · Accessibility pass
 
-- ⚠ `Skeleton` pulses unconditionally — must honour **Reduce Motion**. It is the
-  only always-on animation in the app, and the design says motion is platform
-  defaults plus the accent ring, nothing else.
+- ~~`Skeleton` pulses unconditionally~~ — honours Reduce Motion since 2026-08-25.
 - Dynamic Type is inherited (system font, no `expo-font`) but has not been tested
   at large sizes; the table's fixed column widths are the likely first casualty.
 - Hit targets were built to 44pt but not audited.

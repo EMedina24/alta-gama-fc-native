@@ -41,6 +41,9 @@ export interface ScoreLineProps {
   center?: string;
 }
 
+/** How far a board-size name may shrink before it would rather ellipsise. */
+const NAME_MIN_SCALE = 0.7;
+
 export function ScoreLine({
   home,
   away,
@@ -52,6 +55,10 @@ export function ScoreLine({
   const nameVariant = size === 'board' ? 'title3' : 'bodyStrong';
   const scoreVariant = size === 'board' ? 'scoreLarge' : 'numeral';
   const played = home.goals !== null && away.goals !== null;
+  // ⚠ At board size a single-word club name cannot wrap, and "Barc…" beside a
+  // 0–5 names nobody. It shrinks instead — verified on the simulator with
+  // Elche v Barcelona, where the title3 name ellipsised at one line.
+  const shrinkNames = size === 'board';
 
   return (
     <View style={styles.row}>
@@ -61,6 +68,8 @@ export function ScoreLine({
           variant={nameVariant}
           color={home.muted ? 'textDim' : 'text'}
           numberOfLines={1}
+          adjustsFontSizeToFit={shrinkNames}
+          minimumFontScale={NAME_MIN_SCALE}
           style={styles.name}>
           {home.name}
         </Text>
@@ -80,6 +89,8 @@ export function ScoreLine({
           variant={nameVariant}
           color={away.muted ? 'textDim' : 'text'}
           numberOfLines={1}
+          adjustsFontSizeToFit={shrinkNames}
+          minimumFontScale={NAME_MIN_SCALE}
           style={[styles.name, styles.awayName]}>
           {away.name}
         </Text>

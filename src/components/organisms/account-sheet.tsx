@@ -13,6 +13,20 @@
  *
  * ⚠ **The goals switch is drawn disabled WITH its reason and the reason stays.**
  * That type does not exist and is not coming without a live feed.
+ *
+ * ⚠ The `Cuenta · Cerrar` bar is a STICKY first child of the scroll, not a
+ * sibling above it. Inside a `formSheet`, react-native-screens lays the screen
+ * out with an auto height (its own comment: "due to how Yoga resolves layout"),
+ * so a `flex: 1` wrapper collapses to zero and paints its children on top of
+ * each other. `stickyHeaderIndices` pins the bar without needing a height.
+ *
+ * ⚠ …and that is why the bar is TWO views deep. React Native moves a sticky
+ * child's style onto the wrapper it generates and replaces the child's own with
+ * `{ flex: 1 }` — so a row laid out at that level silently becomes a column.
+ * `bar` is the style that gets hoisted; `barRow` is the one that survives.
+ *
+ * ⚠ `Close` is not decoration: the sheet is long, swipe-down is an invisible
+ * affordance, and the bar also holds the identity heading clear of the grabber.
  */
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
@@ -43,6 +57,7 @@ export interface AccountSheetProps {
   onSetClock: (clock: ClockFormat) => void;
   onReplayOnboarding: () => void;
   onTurnOffAlerts: () => void;
+  onClose: () => void;
 }
 
 function Row({
@@ -108,12 +123,22 @@ export function AccountSheet({
   onSetClock,
   onReplayOnboarding,
   onTurnOffAlerts,
+  onClose,
 }: AccountSheetProps) {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const a = copy.account;
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <ScrollView contentContainerStyle={styles.wrap} stickyHeaderIndices={[0]}>
+      <View style={styles.bar}>
+        <View style={styles.barRow}>
+          <Text variant="callout" color="textSecondary">
+            {a.title}
+          </Text>
+          <Button label={copy.sheets.close} tone="quiet" full={false} onPress={onClose} />
+        </View>
+      </View>
+
       <View style={styles.identity}>
         <Text variant="title3">{a.notSignedIn}</Text>
         <Text variant="footnote" color="textDim">
@@ -234,7 +259,21 @@ export function AccountSheet({
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: Spacing.five, gap: Spacing.three, paddingBottom: Spacing.eight },
+  // Full-bleed out of the 20pt gutter, so no content shows past the bar while
+  // it is pinned.
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.card },
+  barRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // Clears the sheet grabber. ⚠ The right gutter is the Button's own padding —
+    // `Spacing.one` here lands its label on the same gutter as the content below.
+    paddingLeft: Spacing.five,
+    paddingRight: Spacing.one,
+    paddingTop: Spacing.five,
+    paddingBottom: Spacing.one,
+  },
+  wrap: { paddingHorizontal: Spacing.five, paddingBottom: Spacing.eight, gap: Spacing.three },
   identity: { gap: Spacing.one, marginBottom: Spacing.two },
   group: { backgroundColor: Colors.dark.raised, borderRadius: Radius.group, overflow: 'hidden' },
   row: {

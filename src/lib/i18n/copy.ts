@@ -96,7 +96,15 @@ export interface Copy {
     inPlayNote: string;
     kickoffIn: string;
     noScore: string;
+    /**
+     * The score-age line under an in-play score. ⚠ Required wherever a live
+     * score appears (SPEC §3.1). Null hours = the feed carries no stamp.
+     */
     scoreAge: (hoursAgo: number | null) => string;
+    /** The last-result card's eyebrow. */
+    lastResult: string;
+    /** "MD 3" / "J 3" — the matchday half of the last-result meta. */
+    md: (n: number) => string;
     tbd: string;
     finishedToday: string;
     finished: string;
@@ -106,6 +114,15 @@ export interface Copy {
     nextUp: string;
     /** ⚠ Says whose clock the kickoff is in. */
     yourTime: string;
+    /** The day word under an upcoming kickoff — rendered as an eyebrow. */
+    tonight: string;
+    tomorrow: string;
+    /**
+     * Stands in for a missing venue on an upcoming row — "en casa" / "fuera".
+     * ⚠ Reads as a phrase on its own, not the `L`/`V` pill of a fixture list.
+     */
+    homeWord: string;
+    awayWord: string;
     followTitle: string;
     followBody: string;
     browseAll: string;
@@ -148,6 +165,13 @@ export interface Copy {
     addAll: (n: number) => string;
     /** Shown under the title when kickoffs are provisional. */
     timesPending: string;
+    /** The header's range slot while kickoffs are provisional — short, eyebrow-length. */
+    datesPending: string;
+    /** The eyebrow over the 1…N strip. */
+    stripLabel: string;
+    /** Accessibility labels for the prev/next squares. */
+    previous: string;
+    next: string;
     missing: (n: number) => string;
     finished: string;
     empty: string;
@@ -267,10 +291,14 @@ export const esCopy: Copy = {
     inPlayNote: 'En juego en la última comprobación. No hay marcador en vivo todavía.',
     kickoffIn: 'Empieza en',
     noScore: 'Sin marcador todavía',
+    // ⚠ El barrido de partidos corre cada ~3 h y no lleva sello por partido,
+    // así que la rama nula es la que se ve. Nunca "en directo".
     scoreAge: (h: number | null) =>
       h === null
-        ? 'No sabemos cuándo se comprobó este marcador · se actualiza cada 4 h aprox.'
-        : `Marcador comprobado hace ${h} h · se actualiza cada 4 h aprox.`,
+        ? 'Marcador de la última comprobación · se actualiza cada 3 h aprox.'
+        : `Marcador comprobado hace ${h} h · se actualiza cada 3 h aprox.`,
+    lastResult: 'Último resultado',
+    md: (n: number) => `J ${n}`,
     tbd: 'Hora por confirmar',
     finishedToday: 'Finalizados hoy',
     finished: 'FIN',
@@ -279,6 +307,10 @@ export const esCopy: Copy = {
     upcoming: 'Próximos de tus clubes',
     nextUp: 'Siguiente partido',
     yourTime: 'tu hora',
+    tonight: 'Hoy',
+    tomorrow: 'Mañana',
+    homeWord: 'en casa',
+    awayWord: 'a domicilio',
     followTitle: 'Sigue a tu club y no te pierdas ningún partido.',
     followBody:
       'La temporada entera entra de una vez. Si cambia un horario, la entrada del calendario cambia contigo y recibes un aviso.',
@@ -327,6 +359,10 @@ export const esCopy: Copy = {
     addAll: (n: number) => `Añadir los ${n} partidos`,
     timesPending:
       'Los horarios de esta jornada aún no están confirmados. Las fechas son provisionales.',
+    datesPending: 'Fechas por confirmar',
+    stripLabel: 'Jornada',
+    previous: 'Jornada anterior',
+    next: 'Jornada siguiente',
     missing: (n: number) => `Faltan ${n} partidos por publicar`,
     finished: 'FIN',
     empty: 'Esta jornada aún no tiene partidos publicados.',
@@ -455,10 +491,14 @@ export const enCopy: Copy = {
     inPlayNote: 'In play as of the last check. There is no live score feed yet.',
     kickoffIn: 'Kickoff in',
     noScore: 'No score yet',
+    // ⚠ The fixture sweep runs every ~3h and carries no per-row stamp, so the
+    // null branch is the one that renders. States the cadence, never a minute.
     scoreAge: (h: number | null) =>
       h === null
-        ? 'Score age unknown · updates roughly every 4h'
-        : `Score last checked ${h}h ago · updates roughly every 4h`,
+        ? 'Score as of the last check · updates roughly every 3h'
+        : `Score last checked ${h}h ago · updates roughly every 3h`,
+    lastResult: 'Last result',
+    md: (n: number) => `MD ${n}`,
     tbd: 'Kickoff time to be confirmed',
     finishedToday: 'Finished today',
     finished: 'FT',
@@ -467,6 +507,10 @@ export const enCopy: Copy = {
     upcoming: 'Upcoming from your clubs',
     nextUp: 'Next up',
     yourTime: 'your time',
+    tonight: 'Tonight',
+    tomorrow: 'Tomorrow',
+    homeWord: 'at home',
+    awayWord: 'away',
     followTitle: 'Follow your favourite club and never miss a kickoff.',
     followBody:
       'The whole season goes in at once. When a kickoff moves, the calendar entry moves with it and you get an alert the same minute.',
@@ -514,6 +558,10 @@ export const enCopy: Copy = {
     addAll: (n: number) => `Add all ${n} matches`,
     timesPending:
       'Kickoff times for this matchday are not confirmed yet. The dates are provisional.',
+    datesPending: 'Dates to be confirmed',
+    stripLabel: 'Matchday',
+    previous: 'Previous matchday',
+    next: 'Next matchday',
     missing: (n: number) => `${n} matches not published yet`,
     finished: 'FT',
     empty: 'No matches published for this matchday yet.',

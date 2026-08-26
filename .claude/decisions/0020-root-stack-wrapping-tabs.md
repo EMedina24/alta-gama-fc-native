@@ -1,7 +1,7 @@
 # 0020 — Root layout is a `Stack` wrapping a `(tabs)` group
 
 - **Date:** 2026-08-24
-- **Status:** Accepted
+- **Status:** Accepted — sheet presentation revised by [0030](./0030-sheets-are-presented-by-the-root-stack.md)
 - **Revises:** [0005](./0005-native-tabs.md)
 - **Decided by:** Ed Medina
 

@@ -52,10 +52,15 @@ more words than one that's obvious once you see it.
 | [0017](./0017-react-query-data-layer.md) | React Query, with the web app's cache buckets as `staleTime` | Accepted |
 | [0018](./0018-ported-data-layer.md) | The ported `lib/cronogol/` layer mirrors the web app path for path | Accepted |
 | [0019](./0019-anonymous-v1.md) | Anonymous v1: follows are device-keyed, accounts designed-for | Accepted |
-| [0020](./0020-root-stack-wrapping-tabs.md) | Root layout is a `Stack` wrapping a `(tabs)` group | Accepted |
+| [0020](./0020-root-stack-wrapping-tabs.md) | Root layout is a `Stack` wrapping a `(tabs)` group | Accepted — sheets revised by 0030 |
 | [0021](./0021-short-club-display-names.md) | Club names are shortened for display | Accepted |
 | [0022](./0022-finished-today-from-fixtures.md) | `FINISHED TODAY` is built from `/cronogol/fixtures`, not the scoreboard | Accepted |
 | [0023](./0023-phase-3-resequenced-no-apple-account.md) | Phase 3 resequenced around a pending Apple Developer account | Blocked half closed by 0024 |
 | [0024](./0024-push-enabled.md) | Push enabled; Live Activity deferred to v1.1 | Accepted |
 | [0025](./0025-widgets-deferred.md) | Widgets deferred; no native targets in the tree yet | Accepted — open work |
 | [0026](./0026-apns-environment-is-the-provisioning-profile.md) | The APNs environment follows the provisioning profile, not the build name | Accepted |
+| [0027](./0027-board-lead-cards-from-fixtures.md) | Today's live and last-result cards read `/cronogol/fixtures`; the scoreboard is not read by the app | Accepted |
+| [0028](./0028-matchday-pager.md) | Matchdays pager: one clamped setter, text chevrons, no range while provisional | Accepted |
+| [0029](./0029-upcoming-rows-read-from-the-followed-club.md) | `UPCOMING FROM YOUR CLUBS` rows are the crest pairing over `kickoff · day · venue`, with the relative day accented only today | Accepted |
+| [0030](./0030-sheets-are-presented-by-the-root-stack.md) | The sheets are presented by the ROOT stack, not a `(sheets)` layout | Accepted |
+| [0031](./0031-league-filter-tiles-are-artwork-only.md) | The league filter tiles are artwork only, at one fixed size | Accepted |

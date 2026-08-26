@@ -8,17 +8,21 @@
  * league" nor our own crests. The fixture window carries `leagueSlug`,
  * `logoUrls` on our storage, `goalsHome`/`goalsAway` and `status`.
  *
- * The scoreboard is still read, for one job only: the in-progress tile and the
- * `lastUpdateAt` age line beside it.
+ * ⚠ The scoreboard is NOT read here at all — not even for the in-progress card.
+ * It cannot say which match is *yours* (no crosswalk to our clubs, and name
+ * matching is forbidden), so the live and last-result cards read the same
+ * fixture route. See ADR 0027.
  */
 import { useQuery } from '@tanstack/react-query';
 
-import { getFixtureWindow, getScores } from '@/lib/cronogol/client';
-import { todayBounds, upcomingBounds } from '@/lib/cronogol/fixture-window';
+import { getFixtureWindow } from '@/lib/cronogol/client';
+import { recentBounds, todayBounds, upcomingBounds } from '@/lib/cronogol/fixture-window';
 import { keys } from './keys';
 import { STALE } from './stale';
 
 const UPCOMING_DAYS = 7;
+/** Two weeks back covers an international break; nothing older is a "last result". */
+const RECENT_DAYS = 14;
 
 /** Today's played matches, in the reader's own day. */
 export function useFinishedToday(zone: string) {
@@ -42,16 +46,12 @@ export function useUpcoming(zone: string) {
   });
 }
 
-/**
- * The scoreboard, today and yesterday.
- *
- * ⚠ `days: 2` is the only value the UI should send — only the newest two buckets
- * are kept fresh.
- */
-export function useScoreboard() {
+/** The past fortnight, for the LAST RESULT card (and the live card's snapshot). */
+export function useRecent(zone: string) {
+  const { from, to } = recentBounds(new Date(), zone, RECENT_DAYS);
   return useQuery({
-    queryKey: keys.scores(2),
-    queryFn: () => getScores({ days: 2 }),
+    queryKey: keys.fixtureWindow(from.slice(0, 10), 'recent'),
+    queryFn: () => getFixtureWindow({ from, to }),
     staleTime: STALE.feed,
   });
 }

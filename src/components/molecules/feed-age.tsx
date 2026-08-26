@@ -1,8 +1,8 @@
 /**
  * "Score last checked 2h ago · updates roughly every 4h".
  *
- * ⚠ **This line is required wherever a score from `/cronogol/scores` appears**,
- * and the handoff says so twice: "Do not remove those lines to make the screen
+ * ⚠ **This line is required wherever an in-play score appears**, and the
+ * handoff says so twice: "Do not remove those lines to make the screen
  * look cleaner — they are the difference between honest and broken."
  *
  * ⚠ The age is computed from `lastUpdateAt`, which is when the SOURCE moved the
@@ -15,7 +15,12 @@ import { Text } from '@/components/atoms';
 import { Spacing } from '@/constants/theme';
 
 export interface FeedAgeProps {
-  /** `lastUpdateAt` from the scoreboard payload. */
+  /**
+   * When the SOURCE last moved the row. Null when the feed carries no stamp —
+   * `/cronogol/fixtures` never does — and the caller's copy then states the
+   * sweep cadence instead of a number. Never fall back to our own read time:
+   * that can only UNDERSTATE the age.
+   */
   lastUpdateAt: string | null;
   now?: number;
   /** Receives whole hours; the caller owns the wording and the language. */

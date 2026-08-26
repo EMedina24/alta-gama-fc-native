@@ -86,9 +86,13 @@ export const Type = {
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
 export const Size = {
-  minTouch: 44, switchW: 51, switchH: 31, switchKnob: 27,
+  minTouch: 44, rowSkeleton: 44, pill: 34, switchW: 51, switchH: 31, switchKnob: 27,
   crestRow: 26, crestList: 30, crestCard: 40, crestHero: 58,
   tabIcon: 22, avatar: 36, sheetGrabber: 38,
+  /** League filter tiles: artwork only, four across inside the screen gutter. */
+  leagueTileW: 80, leagueTileH: 56, leagueMarkW: 52, leagueMarkH: 28,
+  /** The time column. Fixed so switching 12/24h never reflows a row. */
+  timingColumn: 76,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

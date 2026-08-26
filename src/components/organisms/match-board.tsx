@@ -2,15 +2,21 @@
  * The Today board's lead card: a match in progress, or last result + next kickoff.
  *
  * ⚠ **The score-age line is required and must never be removed to tidy the
- * screen.** The backend has no live push — `/cronogol/scores` sweeps roughly
- * every four hours — so a score here can be hours stale. The handoff is explicit:
- * those lines "are the difference between honest and broken".
+ * screen.** The backend has no live push — the fixture sweep that writes
+ * `status: "live"` and its goals runs roughly every three hours — so a score
+ * here can be hours stale. The handoff is explicit: those lines "are the
+ * difference between honest and broken".
  *
  * ⚠ For the same reason there is **no minute and no pulsing dot**. SPEC §3.1
- * asks for both, but no endpoint returns a minute (`/cronogol/scores` collapses
- * every in-play state to `live` with no minute and "no way to derive one"), and
- * a dot pulsing on four-hour-old data is a liveness claim made by animation.
- * The card states that it is in play *as of the last check* and leaves it there.
+ * asks for both, but no endpoint returns a minute (every in-play state collapses
+ * to `live` with "no minute, no HT, and no way to derive one"), and a dot
+ * pulsing on hours-old data is a liveness claim made by animation. The card
+ * states that it is in play *as of the last check* and leaves it there.
+ *
+ * ⚠ Both the live and last-result cards are fed from `/cronogol/fixtures`, not
+ * the scoreboard — the scoreboard cannot say which match is yours (ADR 0027).
+ * The fixture route carries no per-row stamp, so `lastUpdateAt` is null and the
+ * age line states the cadence rather than a number.
  */
 import { StyleSheet, View } from 'react-native';
 
@@ -29,7 +35,10 @@ export interface MatchBoardProps {
   last?: {
     home: ScoreSide;
     away: ScoreSide;
+    /** "MD 3 · SAT 29 AUG" */
     meta: string;
+    /** Already mapped through `phrases.formLetters` — never a raw `W`/`D`/`L`. */
+    outcome: string | null;
   } | null;
   /** The soonest upcoming match of a followed club. */
   next?: {
@@ -50,6 +59,7 @@ export interface MatchBoardProps {
     inProgress: string;
     inPlayNote: string;
     kickoffIn: string;
+    lastResult: string;
     noScore: string;
     scoreAge: (hoursAgo: number | null) => string;
     tbd: string;
@@ -77,9 +87,12 @@ export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
     <View style={styles.stack}>
       {last ? (
         <View style={styles.card}>
-          <Text variant="eyebrowSm" color="textFaint">
-            {last.meta}
-          </Text>
+          <View style={styles.headRow}>
+            <Text variant="eyebrowSm" color="textFaint">
+              {copy.lastResult} · {last.meta}
+            </Text>
+            {last.outcome ? <Pill label={last.outcome} /> : null}
+          </View>
           <ScoreLine home={last.home} away={last.away} noScoreLabel={copy.noScore} />
         </View>
       ) : null}

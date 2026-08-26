@@ -69,10 +69,75 @@ export function formatFixtureDate(iso: string, zone: string, phrases: Phrases): 
   return Object.values(zonedParts(iso, zone, phrases)).join(' ').toUpperCase();
 }
 
+/**
+ * "SAT 5 — MON 7 SEP 2026" — a matchday's span, in the reader's zone.
+ *
+ * Shared parts collapse to the right: a same-month span prints the month and
+ * year once, a cross-month span repeats the month, a cross-year span repeats
+ * everything. A single day is just that day. Jornada 1 of 2026/27 ran 15–27 Aug
+ * on a deferred opener, so spans are not assumed to be weekends.
+ *
+ * ⚠ Only meaningful when the round's `kickoffsConfirmed` is true — provisional
+ * dates print a range that moves. The caller owns that gate.
+ */
+export function formatDateRange(
+  fromIso: string,
+  toIso: string,
+  zone: string,
+  phrases: Phrases,
+): string {
+  const a = { ...zonedParts(fromIso, zone, phrases), year: zonedDayKey(fromIso, zone).slice(0, 4) };
+  const b = { ...zonedParts(toIso, zone, phrases), year: zonedDayKey(toIso, zone).slice(0, 4) };
+
+  let text: string;
+  if (zonedDayKey(fromIso, zone) === zonedDayKey(toIso, zone)) {
+    text = `${a.weekday} ${a.day} ${a.month} ${a.year}`;
+  } else if (a.year === b.year && a.month === b.month) {
+    text = `${a.weekday} ${a.day} — ${b.weekday} ${b.day} ${b.month} ${b.year}`;
+  } else if (a.year === b.year) {
+    text = `${a.weekday} ${a.day} ${a.month} — ${b.weekday} ${b.day} ${b.month} ${b.year}`;
+  } else {
+    text = `${a.weekday} ${a.day} ${a.month} ${a.year} — ${b.weekday} ${b.day} ${b.month} ${b.year}`;
+  }
+  return text.toUpperCase();
+}
+
 /** `{ weekday, day, month }` for the season spine's stacked three-line rail. */
 export function fixtureDateParts(iso: string, zone: string, phrases: Phrases) {
   const { weekday, day, month } = zonedParts(iso, zone, phrases);
   return { weekday: weekday.toUpperCase(), day, month: month.toUpperCase() };
+}
+
+export interface RelativeDay {
+  label: string;
+  /** Only today is lit — one accent thing per section. */
+  tone: 'accent' | 'faint';
+}
+
+/**
+ * "TONIGHT" / "TOMORROW" / "SAT 30 AUG" — the day an upcoming kickoff falls on,
+ * decided on the viewer's calendar (`zonedDayKey`) so a late-night kickoff
+ * that is "tonight" in Madrid is still tomorrow's row for a reader in Mexico.
+ *
+ * ⚠ Never call this for a `kickoffTbd` row: its `00:00:00Z` placeholder is a
+ * date wearing a midnight time, and it would claim "tonight" for a match with
+ * no kickoff at all. Those rows show the calendar date, faint.
+ */
+export function formatRelativeDay(
+  iso: string,
+  zone: string,
+  now: Date,
+  words: { tonight: string; tomorrow: string },
+  phrases: Phrases,
+): RelativeDay {
+  const day = zonedDayKey(iso, zone);
+  const today = zonedDayKey(now.toISOString(), zone);
+  if (day === today) return { label: words.tonight, tone: 'accent' };
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  if (day === zonedDayKey(tomorrow.toISOString(), zone)) {
+    return { label: words.tomorrow, tone: 'faint' };
+  }
+  return { label: formatFixtureDate(iso, zone, phrases), tone: 'faint' };
 }
 
 /**

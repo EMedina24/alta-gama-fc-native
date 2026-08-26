@@ -99,3 +99,20 @@ export function upcomingBounds(
     to: zonedMidnight(addDays(today, days), zone).toISOString(),
   };
 }
+
+/**
+ * `[local midnight n days ago, now]` — the band the Today board's LAST RESULT
+ * card looks back over. Overlaps `todayBounds` on purpose: one query, and the
+ * newest finished match is the newest finished match wherever it falls.
+ */
+export function recentBounds(
+  now: Date,
+  zone: string,
+  days: number,
+): { from: string; to: string } {
+  const today = zonedDayKey(now.toISOString(), zone);
+  return {
+    from: zonedMidnight(addDays(today, -days), zone).toISOString(),
+    to: now.toISOString(),
+  };
+}

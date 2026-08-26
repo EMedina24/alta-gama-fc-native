@@ -1,14 +1,24 @@
-/** A shimmering placeholder block for list and table loading states. */
+/**
+ * A shimmering placeholder block for list and table loading states.
+ *
+ * ⚠ The only always-on animation in the app, so it is the one that has to
+ * honour Reduce Motion: with it set the block sits at a steady mid opacity.
+ * The design's motion budget is platform defaults plus the accent ring.
+ */
 import { useEffect } from 'react';
 import { StyleSheet, View, type DimensionValue } from 'react-native';
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
+
+/** The resting opacity under Reduce Motion — between the pulse's two ends. */
+const STEADY = 0.6;
 
 export interface SkeletonProps {
   width?: DimensionValue;
@@ -17,11 +27,16 @@ export interface SkeletonProps {
 }
 
 export function Skeleton({ width = '100%', height = 14, radius = Radius.chipSm }: SkeletonProps) {
-  const pulse = useSharedValue(0.4);
+  const reduceMotion = useReducedMotion();
+  const pulse = useSharedValue(reduceMotion ? STEADY : 0.4);
 
   useEffect(() => {
+    if (reduceMotion) {
+      pulse.value = STEADY;
+      return;
+    }
     pulse.value = withRepeat(withTiming(0.85, { duration: 900 }), -1, true);
-  }, [pulse]);
+  }, [pulse, reduceMotion]);
 
   const animated = useAnimatedStyle(() => ({ opacity: pulse.value }));
 
