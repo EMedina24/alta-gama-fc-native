@@ -9,9 +9,17 @@ import SwiftUI
 /// clubs are *expected* here. Never invent artwork for a club that has none.
 ///
 /// ⚠ Reads from the App Group container, never the network. The file was left
-/// there by the service extension (server push) or by the app at schedule time
-/// (local reminder). A `UIImage` load off disk is instant; a fetch inside a
-/// content extension would draw an empty card and fill it in later, or not.
+/// there by the service extension (server push), by the app at schedule time
+/// (local reminder), or by the widget snapshot writer
+/// (`src/features/widgets/crests.ts`). A `UIImage` load off disk is instant; a
+/// fetch inside a content extension would draw an empty card and fill it in
+/// later, or not — and inside a widget's timeline provider it is worse still,
+/// because that process has a hard memory budget and no reliable network.
+///
+/// ⚠ **Shared across targets** — this file lives in `targets/_shared/`, so the
+/// long-look card and both widgets draw crests through the same code and read
+/// the same `crests/{fixtureId}/{slot}.png` layout. Changing that path is a
+/// change to `crest-cache.ts` at the same time.
 struct CrestView: View {
   let fixtureId: String?
   let slot: String

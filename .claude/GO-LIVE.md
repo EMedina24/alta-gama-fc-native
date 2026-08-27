@@ -17,7 +17,9 @@ Nothing else in the app knows whether push exists.
 - [ ] Create an **APNs Auth Key (.p8)** — one key serves every environment. Hand
       the key, its Key ID and the Team ID to whoever configures `senpai-backend`;
       the four `APNS_*` vars there are currently unset.
-- [ ] Create the App Group **`group.com.altagamafc.app`** (widgets only).
+- [x] Create the App Group **`group.com.altagamafc.app`**. ⚠ No longer "widgets
+      only" — the notification service and content extensions use it too (0037),
+      and the widgets joined them (0047). Three extensions, one group.
 
 ⚠ The server is **also** dark: `CRONOGOL_PUSH_CRON_ENABLED='false'` in
 `render.yaml`. Both halves have to be turned on, and the backend wants an APNs
@@ -82,21 +84,29 @@ the 64-notification rolling window are all already correct.
       explanation, never on cold launch.
 - [ ] Point the account sheet's destructive action at `disablePushForDevice()`.
 
-## 4 · Widgets and Live Activity — ⏸ DEFERRED
+## 4 · Widgets — ✅ DONE · Live Activity — ⏸ STILL DEFERRED
 
-**Paused 2026-08-25** — see [decisions/0025](./decisions/0025-widgets-deferred.md)
-for the pick-up steps, and [0024](./decisions/0024-push-enabled.md) for why Live
-Activity is a separate, later decision. The checklist below stands as written.
+**Widgets landed 2026-08-27** — [decisions/0047](./decisions/0047-widgets.md).
+⚠ **Live Activity below is untouched and stays deferred**; do not tick it by
+proximity. [0024](./decisions/0024-push-enabled.md) is still the reason.
 
-
-- [ ] `npx create-target widget` (`@bacons/apple-targets`) — Swift lives in
-      `targets/`, outside `ios/`, so CNG survives. Requires Xcode 16 / macOS 15.
-- [ ] Add the App Group to `ios.entitlements` in `app.json`.
-- [ ] `WIDGETS_AVAILABLE = true` and implement `reloadWidgets()`.
-- [ ] ⚠ **Pre-download crests into the App Group.** A widget extension has a hard
-      memory budget and unreliable network — never `AsyncImage` a remote crest in
-      a timeline provider.
-- [ ] Timeline policy: `.after(nextKickoff)` plus midnight. **Never per-minute.**
+- [x] Widget target added by hand under `targets/widget/`, following the two
+      notification targets rather than `create-target`'s scaffold. Swift lives in
+      `targets/`, outside `ios/`, so CNG survives — verified: `git ls-files ios`
+      is still empty after a `--clean` prebuild.
+- [x] App Group already in `ios.entitlements`; no `app.json` change was needed.
+- [x] `WIDGETS_AVAILABLE = true`, `reloadWidgets()` implemented via
+      `ExtensionStorage.reloadWidget()` — ⚠ deliberately with **no kind string**,
+      so there is no silent two-file contract to drift.
+- [x] ⚠ **Crests pre-downloaded into the App Group**, and pinned so the reminder
+      path's prune cannot sweep them (0047; HANDOFF trap 17's cousin).
+- [x] Timeline policy `.after(nextKickoff)` plus midnight. ⚠ **Minute-resolution
+      timeline ENTRIES in the final hour are not a per-minute refresh** — entries
+      are free, reloads are rationed. Observed on the simulator ticking
+      6m → 2m → 1m with the app closed and no reload spent.
+- [ ] ⚠ **Device build.** A third extension bundle id
+      (`com.altagamafc.app.widget`) needs its own provisioning profile, exactly
+      as the two notification targets did.
 
 ⚠ **Live Activity: decide the scope before anyone writes Swift.** SPEC §4 as
 written is not implementable against this backend — `minuteLabel` has no source,
@@ -160,8 +170,20 @@ dispatch yet.
       dark** — do it before asking anyone to enable the cron.
 - [ ] `xcrun simctl openurl booted "altagamafc://club/valencia"` lands on the club
       page. (Untestable in Expo Go — a custom scheme needs a real build.)
-- [ ] Both widget sizes render real followed-club data; the timeline reloads on a
-      follow change and **not** per minute.
+- [x] Both widget sizes render real followed-club data; the timeline reloads on a
+      follow change and **not** per minute. Verified on the simulator 2026-08-27:
+      real crests, live countdown, and the played fixture dropping out of both
+      widgets at kickoff. ⚠ **App Groups DO work in the simulator** — but a build
+      made with `CODE_SIGNING_ALLOWED=NO` strips the entitlement and the group
+      container silently does not exist, which looks identical to "unsupported".
+- [ ] ⚠ **Lock Screen accessories and the Edit Widget club picker are still
+      UNSEEN.** Both are behind a long-press the simulator cannot be driven
+      through from a script. They compile and are wired; nobody has looked at
+      them. Do this by hand before submission.
+- [ ] A widget tap deep-links to the right club. ⚠ **Partly done**: a medium-widget
+      row tap opened that row's club page from a cold start on the simulator,
+      which is the failure mode open item 3 describes for notifications — so the
+      two paths differ, and the widget's is fine.
 
 ## Store submission
 
@@ -175,4 +197,4 @@ dispatch yet.
       backend does not support. That is a backend project, not an app one.
 - [ ] Guideline **4.2** ("minimum functionality") is the real risk for an app that
       ports a website. Widgets, native tabs and local match reminders are the
-      argument — which is why the widgets are worth doing.
+      argument — and the widgets now exist (0047), so the argument is real.

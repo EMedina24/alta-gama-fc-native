@@ -174,6 +174,35 @@ export function formatKickoffTime(
   return `${String(hour).padStart(2, '0')}:${minute}`;
 }
 
+/**
+ * `Sat 21:00` / `Sáb 21:00` — the WIDGET's one date string (SPEC §4).
+ *
+ * ⚠ **Sentence case, where every other date block in this app is UPPERCASE.**
+ * That is not drift: `formatFixtureDate` renders a weekday in a stacked date
+ * block, where caps are the design. The widget renders it inline beside an
+ * opponent's name and a venue, at 12pt, in a 148pt tile — shouting it there
+ * fights the club name for the row. The mock draws it this way in both sizes.
+ *
+ * ⚠ The weekday still comes from the PINNED tables in `phrases.ts`, not from
+ * `Intl` display output — the same rule the whole module rests on. Only the
+ * casing is this function's own.
+ *
+ * ⚠ Never call this for a `kickoffTbd` fixture: its `00:00:00Z` placeholder is a
+ * date wearing a midnight time. The widget snapshot filters those out before it
+ * ever gets here.
+ */
+export function formatWidgetKickoff(
+  iso: string,
+  zone: string,
+  clock: '24' | '12',
+  phrases: Phrases,
+): string {
+  const { weekday } = zonedParts(iso, zone, phrases);
+  const sentence = weekday ? weekday.charAt(0).toUpperCase() + weekday.slice(1).toLowerCase() : '';
+  const time = formatKickoffTime(iso, zone, clock);
+  return sentence ? `${sentence} ${time}` : time;
+}
+
 /** "Saturday" / "Sábado" — the Today board's eyebrow. */
 export function formatWeekdayLong(iso: string, zone: string, phrases: Phrases): string {
   return new Intl.DateTimeFormat(phrases.intl, { timeZone: zone, weekday: 'long' })

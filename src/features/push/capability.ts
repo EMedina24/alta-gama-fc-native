@@ -7,6 +7,7 @@
  * know whether push exists — it changes preferences, and `use-push-sync` decides
  * whether there is anywhere to send them.
  */
+import { ExtensionStorage } from '@bacons/apple-targets';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 
@@ -18,8 +19,15 @@ import * as Notifications from 'expo-notifications';
  */
 export const PUSH_AVAILABLE = true;
 
-/** Flipped with the widget target. See GO-LIVE.md §4. */
-export const WIDGETS_AVAILABLE = false;
+/**
+ * The widget target landed in ADR 0047 — both home-screen sizes and the Lock
+ * Screen accessories.
+ *
+ * ⚠ Still a seam, and it still matters: a widget reload is a no-op on Android
+ * and on a simulator without the App Group provisioned, and no screen should
+ * ever learn the difference.
+ */
+export const WIDGETS_AVAILABLE = true;
 
 export type PermissionOutcome = 'granted' | 'denied' | 'unavailable';
 
@@ -112,8 +120,31 @@ export function apnsEnvironment(): 'sandbox' | 'production' {
   return process.env.EXPO_PUBLIC_APNS_ENV === 'production' ? 'production' : 'sandbox';
 }
 
-/** Reload widget timelines after the snapshot changes. No-op without a target. */
+/**
+ * Reload widget timelines after the snapshot changes.
+ *
+ * ⚠ **Called with no `kind`, on purpose.** `ExtensionStorage.reloadWidget(name)`
+ * maps to `WidgetCenter.shared.reloadTimelines(ofKind:)` and the bare call to
+ * `reloadAllTimelines()`. Passing a kind would introduce a string that has to
+ * equal `AppIntentConfiguration(kind:)` in two Swift files with nothing
+ * validating either — trap 14's twin, and its failure is silent: the widget
+ * keeps rendering its last timeline and never sees a follow change. There are
+ * two widgets and both want reloading anyway.
+ *
+ * ⚠ **The caller must only reach here when the snapshot actually changed.**
+ * WidgetKit rations reloads (roughly 40–70 a day for an actively used widget)
+ * and spending the budget freezes the widget for the rest of the day with
+ * nothing in any log. `snapshotKey()` is that guard; see `use-push-sync.ts`.
+ *
+ * ⚠ Kept in this file rather than moved to `features/widgets/` to be tidy — the
+ * seam is one file, and splitting it is how `if (WIDGETS_AVAILABLE)` starts
+ * spreading through the app.
+ */
 export async function reloadWidgets(): Promise<void> {
   if (!WIDGETS_AVAILABLE) return;
-  // GO-LIVE step 4: WidgetCenter.shared.reloadAllTimelines() via a native module.
+  try {
+    ExtensionStorage.reloadWidget();
+  } catch {
+    // No target on this platform, or the native module is absent in Expo Go.
+  }
 }

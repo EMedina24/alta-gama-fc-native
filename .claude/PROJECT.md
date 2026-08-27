@@ -1,12 +1,14 @@
 # alta-gama-fc — Project Overview
 
 **Status:** Phases 1–3 complete. The design system, the ported data layer, all
-five screens, four sheets and onboarding run against production data, and **push
-is verified end-to-end on a physical device**.
+five screens, four sheets and onboarding run against production data, **push
+is verified end-to-end on a physical device**, and **the widgets ship**
+([0047](./decisions/0047-widgets.md)) — both home-screen sizes, the Lock Screen
+accessories and a per-club picker, verified on the simulator.
 
-**Not done:** widgets ([0025](./decisions/0025-widgets-deferred.md)), the backend
-push cron (`CRONOGOL_PUSH_CRON_ENABLED` is still `'false'`), and a set of
-front-end gaps — see [HANDOFF.md](./HANDOFF.md), which is the read-this-first doc.
+**Not done:** the backend push cron (`CRONOGOL_PUSH_CRON_ENABLED` is still
+`'false'`), Live Activity ([0024](./decisions/0024-push-enabled.md), still
+deferred — the widgets landed without it), and a set of front-end gaps — see [HANDOFF.md](./HANDOFF.md), which is the read-this-first doc.
 
 **What it is:** the native (iOS/Android) surface of **Alta Gama FC** — the football
 fixtures/results/news product already shipping on the web as

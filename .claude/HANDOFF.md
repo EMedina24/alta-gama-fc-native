@@ -134,10 +134,17 @@ documented at the code that handles them; this is the index.
     `UNNotificationExtensionCategory`. A mismatch produces no error anywhere —
     the long-look card simply never appears.
 15. **The long-look card is a second source of truth, twice over.** An app
-    extension is a separate binary: `targets/notification-content/Tokens.swift`
-    copies `theme.ts` by hand, and `en.lproj`/`es.lproj` copy nothing from
-    `copy.ts` because the extension cannot read the JS bundle. Both will drift
-    and nothing will catch it. ⚠ 0040 widened this: the card's eyebrow now
+    extension is a separate binary: `Tokens.swift` copies `theme.ts` by hand, and
+    `en.lproj`/`es.lproj` copy nothing from `copy.ts` because the extension
+    cannot read the JS bundle. Both will drift and nothing will catch it.
+    ⚠ 0047 halved the first half and did NOT touch the second: `Tokens.swift` and
+    `CrestView.swift` moved to **`targets/_shared/`**, which `@bacons/apple-targets`
+    links into every target, so the widgets did not add a third copy. The
+    `.lproj` files are still the content extension's alone — **and the widgets
+    deliberately have none.** A widget renders in the SYSTEM language, so its copy
+    travels inside the App Group snapshot instead, already resolved for the
+    reader's `lang`/`tz`/`clock`. ⚠ Do not "fix" that inconsistency in either
+    direction: the two surfaces have different constraints and 0047 argues it out. ⚠ 0040 widened this: the card's eyebrow now
     branches on `leadMinutes`, so **a lead added to `REMINDER_LEAD_OPTIONS` needs
     a `case` in `MatchCard.eyebrowText` AND a line in both `.lproj` files** or iOS
     prints the raw key on the card.
@@ -152,6 +159,16 @@ documented at the code that handles them; this is the index.
     on every re-arm — the long-look card showing lettered tiles for clubs that
     HAVE a crest, and re-downloading all of them on every foreground. ⚠ Caught
     by reading the native source, not by `tsc` and not by any test.
+    ⚠⚠ **And it has a cousin, 0047.** That same App Group sweep is keyed on the
+    REMINDER queue — the soonest 12 fixtures inside 7 days — while the widget
+    snapshot is one fixture per followed club across **21**. A club whose next
+    match is twelve days out is in the second and not the first, so the sweep
+    deleted exactly the crests the widget was drawing, on the next foreground,
+    silently. `features/widgets/pins.ts` holds the widget's keep-list and the App
+    Group sweep takes the **union**; the two `Paths.cache` sweeps deliberately do
+    not. ⚠ The pin is set SYNCHRONOUSLY in `use-push-sync`, before any await —
+    losing that race only costs a re-download, but it shows as a flash of
+    lettered tiles.
 18. **An `_`-prefixed route is NOT private.** Only `_layout` is special. `/_debug`
     would have shipped; it is guarded by a `__DEV__` redirect in
     `_debug/_layout.tsx`.
@@ -298,6 +315,16 @@ documented at the code that handles them; this is the index.
     `Espanyol de Barcelona`, which is the failure ADR 0029 exists to name. The
     chevron lives beside `FIN` in the timing column for exactly that reason.
 
+34. **WidgetKit rations RELOADS, not timeline entries — and spending them is
+    silent.** A widget gets roughly 40–70 reloads a day; spend them and it freezes
+    for the rest of the day with nothing in any log, on the device or off it. The
+    re-arm in `use-push-sync` runs on **every foreground**, so `snapshotKey()`
+    excludes `writtenAt` — comparing whole snapshots would call every foreground a
+    change and burn the budget in minutes of ordinary app switching. ⚠ The flip
+    side is the useful half: **entries inside one timeline are free**, which is why
+    the countdown can tick per minute in its last hour while still reloading at
+    most once per kickoff. "Never per-minute" (0025) is about reloads.
+
 ---
 
 ## Where things stand
@@ -342,6 +369,26 @@ documented at the code that handles them; this is the index.
     invokes them locally. No second APNs key was created (the account caps at 2).
   - ⚠ One bug found and deliberately deferred: **a tapped notification lands on
     Today**, open item 3 below.
+- **The widgets ship** (2026-08-27, [0047](./decisions/0047-widgets.md)) —
+  `NextFixtureWidget` (small + the three Lock Screen accessories) and
+  `YourWeekWidget` (medium), both configurable to one followed club or all of them.
+  **Verified on the simulator**, with real production data for two followed clubs:
+  - both sizes rendering real crests off the App Group, `NEXT · MD 1`, the crest
+    pair, and `Thu 15:00 · Spotify Camp…`;
+  - the countdown ticking **6m → 2m → 1m with the app closed** — minute-resolution
+    timeline ENTRIES, and **not one reload spent** (see trap 20);
+  - the played fixture **dropping out of both widgets the moment kickoff passed**,
+    the small advancing to `NEXT · MD 3` / `2d 19h` / `Sun 11:00 · Bernabéu`;
+  - a medium row tap deep-linking to **that row's** club page from a cold start.
+    ⚠ Worth noting against open item 3: the notification path lands on Today, the
+    widget path lands correctly. They are different mechanisms.
+  - ⚠ **App Groups DO work in the iOS simulator** — this was an open question and
+    it is now closed. What breaks them is building with `CODE_SIGNING_ALLOWED=NO`,
+    which strips the entitlement so the container silently does not exist. That
+    looks exactly like "the simulator does not support App Groups". It does.
+  - ⚠ **NOT seen, by anyone:** the Lock Screen accessories and the Edit Widget
+    club picker. Both are behind a long-press that cannot be driven from a script.
+    They compile and are wired; nobody has looked at them.
 - **The push cron is ON** (2026-08-26, Render dashboard; `render.yaml:91` agrees).
   ⚠ It dispatches only what the ~3h sync newly detects, so silence is the normal
   state. Every notification seen on 2026-08-26 was hand-sent.
@@ -350,9 +397,23 @@ documented at the code that handles them; this is the index.
 
 0. **Front-end gaps** — see the section below. The Today board's lead states
    are now wired (0027); loading skeletons are the next most visible.
-1. **Widgets** — [0025](./decisions/0025-widgets-deferred.md). Both sizes, full
-   build. App Group already declared and registered. Strongest Guideline 4.2
-   argument; do it before submission.
+1. ~~**Widgets**~~ — DONE 2026-08-27, [0047](./decisions/0047-widgets.md).
+   Both home-screen sizes, the Lock Screen accessories, and a per-club picker.
+   Verified on the simulator; see "Done and verified" above for what was and was
+   not seen. ⚠ **The remaining widget work is a device build** — a third
+   extension bundle id (`com.altagamafc.app.widget`) needs its own provisioning
+   profile, exactly as the two notification targets did.
+1b. **`REMINDER_HORIZON_DAYS` is 21 over a 7-day dataset**, so it never binds:
+   `selectReminders` filters `useUpcoming`'s seven days, and reminders therefore
+   cover a week rather than three. Found while sizing the widget's own window
+   (0047) and **deliberately not fixed there** — changing it changes the pending
+   notification queue and deserves its own decision, not a drive-by in a widget
+   commit.
+1c. **The two notification targets are pinned at `deploymentTarget: 18.0`**, the
+   plugin's default, while the app runs on 16.4. That silently means no
+   long-look card for a reader on iOS 16.4–17.x. The widget target is at 17.0 by
+   deliberate choice (0047); the notification pair was left alone because they
+   are verified on device and this is not a widget change.
 2. ~~**Device build**~~ — DONE 2026-08-26. `development` profile, ad-hoc, so a
    **production** token ([0026](./decisions/0026-apns-environment-is-the-provisioning-profile.md)).
    ⚠ The two extension targets each needed their own provisioning profile; the

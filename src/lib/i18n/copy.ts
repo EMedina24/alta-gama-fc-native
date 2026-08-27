@@ -41,6 +41,37 @@ export interface Copy {
     /** The one notification ACTION button (ADR 0036). iOS truncates hard. */
     openClub: string;
   };
+  /**
+   * The widgets' own furniture (ADR 0047).
+   *
+   * ⚠⚠ **These strings TRAVEL — they are written into the App Group snapshot and
+   * drawn by a separate binary.** That is the opposite of how the notification
+   * content extension gets its labels (two `.lproj` files, trap 15), and the
+   * inversion is deliberate: a widget renders in the SYSTEM language, so
+   * `.lproj` would hand an English widget to a reader who chose Spanish inside
+   * the app. Every string here arrives at the extension already resolved for
+   * this reader's `lang`, `tz` and `clock`.
+   *
+   * ⚠ The consequence is that they are only as fresh as the last snapshot
+   * write. A language switch rewrites it in the same effect, so the stale window
+   * is one render — but these are a RENDERING, not data.
+   */
+  widgets: {
+    /** Small-widget eyebrow, before the ` · J4`. */
+    next: string;
+    /** Medium-widget eyebrow. */
+    yourWeek: string;
+    /** ⚠ Fully formed, count included — the extension only prints it. */
+    clubCount: (n: number) => string;
+    /** Nothing followed at all. */
+    followPrompt: string;
+    /** Following clubs, none of them playing inside the window. */
+    noFixtures: string;
+    /** The separator in `VAL v RMA`. */
+    versus: string;
+    /** Prefix for an away row: `at Girona`. ⚠ A preposition, not `awayWord`. */
+    away: string;
+  };
   onboarding: {
     pickTitle: string;
     pickBody: string;
@@ -372,6 +403,19 @@ export const esCopy: Copy = {
     openClub: 'Abrir club',
   },
 
+  widgets: {
+    next: 'PRÓXIMO',
+    yourWeek: 'TU SEMANA',
+    // ⚠ `club` is invariable in the singular here — `1 CLUB`, `3 CLUBES`.
+    clubCount: (n: number) => (n === 1 ? '1 CLUB' : `${n} CLUBES`),
+    followPrompt: 'Sigue a un club',
+    noFixtures: 'Sin partidos programados',
+    // ⚠ `v`, not `vs`. The kickoff reminder title already uses the bare `v` in
+    // both languages; the widget is the same fixture named the same way.
+    versus: 'v',
+    away: 'en',
+  },
+
   onboarding: {
     pickTitle: '¿A quién sigues?',
     pickBody:
@@ -645,6 +689,16 @@ export const enCopy: Copy = {
     body: (kickoff: string, venue: string | null) =>
       venue ? `Kicks off ${kickoff} at ${venue}.` : `Kicks off ${kickoff}.`,
     openClub: 'Open club',
+  },
+
+  widgets: {
+    next: 'NEXT',
+    yourWeek: 'YOUR WEEK',
+    clubCount: (n: number) => (n === 1 ? '1 CLUB' : `${n} CLUBS`),
+    followPrompt: 'Follow a club',
+    noFixtures: 'No matches scheduled',
+    versus: 'v',
+    away: 'at',
   },
 
   onboarding: {

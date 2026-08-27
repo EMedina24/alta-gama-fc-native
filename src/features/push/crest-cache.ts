@@ -20,14 +20,15 @@
  *
  * ⚠ The long-look card is drawn by an extension in a different process, which
  * cannot read this app's sandbox. Its crests go to the App Group container
- * instead — the same `group.com.altagamafc.app` the widgets will use (ADR 0025).
+ * instead — the same `group.com.altagamafc.app` the widgets now also read
+ * (ADR 0047). That shared directory is why `pruneCrestCache` takes the widget's
+ * pins into account; see the ⚠⚠ block on its App Group sweep.
  */
 import { Directory, File, Paths } from 'expo-file-system';
 
 import { API_BASE } from '@/lib/cronogol/client';
-
-/** Matches `ios.entitlements` in `app.json` and every target config. */
-const APP_GROUP = 'group.com.altagamafc.app';
+import { groupContainer } from '@/features/app-group';
+import { widgetCrestPins } from '@/features/widgets/pins';
 
 const CACHE_DIR = 'notif-crests';
 const ATTACH_DIR = 'notif-attach';
@@ -104,7 +105,7 @@ export async function attachmentCopy(cachedUri: string, key: string): Promise<st
  * missing file costs artwork, not the card.
  */
 export async function warmLongLookCrests(fixtureId: string): Promise<void> {
-  const container = Paths.appleSharedContainers[APP_GROUP];
+  const container = groupContainer();
   if (!container) return; // Simulator without the group provisioned, or Android.
 
   try {
@@ -164,8 +165,23 @@ export function pruneCrestCache(
     sweep(new Directory(Paths.cache, CACHE_DIR), wantedFixtures, stem);
     sweep(new Directory(Paths.cache, ATTACH_DIR), wantedAttachments, stem);
 
-    const container = Paths.appleSharedContainers[APP_GROUP];
-    if (container) sweep(new Directory(container, GROUP_DIR), wantedFixtures, (name) => name);
+    // ⚠⚠ **THE APP GROUP SWEEP TAKES A THIRD KEEP-LIST, and this is trap 17's
+    // cousin.** That directory serves the long-look card AND the widgets, but
+    // the two are different selections over different windows: the reminder
+    // queue is the soonest 12 fixtures inside 7 days, the widget snapshot is
+    // one fixture per followed club across 21. A club whose next match is 12
+    // days out is in the second and not the first — so sweeping against
+    // `keepFixtures` alone deletes exactly the crests the widget is drawing,
+    // on the very next foreground, and the widget silently falls back to
+    // lettered tiles for clubs that HAVE artwork.
+    //
+    // ⚠ The two `Paths.cache` sweeps above are deliberately NOT unioned: the
+    // widget uses neither the composed `pair` plate nor the attachment copies.
+    const container = groupContainer();
+    if (container) {
+      const wantedGroup = new Set([...keepFixtures, ...widgetCrestPins()]);
+      sweep(new Directory(container, GROUP_DIR), wantedGroup, (name) => name);
+    }
   } catch {
     // A cache that will not prune is a disk-space problem, not a correctness one.
   }

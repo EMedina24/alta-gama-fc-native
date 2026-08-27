@@ -1,0 +1,177 @@
+import Foundation
+
+/// What the widgets can know.
+///
+/// ⚠⚠ **`widget/snapshot.json` in the App Group is the ONLY input.** A widget
+/// extension is a separate process: it cannot call the API, read AsyncStorage,
+/// reach the TanStack Query cache (which is not persisted to disk), or import
+/// `@/constants/theme` or `@/lib/i18n`. Anything drawn here was put in the
+/// container by `src/features/widgets/snapshot.ts` before this ran.
+///
+/// ⚠⚠ **Every string the widget PRINTS is pre-formatted by JS, including the
+/// furniture.** That inverts what the notification content extension does with
+/// its two `.lproj` files, and the inversion is the point: a widget renders in
+/// the SYSTEM language, so `.lproj` strings would hand an English widget to a
+/// reader who picked Spanish inside the app. The snapshot travels with the
+/// reader's `lang`, `tz` and `clock` already applied. The only hardcoded English
+/// in this target is `placeholder`, for the gallery preview before the app has
+/// ever run.
+///
+/// ⚠ Decoding is forgiving on purpose — this parses a file written by a build of
+/// the app that may be older than this extension. A missing field is a quieter
+/// widget, never a crash.
+struct WidgetSnapshot: Codable {
+  struct Club: Codable, Hashable {
+    let slug: String
+    let name: String
+    let abbr: String
+  }
+
+  /// The card's own furniture. See the type header for why this is not `.lproj`.
+  struct Copy: Codable {
+    let next: String
+    let yourWeek: String
+    /// ⚠ Fully formed — `3 CLUBS` / `3 CLUBES`. The plural is resolved in JS, so
+    /// this target holds no counting rule for any language.
+    let clubCount: String
+    let followPrompt: String
+    let noFixtures: String
+    /// The separator in `VAL v RMA`. Localised — `v` in English, `vs` in Spanish.
+    let versus: String
+    /// Prefix for an away row: `at Girona` / `en Girona`.
+    let away: String
+  }
+
+  struct Entry: Codable, Identifiable {
+    let fixtureId: String
+    /// The FOLLOWED club this row belongs to — not necessarily the home side.
+    let clubSlug: String
+    let isHome: Bool
+    let homeAbbr: String
+    let awayAbbr: String
+    let opponentName: String
+    let opponentAbbr: String
+    /// Which crest file in the App Group is the opponent's: `home` or `away`.
+    let opponentSlot: String
+    let kickoffUtc: Date
+    /// Pre-formatted in the reader's zone and clock preference. `Sat 21:00`.
+    let kickoffLabel: String
+    /// `J4`. Null for a competition without rounds.
+    let roundLabel: String?
+    let venue: String?
+
+    var id: String { fixtureId }
+  }
+
+  let v: Int
+  let writtenAt: Date
+  let clubs: [Club]
+  let copy: Copy
+  let entries: [Entry]
+}
+
+extension WidgetSnapshot {
+  /// ⚠ Matches `ios.entitlements` in `app.json`, every `expo-target.config.js`,
+  /// and `APP_GROUP` in `src/features/push/crest-cache.ts`.
+  static let appGroup = "group.com.altagamafc.app"
+
+  static func load() -> WidgetSnapshot? {
+    guard
+      let container = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: appGroup
+      ),
+      let data = try? Data(contentsOf: container.appendingPathComponent("widget/snapshot.json"))
+    else { return nil }
+
+    let decoder = JSONDecoder()
+    // ⚠ The API emits both `…Z` and `…+00:00`, and only the fractional-seconds
+    // formatter accepts the ones carrying milliseconds. Trying one shape only
+    // loses every time — the same trap `Payload.swift` documents.
+    decoder.dateDecodingStrategy = .custom { decoder in
+      let text = try decoder.singleValueContainer().decode(String.self)
+      let plain = ISO8601DateFormatter()
+      plain.formatOptions = [.withInternetDateTime]
+      if let date = plain.date(from: text) { return date }
+
+      let fractional = ISO8601DateFormatter()
+      fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+      guard let date = fractional.date(from: text) else {
+        throw DecodingError.dataCorruptedError(
+          in: try decoder.singleValueContainer(),
+          debugDescription: "Not an ISO-8601 instant: \(text)"
+        )
+      }
+      return date
+    }
+
+    return try? decoder.decode(WidgetSnapshot.self, from: data)
+  }
+
+  /// Rows still ahead of `date`, optionally narrowed to one club.
+  ///
+  /// ⚠ The filter on `kickoffUtc > date` is what makes a snapshot the app has
+  /// not refreshed degrade to the empty state rather than to a countdown that
+  /// has gone negative. A widget on a phone that has not opened the app in a
+  /// week must say "nothing scheduled", not lie about a match played on Sunday.
+  func rows(after date: Date, clubSlug: String?) -> [Entry] {
+    entries
+      .filter { $0.kickoffUtc > date }
+      .filter { clubSlug == nil || $0.clubSlug == clubSlug }
+      .sorted { $0.kickoffUtc < $1.kickoffUtc }
+  }
+
+  /// Whether the reader follows anything at all — which is a different empty
+  /// state from "follows clubs, none of them are playing".
+  var followsNothing: Bool { clubs.isEmpty }
+}
+
+extension WidgetSnapshot {
+  /// The gallery preview, and the state before the app has ever written a file.
+  ///
+  /// ⚠ The only hardcoded copy in this target, and English-only by necessity —
+  /// there is no reader preference to read yet. Kept to the widget's furniture;
+  /// the moment a real snapshot exists this is never seen again.
+  static func placeholder(relativeTo now: Date) -> WidgetSnapshot {
+    WidgetSnapshot(
+      v: 1,
+      writtenAt: now,
+      clubs: [
+        .init(slug: "valencia", name: "Valencia CF", abbr: "VAL"),
+        .init(slug: "sevilla", name: "Sevilla FC", abbr: "SEV"),
+        .init(slug: "athletic", name: "Athletic Club", abbr: "ATH"),
+      ],
+      copy: .init(
+        next: "NEXT",
+        yourWeek: "YOUR WEEK",
+        clubCount: "3 CLUBS",
+        followPrompt: "Follow a club",
+        noFixtures: "No fixtures scheduled",
+        versus: "v",
+        away: "at"
+      ),
+      entries: [
+        .init(
+          fixtureId: "preview-1", clubSlug: "valencia", isHome: true,
+          homeAbbr: "VAL", awayAbbr: "RMA",
+          opponentName: "Real Madrid", opponentAbbr: "RMA", opponentSlot: "away",
+          kickoffUtc: now.addingTimeInterval(100_800),
+          kickoffLabel: "Sat 21:00", roundLabel: "J4", venue: "Mestalla"
+        ),
+        .init(
+          fixtureId: "preview-2", clubSlug: "sevilla", isHome: true,
+          homeAbbr: "SEV", awayAbbr: "OSA",
+          opponentName: "Osasuna", opponentAbbr: "OSA", opponentSlot: "away",
+          kickoffUtc: now.addingTimeInterval(169_200),
+          kickoffLabel: "Sun 16:15", roundLabel: "J4", venue: "Sánchez-Pizjuán"
+        ),
+        .init(
+          fixtureId: "preview-3", clubSlug: "athletic", isHome: false,
+          homeAbbr: "GIR", awayAbbr: "ATH",
+          opponentName: "Girona", opponentAbbr: "GIR", opponentSlot: "home",
+          kickoffUtc: now.addingTimeInterval(177_300),
+          kickoffLabel: "Sun 18:30", roundLabel: "J4", venue: "Montilivi"
+        ),
+      ]
+    )
+  }
+}

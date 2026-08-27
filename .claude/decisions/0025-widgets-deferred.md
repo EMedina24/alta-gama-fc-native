@@ -1,9 +1,16 @@
 # 0025 — Widgets deferred; no native targets in the tree yet
 
 - **Date:** 2026-08-25
-- **Status:** Accepted — **open work, not abandoned**
+- **Status:** **Superseded by [0047](./0047-widgets.md)** — the work below was done, 2026-08-27
 - **Decided by:** Ed Medina
 
+> **Update, 2026-08-27:** superseded by [0047](./0047-widgets.md), which built them.
+> **Every one of the six pick-up steps below was followed**, and the two ⚠ rules —
+> Swift outside `ios/`, and no network in a timeline provider — held. Nothing here
+> is rewritten: this is the record of what was planned, and it is what happened.
+> The one addition 0047 makes is that the widgets are also CONFIGURABLE and reach
+> the Lock Screen, neither of which this ADR anticipated.
+>
 > **Update, 2026-08-25:** [0037](./0037-rich-notifications-server-composed-crests.md)
 > installed `@bacons/apple-targets` and added two notification targets under
 > `targets/`, so steps 1 and 2 below are done and the App Group has a real

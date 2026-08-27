@@ -8,26 +8,32 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
-import { formatKickoffTime } from '@/lib/format';
+import { formatKickoffTime, formatWidgetKickoff } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
-import { useUpcoming } from '@/queries/use-today';
+import { useUpcoming, useWidgetWindow } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
 import { useSession } from '@/store/session';
 import { useRouter } from 'expo-router';
 
+import { pinWidgetCrests } from '@/features/widgets/pins';
+import { buildSnapshot } from '@/features/widgets/snapshot';
+import { scheduleWidgetSync } from '@/features/widgets/sync';
 import { registerNotificationCategories } from './categories';
 import { applyReminders, selectReminders } from './reminders';
 import { initialRoute, onNotificationTap } from './routing';
 import { schedulePushSync, syncPushRegistration } from './sync';
-import { PUSH_AVAILABLE } from './capability';
+import { PUSH_AVAILABLE, WIDGETS_AVAILABLE } from './capability';
 
 export function usePushSync(): void {
   const router = useRouter();
   const prefs = usePreferences();
   const locale = useLocale();
   const zone = useZone();
-  const { copy } = useI18n();
+  const { copy, phrases } = useI18n();
   const upcoming = useUpcoming(zone);
+  // ⚠ A SECOND, WIDER window (21 days). The widget must not go blank over an
+  // international break — see `useWidgetWindow`.
+  const widgetWindow = useWidgetWindow(zone);
   const session = useSession();
 
   // Cold launch: tokens rotate on restore and reinstall, so always re-assert.
@@ -74,40 +80,88 @@ export function usePushSync(): void {
     return onNotificationTap((route) => router.push(route));
   }, [router]);
 
-  // Re-arm reminders whenever the follow set or the fixture data moves, and on
-  // foreground — a notification that fired while backgrounded frees a slot.
+  // Re-arm reminders and rewrite the widget snapshot whenever the follow set or
+  // the fixture data moves, and on foreground — a notification that fired while
+  // backgrounded frees a slot, and a widget that has been on screen all night
+  // wants the next match.
+  //
+  // ⚠⚠ **ONE effect, and the order inside it is load-bearing.** Two things make
+  // it so:
+  //
+  //  1. **The widget half is NOT gated on `prefs.alertReminder`.** A reader who
+  //     turned kickoff reminders off still gets widgets — they are not the same
+  //     feature and never were.
+  //  2. **The pin must be set before `applyReminders` runs**, because that
+  //     function ends by pruning the App Group crest directory against the
+  //     REMINDER queue. The widget's fixtures come from a 21-day window and the
+  //     reminders' from 7, so the widget's crests are routinely outside it and
+  //     would be deleted on this very foreground. See the ⚠⚠ block on the App
+  //     Group sweep in `crest-cache.ts`.
+  //
+  // ⚠ And one `AppState` listener, not two. A second subscription here would
+  // double every re-arm.
   useEffect(() => {
-    if (!PUSH_AVAILABLE || !prefs.alertReminder || !upcoming.data) return;
+    const sync = () => {
+      const now = new Date();
 
-    const rearm = () => {
-      const planned = selectReminders(
-        upcoming.data.fixtures,
-        prefs.followed,
-        prefs.reminderLeads,
-        new Date(),
-        (iso) => formatKickoffTime(iso, zone, prefs.clock),
-      );
-      void applyReminders(planned, {
-        title: copy.reminders.title,
-        body: copy.reminders.body,
-      });
+      const snapshot =
+        WIDGETS_AVAILABLE && widgetWindow.data
+          ? buildSnapshot(
+              widgetWindow.data.fixtures,
+              prefs.followed,
+              now,
+              copy,
+              // ⚠ NOT `formatKickoffTime` — the widget needs the weekday too
+              // (`Sat 21:00`), because a tile with no date on it cannot say
+              // whether `21:00` is tonight or a week on Tuesday.
+              (iso) => formatWidgetKickoff(iso, zone, prefs.clock, phrases),
+            )
+          : null;
+
+      // ⚠ SYNCHRONOUSLY, before anything below can await. Losing this race only
+      // costs a re-download on the next warm — but it shows as a flash of
+      // lettered tiles for clubs that have real crests.
+      if (snapshot) pinWidgetCrests(snapshot.entries.map((entry) => entry.fixtureId));
+
+      if (PUSH_AVAILABLE && prefs.alertReminder && upcoming.data) {
+        const planned = selectReminders(
+          upcoming.data.fixtures,
+          prefs.followed,
+          prefs.reminderLeads,
+          now,
+          (iso) => formatKickoffTime(iso, zone, prefs.clock),
+        );
+        void applyReminders(planned, {
+          title: copy.reminders.title,
+          body: copy.reminders.body,
+        });
+      }
+
+      // ⚠ Debounced and change-guarded inside — WidgetKit rations reloads and
+      // this runs on every single foreground.
+      if (snapshot) scheduleWidgetSync(snapshot);
     };
 
-    rearm();
+    sync();
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') rearm();
+      if (state === 'active') sync();
     });
     return () => subscription.remove();
     // ⚠ `reminderLeads` is in the deps: changing a lead changes the whole pending
     // queue, and without it a toggled lead would not take effect until the next
     // foreground.
+    // ⚠ `copy` is in there for the WIDGET as much as for the reminders — the
+    // snapshot carries its own furniture strings, so a language switch has to
+    // rewrite it (ADR 0047).
   }, [
     upcoming.data,
+    widgetWindow.data,
     prefs.followed,
     prefs.alertReminder,
     prefs.reminderLeads,
     prefs.clock,
     zone,
     copy,
+    phrases,
   ]);
 }

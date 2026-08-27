@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSExtension</key>
+	<dict>
+		<!--
+		  ⚠ A WidgetKit extension has NO principal class. The entry point is the
+		  `@main WidgetBundle` in AltaGamaWidgetBundle.swift, and adding an
+		  `NSExtensionPrincipalClass` here — as the notification extensions
+		  correctly do — makes the widget fail to load with no error surfaced.
+
+		  ⚠ Hand-authored, like the content extension's. `with-widget.js` only
+		  writes a template when the file is ABSENT, so this survives a prebuild.
+		-->
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+</dict>
+</plist>

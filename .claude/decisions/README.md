@@ -57,7 +57,7 @@ more words than one that's obvious once you see it.
 | [0022](./0022-finished-today-from-fixtures.md) | `FINISHED TODAY` is built from `/cronogol/fixtures`, not the scoreboard | Accepted |
 | [0023](./0023-phase-3-resequenced-no-apple-account.md) | Phase 3 resequenced around a pending Apple Developer account | Blocked half closed by 0024 |
 | [0024](./0024-push-enabled.md) | Push enabled; Live Activity deferred to v1.1 | Accepted |
-| [0025](./0025-widgets-deferred.md) | Widgets deferred; no native targets in the tree yet | Accepted — open work |
+| [0025](./0025-widgets-deferred.md) | Widgets deferred; no native targets in the tree yet | Superseded by 0047 |
 | [0026](./0026-apns-environment-is-the-provisioning-profile.md) | The APNs environment follows the provisioning profile, not the build name | Accepted |
 | [0027](./0027-board-lead-cards-from-fixtures.md) | Today's live and last-result cards read `/cronogol/fixtures`; the scoreboard is not read by the app | Accepted |
 | [0028](./0028-matchday-pager.md) | Matchdays pager: one clamped setter, text chevrons, no range while provisional | Accepted |
@@ -79,3 +79,4 @@ more words than one that's obvious once you see it.
 | [0044](./0044-scores-render-as-split-digits.md) | A score is the `Score` atom — two digits split by a rule, the losing digit dimmed, chipped in a list and bare in the Today hero | Accepted — verified on the simulator |
 | [0045](./0045-match-events-expanded-row.md) | A finished match expands into its event timeline: six event types drawn, disclosure gated on status not data, `react-native-svg` adopted | Accepted |
 | [0046](./0046-match-events-grouping-tabs.md) | The events panel groups behind four counted tabs — `goals` / `cards` / `subs` / `other` — which replace its eyebrow; the shown group is derived, never stored | Accepted |
+| [0047](./0047-widgets.md) | Widgets: both home-screen sizes, the Lock Screen accessories and a per-club picker; the App Group snapshot carries its own copy, and timeline ENTRIES are not reloads | Accepted — verified on the simulator |
