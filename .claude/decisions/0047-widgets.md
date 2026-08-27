@@ -57,7 +57,16 @@ as fresh as the last snapshot write. The app rewrites on every foreground and `c
 is in the effect's deps, so a language switch is one render behind at worst.
 
 The one exception is `Snapshot.placeholder`, hardcoded English, for the gallery
-preview before the app has ever run. There is no reader preference to read yet.
+preview. There is no reader preference to read yet.
+
+⚠⚠ **`placeholder` and `unavailable` are two different states and conflating them
+ships fabricated data.** The first cut fell back to the gallery sample whenever
+`load()` returned nil — so a widget placed on a real home screen before the app's
+first launch drew `VAL v RMA · Mestalla`: three invented fixtures for clubs the
+reader may not follow, rendered exactly like real ones. The sample belongs in the
+picker, where everything is obviously a preview, and **nowhere else**. A real
+widget with no snapshot draws `Open Alta Gama FC`. Caught before the device build,
+2026-08-27, and verified by deleting the file and rebooting the simulator.
 
 ### Timeline: many entries, one reload
 

@@ -126,11 +126,37 @@ extension WidgetSnapshot {
 }
 
 extension WidgetSnapshot {
-  /// The gallery preview, and the state before the app has ever written a file.
-  ///
   /// ⚠ The only hardcoded copy in this target, and English-only by necessity —
-  /// there is no reader preference to read yet. Kept to the widget's furniture;
-  /// the moment a real snapshot exists this is never seen again.
+  /// before the app has run there is no reader preference to read. Kept to the
+  /// widget's furniture.
+  static let fallbackCopy = Copy(
+    next: "NEXT",
+    yourWeek: "YOUR WEEK",
+    clubCount: "",
+    followPrompt: "Open Alta Gama FC",
+    noFixtures: "No matches scheduled",
+    versus: "v",
+    away: "at"
+  )
+
+  /// No snapshot on disk at all — the app has never run, or the App Group is not
+  /// provisioned.
+  ///
+  /// ⚠⚠ **This is NOT `placeholder`, and the difference is the whole point.** A
+  /// widget placed on a real home screen before the app's first launch used to
+  /// fall through to the gallery sample and draw `VAL v RMA · Mestalla` — three
+  /// fabricated fixtures for clubs the reader may not follow, in a country they
+  /// may not live in, presented exactly like real data. The sample belongs in
+  /// the picker, where everything is obviously a preview, and nowhere else.
+  static func unavailable(relativeTo now: Date) -> WidgetSnapshot {
+    WidgetSnapshot(v: 1, writtenAt: now, clubs: [], copy: fallbackCopy, entries: [])
+  }
+
+  /// The gallery preview.
+  ///
+  /// ⚠ For `context.isPreview` only — see `unavailable` for why. A real but empty
+  /// snapshot would make every tile in the widget picker say "Follow a club",
+  /// which reads as broken to someone who simply has not opened the app yet.
   static func placeholder(relativeTo now: Date) -> WidgetSnapshot {
     WidgetSnapshot(
       v: 1,

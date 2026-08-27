@@ -20,16 +20,16 @@ struct FixtureProvider: AppIntentTimelineProvider {
     entry(at: Date(), snapshot: WidgetSnapshot.placeholder(relativeTo: Date()), club: nil)
   }
 
-  /// ⚠ The gallery preview. `context.isPreview` is true while the reader is
-  /// scrolling the widget picker, where a real but EMPTY snapshot would show
-  /// "Follow a club" on every tile and make the widget look broken to someone
-  /// who has simply not opened the app yet. Show the sample there instead.
+  /// ⚠ `context.isPreview` is true while the reader is scrolling the widget
+  /// picker, where a real but EMPTY snapshot would show "Follow a club" on every
+  /// tile and make the widget look broken to someone who has simply not opened
+  /// the app yet. The sample belongs there — and, per `WidgetSnapshot.unavailable`,
+  /// ONLY there.
   func snapshot(for configuration: SelectClubIntent, in context: Context) async -> FixtureEntry {
     let now = Date()
-    let loaded = WidgetSnapshot.load()
-    let source = (context.isPreview || loaded == nil)
+    let source = context.isPreview
       ? WidgetSnapshot.placeholder(relativeTo: now)
-      : loaded!
+      : (WidgetSnapshot.load() ?? .unavailable(relativeTo: now))
     return entry(at: now, snapshot: source, club: configuration.club?.id)
   }
 
@@ -38,7 +38,9 @@ struct FixtureProvider: AppIntentTimelineProvider {
     in context: Context
   ) async -> Timeline<FixtureEntry> {
     let now = Date()
-    let snapshot = WidgetSnapshot.load() ?? WidgetSnapshot.placeholder(relativeTo: now)
+    // ⚠ `.unavailable`, NOT `.placeholder`. A widget on a real home screen must
+    // never draw the gallery sample — see `WidgetSnapshot.unavailable`.
+    let snapshot = WidgetSnapshot.load() ?? .unavailable(relativeTo: now)
     let club = configuration.club?.id
     let kickoffs = snapshot.rows(after: now, clubSlug: club).map(\.kickoffUtc)
 
