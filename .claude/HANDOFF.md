@@ -272,6 +272,32 @@ documented at the code that handles them; this is the index.
     and verify against the GENERATED asset in
     `ios/*/Images.xcassets/SplashScreenLogo.imageset/`, never the build's exit code.
 
+32. **An empty events array is NOT a goalless match, and the feed order is not
+    always chronological.** `GET /cronogol/fixtures/{id}/events` returns
+    `count: 0` for any fixture the 3-hourly, finished-only sweep has not reached
+    — so a 4-1 that ended twenty minutes ago and a real 0-0 are the *same
+    response*, and the API cannot tell them apart for us. Copy says "not
+    published yet" and must never be tidied into "no goals"
+    ([0045](./decisions/0045-match-events-expanded-row.md)).
+    ⚠ **Two claims in `handoff_event-expansion/API-MATCH-EVENTS.md` did not
+    survive first contact with production**, checked 2026-08-26:
+    *"`minuteExtra` is Serie A only"* — it is not, LaLiga populates it; and
+    *order comes from the server* implying chronological — on
+    `c56084e3-df56-420d-9a05-714b3eadaaa5` a 46' substitution is served **before**
+    the 45+3' booking, so the panel legitimately renders `46′` above `45+3′`.
+    Shipped as served, per the instruction and design rule 2. A **stable** sort
+    on the composed `(minute, minuteExtra)` would fix that inversion without the
+    pair-flipping the doc warns about — it needs its own ADR, not a quiet edit.
+33. **A fixed-width numeric column needs `adjustsFontSizeToFit`, not just a
+    measured width.** The events panel's minute column was built to the spec's
+    30pt and truncated `45+2′` to `45…` on the simulator — the spec's number was
+    set against HTML, which overflows a fixed width silently rather than
+    ellipsing it. ⚠ `tsc` and `expo export` both passed; **only the simulator
+    caught it**, and the same is true of the chevron column that this change
+    first added to the matchday row: it cost the name block 19pt and truncated
+    `Espanyol de Barcelona`, which is the failure ADR 0029 exists to name. The
+    chevron lives beside `FIN` in the timing column for exactly that reason.
+
 ---
 
 ## Where things stand
@@ -529,6 +555,34 @@ disabled on 38. ⚠ Not yet seen in English or at large Dynamic Type.
 
 Picked up on the way: `Size.pill` now holds the 34pt square for the strip and the
 pager, and the strip's accessibility label is localised (it was hardcoded English).
+
+### 3b · ~~Expanded match events~~ — DONE 2026-08-26
+
+The whole of `handoff_event-expansion/`, built to
+[0045](./decisions/0045-match-events-expanded-row.md). A finished match expands
+in place into its timeline — goals with assists, cards, substitutions, VAR and
+missed penalties, on `GET /cronogol/fixtures/{id}/events`, fetched on expand.
+⚠ Three divergences from the design, each with a reason in the ADR: the **live**
+card takes no chevron (in-progress matches have no events at all, so design rule
+3 cannot be built) and the **last-result** card takes one instead; disclosure is
+gated on **status, not data**, because gating on data means pre-fetching a whole
+matchday; and all six wire types are drawn, not four.
+
+⚠ **`react-native-svg` is now in use** — its first import in `src/`, for the
+event glyphs and the chevron. It autolinks, so no config changed, but it is a
+NATIVE module: a dev client built before it was declared throws rather than
+degrading. `/_debug/gallery` carries the case that checks it, plus every glyph
+and every null.
+
+Verified on the simulator against production: LaLiga jornada 1 expanded, crests
+per side, `45+3′` intact, the panel bleeding to both gutters, scheduled rows with
+no chevron, and the board's last-result card (Elche 0–5 Barcelona).
+⚠ **`FINISHED TODAY` was not exercised** — there were no finished matches that
+day, so the section renders its quiet state and there is nothing to expand. It
+shares `MatchEvents` with the two surfaces that were exercised, but its own row
+geometry has only been seen in code.
+⚠ Player links are deferred deliberately (§6 of the API doc): `player.slug` is a
+PLAYER slug and ADR 0033's sheet keys on `{club slug, person id}`.
 
 ### 4 · Today's stat tiles (SPEC §3.1 item 4)
 

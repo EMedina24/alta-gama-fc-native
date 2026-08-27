@@ -1,7 +1,9 @@
 export { BandRail } from './band-rail';
 export { Button, type ButtonTone } from './button';
+export { Chevron, type ChevronProps } from './chevron';
 export { ChipButton } from './chip-button';
 export { Crest } from './crest';
+export { EventGlyph, type EventGlyphProps } from './event-glyph';
 export { Eyebrow } from './eyebrow';
 export { FormChip, type FormResult } from './form-chip';
 export { Grabber } from './grabber';

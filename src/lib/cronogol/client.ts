@@ -17,6 +17,7 @@
  */
 
 import type {
+  FixtureEventsView,
   FixtureWindowView,
   JornadaView,
   LeagueRef,
@@ -165,8 +166,11 @@ export async function findTeamFixtures(
 }
 
 /**
- * Identity fields only — shirt, name, position group. There are no statistics
- * and never will be.
+ * Identity fields only — shirt, name, position group. There are no SEASON
+ * statistics and never will be — no appearances, no goal totals, no minutes.
+ *
+ * ⚠ That is a statement about this route, not about the app. Per-match events
+ * are a different surface entirely: see `getFixtureEvents` below (ADR 0045).
  *
  * ⚠ A tracked club with no registered squad answers `200 { players: [] }`, which
  * is a different state from the `null` a 404 produces. Both need copy.
@@ -324,4 +328,31 @@ export type GetScoresParams = {
  */
 export async function getScores(params: GetScoresParams = {}): Promise<ScoreboardDayView> {
   return get<ScoreboardDayView>('/cronogol/scores', toQuery(params));
+}
+
+// ---------------------------------------------------------------- events
+
+/**
+ * One finished match's timeline — goals with assists, cards, substitutions.
+ *
+ * ⚠ **Two empty answers, and they are different.** `null` means no such
+ * fixture (404). `{ events: [] }` means we hold none YET: the ingest is
+ * finished-only and runs three-hourly, so a match that ended twenty minutes ago
+ * is a legitimate `count: 0`. **Neither means the match was goalless** — never
+ * write copy that says "no goals" off either one.
+ *
+ * ⚠ In-progress matches have NO events, and this is not a polling problem the
+ * client can solve: there is nothing to poll. Live events are the same backend
+ * project live scores gate on (ADR 0045).
+ *
+ * ⚠ Fetch ON EXPAND, never with the list. Pre-fetching a matchday is ten
+ * requests for nine panels nobody opened.
+ */
+export async function getFixtureEvents(
+  fixtureId: string,
+): Promise<FixtureEventsView | null> {
+  return getOrNull<FixtureEventsView>(
+    `/cronogol/fixtures/${encodeURIComponent(fixtureId)}/events`,
+    toQuery({}),
+  );
 }

@@ -17,12 +17,23 @@
  * the scoreboard — the scoreboard cannot say which match is yours (ADR 0027).
  * The fixture route carries no per-row stamp, so `lastUpdateAt` is null and the
  * age line states the cadence rather than a number.
+ *
+ * ⚠⚠ **The LAST-RESULT card expands into its match timeline; the LIVE card does
+ * not** (ADR 0045). The design asked for the opposite — its expanded panel was
+ * drawn on the live card's footer row — but the events ingest is finished-only
+ * and three-hourly, so an in-play match has no events at all. A chevron there
+ * would open on nothing, every time. **Do not add one back** without the live
+ * events feed that the score-age line above is also waiting on.
  */
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Crest, Pill, Text, VersusBadge } from '@/components/atoms';
+import { Chevron, Crest, Pill, Text, VersusBadge } from '@/components/atoms';
 import { Countdown, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import type { TeamRef } from '@/lib/cronogol/types';
+import type { Copy } from '@/lib/i18n/copy';
+import { MatchEvents } from './match-events';
 
 export interface MatchBoardProps {
   /** A match in play at the last sweep, if any. */
@@ -33,6 +44,16 @@ export interface MatchBoardProps {
   } | null;
   /** The most recent finished match of a followed club. */
   last?: {
+    /**
+     * ⚠ Needed for the events panel, and the reason this card's props stopped
+     * being pure scalars. `home`/`away` here are `ScoreSide` — a name, a crest
+     * and a monogram — which is everything the SCORE line needs and nothing the
+     * events panel does: it derives each event's side by comparing `teamSlug`,
+     * and a `ScoreSide` carries no slug.
+     */
+    id: string;
+    homeTeam: TeamRef | null;
+    awayTeam: TeamRef | null;
     home: ScoreSide;
     away: ScoreSide;
     /** "MD 3 · SAT 29 AUG" */
@@ -64,9 +85,12 @@ export interface MatchBoardProps {
     scoreAge: (hoursAgo: number | null) => string;
     tbd: string;
   };
+  events: Copy['events'];
 }
 
-export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
+export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) {
+  /** One card, so a boolean — not the `openId` the list surfaces carry. */
+  const [showEvents, setShowEvents] = useState(false);
   if (live) {
     return (
       <View style={[styles.card, styles.liveCard]}>
@@ -86,14 +110,43 @@ export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
   return (
     <View style={styles.stack}>
       {last ? (
-        <View style={styles.card}>
-          <View style={styles.headRow}>
-            <Text variant="eyebrowSm" color="textFaint">
-              {copy.lastResult} · {last.meta}
-            </Text>
-            {last.outcome ? <Pill label={last.outcome} /> : null}
+        <View style={[styles.card, styles.resultCard]}>
+          <View style={styles.pad}>
+            <View style={styles.headRow}>
+              <Text variant="eyebrowSm" color="textFaint">
+                {copy.lastResult} · {last.meta}
+              </Text>
+              {last.outcome ? <Pill label={last.outcome} /> : null}
+            </View>
+            <ScoreLine home={last.home} away={last.away} noScoreLabel={copy.noScore} />
           </View>
-          <ScoreLine home={last.home} away={last.away} noScoreLabel={copy.noScore} />
+
+          {/* The footer row IS the tap target, as the design has it — just on
+              the card that has data to show. */}
+          <Pressable
+            onPress={() => setShowEvents((open) => !open)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showEvents }}
+            accessibilityLabel={showEvents ? events.collapse : events.expand}
+            style={({ pressed }) => [styles.disclosure, pressed && { opacity: 0.75 }]}>
+            <Text variant="eyebrowSm" color="textFaint">
+              {events.title}
+            </Text>
+            <Chevron expanded={showEvents} />
+          </Pressable>
+
+          {showEvents ? (
+            <MatchEvents
+              fixtureId={last.id}
+              home={last.homeTeam}
+              away={last.awayTeam}
+              copy={events}
+              // ⚠ The footer row above already reads `MATCH EVENTS`. Left on,
+              // the panel printed its own eyebrow directly beneath it — the
+              // same words twice, one line apart.
+              showTitle={false}
+            />
+          ) : null}
         </View>
       ) : null}
 
@@ -196,6 +249,22 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   liveCard: { borderColor: Colors.dark.live },
+  /**
+   * ⚠ The result card drops the shared `card` padding and gap: its events panel
+   * must run edge to edge inside the rounded corners, so the padding moves onto
+   * `pad` and the card clips instead.
+   */
+  resultCard: { padding: 0, gap: 0, overflow: 'hidden' },
+  pad: { padding: Spacing.four, gap: Spacing.three },
+  disclosure: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.dark.hairlineMid,
+  },
   nextCard: { borderColor: Colors.dark.accentRing },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.hairlineMid },

@@ -21,12 +21,19 @@
  *
  * ⚠ Rows and day headers BLEED past the screen gutter (`-Spacing.five`), so a
  * separator and a live row's tint run edge to edge. Anything added here that
- * carries a background needs the same treatment or it will stop short.
+ * carries a background needs the same treatment or it will stop short. ⚠ That
+ * is exactly why `MatchEvents` is handed `bleed` below — its ground is a
+ * background, and without it the panel stops short of both edges under a row
+ * that does not.
+ *
+ * ⚠ A **finished** row expands into its match timeline (ADR 0045). An in-play
+ * row does NOT: the ingest is finished-only, so there is nothing to show and
+ * the chevron would open on an empty panel. Upcoming rows likewise.
  */
-import { Fragment } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Fragment, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Crest, Text } from '@/components/atoms';
+import { Chevron, Crest, Text } from '@/components/atoms';
 import { FixtureTiming } from '@/components/molecules';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
@@ -34,8 +41,10 @@ import { dayGroups } from '@/lib/cronogol/jornada';
 import { scoreEmphasis } from '@/lib/cronogol/scores';
 import type { JornadaFixtureView, TeamRef } from '@/lib/cronogol/types';
 import { formatFixtureDate } from '@/lib/format';
+import type { Copy } from '@/lib/i18n/copy';
 import type { Phrases } from '@/lib/i18n/phrases';
 import type { ClockFormat } from '@/store/preferences';
+import { MatchEvents } from './match-events';
 
 export interface FixtureListProps {
   fixtures: readonly JornadaFixtureView[];
@@ -49,6 +58,7 @@ export interface FixtureListProps {
    * ⚠ Never the word "live": the sweep is ~3h (ADR 0035).
    */
   inProgressLabel: string;
+  eventsCopy: Copy['events'];
 }
 
 /**
@@ -103,8 +113,11 @@ export function FixtureList({
   phrases,
   finishedLabel,
   inProgressLabel,
+  eventsCopy,
 }: FixtureListProps) {
   const groups = dayGroups(fixtures, zone);
+  /** ⚠ One row open at a time — a single id, not a set (ADR 0045). */
+  const [openId, setOpenId] = useState<string | null>(null);
 
   return (
     <View>
@@ -125,8 +138,27 @@ export function FixtureList({
             const dim = scoreEmphasis({ home: fixture.goalsHome, away: fixture.goalsAway });
             const place = [fixture.venue, fixture.venueCity].filter(Boolean).join(' · ');
 
-            return (
-              <View key={fixture.id} style={[styles.row, inPlay && styles.live]}>
+            const expanded = openId === fixture.id;
+            const homeName = fixture.homeTeam ? displayName(fixture.homeTeam.name) : '—';
+            const awayName = fixture.awayTeam ? displayName(fixture.awayTeam.name) : '—';
+            /**
+             * ⚠ Gated on STATUS, not on whether events exist. Knowing that
+             * before the tap means pre-fetching every row on the round — ten
+             * requests for nine panels nobody opened. An opened row with
+             * nothing stored says so in its own words (ADR 0045).
+             */
+            const canExpand = played;
+
+            /**
+             * The row's contents, shared by both shells below.
+             *
+             * ⚠ An expandable row is a `Pressable`; every other row stays a
+             * plain `View`. Wrapping an inert row in a pressable gives
+             * VoiceOver a button that does nothing — which is worse than no
+             * affordance, because it is one a reader goes looking for.
+             */
+            const body = (
+              <>
                 <FixtureTiming
                   kickoffUtc={fixture.kickoffUtc}
                   kickoffTbd={fixture.kickoffTbd}
@@ -138,16 +170,22 @@ export function FixtureList({
                   tbdLabel={phrases.kickoffTbd}
                   caption={inPlay ? inProgressLabel : played ? finishedLabel : null}
                   captionTone={inPlay ? 'live' : 'textFaint'}
+                  // ⚠ Beside `FIN`, not in a column of its own on the right. A
+                  // right-hand chevron column cost the name block 19pt and
+                  // truncated `Espanyol de Barcelona` — measured on the
+                  // simulator, not guessed, and the exact failure ADR 0029
+                  // names. See `FixtureTiming`'s `disclosure` prop.
+                  disclosure={canExpand ? <Chevron expanded={expanded} /> : null}
                 />
 
                 <CrestPair home={fixture.homeTeam} away={fixture.awayTeam} />
 
                 <View style={styles.names}>
                   <Text variant="bodyStrong" color={dim.home === 'muted' ? 'textDim' : 'text'} numberOfLines={1}>
-                    {fixture.homeTeam ? displayName(fixture.homeTeam.name) : '—'}
+                    {homeName}
                   </Text>
                   <Text variant="bodyStrong" color={dim.away === 'muted' ? 'textDim' : 'text'} numberOfLines={1}>
-                    {fixture.awayTeam ? displayName(fixture.awayTeam.name) : '—'}
+                    {awayName}
                   </Text>
                   {place ? (
                     <Text variant="footnote" color="textFaint" numberOfLines={1}>
@@ -155,6 +193,44 @@ export function FixtureList({
                     </Text>
                   ) : null}
                 </View>
+
+              </>
+            );
+
+            return (
+              <View key={fixture.id}>
+                {canExpand ? (
+                  <Pressable
+                    onPress={() => setOpenId(expanded ? null : fixture.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded }}
+                    // One stop for the whole row. Without it VoiceOver reads
+                    // the time, the pairing, both names and the venue as five.
+                    accessibilityLabel={`${homeName} ${fixture.goalsHome}, ${awayName} ${fixture.goalsAway}`}
+                    accessibilityHint={expanded ? eventsCopy.collapse : eventsCopy.expand}
+                    style={({ pressed }) => [
+                      styles.row,
+                      inPlay && styles.live,
+                      // ⚠ Opacity, not `rowActive` — that colour is the in-play
+                      // tint two lines up, and borrowing it for a press would
+                      // make a finished row flash as if it were live.
+                      pressed && { opacity: 0.75 },
+                    ]}>
+                    {body}
+                  </Pressable>
+                ) : (
+                  <View style={[styles.row, inPlay && styles.live]}>{body}</View>
+                )}
+
+                {expanded ? (
+                  <MatchEvents
+                    fixtureId={fixture.id}
+                    home={fixture.homeTeam}
+                    away={fixture.awayTeam}
+                    copy={eventsCopy}
+                    bleed
+                  />
+                ) : null}
               </View>
             );
           })}

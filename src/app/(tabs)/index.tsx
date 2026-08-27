@@ -150,6 +150,12 @@ export default function TodayScreen() {
           last={
             last
               ? {
+                  // ⚠ The fixture's own id and its two `TeamRef`s, for the
+                  // events panel (ADR 0045). `ScoreSide` below carries no slug,
+                  // and the panel derives each event's side by comparing one.
+                  id: last.id,
+                  homeTeam: last.homeTeam,
+                  awayTeam: last.awayTeam,
                   home: side(last.homeTeam, last.goalsHome, loses(last.goalsHome, last.goalsAway)),
                   away: side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome)),
                   meta: [
@@ -182,6 +188,7 @@ export default function TodayScreen() {
               : null
           }
           copy={copy.today}
+          events={copy.events}
         />
       ) : null}
 
@@ -198,7 +205,11 @@ export default function TodayScreen() {
         <SkeletonRows count={3} height={Size.rowSkeleton} />
       ) : finished.data && finished.data.fixtures.some((f) => f.status === 'finished') ? (
         <>
-          <FinishedToday window={finished.data} finishedLabel={copy.today.finished} />
+          <FinishedToday
+            window={finished.data}
+            finishedLabel={copy.today.finished}
+            eventsCopy={copy.events}
+          />
           <Text variant="footnote" color="textFaint">
             {copy.today.settleNote}
           </Text>

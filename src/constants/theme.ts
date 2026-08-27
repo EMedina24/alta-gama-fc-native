@@ -13,6 +13,9 @@ const dark = {
   raised: '#1e2126',            // segmented selection, avatar, secondary button
   raisedAlt: '#242830',         // control track inside a card (sheet segmenteds)
   rowActive: '#12161a',         // row of a subscribed club / live fixture
+  // The match-events panel, one step BELOW `card` — an expansion reads as
+  // recessed into the row it came from, not stacked on top of it (ADR 0045).
+  sunken: '#101317',
   glyph: '#39404a',             // the player silhouette, on `raisedAlt`
 
   // Hairlines
@@ -45,6 +48,14 @@ const dark = {
   postponed: '#ff8f6b',
   postponedWash: 'rgba(255,143,107,0.14)',
   postponedRing: 'rgba(255,143,107,0.36)',
+
+  // Disciplinary cards, in the match-events timeline (ADR 0045).
+  // ⚠ `cardRed` is the same hex as `live` and that is a COINCIDENCE, not a
+  // relationship — the same trap `moved`/`bandUel` below already carries. One
+  // means "a player was sent off", the other "this match is in play"; aliasing
+  // them makes a liveness recolour silently repaint every red card.
+  cardYellow: '#f2c14e',
+  cardRed: '#ff5c47',
 
   // Qualification bands (per-league CONFIG, never position arithmetic)
   bandUcl: '#c8f25a',
@@ -125,6 +136,18 @@ export const Type = {
    * ADR 0043 — they are cards now, not rows.)
    */
   numeralLg: { fontSize: 19, fontWeight: '700', letterSpacing: -0.5 },
+  /**
+   * The match-events timeline (ADR 0045). Two steps of its own because the
+   * panel is a dense list inside a row: `bodyStrong` (15) at eleven rows deep
+   * out-weighed the club names in the row above it, and `caption` (12.5/500)
+   * lost the player name to its own detail line.
+   *
+   * ⚠ The detail line is `micro` and the crest column is `eyebrowSm` — both
+   * already match the spec's values, so they are reused rather than copied.
+   */
+  eventName: { fontSize: 13, fontWeight: '600', letterSpacing: -0.13 },
+  /** Always `tabular` — the minute column is read as a column. */
+  eventMinute: { fontSize: 11, fontWeight: '700' },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -168,6 +191,33 @@ export const Size = {
    */
   timingColumn: 64,
   timingColumn12: 88,
+  /**
+   * The match-events timeline (ADR 0045).
+   *
+   * ⚠⚠ **The glyph slot is FIXED at 18 × 15 for every event type.** Names
+   * align down the timeline whatever the mix of goals, cards and subs.
+   * **Never size the slot to the glyph** — a card is 11pt wide and a goal
+   * disc 24, and sizing to content ragged every name in the panel.
+   *
+   * ⚠ `crestEvent` is 22, below `crestRow` (26): the side crest here is a
+   * column marker inside an already-nested list, not an identification.
+   */
+  eventGlyphW: 18,
+  eventGlyphH: 15,
+  /**
+   * ⚠ **38, not the spec's 30.** Measured on the simulator, not derived: at 30
+   * a stoppage-time minute truncated to `45…`, because `45+2′` is six glyphs
+   * where `63′` is three. The spec's 30 was set against HTML, which overflows
+   * a fixed width silently rather than ellipsing it.
+   *
+   * ⚠ Widening the column does NOT break the design's alignment rule — it is
+   * still FIXED, which is the whole point. It costs the name block 8pt, which
+   * that column can afford in a way the parent row's cannot.
+   */
+  eventMinuteColumn: 38,
+  crestEvent: 22,
+  /** The disclosure chevron. ⚠ Its 44pt hit target is the ROW, not this. */
+  chevron: 11,
   /**
    * The vertical rule between a score's two digits (ADR 0044), per size. Set
    * against the digits' cap height on the simulator, not by arithmetic: a rule

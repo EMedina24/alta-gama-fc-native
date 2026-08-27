@@ -28,6 +28,7 @@
  * payload-size measurement (46KB vs 4.8KB across a 38-row season); here it is
  * about re-render scope, and it keeps the same shape either way.
  */
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Score, Text } from '@/components/atoms';
@@ -51,6 +52,17 @@ export interface FixtureTimingProps {
   caption?: string | null;
   /** ⚠ `live` only ever paints the honest in-play caption — see the header. */
   captionTone?: ThemeColor;
+  /**
+   * A disclosure mark, drawn BESIDE the caption (ADR 0045).
+   *
+   * ⚠ It lives here, and not in a column of its own on the row, because this
+   * cell has spare width and the row's name column has none. A chevron column
+   * on the right cost the names 19pt and truncated `Espanyol de Barcelona` —
+   * measured on the simulator, and the exact failure ADR 0029 names. Beside the
+   * caption it costs nothing, and it matches the design's own placement on
+   * FINISHED TODAY, where the chevron sits next to `FT`.
+   */
+  disclosure?: ReactNode;
   align?: 'left' | 'right';
 }
 
@@ -65,6 +77,7 @@ export function FixtureTiming({
   tbdLabel,
   caption,
   captionTone = 'textFaint',
+  disclosure = null,
   align = 'left',
 }: FixtureTimingProps) {
   const scored =
@@ -110,10 +123,15 @@ export function FixtureTiming({
           {value}
         </Text>
       )}
-      {caption ? (
-        <Text variant="eyebrowSm" color={captionTone}>
-          {caption}
-        </Text>
+      {caption || disclosure ? (
+        <View style={[styles.captionRow, align === 'right' && styles.right]}>
+          {caption ? (
+            <Text variant="eyebrowSm" color={captionTone}>
+              {caption}
+            </Text>
+          ) : null}
+          {disclosure}
+        </View>
       ) : null}
     </View>
   );
@@ -124,6 +142,7 @@ const styles = StyleSheet.create({
   // Fixed within a format, so no row reflows against its neighbours.
   cell: { gap: Spacing.half },
   right: { alignItems: 'flex-end' },
+  captionRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
   chipLeft: { alignSelf: 'flex-start' },
   chipRight: { alignSelf: 'flex-end' },
 });

@@ -944,3 +944,107 @@ export interface TeamSquadView {
    */
   players: SquadPlayerView[];
 }
+
+/* ── One match's timeline ───────────────────────────────────────────────────
+ *
+ * ⚠ `ScoreboardEventView` above is NOT related. There, an "event" is a whole
+ * MATCH on `/cronogol/scores`; here it is one incident inside a match. The two
+ * share a word and nothing else — no ids, no source, no route.
+ */
+
+/**
+ * `type` on a match event.
+ *
+ * ⚠ `'unknown'` is a REAL value you must render, not an error. It means the
+ * source described something the backend has no name for yet, which will
+ * happen — the underlying vocabulary is long-tailed. Show it as a neutral
+ * timeline entry; never drop the row.
+ */
+export type MatchEventTypeView =
+  | 'goal'
+  | 'card'
+  | 'substitution'
+  | 'var'
+  | 'missed-penalty'
+  | 'unknown';
+
+export interface MatchEventPersonView {
+  /**
+   * The display name as the source renders it — `Vini Jr.`, `Bellingham`,
+   * `Malen`. Not a legal name, and not normalised: LaLiga's own casing is
+   * occasionally poor (`C.soler`).
+   */
+  name: string;
+  /**
+   * Our `players.slug`, for linking to a squad page.
+   *
+   * ⚠⚠ **NULL FOR EVERY SERIE A AND BUNDESLIGA PERSON, ALWAYS.** Squads exist
+   * for LaLiga and the Premier League only. Fall back to plain text — do not
+   * hide the event.
+   *
+   * ⚠ Unread today (ADR 0045 defers player links): this is a PLAYER slug, and
+   * the sheet ADR 0033 ships keys on `{club slug, person id}`. Linking needs a
+   * squad fetch per panel and a slug→id map, which the timeline does not do.
+   */
+  slug: string | null;
+}
+
+/** One event on `GET /cronogol/fixtures/{id}/events` */
+export interface MatchEventView {
+  id: string;
+  type: MatchEventTypeView;
+  /**
+   * The narrowing within a type: `normal` · `penalty` · `own` · `yellow` ·
+   * `second-yellow` · `red` · `tactical` · `injury`, plus slugged free text for
+   * VAR decisions.
+   *
+   * ⚠ An OPEN string, deliberately not a union — a closed type would reject
+   * real data. Switch on `type`; treat this as a label. Null on Premier League
+   * substitutions, which do not distinguish tactical from injury.
+   */
+  subtype: string | null;
+  /** Regulation minute. Null means the source did not say — do not render 0. */
+  minute: number | null;
+  /**
+   * Stoppage-time offset.
+   *
+   * ⚠ **Serie A only** — 65 of 1,005 rows. LaLiga and the Premier League fold
+   * stoppage into `minute`, so a 90+4 arrives from them as
+   * `minute: 94, minuteExtra: null`. Render `45+2`, ⚠ **never the sum**: `47`
+   * is a minute that did not happen. `minuteLabel` in `./events` is the one
+   * copy of that rule.
+   */
+  minuteExtra: number | null;
+  /** The source's period label — `SecondHalf`, `2ª parte`. Free text. */
+  period: string | null;
+  /** The club, as `TeamView.slug`. Null on a VAR decision belonging to neither. */
+  teamSlug: string | null;
+  /** Scorer · booked player · the player coming ON. */
+  player: MatchEventPersonView;
+  /**
+   * The assister when `type === 'goal'`; the player going OFF when
+   * `type === 'substitution'`. Null on everything else.
+   *
+   * ⚠ Null on a goal means UNASSISTED, not missing — about a third of goals
+   * have no assister recorded.
+   */
+  related: MatchEventPersonView | null;
+}
+
+/** GET /cronogol/fixtures/{id}/events */
+export interface FixtureEventsView {
+  fixtureId: string;
+  /**
+   * Chronological, as ordered by the server.
+   *
+   * ⚠⚠ **Do NOT re-sort on `minute`.** Events share a minute often and this
+   * order encodes each source's own chronology; sorting client-side will flip
+   * substitution pairs between renders.
+   *
+   * ⚠⚠ **An empty array does NOT mean a goalless match** — it means nothing is
+   * stored for that fixture yet. The sweep is 3-hourly and finished-only, so a
+   * 4-1 that ended twenty minutes ago arrives here as `count: 0`.
+   */
+  events: MatchEventView[];
+  count: number;
+}

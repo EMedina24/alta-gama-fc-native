@@ -22,9 +22,11 @@
  * `<img>` could 404 before React hydrated. That is an SSR artefact with no
  * counterpart here; `onError` is sufficient.
  *
- * ⚠ Drawn with plain views rather than `react-native-svg`. That package is a
- * dependency but is imported nowhere in `src/`, and a circle over a dome does
- * not justify being its first use.
+ * ⚠ Drawn with plain views rather than `react-native-svg`, because a circle
+ * over a dome does not justify reaching for it. ⚠ **Amended 2026-08-26:** that
+ * was a judgement about THIS silhouette, not about the package — `react-native-svg`
+ * is now in use, for the match-event glyphs (`event-glyph.tsx`, ADR 0045).
+ * This one stays plain views; two views beat a dependency import for two shapes.
  */
 import { Image } from 'expo-image';
 import { useState } from 'react';

@@ -77,3 +77,4 @@ more words than one that's obvious once you see it.
 | [0042](./0042-brand-spelling-spaced-form-reinstated.md) | The spaced `Alta Gama FC` is reinstated | Accepted — open across the ecosystem |
 | [0043](./0043-upcoming-cards-name-the-sides.md) | `UPCOMING FROM YOUR CLUBS` is one card per match: the sides named home-lit over away-dim, `MD n · ground` as the eyebrow, kickoff over its date, accent only on today | Accepted |
 | [0044](./0044-scores-render-as-split-digits.md) | A score is the `Score` atom — two digits split by a rule, the losing digit dimmed, chipped in a list and bare in the Today hero | Accepted — verified on the simulator |
+| [0045](./0045-match-events-expanded-row.md) | A finished match expands into its event timeline: six event types drawn, disclosure gated on status not data, `react-native-svg` adopted | Accepted |

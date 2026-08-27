@@ -1,4 +1,5 @@
 export { Countdown } from './countdown';
+export { EventRow, type EventRowProps } from './event-row';
 export { FeedAge } from './feed-age';
 export { FixtureTiming } from './fixture-timing';
 export { FormStrip } from './form-strip';

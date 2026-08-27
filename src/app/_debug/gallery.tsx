@@ -11,6 +11,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, ChipButton, Hairline, Score, Switch, Text } from '@/components/atoms';
 import {
   Countdown,
+  EventRow,
   FeedAge,
   FixtureTiming,
   FormStrip,
@@ -21,11 +22,68 @@ import {
   StatRow,
 } from '@/components/molecules';
 import { Colors, Spacing } from '@/constants/theme';
+import { detailLine, eventKind, eventSide, minuteLabel } from '@/lib/cronogol/events';
+import type { MatchEventView, TeamRef } from '@/lib/cronogol/types';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useState } from 'react';
 
 const ZONE = 'Europe/Madrid';
 const SOON = new Date(Date.now() + 1000 * 60 * 60 * 28).toISOString();
+
+/**
+ * A fabricated timeline covering every branch of `lib/cronogol/events.ts` —
+ * including the ones production shows about once a month.
+ *
+ * ⚠ This case is also the **native-module check for `react-native-svg`**
+ * (ADR 0045). The package autolinks from `package.json`, but a dev client built
+ * before it was declared throws here rather than degrading. If this screen
+ * crashes, the fix is a new dev build, not a code change.
+ *
+ * ⚠ It renders `EventRow` through the real mappers rather than `MatchEvents`,
+ * which would fire a network request off a fake fixture id.
+ */
+const EV_HOME: TeamRef = {
+  slug: 'arsenal', name: 'Arsenal', shortName: 'ARS', logoUrl: null, logoUrls: null,
+};
+const EV_AWAY: TeamRef = {
+  slug: 'brighton', name: 'Brighton', shortName: 'BHA', logoUrl: null, logoUrls: null,
+};
+
+const person = (name: string) => ({ name, slug: null });
+
+const EVENTS: MatchEventView[] = [
+  { id: 'e1', type: 'goal', subtype: 'normal', minute: 9, minuteExtra: null, period: 'FirstHalf',
+    teamSlug: 'arsenal', player: person('Bukayo Saka'), related: person('Martin Ødegaard') },
+  // ⚠ Unassisted — a third of goals are, and `related: null` is not missing data.
+  { id: 'e2', type: 'goal', subtype: 'normal', minute: 22, minuteExtra: null, period: 'FirstHalf',
+    teamSlug: 'brighton', player: person('João Pedro'), related: null },
+  { id: 'e3', type: 'goal', subtype: 'penalty', minute: 31, minuteExtra: null, period: 'FirstHalf',
+    teamSlug: 'arsenal', player: person('Kai Havertz'), related: null },
+  { id: 'e4', type: 'goal', subtype: 'own', minute: 38, minuteExtra: null, period: 'FirstHalf',
+    teamSlug: 'brighton', player: person('Lewis Dunk'), related: null },
+  // ⚠ Serie A's shape: 45+2, NEVER rendered as 47.
+  { id: 'e5', type: 'card', subtype: 'yellow', minute: 45, minuteExtra: 2, period: 'FirstHalf',
+    teamSlug: 'brighton', player: person('Joël Veltman'), related: null },
+  { id: 'e6', type: 'card', subtype: 'second-yellow', minute: 62, minuteExtra: null,
+    period: 'SecondHalf', teamSlug: 'brighton', player: person('Jan Paul van Hecke'), related: null },
+  // ⚠ Premier League substitutions carry a null subtype. No caption is derived from it.
+  { id: 'e7', type: 'substitution', subtype: null, minute: 66, minuteExtra: null,
+    period: 'SecondHalf', teamSlug: 'arsenal', player: person('Leandro Trossard'),
+    related: person('Gabriel Martinelli') },
+  // ⚠ A VAR decision can belong to NEITHER club — null `teamSlug`, blank crest column.
+  { id: 'e8', type: 'var', subtype: 'goal-not-awarded', minute: 73, minuteExtra: null,
+    period: 'SecondHalf', teamSlug: null, player: person('Kai Havertz'), related: null },
+  { id: 'e9', type: 'missed-penalty', subtype: 'saved', minute: 81, minuteExtra: null,
+    period: 'SecondHalf', teamSlug: 'brighton', player: person('Danny Welbeck'), related: null },
+  // ⚠ An OPEN subtype the copy map has never heard of → the bare mark, no detail
+  // line, and certainly not the raw slug.
+  { id: 'e10', type: 'var', subtype: 'offside-overturned-on-review', minute: 86,
+    minuteExtra: null, period: 'SecondHalf', teamSlug: 'arsenal', player: person('Gabriel Jesus'),
+    related: null },
+  // ⚠⚠ The row that must never be dropped, and the one with no minute.
+  { id: 'e11', type: 'unknown', subtype: 'something-new', minute: null, minuteExtra: null,
+    period: null, teamSlug: 'arsenal', player: person('Declan Rice'), related: null },
+];
 
 function Case({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -219,6 +277,33 @@ export default function GalleryScreen() {
           <Switch value={false} onValueChange={() => {}} disabled />
         </View>
       </Case>
+      <SectionHeader title="Match events" meta="every glyph · every null" />
+      <Case label="the expanded panel's timeline, on fabricated data">
+        <View style={styles.eventPanel}>
+          {EVENTS.map((event) => {
+            const side = eventSide(event, EV_HOME, EV_AWAY);
+            const team = side === 'home' ? EV_HOME : side === 'away' ? EV_AWAY : null;
+            return (
+              <EventRow
+                key={event.id}
+                minute={minuteLabel(event)}
+                kind={eventKind(event)}
+                name={event.player.name}
+                detail={detailLine(event, copy.events)}
+                crest={null}
+                abbr={team?.shortName ?? null}
+              />
+            );
+          })}
+        </View>
+      </Case>
+      <Case label="nothing stored yet — ⚠ NOT the same as a goalless match">
+        <View style={styles.eventPanel}>
+          <Text variant="micro" color="textMuted">
+            {copy.events.notPublished}
+          </Text>
+        </View>
+      </Case>
     </ScrollView>
   );
 }
@@ -232,4 +317,9 @@ const styles = StyleSheet.create({
   cell: { gap: Spacing.one },
   rowBetween: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   buttons: { gap: Spacing.two },
+  eventPanel: {
+    backgroundColor: Colors.dark.sunken,
+    padding: Spacing.four,
+    gap: Spacing.three,
+  },
 });

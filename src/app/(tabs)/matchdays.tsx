@@ -232,6 +232,7 @@ export default function MatchdaysScreen() {
             phrases={phrases}
             finishedLabel={copy.matchdays.finished}
             inProgressLabel={copy.matchdays.inProgress}
+            eventsCopy={copy.events}
           />
         </>
       ) : null}

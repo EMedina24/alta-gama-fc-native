@@ -177,6 +177,48 @@ export interface Copy {
     browseAll: string;
     quiet: string;
   };
+  /**
+   * The expanded match row: one finished match's timeline (ADR 0045).
+   *
+   * ⚠ Shared by three surfaces — FINISHED TODAY, the matchday rows and the
+   * board's last-result card — so it is top-level rather than living under
+   * `today`.
+   */
+  events: {
+    /** The panel's eyebrow. Rendered uppercase by the `eyebrow` variant. */
+    title: string;
+    /** ⚠ Only on a goal, and never together with `penalty`. */
+    assist: (name: string) => string;
+    /** ⚠ The player going OFF. The one coming ON takes the primary line. */
+    off: (name: string) => string;
+    penalty: string;
+    ownGoal: string;
+    /** ⚠ A sending-off, not a booking — it draws the RED card. */
+    secondYellow: string;
+    /**
+     * ⚠⚠ `subtype` is an OPEN string on the wire, not a union. An unrecognised
+     * key must render the mark with **no detail line** — never the raw slug.
+     * Both maps are looked up defensively in `lib/cronogol/events.ts`.
+     */
+    varLabels: Readonly<Record<string, string>>;
+    missedLabels: Readonly<Record<string, string>>;
+    /**
+     * ⚠⚠ **Never "no goals", and never "0 events".** An empty array means we
+     * have not swept the fixture yet — the ingest is finished-only and
+     * three-hourly, so a 4-1 that ended twenty minutes ago returns `count: 0`.
+     * A 0-0 and an un-swept thriller are the same response and the API cannot
+     * tell them apart for us.
+     */
+    notPublished: string;
+    /**
+     * ⚠ A FAILED request is not an empty one. Without this branch a dropped
+     * connection renders `notPublished` — the app stating, as fact, that the
+     * backend holds no events for a match it never managed to ask about.
+     */
+    error: string;
+    expand: string;
+    collapse: string;
+  };
   club: {
     alertsOn: string;
     alertsOff: string;
@@ -430,6 +472,33 @@ export const esCopy: Copy = {
     quiet: 'Hoy no se ha jugado nada todavía.',
   },
 
+  events: {
+    title: 'Sucesos del partido',
+    assist: (name: string) => `Asistencia · ${name}`,
+    off: (name: string) => `Sale · ${name}`,
+    penalty: 'Penalti',
+    ownGoal: 'En propia puerta',
+    secondYellow: 'Doble amarilla',
+    varLabels: {
+      'goal-awarded': 'Gol concedido',
+      'goal-not-awarded': 'Gol anulado',
+      'penalty-awarded': 'Penalti concedido',
+      'penalty-not-awarded': 'Penalti denegado',
+      'card-upgrade': 'Tarjeta agravada',
+    },
+    missedLabels: {
+      saved: 'Penalti parado',
+      missed: 'Penalti fallado',
+      post: 'Al palo',
+    },
+    // ⚠ "Todavía no están publicados", nunca "sin goles": una goleada que acabó
+    // hace veinte minutos devuelve exactamente esta misma respuesta.
+    notPublished: 'Los sucesos de este partido todavía no están publicados.',
+    error: 'No se han podido cargar los sucesos.',
+    expand: 'Ver los sucesos del partido',
+    collapse: 'Ocultar los sucesos del partido',
+  },
+
   club: {
     alertsOn: 'Avisos activados',
     alertsOff: 'Avisos de partido',
@@ -674,6 +743,33 @@ export const enCopy: Copy = {
       'The whole season goes in at once. When a kickoff moves, the calendar entry moves with it and you get an alert the same minute.',
     browseAll: 'Browse all',
     quiet: 'Nothing has been played yet today.',
+  },
+
+  events: {
+    title: 'Match events',
+    assist: (name: string) => `Assist · ${name}`,
+    off: (name: string) => `Off · ${name}`,
+    penalty: 'Penalty',
+    ownGoal: 'Own goal',
+    secondYellow: 'Second yellow',
+    varLabels: {
+      'goal-awarded': 'Goal awarded',
+      'goal-not-awarded': 'Goal disallowed',
+      'penalty-awarded': 'Penalty awarded',
+      'penalty-not-awarded': 'Penalty not awarded',
+      'card-upgrade': 'Card upgraded',
+    },
+    missedLabels: {
+      saved: 'Penalty saved',
+      missed: 'Penalty missed',
+      post: 'Off the post',
+    },
+    // ⚠ "Not published yet", never "no goals": a thrashing that ended twenty
+    // minutes ago returns exactly this same response.
+    notPublished: "This match's events aren't published yet.",
+    error: "Couldn't load the events.",
+    expand: 'Show match events',
+    collapse: 'Hide match events',
   },
 
   club: {

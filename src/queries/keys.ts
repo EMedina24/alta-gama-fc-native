@@ -21,4 +21,10 @@ export const keys = {
    */
   account: (userId: string) => ['account', userId] as const,
   fixtureWindow: (from: string, to: string) => ['fixture-window', from, to] as const,
+  /**
+   * One match's timeline. Keyed on OUR fixture id — the same `id` already on
+   * `JornadaFixtureView` / `WindowFixtureView` / `FixtureView`, so a row opened
+   * on Today and the same row opened on Matchdays share one cache entry.
+   */
+  fixtureEvents: (id: string) => ['fixture-events', id] as const,
 } as const;
