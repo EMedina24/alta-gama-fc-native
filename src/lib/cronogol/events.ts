@@ -95,6 +95,90 @@ export function eventKind(event: MatchEventView): EventKind {
 }
 
 /**
+ * The panel's tabs. Four, from the eight marks above (ADR 0046).
+ *
+ * ⚠ `other` is not a leftovers bin, it is the thing that makes the control safe.
+ * The design asked for three — `goals` / `cards` / `subs` — against its own
+ * four-kind union. Ours is eight, and ADR 0045 decision 1 is emphatic that a row
+ * is never dropped; a three-group control has nowhere to put `var`,
+ * `missed-penalty` or `unknown`, and "nowhere" means the row stops rendering.
+ */
+export type EventGroup = 'goals' | 'cards' | 'subs' | 'other';
+
+/** Tab order, and the order `initialGroup` looks for something to show. */
+export const EVENT_GROUPS = ['goals', 'cards', 'subs', 'other'] as const;
+
+/**
+ * Which tab a mark files under.
+ *
+ * ⚠⚠ **The `default` branch is the point, not a fallback.** It carries
+ * `eventKind`'s never-drop rule forward: a ninth mark added to `EventKind`
+ * tomorrow lands in `other` and is still read, rather than vanishing out of a
+ * control that only knows the eight named here. Never replace it with an
+ * exhaustive list of cases.
+ *
+ * ⚠ `yellow` and `red` share one group deliberately — a card is a card to
+ * someone scanning, and splitting them leaves two one-row tabs. The **glyph
+ * colour** is what tells them apart, at row level. Never rely on the tab.
+ *
+ * ⚠ `own-goal` is a GOAL here even though it draws its own mark: it is on the
+ * scoresheet, and a reader opening `Goals` on a 1-0 won by an own goal must not
+ * find the tab empty.
+ */
+export function groupOf(kind: EventKind): EventGroup {
+  switch (kind) {
+    case 'goal':
+    case 'own-goal':
+      return 'goals';
+    case 'yellow':
+    case 'red':
+      return 'cards';
+    case 'sub':
+      return 'subs';
+    default:
+      return 'other';
+  }
+}
+
+/**
+ * How many events in each group — the number every tab prints, including the
+ * `0`s.
+ *
+ * ⚠ A zero is INFORMATION, not an absence: no bookings in a four-goal game is
+ * worth seeing, which is why the tab renders it rather than hiding itself.
+ */
+export function groupCounts(events: MatchEventView[]): Record<EventGroup, number> {
+  const counts: Record<EventGroup, number> = { goals: 0, cards: 0, subs: 0, other: 0 };
+  for (const event of events) counts[groupOf(eventKind(event))] += 1;
+  return counts;
+}
+
+/**
+ * The tab a freshly opened panel lands on: the first non-empty one, in
+ * `EVENT_GROUPS` order.
+ *
+ * ⚠ A 0-0 with two bookings opens on `cards`. Landing on `goals` unconditionally
+ * shows an empty list for a match that has events, which reads as a broken panel.
+ *
+ * ⚠ Falls back to `goals` only when every count is zero — a state the panel does
+ * not render tabs in at all, so the value is a formality, not a display.
+ */
+export function initialGroup(counts: Record<EventGroup, number>): EventGroup {
+  return EVENT_GROUPS.find((group) => counts[group] > 0) ?? 'goals';
+}
+
+/**
+ * One group's events.
+ *
+ * ⚠ A `filter`, which preserves relative order — that is the whole reason it is
+ * a filter. The no-sort rule at the top of this file still stands: narrowing the
+ * feed does not reorder it, and nothing here may start to.
+ */
+export function eventsInGroup(events: MatchEventView[], group: EventGroup): MatchEventView[] {
+  return events.filter((event) => groupOf(eventKind(event)) === group);
+}
+
+/**
  * Which side of the card the event belongs to, for the crest column.
  *
  * The API says which CLUB (`teamSlug`), not which side. This is the derivation

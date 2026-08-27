@@ -584,6 +584,43 @@ geometry has only been seen in code.
 ⚠ Player links are deferred deliberately (§6 of the API doc): `player.slug` is a
 PLAYER slug and ADR 0033's sheet keys on `{club slug, person id}`.
 
+### 3c · ~~Event grouping tabs~~ — DONE 2026-08-27
+
+`handoff_event-groups/`, built to
+[0046](./decisions/0046-match-events-grouping-tabs.md). The panel from 3b now
+opens on a four-segment counted control — `Goles · Tarjetas · Cambios · Otros` —
+and shows one group at a time. It was twenty rows on a busy match, which pushed
+the matches under it off screen.
+
+⚠ **Four groups, where the design asked for three.** It was written against its
+own four-kind model; ours is eight, and 0045 decision 1 forbids dropping a row,
+so `var` / `missed-penalty` / `unknown` need somewhere to go. **`groupOf`'s
+`default:` branch is the guarantee** — a ninth mark lands in `other` and is still
+read. Never expand it into an exhaustive list of cases.
+
+⚠ **The tabs replaced the eyebrow**, but `showTitle` did NOT go away — it now
+gates on `events.length === 0`, so `MATCH EVENTS` still labels the pending, error
+and not-published states. `match-board.tsx` still needs its `false`.
+
+⚠ **The active group is derived from a nullable pick, not stored**, and there is
+no `useEffect` in this feature. Seeding state with a group needs an effect to
+correct it when the fetch lands, which flashes an empty `Goals` on a 0-0 with two
+bookings. Resetting per match is free for the same reason — the component
+unmounts with its row.
+
+⚠ `Size.eventTab` is **28, under `minTouch`**, with `hitSlop` making up the
+difference. The only control in the app that paints under the minimum; a 44pt
+track spends the height the grouping won back.
+
+⚠ `handoff_event-groups/EventTabs.tsx` is a **reference, not the shipped
+mapping** — its `groupOf` files `own-goal`, `var`, `missed-penalty` and `unknown`
+into `cards`. Read it for the values and the behaviour only.
+
+Typecheck and lint clean (baseline unchanged: 6 pre-existing `Date.now()` purity
+errors, none in the touched files). ⚠ **Not yet exercised on the simulator** —
+`/_debug/gallery` carries a live tab case and a dimmed-`0` case, but the real
+panel on real data has not been opened since the change.
+
 ### 4 · Today's stat tiles (SPEC §3.1 item 4)
 
 Two tiles under the upcoming section — subscribed count → Clubs, feed count →

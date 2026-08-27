@@ -12,6 +12,7 @@ import { Button, ChipButton, Hairline, Score, Switch, Text } from '@/components/
 import {
   Countdown,
   EventRow,
+  EventTabs,
   FeedAge,
   FixtureTiming,
   FormStrip,
@@ -22,7 +23,16 @@ import {
   StatRow,
 } from '@/components/molecules';
 import { Colors, Spacing } from '@/constants/theme';
-import { detailLine, eventKind, eventSide, minuteLabel } from '@/lib/cronogol/events';
+import {
+  detailLine,
+  eventKind,
+  eventSide,
+  eventsInGroup,
+  groupCounts,
+  initialGroup,
+  minuteLabel,
+  type EventGroup,
+} from '@/lib/cronogol/events';
 import type { MatchEventView, TeamRef } from '@/lib/cronogol/types';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useState } from 'react';
@@ -97,9 +107,16 @@ function Case({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
+/** Counted once — the fixture array is a module constant, not props. */
+const EV_COUNTS = groupCounts(EVENTS);
+
 export default function GalleryScreen() {
   const { copy, phrases } = useI18n();
   const [on, setOn] = useState(true);
+  // ⚠ `null` and derived, exactly as `MatchEvents` does it — the gallery must
+  // exercise the real behaviour, not a simplified stand-in of it.
+  const [picked, setPicked] = useState<EventGroup | null>(null);
+  const evGroup = picked !== null && EV_COUNTS[picked] > 0 ? picked : initialGroup(EV_COUNTS);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -297,6 +314,39 @@ export default function GalleryScreen() {
           })}
         </View>
       </Case>
+      <Case label="the group tabs, live — tap through; ⚠ a 0 group is dimmed and inert">
+        <View style={styles.eventPanel}>
+          <EventTabs
+            counts={EV_COUNTS}
+            active={evGroup}
+            labels={copy.events.groups}
+            onSelect={setPicked}
+          />
+          <View style={styles.eventRows}>
+            {eventsInGroup(EVENTS, evGroup).map((event) => (
+              <EventRow
+                key={event.id}
+                minute={minuteLabel(event)}
+                kind={eventKind(event)}
+                name={event.player.name}
+                detail={detailLine(event, copy.events)}
+                crest={null}
+                abbr={eventSide(event, EV_HOME, EV_AWAY) === 'home' ? EV_HOME.shortName : null}
+              />
+            ))}
+          </View>
+        </View>
+      </Case>
+      <Case label="every group empty but one — what a 4-0 with no cards and no VAR looks like">
+        <View style={styles.eventPanel}>
+          <EventTabs
+            counts={{ goals: 4, cards: 0, subs: 2, other: 0 }}
+            active="goals"
+            labels={copy.events.groups}
+            onSelect={() => {}}
+          />
+        </View>
+      </Case>
       <Case label="nothing stored yet — ⚠ NOT the same as a goalless match">
         <View style={styles.eventPanel}>
           <Text variant="micro" color="textMuted">
@@ -317,6 +367,7 @@ const styles = StyleSheet.create({
   cell: { gap: Spacing.one },
   rowBetween: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   buttons: { gap: Spacing.two },
+  eventRows: { gap: Spacing.three },
   eventPanel: {
     backgroundColor: Colors.dark.sunken,
     padding: Spacing.four,

@@ -29,6 +29,15 @@ const dark = {
   textDim: '#8fa0a6',
   textFaint: '#59626a',
   textMuted: '#7c858b',
+  /**
+   * The label and count of an INERT control — today the match-events tab whose
+   * group holds nothing (ADR 0046).
+   *
+   * ⚠ Dimmer than `textFaint`, and it has to be: `textFaint` is what an *idle*
+   * tab's count already uses, so borrowing it makes "you can tap this, there is
+   * nothing under it" and "you can tap this" the same colour.
+   */
+  textGhost: '#3d444a',
 
   // Brand + status
   accent: '#c8f25a',            // the ONE carry-over from the web app
@@ -148,6 +157,19 @@ export const Type = {
   eventName: { fontSize: 13, fontWeight: '600', letterSpacing: -0.13 },
   /** Always `tabular` — the minute column is read as a column. */
   eventMinute: { fontSize: 11, fontWeight: '700' },
+  /**
+   * The events panel's group tabs (ADR 0046).
+   *
+   * ⚠ NOT `eventMinute`, which happens to share 11/700 today. That token is
+   * documented "always tabular" and is measured against `eventMinuteColumn`;
+   * the two must be free to move apart without one dragging the other.
+   *
+   * ⚠ Sentence case, not an eyebrow. `eyebrowSm` uppercases, and `GOLES` beside
+   * `TARJETAS` in four quarter-width segments is the layout that truncates.
+   */
+  eventTab: { fontSize: 11, fontWeight: '700', letterSpacing: 0.22 },
+  /** The count beside it. ⚠ A number — always with `tabular`. */
+  eventTabCount: { fontSize: 10, fontWeight: '700' },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -216,6 +238,14 @@ export const Size = {
    */
   eventMinuteColumn: 38,
   crestEvent: 22,
+  /**
+   * A group tab's height (ADR 0046).
+   *
+   * ⚠ Below `minTouch` on purpose, and the segments carry `hitSlop` to make up
+   * the difference. The control exists to SAVE panel height — a 44pt track
+   * spends most of what grouping the rows won back.
+   */
+  eventTab: 28,
   /** The disclosure chevron. ⚠ Its 44pt hit target is the ROW, not this. */
   chevron: 11,
   /**

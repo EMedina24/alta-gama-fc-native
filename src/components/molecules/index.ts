@@ -1,5 +1,6 @@
 export { Countdown } from './countdown';
 export { EventRow, type EventRowProps } from './event-row';
+export { EventTabs, type EventTabsProps } from './event-tabs';
 export { FeedAge } from './feed-age';
 export { FixtureTiming } from './fixture-timing';
 export { FormStrip } from './form-strip';

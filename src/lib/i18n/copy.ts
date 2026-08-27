@@ -185,8 +185,26 @@ export interface Copy {
    * `today`.
    */
   events: {
-    /** The panel's eyebrow. Rendered uppercase by the `eyebrow` variant. */
+    /**
+     * The panel's eyebrow. Rendered uppercase by the `eyebrow` variant.
+     *
+     * ⚠ Only reaches the screen when the panel has NO tabs — the group control
+     * labels itself, and the two together printed the same idea twice (ADR
+     * 0046). It survives for the pending / error / not-published states, which
+     * have nothing to group.
+     */
     title: string;
+    /**
+     * The group tabs (ADR 0046).
+     *
+     * ⚠ Sentence case — these are NOT eyebrows, and `Type.eventTab` does not
+     * uppercase them.
+     *
+     * ⚠ `other` is `var` + `missed-penalty` + `unknown`, and whatever mark is
+     * added next. Keep the label generic: naming it after VAR would mislabel
+     * the day something else lands in it.
+     */
+    groups: { goals: string; cards: string; subs: string; other: string };
     /** ⚠ Only on a goal, and never together with `penalty`. */
     assist: (name: string) => string;
     /** ⚠ The player going OFF. The one coming ON takes the primary line. */
@@ -474,6 +492,7 @@ export const esCopy: Copy = {
 
   events: {
     title: 'Sucesos del partido',
+    groups: { goals: 'Goles', cards: 'Tarjetas', subs: 'Cambios', other: 'Otros' },
     assist: (name: string) => `Asistencia · ${name}`,
     off: (name: string) => `Sale · ${name}`,
     penalty: 'Penalti',
@@ -747,6 +766,7 @@ export const enCopy: Copy = {
 
   events: {
     title: 'Match events',
+    groups: { goals: 'Goals', cards: 'Cards', subs: 'Subs', other: 'Other' },
     assist: (name: string) => `Assist · ${name}`,
     off: (name: string) => `Off · ${name}`,
     penalty: 'Penalty',

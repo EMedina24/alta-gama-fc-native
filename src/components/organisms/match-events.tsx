@@ -23,14 +23,29 @@
  * ⚠ In-progress matches have no events at all, so they get no chevron and
  * never reach this component. That is the design's rule 3 struck out — live
  * events are a separate backend project.
+ *
+ * ⚠ **One group at a time, behind the tabs** (ADR 0046). A 4-1 with six bookings
+ * and ten substitutions is twenty rows, and a panel that long pushes the matches
+ * under it off screen — which is the one thing an expansion inside a list must
+ * not do.
  */
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { SkeletonRows, Text } from '@/components/atoms';
-import { EventRow } from '@/components/molecules';
+import { EventRow, EventTabs } from '@/components/molecules';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc } from '@/lib/cronogol/derive';
-import { detailLine, eventKind, eventSide, minuteLabel } from '@/lib/cronogol/events';
+import {
+  detailLine,
+  eventKind,
+  eventSide,
+  eventsInGroup,
+  groupCounts,
+  initialGroup,
+  minuteLabel,
+  type EventGroup,
+} from '@/lib/cronogol/events';
 import type { TeamRef } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { useFixtureEvents } from '@/queries/use-fixture-events';
@@ -49,6 +64,11 @@ export interface MatchEventsProps {
   bleed?: boolean;
   /**
    * Draw the panel's own eyebrow.
+   *
+   * ⚠⚠ Even at `true` this only reaches the screen when there are no tabs — the
+   * group control labels the panel, and the two together printed `SUCESOS DEL
+   * PARTIDO` directly above `Goles · Tarjetas · Cambios · Otros` (ADR 0046). It
+   * still draws for pending / error / not-published, which have no groups.
    *
    * ⚠ `false` where the SURFACE already names the panel. The board's
    * last-result card discloses through a labelled footer row rather than a bare
@@ -70,9 +90,28 @@ export function MatchEvents({
   const query = useFixtureEvents(fixtureId);
   const events = query.data?.events ?? [];
 
+  /**
+   * ⚠ **`null` until the reader taps, and the shown group is DERIVED from it.**
+   * The counts arrive with the fetch, so a state seeded with a group would have
+   * to be corrected by an effect once the data landed — one render of an empty
+   * `Goals` on a 0-0 with two bookings, then a jump. Deriving lands it right on
+   * the first render that has data, with nothing to sequence.
+   *
+   * ⚠ It resets itself per match. This component is rendered only while its row
+   * is open and each surface keeps one row open at a time, so opening another
+   * match unmounts this instance — the reader never inherits the previous
+   * match's tab.
+   */
+  const [picked, setPicked] = useState<EventGroup | null>(null);
+  const counts = groupCounts(events);
+  // The `> 0` guard is what stops a stale pick stranding the panel on an empty
+  // list if the same instance ever saw its group emptied under it.
+  const active = picked !== null && counts[picked] > 0 ? picked : initialGroup(counts);
+
   return (
     <View style={[styles.panel, bleed && styles.bleed]}>
-      {showTitle ? (
+      {/* ⚠ The eyebrow yields to the tabs. See `showTitle`. */}
+      {showTitle && events.length === 0 ? (
         <Text variant="eyebrowSm" color="textFaint">
           {copy.title}
         </Text>
@@ -92,27 +131,35 @@ export function MatchEvents({
           {copy.notPublished}
         </Text>
       ) : (
-        <View style={styles.rows}>
-          {events.map((event) => {
-            const side = eventSide(event, home, away);
-            const team = side === 'home' ? home : side === 'away' ? away : null;
+        <>
+          <EventTabs
+            counts={counts}
+            active={active}
+            labels={copy.groups}
+            onSelect={setPicked}
+          />
+          <View style={styles.rows}>
+            {eventsInGroup(events, active).map((event) => {
+              const side = eventSide(event, home, away);
+              const team = side === 'home' ? home : side === 'away' ? away : null;
 
-            return (
-              <EventRow
-                key={event.id}
-                minute={minuteLabel(event)}
-                kind={eventKind(event)}
-                name={event.player.name}
-                detail={detailLine(event, copy)}
-                crest={crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'xsmall')}
-                // ⚠ Null keeps the column's width but draws nothing — a VAR
-                // decision can belong to neither club, and a guessed side is
-                // worse than a blank one.
-                abbr={team ? abbreviate(team.name, team.slug, team.shortName) : null}
-              />
-            );
-          })}
-        </View>
+              return (
+                <EventRow
+                  key={event.id}
+                  minute={minuteLabel(event)}
+                  kind={eventKind(event)}
+                  name={event.player.name}
+                  detail={detailLine(event, copy)}
+                  crest={crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'xsmall')}
+                  // ⚠ Null keeps the column's width but draws nothing — a VAR
+                  // decision can belong to neither club, and a guessed side is
+                  // worse than a blank one.
+                  abbr={team ? abbreviate(team.name, team.slug, team.shortName) : null}
+                />
+              );
+            })}
+          </View>
+        </>
       )}
     </View>
   );
