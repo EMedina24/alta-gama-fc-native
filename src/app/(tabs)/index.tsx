@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
-import { SectionHeader, StatTile, UpcomingRow } from '@/components/molecules';
+import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { MatchBoard } from '@/components/organisms/match-board';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
@@ -97,7 +97,7 @@ export default function TodayScreen() {
   const loses = (mine: number | null, theirs: number | null) =>
     mine !== null && theirs !== null && mine < theirs;
 
-  /** A crest and its monogram for the upcoming pairing. Names go to the label. */
+  /** A crest, its monogram fallback and the short name for an upcoming side. */
   const upcomingSide = (team: WindowFixtureView['homeTeam']) => ({
     crest: crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'small'),
     abbr: team ? abbreviate(team.name, team.slug, team.shortName) : phrases.unknownOpponent,
@@ -212,39 +212,45 @@ export default function TodayScreen() {
       {hasClubs && mine.length > 0 ? (
         <>
           {/* ⚠ Plain, no count: the accent in this section belongs to the day
-              word on today's row, and the count restates six visible rows. */}
+              word on today's card, and the count restates six visible cards. */}
           <SectionHeader title={copy.today.upcoming} />
-          <View style={styles.card}>
-            {/* ⚠ One `now` for the whole card: read per row, a render that
-                straddles midnight would date two rows off different days. */}
-            {mine.map((fixture, index) => {
+          <View style={styles.upcoming}>
+            {/* ⚠ One `now` for the whole section: read per card, a render that
+                straddles midnight would date two of them off different days. */}
+            {mine.map((fixture) => {
               // The row is read from the followed club's bench (ADR 0029) —
               // for the tap target and the home/away fallback, not the order:
-              // the crests stay home-first, the way the match is named.
+              // the sides stay home-first, the way the match is named.
               const row = upcomingRow(fixture, followed);
               if (!row) return null;
+              const md = matchday(fixture.round) ?? fixture.matchweek;
               // ⚠ `venue` is null on plenty of rows. Where the ground is
               // unknown, saying which end of it you are on is still a fact.
               const location =
                 fixture.venue ?? (row.isHome ? copy.today.homeWord : copy.today.awayWord);
-              // ⚠ A TBD kickoff is stored as midnight UTC. It never says
-              // "tonight" — it shows its calendar date, faint.
-              const day = fixture.kickoffTbd
-                ? { label: formatFixtureDate(fixture.kickoffUtc, zone, phrases), tone: 'faint' as const }
+              // ⚠ A TBD kickoff is stored as midnight UTC — `formatRelativeDay`
+              // must never see one, or it claims "tonight" for a match that has
+              // no kickoff at all (ADR 0029). Those cards just lose the word.
+              const relative = fixture.kickoffTbd
+                ? null
                 : formatRelativeDay(fixture.kickoffUtc, zone, now, copy.today, phrases);
 
               return (
-                <UpcomingRow
+                <UpcomingCard
                   key={fixture.id}
                   home={upcomingSide(fixture.homeTeam)}
                   away={upcomingSide(fixture.awayTeam)}
+                  meta={[md !== null ? copy.today.md(md) : null, location]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  // ⚠ Today only. `formatRelativeDay` also names tomorrow, and
+                  // that word is deliberately dropped here (ADR 0043) — the
+                  // date under the kickoff already carries it.
+                  todayLabel={relative?.tone === 'accent' ? relative.label : null}
                   kickoffLabel={
                     fixture.kickoffTbd ? '--:--' : formatKickoffTime(fixture.kickoffUtc, zone, clock)
                   }
-                  dayLabel={day.label}
-                  dayTone={day.tone}
-                  venue={location}
-                  divided={index > 0}
+                  dateLabel={formatFixtureDate(fixture.kickoffUtc, zone, phrases)}
                   onPress={() =>
                     router.push({ pathname: '/club/[slug]', params: { slug: row.club.slug } })
                   }
@@ -328,7 +334,8 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.dark.card, borderRadius: Radius.group, overflow: 'hidden' },
+  // ⚠ Each fixture draws its own surface (ADR 0043); this only spaces them.
+  upcoming: { gap: Spacing.three },
   // ⚠ The gap is the only thing separating the two tiles — they share a fill
   // colour, so a zero gap reads as one wide tile with two numbers in it.
   tiles: { flexDirection: 'row', gap: Spacing.two },

@@ -12,7 +12,8 @@
  *
  * ⚠ The losing side's name drops to `textDim`; **a draw leaves both at full
  * ink.** That is score-driven, not status-driven — an in-play row dims the side
- * that is behind, which is what the visible score already says.
+ * that is behind, which is what the visible score already says. `scoreEmphasis`
+ * is the one copy of that rule; the `Score` atom applies it to the digits too.
  *
  * ⚠ An in-play row shows its score under an `IN PLAY` caption in `live`, never
  * the word "live" (ADR 0035). The screen owns the cadence sentence that goes
@@ -30,6 +31,7 @@ import { FixtureTiming } from '@/components/molecules';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import { dayGroups } from '@/lib/cronogol/jornada';
+import { scoreEmphasis } from '@/lib/cronogol/scores';
 import type { JornadaFixtureView, TeamRef } from '@/lib/cronogol/types';
 import { formatFixtureDate } from '@/lib/format';
 import type { Phrases } from '@/lib/i18n/phrases';
@@ -49,14 +51,6 @@ export interface FixtureListProps {
   inProgressLabel: string;
 }
 
-/** Both sides full-strength unless one of them lost. */
-function emphasis(goalsHome: number | null, goalsAway: number | null) {
-  if (goalsHome === null || goalsAway === null || goalsHome === goalsAway) {
-    return { home: false, away: false };
-  }
-  return { home: goalsHome < goalsAway, away: goalsAway < goalsHome };
-}
-
 /**
  * `[home] v [away]` — the pairing, in the order the match is named.
  *
@@ -70,8 +64,9 @@ function emphasis(goalsHome: number | null, goalsAway: number | null) {
  *
  * ⚠ `Size.crestCard` (40), NOT `Size.crestRow` (26). `crestRow` is shared with
  * the standings row, FINISHED TODAY and `ScoreLine` and must not move; 40 is
- * the size ADR 0034 records as "the row and list size", and it is what
- * `UpcomingRow` already uses for the same two-crest pairing.
+ * the size ADR 0034 records as "the row and list size", and this pairing is
+ * unnamed, so the crest is the whole identification. (`UpcomingCard` used to
+ * share it; it dropped to 30 in ADR 0043 once the names joined it.)
  *
  * ⚠ The cut is `small`, not `xsmall`. `CREST_KEYS.xsmall` is documented for
  * 40–76px slots — at 40pt that is a 120px box on a @3x screen, and ADR 0034
@@ -127,7 +122,7 @@ export function FixtureList({
           {group.items.map((fixture) => {
             const played = fixture.status === 'finished';
             const inPlay = fixture.status === 'live';
-            const dim = emphasis(fixture.goalsHome, fixture.goalsAway);
+            const dim = scoreEmphasis({ home: fixture.goalsHome, away: fixture.goalsAway });
             const place = [fixture.venue, fixture.venueCity].filter(Boolean).join(' · ');
 
             return (
@@ -148,10 +143,10 @@ export function FixtureList({
                 <CrestPair home={fixture.homeTeam} away={fixture.awayTeam} />
 
                 <View style={styles.names}>
-                  <Text variant="bodyStrong" color={dim.home ? 'textDim' : 'text'} numberOfLines={1}>
+                  <Text variant="bodyStrong" color={dim.home === 'muted' ? 'textDim' : 'text'} numberOfLines={1}>
                     {fixture.homeTeam ? displayName(fixture.homeTeam.name) : '—'}
                   </Text>
-                  <Text variant="bodyStrong" color={dim.away ? 'textDim' : 'text'} numberOfLines={1}>
+                  <Text variant="bodyStrong" color={dim.away === 'muted' ? 'textDim' : 'text'} numberOfLines={1}>
                     {fixture.awayTeam ? displayName(fixture.awayTeam.name) : '—'}
                   </Text>
                   {place ? (

@@ -1,7 +1,7 @@
 # 0029 — `UPCOMING FROM YOUR CLUBS` rows are the pairing, over kickoff · day · venue
 
 - **Date:** 2026-08-25
-- **Status:** Accepted
+- **Status:** Superseded by [0043](./0043-upcoming-cards-name-the-sides.md)
 - **Decided by:** Ed Medina
 
 ## Context

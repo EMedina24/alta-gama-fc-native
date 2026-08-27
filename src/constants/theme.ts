@@ -1,5 +1,5 @@
 /**
- * AltaGama FC — native design tokens.
+ * Alta Gama FC — native design tokens.
  * Drop-in replacement for src/constants/theme.ts (ADR 0006 / 0014).
  * Dark-only for v1: the design has no light ground. Keep Colors.light as an
  * alias of dark until a light theme is actually designed, so nothing renders
@@ -100,6 +100,14 @@ export const Type = {
   scoreLarge: { fontSize: 38, fontWeight: '700', letterSpacing: -1.5 },
   kickoff: { fontSize: 32, fontWeight: '700', letterSpacing: -1.1 },
   /**
+   * The upcoming card's kickoff (ADR 0043). `kickoff` at 32pt is the next-up
+   * HERO's size — six list cards setting it would out-shout the card the
+   * screen leads with; `numeralLg` at 19 loses to the 22pt club name beside
+   * it. Shares its metrics with `countdownNum` today and must NOT borrow that
+   * name: the countdown is free to move without dragging every kickoff along.
+   */
+  kickoffSm: { fontSize: 26, fontWeight: '700', letterSpacing: -0.9 },
+  /**
    * The countdown's digits and its unit letters. Smaller than `kickoff` because
    * the row carries four groups (`1d 18h 04m 12s`), not one time (ADR 0034).
    */
@@ -112,8 +120,9 @@ export const Type = {
    * 19pt against 15pt names makes the number the thing you scan down. Lighter
    * than `numeral` (700 vs 800) because it is bigger — the two read the same.
    *
-   * ⚠ `numeral` stays at 16: `ScoreLine size='row'`, `UpcomingRow` and
-   * `SeasonSpine` are all sized against it.
+   * ⚠ `numeral` stays at 16: `ScoreLine size='row'` and `SeasonSpine` are
+   * both sized against it. (The upcoming cards left it for `kickoffSm` in
+   * ADR 0043 — they are cards now, not rows.)
    */
   numeralLg: { fontSize: 19, fontWeight: '700', letterSpacing: -0.5 },
 } as const;
@@ -159,6 +168,22 @@ export const Size = {
    */
   timingColumn: 64,
   timingColumn12: 88,
+  /**
+   * The vertical rule between a score's two digits (ADR 0044), per size. Set
+   * against the digits' cap height on the simulator, not by arithmetic: a rule
+   * as tall as the line box reads as a table border, and one as short as the
+   * gap reads as a stray pixel. It wants to be a little under the cap.
+   */
+  scoreRuleBoard: 30,
+  scoreRuleRowLg: 17,
+  scoreRuleRow: 14,
+  /**
+   * Its thickness. ⚠ NOT `hairlineWidth`: at 0.33pt beside a 38pt numeral the
+   * rule disappears and the score reads as two unrelated numbers. The board
+   * rule is heavier than a row's for the same reason the digits are.
+   */
+  scoreRuleWidthBoard: 2,
+  scoreRuleWidth: 1,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

@@ -1,18 +1,21 @@
 /**
  * crest · score · crest — the board's headline row.
  *
- * ⚠ A `null` score renders an en dash, **never a zero**. The upstream really
- * does send zeros for unplayed matches and the backend strips them, so `null`
- * here means "no score yet". The dash alone reads as "en dash" to a screen
- * reader or is skipped outright, so the sentence goes on the label.
+ * ⚠ The score itself is the `Score` atom (ADR 0044) — two numerals with a rule
+ * between them, and **never a zero** for an unplayed match. It owns the dashes
+ * and the spoken label; this molecule owns the sides around it.
  *
  * ⚠ Emphasis is SCORE-driven, not status-driven: the losing side recedes, a
  * draw leaves both at full strength. That is `scoreEmphasis` in `scores.ts` and
- * it is deliberately not a function of `status`.
+ * it is deliberately not a function of `status`. The atom applies the same rule
+ * to the digits; `muted` here is the caller's word for the same thing on names.
+ *
+ * ⚠ The hero is BARE and a row is CHIPPED. A 38pt chip at the top of Today is
+ * the loudest object on the screen and the hero does not need finding.
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Crest, Text } from '@/components/atoms';
+import { Crest, Score, Text } from '@/components/atoms';
 import { Size, Spacing } from '@/constants/theme';
 
 export interface ScoreSide {
@@ -51,14 +54,13 @@ export function ScoreLine({
   noScoreLabel,
   center,
 }: ScoreLineProps) {
-  const crestSize = size === 'board' ? Size.crestCard : Size.crestRow;
-  const nameVariant = size === 'board' ? 'title3' : 'bodyStrong';
-  const scoreVariant = size === 'board' ? 'scoreLarge' : 'numeral';
-  const played = home.goals !== null && away.goals !== null;
+  const board = size === 'board';
+  const crestSize = board ? Size.crestCard : Size.crestRow;
+  const nameVariant = board ? 'title3' : 'bodyStrong';
   // ⚠ At board size a single-word club name cannot wrap, and "Barc…" beside a
   // 0–5 names nobody. It shrinks instead — verified on the simulator with
   // Elche v Barcelona, where the title3 name ellipsised at one line.
-  const shrinkNames = size === 'board';
+  const shrinkNames = board;
 
   return (
     <View style={styles.row}>
@@ -75,14 +77,20 @@ export function ScoreLine({
         </Text>
       </View>
 
-      <Text
-        variant={center ? 'title3' : scoreVariant}
-        tabular
-        color={center || played ? 'text' : 'textFaint'}
-        style={styles.score}
-        accessibilityLabel={!center && !played ? noScoreLabel : undefined}>
-        {center ?? (played ? `${home.goals}–${away.goals}` : '–')}
-      </Text>
+      {center ? (
+        <Text variant="title3" tabular style={styles.score}>
+          {center}
+        </Text>
+      ) : (
+        <Score
+          home={home.goals}
+          away={away.goals}
+          size={board ? 'board' : 'row'}
+          chip={!board}
+          noScoreLabel={noScoreLabel}
+          style={styles.score}
+        />
+      )}
 
       <View style={[styles.side, styles.right]}>
         <Text

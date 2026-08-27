@@ -8,7 +8,7 @@ is verified end-to-end on a physical device**.
 push cron (`CRONOGOL_PUSH_CRON_ENABLED` is still `'false'`), and a set of
 front-end gaps — see [HANDOFF.md](./HANDOFF.md), which is the read-this-first doc.
 
-**What it is:** the native (iOS/Android) surface of **AltaGama FC** — the football
+**What it is:** the native (iOS/Android) surface of **Alta Gama FC** — the football
 fixtures/results/news product already shipping on the web as
 [altagamafc.com](https://altagamafc.com) (repo `cronogol`) and served by the
 `senpai-backend` API. **Read [ECOSYSTEM.md](./ECOSYSTEM.md) before writing any

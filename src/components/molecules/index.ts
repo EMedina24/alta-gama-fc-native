@@ -11,4 +11,4 @@ export { ScoreLine, type ScoreSide } from './score-line';
 export { SectionHeader } from './section-header';
 export { StatRow } from './stat-row';
 export { StatTile } from './stat-tile';
-export { UpcomingRow } from './upcoming-row';
+export { UpcomingCard, type UpcomingSide } from './upcoming-card';

@@ -1,7 +1,7 @@
 # 0036 — The app icon is three 1024s wired through `ios.icon`'s variant object
 
 - **Date:** 2026-08-25
-- **Status:** Accepted
+- **Status:** Superseded by [0041](./0041-app-icon-1b-and-a-splash-of-its-own.md) — the splash no longer shares `icon-dark.png`; the three-variant wiring stands
 - **Decided by:** Ed Medina
 
 ## Context

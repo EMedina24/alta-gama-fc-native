@@ -41,12 +41,18 @@ Three marks are in play and they do **not** collapse into each other:
 
 | Form | Where it belongs |
 | --- | --- |
-| **AltaGama FC** | Reader-facing brand. **One word, no space.** |
-| ~~Alta Gama FC~~ | **RETIRED** spelling (as of 2026-08-11). Never write it. |
+| **Alta Gama FC** | Reader-facing brand. **Spaced.** Reinstated 2026-08-26 — see [0042](./decisions/0042-brand-spelling-spaced-form-reinstated.md). |
+| ~~AltaGama FC~~ | The closed-up spelling this reverses. In force 2026-08-11 → 2026-08-26. |
 | **CronoGol** | Internal name — kept deliberately in route prefixes (`/cronogol/*`), env vars, `crono-gol.com`, class names, operator surfaces. |
-| **Alta Gama Fixture Club** | A **separate** mark that does not collapse — page-title suffix and logo lockup. |
+| **Alta Gama Fixture Club** | A **separate** mark that does not collapse — page-title suffix and logo lockup. Unaffected by 0042. |
 
-`senpai-backend/CLAUDE.md` is the authority; copy brand strings from there.
+⚠ **This repo now leads on the spelling and the other two have not caught up.**
+`senpai-backend/CLAUDE.md` was the authority and still states the closed-up rule,
+which `CRONOGOL.md` §44 enforces in every outgoing email; `cronogol` follows it
+too. So a reader gets `Alta Gama FC` on the app's launch screen and
+`AltaGama FC` in their kickoff email until those repos are updated. Do not "fix"
+this repo back to match them — 0042 is the newer decision. Copy brand strings from
+the table above, not from `senpai-backend`, until it is re-synced.
 
 ## ⚠ Domains — two hosts, on purpose
 

@@ -9,11 +9,12 @@
  *
  * ⚠ Scores here are `goalsFor`/`goalsAgainst`, the REQUESTED club's perspective.
  * The jornada routes use `goalsHome`/`goalsAway`. Mixing them silently inverts
- * every away result.
+ * every away result — and now the emphasis too: the `Score` atom dims whichever
+ * DIGIT is lower, so a swap dims the wrong side of an away loss (ADR 0044).
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Crest, Text } from '@/components/atoms';
+import { Crest, Score, Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName, matchday, nextUpIndex, outcome } from '@/lib/cronogol/derive';
 import type { FixtureView, TeamFixturesView } from '@/lib/cronogol/types';
@@ -98,9 +99,12 @@ export function SeasonSpine({ data, zone, clock, phrases, roundPrefix }: SeasonS
 
               {played ? (
                 <View style={styles.result}>
-                  <Text variant="numeral" tabular>
-                    {`${fixture.goalsFor}–${fixture.goalsAgainst}`}
-                  </Text>
+                  <Score
+                    home={fixture.goalsFor}
+                    away={fixture.goalsAgainst}
+                    size="row"
+                    chip
+                  />
                   {chip ? (
                     <View
                       style={[

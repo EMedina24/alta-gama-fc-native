@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments, type NativeStackNavigationOptions } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +12,15 @@ import { watchAppStateForRefresh } from '@/lib/supabase/client';
 import { queryClient } from '@/queries/client';
 import { hydratePreferences, usePreferences } from '@/store/preferences';
 import { hydrateSession, useSession } from '@/store/session';
+
+// ⚠ Module scope, deliberately un-awaited — the docs are explicit that calling
+// this from inside a component or hook runs it too late to catch the auto-hide.
+//
+// ⚠ The `.catch` is load-bearing on both calls, not defensive noise. Each one
+// rejects harmlessly when the splash is already gone, which happens on every Fast
+// Refresh, and an unhandled rejection surfaces as a red box in dev.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({ fade: true, duration: 250 });
 
 export default function RootLayout() {
   // AsyncStorage is async, so preferences arrive after first paint. Holding the
@@ -25,6 +35,17 @@ export default function RootLayout() {
   useEffect(() => {
     Promise.all([hydratePreferences(), hydrateSession()]).finally(() => setReady(true));
   }, []);
+
+  // ⚠ This is what makes the `return null` below survivable. Without it the
+  // native splash auto-hides at first mount, so the two hydration reads play out
+  // against an EMPTY screen — a black frame or two before anything paints. Held
+  // here, the launch artwork stays up until there is a real screen behind it.
+  //
+  // ⚠ Keyed to `ready`, so it fires in the commit that renders the Stack, not
+  // before it.
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
   // ⚠ Token refresh follows the foreground. Left to `autoRefreshToken` alone it
   // keeps firing while the app is suspended, waking to spend requests nobody is

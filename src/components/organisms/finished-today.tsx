@@ -6,25 +6,22 @@
  * correct and the crests ours.
  *
  * ⚠ The losing side's name drops to `textDim`; **a draw leaves both at full
- * ink.** Score-driven, not status-driven.
+ * ink.** Score-driven, not status-driven — `scoreEmphasis`, which the `Score`
+ * atom applies to the digits from the same two numbers (ADR 0044).
  */
 import { Image } from 'expo-image';
 import { Fragment, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Crest, Hairline, Text } from '@/components/atoms';
+import { Crest, Hairline, Score, Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
+import { scoreEmphasis } from '@/lib/cronogol/scores';
 import type { FixtureWindowView, LeagueRef, WindowFixtureView } from '@/lib/cronogol/types';
 
 export interface FinishedTodayProps {
   window: FixtureWindowView;
   finishedLabel: string;
-}
-
-function emphasis(home: number | null, away: number | null) {
-  if (home === null || away === null || home === away) return { home: false, away: false };
-  return { home: home < away, away: away < home };
 }
 
 export function FinishedToday({ window: data, finishedLabel }: FinishedTodayProps) {
@@ -67,7 +64,7 @@ export function FinishedToday({ window: data, finishedLabel }: FinishedTodayProp
           </View>
 
           {group.fixtures.map((fixture) => {
-            const dim = emphasis(fixture.goalsHome, fixture.goalsAway);
+            const dim = scoreEmphasis({ home: fixture.goalsHome, away: fixture.goalsAway });
             return (
               <View key={fixture.id} style={styles.row}>
                 <Crest
@@ -75,17 +72,15 @@ export function FinishedToday({ window: data, finishedLabel }: FinishedTodayProp
                   fallback={fixture.homeTeam ? abbreviate(fixture.homeTeam.name, fixture.homeTeam.slug, fixture.homeTeam.shortName) : '?'}
                   size={Size.crestRow}
                 />
-                <Text variant="bodyStrong" color={dim.home ? 'textDim' : 'text'} numberOfLines={1} style={styles.name}>
+                <Text variant="bodyStrong" color={dim.home === 'muted' ? 'textDim' : 'text'} numberOfLines={1} style={styles.name}>
                   {fixture.homeTeam ? displayName(fixture.homeTeam.name) : '—'}
                 </Text>
 
-                <Text variant="numeral" tabular>
-                  {`${fixture.goalsHome}–${fixture.goalsAway}`}
-                </Text>
+                <Score home={fixture.goalsHome} away={fixture.goalsAway} size="row" chip />
 
                 <Text
                   variant="bodyStrong"
-                  color={dim.away ? 'textDim' : 'text'}
+                  color={dim.away === 'muted' ? 'textDim' : 'text'}
                   numberOfLines={1}
                   style={[styles.name, styles.awayName]}>
                   {fixture.awayTeam ? displayName(fixture.awayTeam.name) : '—'}
@@ -122,7 +117,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    // ⚠ `one`, not `two`. The score chip (ADR 0044) is ~24pt wider than the
+    // `4–1` string it replaced and the two name columns are what pay for it —
+    // 4pt back at each of the five gaps is the difference between `Real Madrid`
+    // v `Real Sociedad` fitting and truncating, and a truncated club name is
+    // the failure ADR 0029 names.
+    gap: Spacing.one,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
     borderTopWidth: StyleSheet.hairlineWidth,

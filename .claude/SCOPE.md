@@ -2,7 +2,7 @@
 
 ## What this app is
 
-The **native iOS app for AltaGama FC**, built with Expo / React Native, with the
+The **native iOS app for Alta Gama FC**, built with Expo / React Native, with the
 goal of being **published on the Apple App Store**.
 
 It ports the functionality of the web app ([`cronogol`](./ECOSYSTEM.md), serving

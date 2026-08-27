@@ -11,8 +11,9 @@
  * documents, which is why every counted phrase there annotates `: string`.
  * Declaring the interface is what makes the shape shared rather than the words.
  *
- * ⚠ Brand strings are NOT localised and NOT edited: **AltaGama FC**, one word,
- * no space. `Alta Gama FC` is a retired spelling.
+ * ⚠ Brand strings are NOT localised and NOT edited: **Alta Gama FC**, spaced.
+ * `AltaGama FC` is the superseded closed-up spelling — see
+ * `.claude/decisions/0042-brand-spelling-spaced-form-reinstated.md`.
  */
 
 import type { ZoneKind } from '@/lib/cronogol/leagues';
@@ -362,7 +363,7 @@ export const esCopy: Copy = {
   },
 
   auth: {
-    title: 'Tu cuenta de AltaGama FC',
+    title: 'Tu cuenta de Alta Gama FC',
     body: 'Para tener tus clubes y calendarios en cualquier dispositivo. Puedes seguir usando la app sin cuenta.',
     apple: 'Continuar con Apple',
     google: 'Continuar con Google',
@@ -609,7 +610,7 @@ export const enCopy: Copy = {
   },
 
   auth: {
-    title: 'Your AltaGama FC account',
+    title: 'Your Alta Gama FC account',
     body: 'Keeps your clubs and calendars on every device. The app works fine without one.',
     apple: 'Continue with Apple',
     google: 'Continue with Google',

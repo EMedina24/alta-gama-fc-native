@@ -8,7 +8,7 @@
  */
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, ChipButton, Hairline, Switch, Text } from '@/components/atoms';
+import { Button, ChipButton, Hairline, Score, Switch, Text } from '@/components/atoms';
 import {
   Countdown,
   FeedAge,
@@ -47,6 +47,28 @@ export default function GalleryScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text variant="title">Molecules</Text>
 
+      <SectionHeader title="Score" meta="3 sizes × 3 states (ADR 0044)" />
+      {([
+        { size: 'board' as const, chip: false, label: 'board · bare — the Today hero' },
+        { size: 'rowLg' as const, chip: true, label: 'rowLg · chip — the jornada column' },
+        { size: 'row' as const, chip: true, label: 'row · chip — a list line' },
+      ]).map(({ size, chip, label }) => (
+        <Case key={size} label={label}>
+          <View style={styles.rowOfCells}>
+            <Score home={1} away={0} size={size} chip={chip} noScoreLabel={copy.today.noScore} />
+            <Score home={1} away={1} size={size} chip={chip} noScoreLabel={copy.today.noScore} />
+            <Score home={0} away={2} size={size} chip={chip} noScoreLabel={copy.today.noScore} />
+            <Score home={null} away={null} size={size} chip={chip} noScoreLabel={copy.today.noScore} />
+          </View>
+        </Case>
+      ))}
+      <Case label="win · draw · loss · null — the losing DIGIT dims, a draw does not.">
+        <View style={styles.rowOfCells}>
+          <Score home={10} away={0} size="rowLg" chip noScoreLabel={copy.today.noScore} />
+          <Score home={1} away={0} size="rowLg" noScoreLabel={copy.today.noScore} />
+        </View>
+      </Case>
+
       <SectionHeader title="Score line" meta="3 states" />
       <Case label="played · away side muted">
         <ScoreLine
@@ -55,7 +77,7 @@ export default function GalleryScreen() {
           noScoreLabel="No score yet"
         />
       </Case>
-      <Case label="null score → en dash, NEVER 0–0">
+      <Case label="null score → – │ –, NEVER 0 │ 0">
         <ScoreLine
           home={{ name: 'Valencia', abbr: 'VAL', goals: null, crest: null }}
           away={{ name: 'Real Madrid', abbr: 'RMA', goals: null, crest: null }}

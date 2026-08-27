@@ -4,7 +4,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 
 # What this is
 
-The **native iOS app for AltaGama FC**, aimed at the **Apple App Store**. It is a
+The **native iOS app for Alta Gama FC**, aimed at the **Apple App Store**. It is a
 working app — five screens on live data, push wired — not a scaffold.
 Functionality is **ported from `cronogol`**; data comes from **`senpai-backend`**;
 the **design is new and app-specific — do not port the web look**
@@ -32,8 +32,14 @@ Read [.claude/ECOSYSTEM.md](.claude/ECOSYSTEM.md) before touching data, naming,
 or URLs. The full contract is `senpai-backend/CRONOGOL-API.md`; read its
 "Read this before building any UI" section before building any screen.
 
-Brand: **AltaGama FC** (no space) reader-facing · *Alta Gama FC* is RETIRED ·
-*CronoGol* is internal-only · *Alta Gama Fixture Club* is a separate mark.
+Brand: **Alta Gama FC** (spaced) reader-facing — reinstated 2026-08-26, reversing
+the closed-up spelling ([.claude/decisions/0042](.claude/decisions/0042-brand-spelling-spaced-form-reinstated.md)) ·
+*AltaGama FC* is the superseded closed-up form · *CronoGol* is internal-only ·
+*Alta Gama Fixture Club* is a separate mark that does not collapse.
+
+⚠ **`senpai-backend` and `cronogol` still carry the closed-up rule** and the
+backend emits it in every email. Until they are updated the surfaces disagree —
+0042 tracks it.
 
 # Read the project docs first
 

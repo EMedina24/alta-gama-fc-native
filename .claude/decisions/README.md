@@ -61,15 +61,19 @@ more words than one that's obvious once you see it.
 | [0026](./0026-apns-environment-is-the-provisioning-profile.md) | The APNs environment follows the provisioning profile, not the build name | Accepted |
 | [0027](./0027-board-lead-cards-from-fixtures.md) | Today's live and last-result cards read `/cronogol/fixtures`; the scoreboard is not read by the app | Accepted |
 | [0028](./0028-matchday-pager.md) | Matchdays pager: one clamped setter, text chevrons, no range while provisional | Accepted |
-| [0029](./0029-upcoming-rows-read-from-the-followed-club.md) | `UPCOMING FROM YOUR CLUBS` rows are the crest pairing over `kickoff · day · venue`, with the relative day accented only today | Accepted |
+| [0029](./0029-upcoming-rows-read-from-the-followed-club.md) | `UPCOMING FROM YOUR CLUBS` rows are the crest pairing over `kickoff · day · venue`, with the relative day accented only today | Superseded by 0043 |
 | [0030](./0030-sheets-are-presented-by-the-root-stack.md) | The sheets are presented by the ROOT stack, not a `(sheets)` layout | Accepted |
 | [0031](./0031-league-filter-tiles-are-artwork-only.md) | The league filter tiles are artwork only, at one fixed size | Accepted |
 | [0032](./0032-clubs-browse-by-league.md) | Clubs browses one league at a time, behind the Matchdays filter row; search stays global | Accepted |
 | [0033](./0033-player-detail-sheet.md) | Tapping a squad row opens a player sheet, read from the cached squad payload; a null keeps its label and blanks its cell | Accepted |
 | [0034](./0034-next-up-card-live-seconds-countdown.md) | The next-up card leads with its crests and an accent versus ring; its countdown ticks per second, torn down while backgrounded | Accepted |
 | [0035](./0035-jornada-rows-show-in-play-scores.md) | Jornada rows: 40pt `v` crest pairing, a clock-split timing column, and an in-play score captioned `In play`, never `LIVE` | Accepted |
-| [0036](./0036-app-icon-appearance-variants.md) | The app icon is three 1024s wired through `ios.icon`'s variant object; the tinted variant must be opaque | Accepted |
+| [0036](./0036-app-icon-appearance-variants.md) | The app icon is three 1024s wired through `ios.icon`'s variant object; the tinted variant must be opaque | Superseded by 0041 |
 | [0037](./0037-rich-notifications-server-composed-crests.md) | Rich notifications: the backend composes every crest; the app grows a service and a content extension | Accepted — verified on device |
 | [0038](./0038-accounts-apple-and-google.md) | Accounts: Apple and Google, sign-in optional | Accepted |
 | [0039](./0039-auth-goes-direct-to-supabase.md) | Auth goes direct to Supabase `/auth/v1`; the backend stays the only *data* gateway | Accepted — waypoint, proxied auth intended |
 | [0040](./0040-kickoff-reminder-lead-times.md) | Kickoff reminders offer 1 h / 30 min / 15 min lead times; the notification budget counts notifications, not fixtures | Accepted — not yet on a device |
+| [0041](./0041-app-icon-1b-and-a-splash-of-its-own.md) | App icon 1b: three opaque appearance masters, and a splash asset of its own | Accepted |
+| [0042](./0042-brand-spelling-spaced-form-reinstated.md) | The spaced `Alta Gama FC` is reinstated | Accepted — open across the ecosystem |
+| [0043](./0043-upcoming-cards-name-the-sides.md) | `UPCOMING FROM YOUR CLUBS` is one card per match: the sides named home-lit over away-dim, `MD n · ground` as the eyebrow, kickoff over its date, accent only on today | Accepted |
+| [0044](./0044-scores-render-as-split-digits.md) | A score is the `Score` atom — two digits split by a rule, the losing digit dimmed, chipped in a list and bare in the Today hero | Accepted — verified on the simulator |

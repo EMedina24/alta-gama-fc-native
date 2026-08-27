@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 32" width="200" height="32" role="img" aria-label="Alta Gama FC — Fixture Club">
+  <g transform="translate(0 1)">
+  <g fill="none" stroke="#c8f25a" stroke-width="2.5">
+    <rect x="1.25" y="1.25" width="39.5" height="27.5" rx="4.75"></rect>
+    <path d="M21 1.25V8.5M21 21.5V28.75"></path>
+    <path d="M0 8.25H4.75V21.75H0"></path>
+    <path d="M42 8.25H37.25V21.75H42"></path>
+    <circle cx="21" cy="15" r="5.25"></circle>
+  </g>
+  </g>
+  <g font-family="Archivo, system-ui, sans-serif">
+    <text x="53" y="15.6" font-size="19" font-weight="900" letter-spacing="-0.665" fill="#edf3f4">ALTA GAMA<tspan fill="#c8f25a"> FC</tspan></text>
+    <text x="53" y="29.4" font-size="8.5" font-weight="800" letter-spacing="2.72" fill="#6d7d84"><tspan fill="#8fa0a6">F</tspan>IXTURE <tspan fill="#8fa0a6">C</tspan>LUB</text>
+  </g>
+</svg>

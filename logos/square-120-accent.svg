@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Alta Gama FC">
+  <rect width="120" height="120" rx="26" fill="#0b1015"></rect>
+  <g transform="translate(15.9 28.5) scale(2.1)" fill="none" stroke="#c8f25a" stroke-width="2.5">
+    <rect x="1.25" y="1.25" width="39.5" height="27.5" rx="4.75"></rect>
+    <path d="M21 1.25V8.5M21 21.5V28.75"></path>
+    <path d="M0 8.25H4.75V21.75H0"></path>
+    <path d="M42 8.25H37.25V21.75H42"></path>
+    <circle cx="21" cy="15" r="5.25"></circle>
+  </g>
+</svg>

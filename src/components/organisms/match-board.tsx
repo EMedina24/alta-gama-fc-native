@@ -115,7 +115,7 @@ export function MatchBoard({ live, last, next, copy }: MatchBoardProps) {
             ) : null}
           </View>
 
-          {/* One VoiceOver stop for the whole pairing, as UpcomingRow already
+          {/* One VoiceOver stop for the whole pairing, as UpcomingCard already
               does — otherwise it reads as four: crest, name, "V", name. */}
           <View
             style={styles.pair}

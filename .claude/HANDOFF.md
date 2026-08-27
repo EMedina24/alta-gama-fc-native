@@ -1,6 +1,6 @@
 # Handoff — read this first
 
-**As of 2026-08-25.** State of play for a session picking this up cold.
+**As of 2026-08-26.** State of play for a session picking this up cold.
 
 The app is a working iOS app: five screens on live production data, four sheets,
 onboarding, EN + ES, push wired and verified on a simulator build. What remains is
@@ -12,7 +12,7 @@ widgets, a device build, and the backend's push cron.
 
 | | |
 | --- | --- |
-| **What** | Native iOS app for **AltaGama FC** — football fixtures, results, tables, club calendars |
+| **What** | Native iOS app for **Alta Gama FC** — football fixtures, results, tables, club calendars |
 | **Stack** | Expo SDK 57 · expo-router · React Query · TypeScript strict · dark-only |
 | **Data** | `senpai-backend` at `crono-gol.com`. **The only gateway** — never Supabase or a football provider directly |
 | **Reference** | `cronogol` (Next.js web app at `altagamafc.com`). Behaviour is inherited from it; **appearance is not** |
@@ -80,6 +80,10 @@ documented at the code that handles them; this is the index.
    it. Drop any one of the three and you are back to the claim this trap exists
    to stop. `statusText` in `scores.ts` still returns null for `live` — that
    guard is for `/cronogol/scores`, which no UI reads.
+   ⚠ The score CHIP ([0044](./decisions/0044-scores-render-as-split-digits.md))
+   is `raised`, a neutral ground, and must stay that way. Painting it `live` /
+   `liveWash` would make every finished score in a list look current, which is
+   this trap by another route.
 9. **The APNs token must be lowercased** — the backend rejects uppercase hex with
    a 400 on *every* registration. Verified against production.
 10. **The APNs environment follows the PROVISIONING PROFILE, not the build
@@ -179,12 +183,25 @@ documented at the code that handles them; this is the index.
     — only `dark` keeps its alpha. A tinted export drawn the usual way (a pale
     glyph on transparency) comes out white-on-white, and since iOS 18 maps
     *luminance* to the user's tint, the home-screen tile renders as flat colour
-    with **no mark in it**. `assets/images/icon-tinted.png` is therefore
-    pre-composited over **opaque black**. ⚠ This fails silently: nothing errors,
+    with **no mark in it**. The icon-1b masters arrive pre-composited on opaque
+    `#0b0b0b`, so the flatten is currently a no-op — **but the requirement did not
+    go away, it just became the design source's default.** Any tinted export that
+    comes back transparent reverts the bug. ⚠ It fails silently: nothing errors,
     `expo-doctor` passes, and it is visible only under Settings → Display &
-    Brightness → **Tinted** on a real build. Re-exporting that asset without
-    re-flattening reverts it. See
-    [0036](./decisions/0036-app-icon-appearance-variants.md).
+    Brightness → **Tinted** on a real build. See
+    [0036](./decisions/0036-app-icon-appearance-variants.md) →
+    [0041](./decisions/0041-app-icon-1b-and-a-splash-of-its-own.md).
+    ⚠ **And the `dark` master is OPAQUE now, so it is no longer splash-safe.**
+    0036 had the splash reuse `icon-dark.png` because that variant was the glyph
+    alone on transparency. Icon 1b's dark variant is a full-bleed `#0f1216` field
+    — deliberately, so the lime stays the Home Screen signal — and 184pt of it
+    centred on the `#0a0b0c` ground is a **visible dark square**. The splash has
+    its own asset now: `assets/images/splash-lockup.png`, the full logo lockup. ⚠ It
+    is TIGHT to the artwork — no padding — so `imageWidth` (300) is the artwork's
+    true width, NOT 0036's 184, which was really 184 × 0.646 because the mark
+    floated in a 1024 square. **Trim and `imageWidth` are one setting in two
+    files**: re-trim the artwork without re-deriving the number and the launch
+    screen silently resizes.
 23. **A hand-authored `AppIcon.appiconset` in the repo does NOTHING.** This is a
     CNG project — `prebuild` regenerates `Images.xcassets/AppIcon.appiconset`
     from `app.json` and overwrites it. A complete, correct seventeen-file
@@ -192,6 +209,10 @@ documented at the code that handles them; this is the index.
     configured in `app.json`, nowhere else. ⚠ `prebuild` also rewrites
     `package.json`'s `ios`/`android` scripts to `expo run:*` — revert that; the
     run command is still `npx expo start --dev-client --ios`.
+    ⚠ Same trap, same shape: **`icon-handoff/` and `logos/` are design source and
+    no build step reads a byte of either.** They are kept because the SVG masters
+    and the geometry notes are worth having; the only files that reach a build are
+    the four in `assets/images/` that `app.json` names.
 24. **Signing out must never touch `followed`.** It is device state, this device's
     array IS the follow state, and nothing on the server can rebuild it
     ([0019](./decisions/0019-anonymous-v1.md) survives 0038 on this point). A
@@ -239,6 +260,17 @@ documented at the code that handles them; this is the index.
     does `pair.split('=')` and takes two elements, cutting any value containing
     `=`. Both truncate rather than throw. `features/auth/google.ts` parses the
     OAuth redirect by hand for exactly this reason — do not "simplify" it back.
+31. **The splash and the icon are NATIVE — Metro reloads will never change them.**
+    Both are compiled into the binary from `app.json` at build time, so a dev build
+    already installed on a device keeps the artwork it was built with no matter how
+    many times it re-downloads the bundle. Seeing new launch artwork means
+    installing a NEW NATIVE BUILD on **that** device; a simulator being right says
+    nothing about the phone. ⚠ And `expo run:ios` **skips prebuild entirely when
+    `ios/` already exists**, so an `app.json` change silently does not reach the
+    native project — it reports "Build Succeeded" and installs the previous
+    artwork. Delete `ios/` (or `expo prebuild --clean`) after ANY `app.json` edit,
+    and verify against the GENERATED asset in
+    `ios/*/Images.xcassets/SplashScreenLogo.imageset/`, never the build's exit code.
 
 ---
 
@@ -501,12 +533,15 @@ pager, and the strip's accessibility label is localised (it was hardcoded Englis
 ### 4 · Today's stat tiles (SPEC §3.1 item 4)
 
 Two tiles under the upcoming section — subscribed count → Clubs, feed count →
-account sheet. Not built. (The upcoming section itself is done —
-[0029](./decisions/0029-upcoming-rows-read-from-the-followed-club.md): the
-both crests either side of a `vs`, over `kickoff · day · venue` — a relative day
-word, accent on today only. Names live on the accessibility label, not the row.
-⚠ `formatRelativeDay` must never see a `kickoffTbd` row — midnight-UTC would
-claim "tonight" for a match with no kickoff.)
+account sheet. Not built. (The upcoming section itself is done, and was
+restyled on 2026-08-26 —
+[0043](./decisions/0043-upcoming-cards-name-the-sides.md), superseding
+[0029](./decisions/0029-upcoming-rows-read-from-the-followed-club.md): one card
+per match, `MD n · ground` as the eyebrow with `TONIGHT` accent opposite it, the
+two sides NAMED and stacked home-lit over away-dim, kickoff over its absolute
+date on the right. ⚠ `formatRelativeDay` must never see a `kickoffTbd` row —
+midnight-UTC would claim "tonight" for a match with no kickoff. ⚠ Only today is
+named now; the `tomorrow` copy key is no longer rendered anywhere.)
 
 ### 5 · The account avatar exists on one screen
 

@@ -8,6 +8,7 @@ export { Grabber } from './grabber';
 export { Hairline } from './hairline';
 export { Pill } from './pill';
 export { PlayerPhoto, type PlayerPhotoProps } from './player-photo';
+export { Score, type ScoreProps, type ScoreSize } from './score';
 export { Skeleton, SkeletonRows } from './skeleton';
 export { Switch } from './switch';
 export { Text, type TextProps, type TypeVariant } from './text';
