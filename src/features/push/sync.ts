@@ -64,6 +64,7 @@ export function buildRegistration(
     clubSlugs: [...prefs.followed].slice(0, MAX_CLUB_SLUGS),
     alertMoved: prefs.alertMoved,
     alertPostponed: prefs.alertPostponed,
+    alertGoals: prefs.alertGoals,
     environment: apnsEnvironment(),
   };
 }

@@ -24,6 +24,16 @@ export interface PushRegistration {
   alertMoved: boolean;
   alertPostponed: boolean;
   /**
+   * Goals, red cards and full time (ADR 0053).
+   *
+   * ⚠⚠ **THE BACKEND DTO MUST CARRY THIS BEFORE THIS APP SHIPS IT.** The DTO is
+   * `forbidNonWhitelisted`, so an undeclared field is a 400 on EVERY
+   * registration — not a dropped field, a total and silent loss of push for the
+   * device. `senpai-backend` declared it in the same change; if a build starts
+   * failing to register, check that it is deployed before anything here.
+   */
+  alertGoals: boolean;
+  /**
    * ⚠ **REQUIRED IN PRACTICE, optional in the schema.** The DTO defaults a
    * missing value to `production`, and a development build registered as
    * `production` receives nothing, silently, with no error anywhere. Wire it to
@@ -38,6 +48,7 @@ export interface PushRegistrationView {
   clubSlugs: string[];
   alertMoved: boolean;
   alertPostponed: boolean;
+  alertGoals: boolean;
   lang: string;
   environment: string;
   /** Whether a bearer linked this row to an account — never whose. */

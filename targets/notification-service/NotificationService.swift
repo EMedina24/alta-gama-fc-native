@@ -12,10 +12,14 @@ import UserNotifications
 /// Its artwork is attached at schedule time from a file the app already cached —
 /// `src/features/push/crest-cache.ts`.
 ///
-/// ⚠ **This file draws nothing.** Two of our four leagues cannot be rasterised
+/// ⚠ **This file draws no CRESTS.** Two of our four leagues cannot be rasterised
 /// here: Bundesliga crests are SVG and Serie A's are WebP, and there is no
 /// decoder for either in the system frameworks. `senpai-backend` composites the
 /// plate — including the lettered fallback tile — and this only downloads it.
+///
+/// ⚠ It DOES draw the live match glyph plate (ADR 0053), and the distinction is
+/// the reason above: a glyph is our own vectors in our own colours, identical
+/// for every club, with no upstream format to decode. See `EventPlate.swift`.
 class NotificationService: UNNotificationServiceExtension {
   private var contentHandler: ((UNNotificationContent) -> Void)?
   private var bestAttempt: UNMutableNotificationContent?
@@ -35,6 +39,23 @@ class NotificationService: UNNotificationServiceExtension {
 
     let info = content.userInfo
     let fixtureId = info["fixtureId"] as? String
+
+    // ⭐ ADR 0053 — the live match alerts take a different path entirely: their
+    // attachment is DRAWN here, not downloaded, and they carry no crest urls at
+    // all. Handled first so none of the crest machinery below runs for them.
+    if let plate = Self.plateKind(for: content.categoryIdentifier) {
+      if let attachment = Self.drawnAttachment(plate) {
+        content.attachments = [attachment]
+      }
+      // ⚠ Synchronous — nothing is fetched, so there is nothing to wait for.
+      contentHandler(content)
+      self.contentHandler = nil
+      return
+    }
+
+    // ⚠ Full time reaches here with no plate and no crest urls, falls through
+    // the guard below, and is delivered bare. That is the design: a result is
+    // not an event with a glyph.
 
     // ⚠ The app group is the ONLY channel to the content extension. It is a
     // separate process and cannot read this one's container.
@@ -72,6 +93,48 @@ class NotificationService: UNNotificationServiceExtension {
       contentHandler(bestAttempt)
     }
     contentHandler = nil
+  }
+
+  // MARK: - The live match plate (ADR 0053)
+
+  /// ⚠ The category strings are the THREE-WAY contract — this file, the app's
+  /// `categories.ts`, and the content extension's Info.plist. An unrecognised
+  /// one returns nil and takes the ordinary crest path, which is the safe
+  /// direction: a new type gets a bare notification, never a crash.
+  private static func plateKind(for category: String) -> EventPlate.Kind? {
+    switch category {
+    case "match_goal": return .goal
+    case "match_red_card": return .redCard
+    // `match_full_time` deliberately absent — no glyph, no attachment.
+    default: return nil
+    }
+  }
+
+  /// ⚠ `UNNotificationAttachment` MOVES the file it is handed, so this writes to
+  /// a fresh path in the extension's own temporary directory every time. Same
+  /// two traps as `attachment(from:)` below: the move, and the `.png` suffix
+  /// plus `typeHint` without which iOS drops the attachment without a word.
+  private static func drawnAttachment(_ kind: EventPlate.Kind) -> UNNotificationAttachment? {
+    guard let data = EventPlate.png(for: kind) else { return nil }
+
+    let directory = URL(fileURLWithPath: NSTemporaryDirectory())
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let file = directory.appendingPathComponent("event.png")
+
+    do {
+      try FileManager.default.createDirectory(
+        at: directory, withIntermediateDirectories: true
+      )
+      try data.write(to: file)
+      return try UNNotificationAttachment(
+        identifier: "event",
+        url: file,
+        options: [UNNotificationAttachmentOptionsTypeHintKey: "public.png"]
+      )
+    } catch {
+      // ⚠ Always deliver. A failed plate costs the artwork, never the alert.
+      return nil
+    }
   }
 
   // MARK: - Attachment

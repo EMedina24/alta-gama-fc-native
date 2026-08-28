@@ -12,7 +12,7 @@
  *    (`targets/notification-content/expo-target.config.js`).
  *
  * ⚠ **`kickoff_reminder` is device-local and never reaches the backend.** The
- * server sends exactly two types; the reminder is scheduled on this device
+ * server sends the other five types; the reminder is scheduled on this device
  * (ADR 0024). It still needs a category, because the content extension keys off
  * one — but do not add it to any push DTO.
  *
@@ -31,18 +31,32 @@ export const CATEGORY_REMINDER = 'kickoff_reminder';
 export const CATEGORY_MOVED = 'kickoff_moved';
 export const CATEGORY_POSTPONED = 'fixture_postponed';
 
+/**
+ * The live match alerts (ADR 0053).
+ *
+ * ⚠ Three identifiers rather than one because `aps.category` selects the
+ * long-look card's LAYOUT, and a goal, a sending-off and a result are three
+ * different cards. They share one preference switch, which is a separate axis.
+ */
+export const CATEGORY_MATCH_GOAL = 'match_goal';
+export const CATEGORY_MATCH_RED_CARD = 'match_red_card';
+export const CATEGORY_MATCH_FULL_TIME = 'match_full_time';
+
 export const NOTIFICATION_CATEGORIES = [
   CATEGORY_REMINDER,
   CATEGORY_MOVED,
   CATEGORY_POSTPONED,
+  CATEGORY_MATCH_GOAL,
+  CATEGORY_MATCH_RED_CARD,
+  CATEGORY_MATCH_FULL_TIME,
 ] as const;
 
 /** The one action. Read back off `response.actionIdentifier` in `routing.ts`. */
 export const ACTION_OPEN_CLUB = 'open_club';
 
 /**
- * Register all three categories. Idempotent, so the cold-launch effect can call
- * it unconditionally.
+ * Register every category. Idempotent, so the cold-launch effect can call it
+ * unconditionally.
  *
  * ⚠ The button title is localised, so this re-runs when the language changes —
  * iOS caches the category by identifier and a stale registration keeps the old

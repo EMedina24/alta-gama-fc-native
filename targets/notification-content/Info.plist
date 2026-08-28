@@ -21,6 +21,15 @@
 				<string>kickoff_reminder</string>
 				<string>kickoff_moved</string>
 				<string>fixture_postponed</string>
+				<!--
+				  The live match alerts (ADR 0053). Three identifiers because the
+				  category selects the card LAYOUT — a goal, a sending-off and a
+				  result are three different cards. They share one preference
+				  switch, which is a different axis entirely.
+				-->
+				<string>match_goal</string>
+				<string>match_red_card</string>
+				<string>match_full_time</string>
 			</array>
 			<!--
 			  The card draws its own header, crests and copy, so the system's

@@ -28,3 +28,20 @@
 
 "Calendar entry moved for you" = "Calendar entry moved for you";
 "Removed from your calendar" = "Removed from your calendar";
+
+/*
+  The live match card (ADR 0053).
+
+  ⚠ A key missing from EITHER .lproj prints the raw key on the card — no error,
+  no fallback. Adding a segment to the meta row means adding it in both files.
+*/
+
+"GOAL" = "GOAL";
+"RED CARD" = "RED CARD";
+"FULL TIME" = "FULL TIME";
+
+/* ⚠ The typographic prime, not an apostrophe — the design specifies it. */
+"%d’ left" = "%d’ left";
+/* ⚠ Names the CLUB, never an abbreviation: `GET 10 men` reads as a typo. */
+"%@ 10 men" = "%@ 10 men";
+"%@ 9 men" = "%@ 9 men";

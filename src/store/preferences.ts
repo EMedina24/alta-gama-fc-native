@@ -32,7 +32,7 @@ const STORAGE_KEY = 'altagama:preferences';
  * `FOLLOWED_RULE_VERSION` did NOT move — that separation is what stops a shape
  * bump from emptying every reader's follow list.
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -98,12 +98,27 @@ export interface Preferences {
    * `alertMoved` / `alertPostponed` on `PUT /cronogol/push/device` unchanged, so
    * this shape is the wire shape and stays that way.
    *
-   * There is deliberately no `goals`: that type does not exist and is not coming
-   * without a live feed. Its switch is drawn disabled with its reason.
+   * `alertGoals` joined them at ADR 0053, when the backend grew a dispatch path
+   * for the live event feed. It is the wire shape too.
    */
   alertReminder: boolean;
   alertMoved: boolean;
   alertPostponed: boolean;
+  /**
+   * Goals, red cards and full time for a followed club (ADR 0053).
+   *
+   * ⚠ **ONE switch for all three**, matching the design: a reader who wants to
+   * know about a goal wants to know about the sending-off that shaped it.
+   *
+   * ⚠ **Defaults OFF, unlike the other three.** They describe a fixture already
+   * in the reader's calendar; this is a new class of interruption — several per
+   * match, breaking through a Focus — and turning it on for everyone who
+   * upgrades would be us making that choice for them.
+   *
+   * ⚠ LaLiga only, because the live feed is. The account sheet says so; do not
+   * let that note drift from `useLive`'s real coverage.
+   */
+  alertGoals: boolean;
   /**
    * Which lead times a kickoff reminder fires at (ADR 0040).
    *
@@ -133,6 +148,8 @@ const DEFAULTS: Preferences = {
   alertReminder: true,
   alertMoved: true,
   alertPostponed: true,
+  // ⚠ The one alert that defaults OFF. See the field's docblock.
+  alertGoals: false,
   reminderLeads: [30],
 };
 
@@ -163,6 +180,10 @@ function parse(raw: string | null): Preferences {
       alertReminder: data.alertReminder !== false,
       alertMoved: data.alertMoved !== false,
       alertPostponed: data.alertPostponed !== false,
+      // ⚠ `=== true`, NOT `!== false` — the opposite test to the three above,
+      // and deliberately. Absent on every v1 and v2 payload, and absent must
+      // mean OFF: an upgrade is not consent to be interrupted.
+      alertGoals: data.alertGoals === true,
       // ⚠ Absent on every v1 payload, which had one hardcoded 30-minute lead.
       // Migrating to `[30]` UNCONDITIONALLY — including when the master is off —
       // is what makes turning it back on behave as it did before the upgrade.
@@ -196,6 +217,7 @@ function same(a: Preferences, b: Preferences): boolean {
     a.alertReminder === b.alertReminder &&
     a.alertMoved === b.alertMoved &&
     a.alertPostponed === b.alertPostponed &&
+    a.alertGoals === b.alertGoals &&
     sameLeads(a.reminderLeads, b.reminderLeads) &&
     a.followed.length === b.followed.length &&
     a.followed.every((slug, i) => slug === b.followed[i])
@@ -309,7 +331,7 @@ export function setOnboarded(onboarded: boolean) {
  * other key is a plain write.
  */
 export function setAlert(
-  key: 'alertReminder' | 'alertMoved' | 'alertPostponed',
+  key: 'alertReminder' | 'alertMoved' | 'alertPostponed' | 'alertGoals',
   value: boolean,
 ) {
   if (key === 'alertReminder' && value && snapshot.reminderLeads.length === 0) {

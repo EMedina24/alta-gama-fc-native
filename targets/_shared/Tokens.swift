@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The design tokens the extensions need.
 ///
@@ -41,6 +42,33 @@ enum Tok {
   static let hairline = Color.white.opacity(0.10)
   static let tileRing = Color.white.opacity(0.14)
   static let tileInk = Color(red: 0.561, green: 0.627, blue: 0.651) // #8fa0a6
+
+  // ---------------------------------------- the live match alert (ADR 0053) --
+
+  /// theme.ts `cardYellow` / `cardRed`, and `onAccent` for the goal pentagon.
+  ///
+  /// ⚠ `cardRed` and theme.ts's `live` are the SAME hex and must not be aliased
+  /// — a documented coincidence in `theme.ts`, and the two move independently.
+  static let cardYellow = Color(red: 0.949, green: 0.757, blue: 0.306) // #f2c14e
+  static let cardRed = Color(red: 1.000, green: 0.361, blue: 0.278) // #ff5c47
+  static let onAccent = Color(red: 0.039, green: 0.043, blue: 0.047) // #0a0b0c
+
+  /// The consequence text on the meta row — theme.ts has no name for this yet.
+  static let redInk = Color(red: 1.000, green: 0.561, blue: 0.486) // #ff8f7c
+
+  /// The attachment plate behind a live glyph: a wash and a hairline ring.
+  ///
+  /// ⚠ **UIColor, not Color, and that is not duplication for its own sake.** The
+  /// service extension draws the plate with `UIGraphicsImageRenderer` — UIKit,
+  /// because a notification ATTACHMENT is a PNG file on disk, not a view. The
+  /// SwiftUI values above cannot be handed to a CoreGraphics context.
+  static let plateAccentWash = UIColor(red: 0.784, green: 0.949, blue: 0.353, alpha: 0.13)
+  static let plateAccentRing = UIColor(red: 0.784, green: 0.949, blue: 0.353, alpha: 0.30)
+  static let plateAccent = UIColor(red: 0.784, green: 0.949, blue: 0.353, alpha: 1.0)
+  static let plateOnAccent = UIColor(red: 0.039, green: 0.043, blue: 0.047, alpha: 1.0)
+  static let plateRedWash = UIColor(red: 1.0, green: 0.361, blue: 0.278, alpha: 0.13)
+  static let plateRedRing = UIColor(red: 1.0, green: 0.361, blue: 0.278, alpha: 0.30)
+  static let plateRed = UIColor(red: 1.0, green: 0.361, blue: 0.278, alpha: 1.0)
 
   /// theme.ts `background` — the widget's own ground.
   ///

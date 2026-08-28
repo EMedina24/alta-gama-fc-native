@@ -19,7 +19,8 @@
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.altagamafc.app"
-        ]
+        ],
+        "com.apple.developer.usernotifications.time-sensitive": true
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

@@ -363,6 +363,45 @@ documented at the code that handles them; this is the index.
     window that had already ended. They are built inside the `queryFn` now. See
     [0052](./decisions/0052-kickoff-triggers-the-live-refetch.md).
 
+36. **A live push must not replay the first half.** `LiveSessionService` opens
+    onto whatever is in its window — including a match already at 60 minutes,
+    after a restart, a lease handover or a deploy. The stored row is then null
+    and **every event of the match is "new"**, so the naive detector fans out
+    five goal banners for goals scored an hour ago. `decideLiveAlerts` returns
+    `[]` outright when `stored === null`: a match we have never seen starts
+    silent and alerts only on what happens next. ⚠ The same shape bites twice —
+    `finished` PERSISTS for every remaining cycle of the session, so full time
+    keys on the **transition** (`stored.status !== 'finished'`), never on the
+    state. See backend decision 0033.
+
+37. **`interruption-level: time-sensitive` is SILENTLY DOWNGRADED without the
+    entitlement.** No error, no log, nothing in the payload to inspect — the
+    alert simply arrives without Focus break-through, which is the one thing it
+    was marked for. `com.apple.developer.usernotifications.time-sensitive` is now
+    in `app.json`'s `ios.entitlements`.
+    ⚠ **You do NOT enable this by hand in the Apple Developer portal.** EAS Build
+    syncs capabilities from `ios.entitlements` to the App ID on every build —
+    watch for the `✔ Synced capabilities` step in the log. Time Sensitive
+    Notifications is on its supported list.
+    ⚠ **What DOES bite: the provisioning profile.** An existing profile does not
+    know about a newly-synced capability, and EAS has been seen reusing a cached
+    one (expo/expo#40851). If a build signs but the level still downgrades, run
+    `eas credentials` and regenerate the iOS profile before suspecting the
+    payload. `EXPO_DEBUG=1 eas build` shows the sync; `EXPO_NO_CAPABILITY_SYNC=1`
+    turns it off.
+    ⚠ This is why `reminders.ts` has always used `active`. The only way to
+    confirm it works is to fire one at a device with a Focus on
+    ([0053](./decisions/0053-live-match-push-alerts.md)).
+
+38. **The live alert's meta row is the CARD, not the banner.** A standard iOS
+    banner has title, subtitle and body and no third styled row — so
+    `28' left · 🟨 3 · 🟥 1 · Getafe 10 men` can only exist on the long look,
+    drawn by `MatchCard.swift` from `userInfo` keys. ⚠ A missing key **drops its
+    segment**, deliberately: a zero would draw `🟨 0`. And if only the clock
+    would remain, the whole row goes — a lone `28' left` under a scoreline is a
+    widow. ⚠ Its five new strings need a line in **both** `.lproj` files or iOS
+    prints the raw key (trap 15, again).
+
 ---
 
 ## Where things stand

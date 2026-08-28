@@ -264,11 +264,18 @@ requests per cycle for data you were handed.
 
 ## 6. What this does NOT give you
 
-- ⛔ **No push.** There is no websocket, no SSE, no webhook, and no APNs
-  goal push. The app polls. `PUSH-AND-ACCOUNTS.md`'s "goal/score pushes do not
-  exist" is still true — but its stated *reason* ("no live feed") is now out of
-  date, and Live Activities are a real phase-2 option that were not viable
-  before this landed.
+- ⭐ **APNs goal push — BUILT 2026-08-28, shipped dark.** This entry read "no
+  push" for one day. There is still **no websocket, no SSE and no webhook**, and
+  the app still POLLS while it is open — none of that changed. What changed is
+  that a locked phone can now be told: `senpai-backend` dispatches
+  `match_goal` / `match_red_card` / `match_full_time` from inside the live
+  session's own 30s loop ([0053](./decisions/0053-live-match-push-alerts.md),
+  backend decision 0033), gated by `alertGoals`.
+  ⚠ **It delivers nothing until `CRONOGOL_LIVE_PUSH_ENABLED` is flipped**, which
+  waits on a matchday of dry-run logs. Until then the detector runs and logs and
+  no device is touched.
+  ⚠ Live Activities remain deferred — [0054](./decisions/0054-live-activities-still-deferred.md)
+  and [LIVE-ACTIVITIES.md](./LIVE-ACTIVITIES.md).
 - ⭐⭐ **LIVE MATCH EVENTS — DEPLOYED AND CONSUMED, 2026-08-28.** This entry was
   ⛔ for a single day. `/cronogol/live` now carries an `events` array per match,
   and the Today board's in-progress card renders it

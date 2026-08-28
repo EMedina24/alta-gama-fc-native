@@ -81,6 +81,7 @@ export function registrationChanged(
     previous.environment !== next.environment ||
     previous.alertMoved !== next.alertMoved ||
     previous.alertPostponed !== next.alertPostponed ||
+    previous.alertGoals !== next.alertGoals ||
     previous.clubSlugs.length !== next.clubSlugs.length ||
     previous.clubSlugs.some((slug, i) => slug !== next.clubSlugs[i])
   );

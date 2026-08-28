@@ -20,3 +20,20 @@
 
 "Calendar entry moved for you" = "Tu calendario ya está actualizado";
 "Removed from your calendar" = "Eliminado de tu calendario";
+
+/*
+  La tarjeta de partido en directo (ADR 0053).
+
+  ⚠ Una clave que falte en CUALQUIERA de los dos .lproj imprime la clave en
+  crudo sobre la tarjeta — sin error y sin alternativa.
+*/
+
+"GOAL" = "GOL";
+"RED CARD" = "ROJA";
+"FULL TIME" = "FINAL";
+
+/* ⚠ El prima tipográfico, no un apóstrofo. */
+"%d’ left" = "quedan %d’";
+/* ⚠ Nombra al CLUB, nunca la abreviatura. */
+"%@ 10 men" = "%@ con diez";
+"%@ 9 men" = "%@ con nueve";

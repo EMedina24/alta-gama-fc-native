@@ -65,6 +65,7 @@ export default function AccountSheetRoute() {
         reminder: prefs.alertReminder,
         moved: prefs.alertMoved,
         postponed: prefs.alertPostponed,
+        goals: prefs.alertGoals,
         leads: prefs.reminderLeads,
       }}
       feeds={feeds}

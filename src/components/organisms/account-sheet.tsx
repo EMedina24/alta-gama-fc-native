@@ -75,12 +75,17 @@ export interface AccountSheetProps {
     reminder: boolean;
     moved: boolean;
     postponed: boolean;
+    /** ⚠ Goals, reds and full time share ONE switch (ADR 0053). */
+    goals: boolean;
     /** ⚠ Minutes before kickoff, subordinate to `reminder` (ADR 0040). Never
      *  empty while `reminder` is true — the store keeps the two coupled. */
     leads: readonly ReminderLead[];
   };
   feeds: readonly AccountFeed[];
-  onSetAlert: (key: 'alertReminder' | 'alertMoved' | 'alertPostponed', value: boolean) => void;
+  onSetAlert: (
+    key: 'alertReminder' | 'alertMoved' | 'alertPostponed' | 'alertGoals',
+    value: boolean,
+  ) => void;
   onSetReminderLead: (lead: ReminderLead, value: boolean) => void;
   onSetLanguage: (lang: Locale) => void;
   onSetClock: (clock: ClockFormat) => void;
@@ -306,9 +311,17 @@ export function AccountSheet({
           />
         </Row>
         <Hairline />
-        {/* ⚠ Disabled, and the reason beside it is load-bearing. */}
-        <Row title={a.goals} note={a.goalsNote} dim>
-          <Switch value={false} onValueChange={() => {}} disabled accessibilityLabel={a.goals} />
+        {/*
+          ⚠ Live since ADR 0053. The note beside it is still load-bearing — it
+          now states the real limit (LaLiga only), not the old one (no feed).
+          A switch that promises alerts for a Bundesliga follower would lie.
+        */}
+        <Row title={a.goals} note={a.goalsNote}>
+          <Switch
+            value={alerts.goals}
+            onValueChange={(v) => onSetAlert('alertGoals', v)}
+            accessibilityLabel={a.goals}
+          />
         </Row>
       </View>
 

@@ -22,6 +22,7 @@ struct MatchCard: View {
       case .reminder: reminder
       case .moved: moved
       case .postponed: postponed
+      case .goal, .redCard, .fullTime: live
       }
     }
     .padding(.vertical, 14)
@@ -81,6 +82,9 @@ struct MatchCard: View {
       }
     case .moved: String(localized: "KICKOFF MOVED")
     case .postponed: String(localized: "POSTPONED")
+    case .goal: String(localized: "GOAL")
+    case .redCard: String(localized: "RED CARD")
+    case .fullTime: String(localized: "FULL TIME")
     }
   }
 
@@ -89,6 +93,12 @@ struct MatchCard: View {
     case .reminder: Tok.accent
     case .moved: Tok.moved
     case .postponed: Tok.postponed
+    case .goal: Tok.accent
+    case .redCard: Tok.cardRed
+    // ⚠ Muted, not accent. Full time is a result, not a moment — tinting it
+    // like a goal would make the least urgent alert the loudest thing on the
+    // lock screen.
+    case .fullTime: Tok.ink62
     }
   }
 
@@ -263,6 +273,113 @@ struct MatchCard: View {
       .padding(.horizontal, 18)
       .padding(.top, 14)
     }
+  }
+
+  // MARK: - Live match (ADR 0053)
+
+  /// The live alert card: the fixture, the score, and the meta row.
+  ///
+  /// ⚠ The crests come back here even though the ATTACHMENT is crest-free —
+  /// they are two different surfaces. The banner's 38pt plate carries a glyph
+  /// because there is no room for more; the expanded card has the width, and
+  /// `CrestView` already falls back to a lettered tile on its own.
+  private var live: some View {
+    VStack(spacing: 0) {
+      fixtureRow
+
+      if let scoreline = payload.scoreline {
+        Text(scoreline)
+          .font(Tok.numerals(30, .bold))
+          .tracking(-0.9)
+          .foregroundStyle(Tok.ink)
+          .padding(.top, 12)
+      }
+
+      metaRow
+    }
+  }
+
+  /// `28' left · 🟨 3 · 🟥 1 · Getafe 10 men`
+  ///
+  /// ⚠⚠ **Order is FIXED: time left → yellows → reds → consequence.** A row whose
+  /// segments move around between two notifications cannot be read at a glance,
+  /// which is the only way this row is ever read.
+  ///
+  /// ⚠ **A zero-value segment is DROPPED, with its divider.** `🟨 0` is noise.
+  /// And if only the clock would remain, the whole row goes — a lone `28' left`
+  /// under a scoreline is a widow, not information.
+  @ViewBuilder
+  private var metaRow: some View {
+    let segments = metaSegments
+    // ⚠ `> 1`, not `> 0`. See the docblock: the clock alone is not a row.
+    if segments.count > 1 {
+      HStack(spacing: 10) {
+        ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
+          if index > 0 {
+            Rectangle()
+              .fill(Tok.tileRing)
+              .frame(width: 1, height: 10)
+          }
+          Text(segment.text)
+            .font(.system(size: 11, weight: .semibold))
+            .monospacedDigit()
+            .foregroundStyle(segment.tint)
+        }
+      }
+      .padding(.horizontal, 18)
+      .padding(.top, 13)
+    }
+  }
+
+  private struct MetaSegment {
+    let text: String
+    let tint: Color
+  }
+
+  /// ⚠ Built as a LIST, then joined — never a template with holes. That is what
+  /// makes "drop the segment and its divider" fall out for free rather than
+  /// being three special cases that each have to remember the divider.
+  private var metaSegments: [MetaSegment] {
+    var segments: [MetaSegment] = []
+
+    // ⚠ Never shown on full time: "28' left" beside a final score is a lie, and
+    // the server omits `minutesLeft` there anyway. Belt and braces.
+    if payload.kind != .fullTime, let left = payload.minutesLeft {
+      segments.append(
+        MetaSegment(
+          text: String(
+            format: String(localized: "%d’ left"),
+            left
+          ),
+          tint: Tok.ink62
+        )
+      )
+    }
+
+    if let yellow = payload.yellowCards, yellow > 0 {
+      segments.append(MetaSegment(text: "🟨 \(yellow)", tint: Tok.ink62))
+    }
+    if let red = payload.redCards, red > 0 {
+      segments.append(MetaSegment(text: "🟥 \(red)", tint: Tok.ink62))
+    }
+
+    // ⚠ The ONE consequence phrase this row carries, and only after a red. It
+    // names the CLUB, never an abbreviation — `GET 10 men` reads as a typo.
+    if let short = payload.shortHanded {
+      segments.append(
+        MetaSegment(
+          text: String(
+            format: short.nine
+              ? String(localized: "%@ 9 men")
+              : String(localized: "%@ 10 men"),
+            short.club
+          ),
+          tint: Tok.redInk
+        )
+      )
+    }
+
+    return segments
   }
 
   // MARK: - Shared
