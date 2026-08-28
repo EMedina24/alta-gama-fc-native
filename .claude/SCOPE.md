@@ -54,9 +54,13 @@ Full audited list: [HANDOFF.md § Front-end work outstanding](./HANDOFF.md).
   the obvious one. **Partly resolved 2026-08-24:** the backend now has a full
   fixture-change push subsystem (moved/postponed alerts, device registration —
   see [PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md)), shipped dark until the
-  Apple Developer account exists. **Goal/live-score push remains absent** — the
-  backend has no live feed (`/cronogol/scores` refreshes every ~4h) and that is
-  still a backend project first.
+  Apple Developer account exists. **Goal/live-score push remains absent** — but
+  ⚠ **its stated reason expired on 2026-08-27.** The backend now HAS a live
+  feed: `GET /cronogol/live` carries in-play status, score and a MINUTE,
+  refreshed every ~30s during a match (LaLiga only —
+  [LIVE-SCORES.md](./LIVE-SCORES.md)). What is still missing is the
+  *delivery* half — no websocket, no goal push — which makes APNs Live
+  Activities a real phase-2 option rather than the non-starter it was.
 - **Accounts on day one?** (`/cronogol/me`, claimed feeds, passkeys.)
 - **Calendar:** subscribe natively to the existing `.ics` feeds, or integrate with
   the device calendar directly?

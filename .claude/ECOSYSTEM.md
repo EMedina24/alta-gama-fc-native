@@ -87,7 +87,8 @@ Public read: `/cronogol/teams`, `/cronogol/teams/{slug}/fixtures`,
 `/cronogol/teams/{slug}/squad`, `/cronogol/teams/{slug}/news`, `/cronogol/leagues`,
 `/cronogol/fixtures`, `/cronogol/standings`, `/cronogol/jornada/{league}/{season}[/{n}]`,
 `/cronogol/news`, `/cronogol/news/leagues`, `/cronogol/scores`, `/cronogol/scores/recent`,
-`/cronogol/health`, `/og/match.png`
+`/cronogol/live` (**added 2026-08-27** — in-play state with a MINUTE, LaLiga only;
+see [.claude/LIVE-SCORES.md](./LIVE-SCORES.md)), `/cronogol/health`, `/og/match.png`
 
 Calendar feeds: `/cronogol/feed/{slug}.ics`, `/cronogol/feed/jornada/{league}/{season}/{n}.ics`
 
@@ -121,6 +122,14 @@ building a screen. The ones that bite hardest:
 - **`/cronogol/scores` is a different feature on a different source** — refreshed
   every ~4h, no live push, and it does **not** join to clubs, fixtures or jornadas.
   Do not reconcile it against `/cronogol/standings`.
+- ⚠⚠ **`/cronogol/live` is a THIRD source and must not be merged with either.**
+  Added 2026-08-27. It is the only route with a **minute**, the only live data
+  that **joins to a fixture** (`fixtureId` + team slugs), and it is **LaLiga
+  only**. It refreshes every ~30s *during a match* and rows **disappear** when
+  the match ends — it is not a results feed. It does **not** license
+  un-suppressing liveness on `/cronogol/scores`, which is still a 4-hourly
+  snapshot: see [.claude/LIVE-SCORES.md](./LIVE-SCORES.md) §1 before touching
+  `src/lib/cronogol/scores.ts`.
 - **Standings lag a finished match by up to ~3h** and carry no zones, no home/away
   split, no live update.
 - **`to` is EXCLUSIVE on `/cronogol/fixtures`** (`[from, to)`) but **inclusive** on
@@ -139,6 +148,7 @@ building a screen. The ones that bite hardest:
 | Product history & decisions (12.7k lines) | `senpai-backend/CRONOGOL.md` |
 | Account/auth behavior | `senpai-backend/CRONOGOL-ACCOUNT-PAGE.md` |
 | Push registration, payloads, account deletion (this app) | [.claude/PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md) |
+| Live scores — the route, the caveats, why the scoreboard stays suppressed | [.claude/LIVE-SCORES.md](./LIVE-SCORES.md) |
 | Deploy/infra | `senpai-backend/DEPLOY.md` |
 | Web app ground rules | `cronogol/AGENTS.md` |
 | Web feature/gotcha notes | `cronogol/docs/{features,gotchas,plans}/` |

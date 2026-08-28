@@ -640,6 +640,122 @@ export interface ScoreboardDayView {
   events: ScoreboardEventView[];
 }
 
+/* ── Live ──────────────────────────────────────────────────────────────────
+   Added 2026-08-27. `GET /cronogol/live` — the only route in this API that
+   carries a MINUTE OF PLAY, and the only live data that joins to a fixture.
+
+   ⚠⚠ **A THIRD source, and it merges with neither of the other two.** There
+   are now three ways this API describes a match, and telling them apart is the
+   whole point of this band:
+
+     · the FIXTURE routes — our own ids and slugs, swept every ~3h. `status:
+       "live"` there was true at the last sweep and the match has probably
+       finished since.
+     · the SCOREBOARD above — a scraped world feed, opta-keyed, swept every
+       ~4h, no crosswalk to our clubs at all. Liveness on it is NOT
+       trustworthy, which is what `./scores` exists to suppress.
+     · THIS — refreshed every ~30s while a match is being played, and every row
+       carries our own `fixtures.id`. Liveness is honest here and only here.
+
+   ⚠ Because it joins, nothing like `scoreAbbr` is needed: `home.slug` and
+   `away.slug` are our own slugs and the ordinary crest machinery applies.
+
+   ⚠⚠ **This does not license un-suppressing the scoreboard.** `statusText` in
+   `./scores` still returns `null` for a `live` row, and `concludedScores`
+   still filters those rows out. That guard is about the 4-hourly sweep, which
+   this change does nothing to make fresher. See `.claude/LIVE-SCORES.md` §1.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * ⚠ Valores de protocolo — no traducir.
+ *
+ * ⚠ **Narrower than `FixtureStatus` and not `ScoreboardStatus` either.** A live
+ * poll never observes a schedule change, so there is no `postponed` and no
+ * `cancelled`; and unlike `FixtureStatus` there IS an `unknown`, because the
+ * upstream's in-play vocabulary is only partly observed and an unrecognised
+ * state is reported honestly rather than guessed. Do not widen one of the other
+ * two unions to stand in for this — they describe different sources.
+ */
+export type LiveStatus = "scheduled" | "live" | "finished" | "unknown";
+
+/** One side of a live match. ⚠ `slug` is OUR slug — it joins. */
+export interface LiveTeamRef {
+  slug: string;
+  name: string;
+  shortName: string | null;
+}
+
+export interface LiveMatchView {
+  /**
+   * ⚠⚠ **`fixtures.id` — OUR id.** The same `id` already on
+   * `JornadaFixtureView`, `WindowFixtureView` and `FixtureView`, and the same
+   * one `keys.fixtureEvents(id)` is keyed on. Join on THIS, never on names or
+   * kickoff times. It is the capability `/cronogol/scores` structurally does
+   * not have, and the reason a row already on screen can be UPGRADED with live
+   * state rather than replaced by a parallel list.
+   */
+  fixtureId: string;
+  home: LiveTeamRef;
+  away: LiveTeamRef;
+  kickoffUtc: string;
+  status: LiveStatus;
+  /**
+   * ⚠ Null unless `status` is `'live'` — null before kick-off and null once
+   * finished. Render nothing, never `0'`.
+   * ⚠ **INCLUDES stoppage time.** `94` means "90+4". There is no split here.
+   * Render `94′`, never `90+4′`.
+   */
+  minute: number | null;
+  /** ⚠ Always null for LaLiga — the source folds stoppage into `minute`. */
+  injuryTime: number | null;
+  /**
+   * ⚠ Null before kick-off, exactly as on the scoreboard. Null means "no score
+   * yet" and never nil-nil — render `vs` or a dash, never `0 - 0`.
+   */
+  score: { home: number | null; away: number | null };
+  /** ⚠ Always `{null, null}` today. In the shape for a second source. */
+  halftime: { home: number | null; away: number | null };
+  /**
+   * ⚠ **"We looked", not "it changed."** It advances every ~30s during a live
+   * match whether or not the score moved, which is precisely what makes it the
+   * honest freshness signal and the right thing to drive a stalled-data
+   * indicator from.
+   *
+   * ⚠ NOT the scoreboard's `lastUpdateAt`, which is the SOURCE's stamp.
+   * `lastSourceUpdate()` in `./scores` must never be pointed at this.
+   */
+  lastSeenAt: string;
+}
+
+/**
+ * `GET /cronogol/live`.
+ *
+ * ⚠⚠ **An empty `matches` array is the NORMAL answer.** Most of the time
+ * nothing is being played. It is an ordinary empty state, never an error.
+ *
+ * ⚠⚠ **LaLiga only today.** A Premier League, Serie A, Bundesliga or Segunda
+ * match returns nothing here — a coverage gap, not a bug. The existing non-live
+ * rendering stays the fallback rather than being replaced.
+ *
+ * ⚠⚠ **Rows DISAPPEAR when the match ends.** This route serves in-play matches
+ * only; the final score arrives on `/cronogol/fixtures` (within ~3h) and
+ * `/cronogol/scores` (within ~4h). A row vanishing is not an error, and this is
+ * not a results feed.
+ */
+export interface LiveView {
+  matches: LiveMatchView[];
+  count: number;
+  /**
+   * Whether the backend currently has a session refreshing these rows.
+   *
+   * ⚠ `false` with an EMPTY `matches` is normal — nothing is being played.
+   * ⚠ `false` with a NON-EMPTY `matches` means matches are live and nothing is
+   * refreshing them. **That is the one failure mode this feature has**, and
+   * without this field it looks identical to the line above.
+   */
+  polling: boolean;
+}
+
 /* ── Standings ─────────────────────────────────────────────────────────────
    Added 2026-08-14; `form` and `?matchweek=` added 2026-08-15.
 

@@ -22,6 +22,7 @@ import type {
   JornadaView,
   LeagueRef,
   SeasonJornadasView,
+  LiveView,
   ScoreboardDayView,
   StandingsView,
   TeamFixturesView,
@@ -328,6 +329,40 @@ export type GetScoresParams = {
  */
 export async function getScores(params: GetScoresParams = {}): Promise<ScoreboardDayView> {
   return get<ScoreboardDayView>('/cronogol/scores', toQuery(params));
+}
+
+// ---------------------------------------------------------------- live
+
+export type GetLiveParams = {
+  /**
+   * ⚠ An **API slug** — `laliga`, never our own `la-liga`. The same trap
+   * `queries/keys.ts` documents. An unknown slug returns an EMPTY LIST rather
+   * than a 404, so a mistyped one reads as a coverage gap, not a bug.
+   *
+   * ⚠ **The app sends nothing here, deliberately.** Hardcoding `laliga` would
+   * silently cap coverage on the day the backend widens the route past it. The
+   * parameter exists because the route has it, not because we use it.
+   */
+  league?: string;
+};
+
+/**
+ * What is being played right now.
+ *
+ * ⚠ **A THIRD source, and not the scoreboard above.** Refreshed every ~30s
+ * while a match is in play, and every row carries our own `fixtures.id` — so
+ * unlike `getScores`, a row already on screen can be upgraded rather than
+ * matched by name. Liveness is honest here and only here; nothing about this
+ * changes what `scores.ts` suppresses.
+ *
+ * ⚠ **LaLiga only today**, and `{ matches: [] }` is the NORMAL answer — most of
+ * the time nothing is being played. Never an error, never a 404.
+ *
+ * ⚠ Any query parameter beyond `league` is a **400**, not a no-op — which is
+ * what `toQuery`'s drop-undefined filter is protecting here as well.
+ */
+export async function getLive(params: GetLiveParams = {}): Promise<LiveView> {
+  return get<LiveView>('/cronogol/live', toQuery(params));
 }
 
 // ---------------------------------------------------------------- events

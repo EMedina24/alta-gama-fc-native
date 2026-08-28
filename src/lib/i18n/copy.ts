@@ -161,7 +161,35 @@ export interface Copy {
     /** "SÁBADO · JORNADA 4" */
     eyebrow: (weekday: string) => string;
     inProgress: string;
+    /**
+     * ⚠ The SWEEP path's note — the card fed by `/cronogol/fixtures`, whose
+     * `live` flag is up to ~3h old. Says "as of the last check" and names the
+     * real limit on the live feed. **Never the word "live" about this data.**
+     */
     inPlayNote: string;
+    /**
+     * The minute of play, on the LIVE path only (`GET /cronogol/live`).
+     *
+     * ⚠ The number ALREADY INCLUDES stoppage time — `94` is "90+4". Print it as
+     * given; never compose `90+4`, the source sends no split.
+     * ⚠ A PRIME (U+2032), the same mark the events panel uses in `45+3′`, not
+     * an apostrophe.
+     */
+    minute: (n: number) => string;
+    /**
+     * The live card's note. ⚠ This is the one place in the app that may say a
+     * score is current, because `/cronogol/live` re-reads every ~30s and its
+     * rows join to our fixtures by id. It states the cadence anyway — the age
+     * line is the design's contract, not a workaround for a slow feed.
+     */
+    liveNote: string;
+    /**
+     * ⚠ **The failure mode.** Rendered when the backend has in-play rows and
+     * nothing refreshing them, or `lastSeenAt` has fallen behind. Null minutes
+     * = the stamp could not be read: say the score may be out of date rather
+     * than inventing a number for how far.
+     */
+    liveStalled: (minutesAgo: number | null) => string;
     kickoffIn: string;
     noScore: string;
     /**
@@ -501,8 +529,16 @@ export const esCopy: Copy = {
     title: 'Tablero',
     eyebrow: (weekday: string) => weekday.toUpperCase(),
     inProgress: 'En juego',
-    // ⚠ Dice "en la última comprobación", nunca "en directo".
-    inPlayNote: 'En juego en la última comprobación. No hay marcador en vivo todavía.',
+    // ⚠ La rama del BARRIDO (~3 h). Dice "en la última comprobación", nunca
+    // "en directo" — el minuto en directo solo cubre LaLiga.
+    inPlayNote: 'En juego en la última comprobación. El minuto en directo solo cubre LaLiga.',
+    // ⚠ El número YA INCLUYE el descuento: 94 es "90+4". Nunca componer `90+4`.
+    minute: (n: number) => `${n}′`,
+    liveNote: 'En directo · se actualiza cada 30 s aprox.',
+    liveStalled: (m: number | null) =>
+      m === null
+        ? 'Actualización en directo detenida · el marcador puede estar desactualizado'
+        : `Actualización en directo detenida · marcador comprobado hace ${m} min`,
     kickoffIn: 'Empieza en',
     noScore: 'Sin marcador todavía',
     // ⚠ El barrido de partidos corre cada ~3 h y no lleva sello por partido,
@@ -628,7 +664,7 @@ export const esCopy: Copy = {
     // ⚠ Dice "en juego", nunca "en directo": el barrido corre cada ~3 h.
     inProgress: 'En juego',
     inPlayNote:
-      'En juego en la última comprobación. Se actualiza cada ~3 h; todavía no hay marcador en vivo.',
+      'En juego en la última comprobación. Se actualiza cada ~3 h; el minuto en directo solo cubre LaLiga y no se muestra aquí.',
     empty: 'Esta jornada aún no tiene partidos publicados.',
     error: 'No se ha podido cargar la jornada.',
     retry: 'Reintentar',
@@ -786,7 +822,16 @@ export const enCopy: Copy = {
     title: 'Board',
     eyebrow: (weekday: string) => weekday.toUpperCase(),
     inProgress: 'In progress',
-    inPlayNote: 'In play as of the last check. There is no live score feed yet.',
+    // ⚠ The SWEEP branch (~3h). Names the real limit rather than claiming no
+    // live feed exists — one does, and it covers LaLiga only.
+    inPlayNote: 'In play as of the last check. Live minutes cover LaLiga only.',
+    // ⚠ The number ALREADY INCLUDES stoppage: 94 is "90+4". Never compose one.
+    minute: (n: number) => `${n}′`,
+    liveNote: 'Live · refreshed about every 30s.',
+    liveStalled: (m: number | null) =>
+      m === null
+        ? 'Live updates paused · this score may be out of date'
+        : `Live updates paused · score last checked ${m} min ago`,
     kickoffIn: 'Kickoff in',
     noScore: 'No score yet',
     // ⚠ The fixture sweep runs every ~3h and carries no per-row stamp, so the
@@ -912,7 +957,7 @@ export const enCopy: Copy = {
     // which does not fit the timing column at eyebrow tracking.
     inProgress: 'In play',
     inPlayNote:
-      'In play as of the last check. Updates roughly every 3h — there is no live score feed yet.',
+      'In play as of the last check. Updates roughly every 3h — live minutes cover LaLiga only and are not shown here.',
     empty: 'No matches published for this matchday yet.',
     error: 'Could not load the matchday.',
     retry: 'Try again',

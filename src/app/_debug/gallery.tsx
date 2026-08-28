@@ -22,6 +22,7 @@ import {
   SectionHeader,
   StatRow,
 } from '@/components/molecules';
+import { MatchBoard } from '@/components/organisms/match-board';
 import { Colors, Spacing } from '@/constants/theme';
 import {
   detailLine,
@@ -33,12 +34,15 @@ import {
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
-import type { MatchEventView, TeamRef } from '@/lib/cronogol/types';
+import { isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
+import type { LiveMatchView, MatchEventView, TeamRef } from '@/lib/cronogol/types';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useState } from 'react';
 
 const ZONE = 'Europe/Madrid';
 const SOON = new Date(Date.now() + 1000 * 60 * 60 * 28).toISOString();
+/** One clock read for every fabricated stamp below — never read during render. */
+const NOW = Date.now();
 
 /**
  * A fabricated timeline covering every branch of `lib/cronogol/events.ts` —
@@ -95,6 +99,40 @@ const EVENTS: MatchEventView[] = [
     period: null, teamSlug: 'arsenal', player: person('Declan Rice'), related: null },
 ];
 
+/**
+ * Fabricated `/cronogol/live` rows (ADR 0048).
+ *
+ * ⚠ **This is the only way to see the live card most days.** The route is
+ * LaLiga-only and serves in-play matches exclusively, so outside a ninety-minute
+ * window on a matchday it returns an empty array — which is the normal answer,
+ * and which means the states below would otherwise ship unseen.
+ *
+ * ⚠ `lastSeenAt` is built off the clock rather than pinned, because the stall
+ * test is a comparison against now. A frozen literal would read as stalled the
+ * day after this file was written and prove nothing.
+ */
+const liveRow = (over: Partial<LiveMatchView> = {}): LiveMatchView => ({
+  fixtureId: 'gallery-live',
+  home: { slug: 'barcelona', name: 'FC Barcelona', shortName: 'BAR' },
+  away: { slug: 'athletic-club', name: 'Athletic Club', shortName: 'ATH' },
+  kickoffUtc: new Date(NOW - 1000 * 60 * 67).toISOString(),
+  status: 'live',
+  minute: 67,
+  injuryTime: null,
+  score: { home: 1, away: 0 },
+  halftime: { home: null, away: null },
+  lastSeenAt: new Date(NOW - 1000 * 12).toISOString(),
+  ...over,
+});
+
+const LIVE_SIDE = (name: string, abbr: string, goals: number | null, muted: boolean) => ({
+  name,
+  crest: null,
+  abbr,
+  goals,
+  muted,
+});
+
 function Case({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={styles.case}>
@@ -109,6 +147,55 @@ function Case({ label, children }: { label: string; children: React.ReactNode })
 
 /** Counted once — the fixture array is a module constant, not props. */
 const EV_COUNTS = groupCounts(EVENTS);
+
+/**
+ * The live-card states, resolved ONCE at module scope.
+ *
+ * ⚠ `isStalled` and `minutesSinceSeen` both read a clock, and doing that during
+ * render is `react-hooks/purity`. Resolving here is also the more honest test:
+ * these cases are fixed states to look at, not a ticking card, and a stall that
+ * flickered between renders would be a worse gallery than one that does not.
+ */
+const LIVE_CASES = (
+  [
+    {
+      label: 'live · 67′ — the ordinary case, /cronogol/live',
+      match: liveRow(),
+      polling: true,
+    },
+    {
+      label: 'live · 94′ — ⚠ stoppage is INCLUDED, never rendered 90+4′',
+      match: liveRow({ minute: 94 }),
+      polling: true,
+    },
+    {
+      label: 'live · before kick-off — ⚠ a dash, never 0 (null is not a zero)',
+      match: liveRow({ minute: null, score: { home: null, away: null } }),
+      polling: true,
+    },
+    {
+      label: 'unknown status — ⚠ the score is still true, the minute is not',
+      match: liveRow({ status: 'unknown', minute: null }),
+      polling: true,
+    },
+    {
+      label: 'stalled · polling false — the one failure mode this feature has',
+      match: liveRow(),
+      polling: false,
+    },
+    {
+      label: 'stalled · lastSeenAt fell behind — dimmed minute, paused note',
+      match: liveRow({ lastSeenAt: new Date(NOW - 1000 * 60 * 9).toISOString() }),
+      polling: true,
+    },
+  ] as const
+).map(({ label, match, polling }) => ({
+  label,
+  match,
+  stalled: isStalled(match, polling, NOW),
+  minute: liveMinute(match),
+  minutesAgo: minutesSinceSeen(match, NOW),
+}));
 
 export default function GalleryScreen() {
   const { copy, phrases } = useI18n();
@@ -353,6 +440,50 @@ export default function GalleryScreen() {
             {copy.events.notPublished}
           </Text>
         </View>
+      </Case>
+
+      <SectionHeader title="Live card" meta="the two paths (ADR 0048)" />
+      {LIVE_CASES.map(({ label, match, stalled, minute, minutesAgo }) => (
+        <Case key={label} label={label}>
+          <MatchBoard
+            live={{
+              home: LIVE_SIDE('Barcelona', 'BAR', match.score.home, false),
+              away: LIVE_SIDE(
+                'Athletic Club',
+                'ATH',
+                match.score.away,
+                match.score.home !== null &&
+                  match.score.away !== null &&
+                  match.score.away < match.score.home,
+              ),
+              isLive: true,
+              minute: minute === null ? null : copy.today.minute(minute),
+              stalled,
+              note: stalled ? copy.today.liveStalled(minutesAgo) : copy.today.liveNote,
+              lastUpdateAt: null,
+            }}
+            copy={copy.today}
+            events={copy.events}
+          />
+        </Case>
+      ))}
+      {/* ⚠ The FALLBACK, side by side with the above on purpose: every league
+          except LaLiga still lands here, and it must keep its FeedAge line and
+          its "as of the last check" note. */}
+      <Case label="sweep fallback · /cronogol/fixtures — no minute, FeedAge, cadence note">
+        <MatchBoard
+          live={{
+            home: LIVE_SIDE('Bayern München', 'FCB', 2, false),
+            away: LIVE_SIDE('RB Leipzig', 'RBL', 1, true),
+            isLive: false,
+            minute: null,
+            stalled: false,
+            note: copy.today.inPlayNote,
+            lastUpdateAt: null,
+          }}
+          copy={copy.today}
+          events={copy.events}
+        />
       </Case>
     </ScrollView>
   );

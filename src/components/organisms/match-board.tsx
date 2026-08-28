@@ -1,22 +1,34 @@
 /**
  * The Today board's lead card: a match in progress, or last result + next kickoff.
  *
- * ⚠ **The score-age line is required and must never be removed to tidy the
- * screen.** The backend has no live push — the fixture sweep that writes
- * `status: "live"` and its goals runs roughly every three hours — so a score
- * here can be hours stale. The handoff is explicit: those lines "are the
- * difference between honest and broken".
+ * ⚠⚠ **The in-progress card has TWO paths and the difference is the whole
+ * feature** (ADR 0048). `isLive` says which one is on screen:
  *
- * ⚠ For the same reason there is **no minute and no pulsing dot**. SPEC §3.1
- * asks for both, but no endpoint returns a minute (every in-play state collapses
- * to `live` with "no minute, no HT, and no way to derive one"), and a dot
- * pulsing on hours-old data is a liveness claim made by animation. The card
- * states that it is in play *as of the last check* and leaves it there.
+ * - **LIVE** — `GET /cronogol/live`, re-read every ~30s, joined to this fixture
+ *   by our own id. It carries a real `minute`, so the card prints one. LaLiga
+ *   only.
+ * - **SWEEP** — `GET /cronogol/fixtures`, whose `status: "live"` was true at a
+ *   sweep up to three hours ago. Every other league lands here, and it renders
+ *   exactly as it always has: no minute, `FeedAge`, and a note saying the score
+ *   is as of the last check.
  *
- * ⚠ Both the live and last-result cards are fed from `/cronogol/fixtures`, not
- * the scoreboard — the scoreboard cannot say which match is yours (ADR 0027).
- * The fixture route carries no per-row stamp, so `lastUpdateAt` is null and the
- * age line states the cadence rather than a number.
+ * ⚠ **The note is required on BOTH and must never be removed to tidy the
+ * screen.** The handoff is explicit that those lines "are the difference
+ * between honest and broken", and on the live path it also carries the stalled
+ * state — the one failure this feature has, where rows are in play and nothing
+ * is refreshing them.
+ *
+ * ⚠ **Still no pulsing dot.** SPEC §3.1 asks for one and ADR 0034 refused it
+ * once already. The minute is the liveness signal now, and it is information
+ * rather than animation — a pulse would say nothing the number does not, and
+ * would need a Reduce Motion path to say it.
+ *
+ * ⚠ **Still not the word "live" in the UI** (ADR 0035). The pill stays
+ * `In progress` / `En juego`. What changed is that the card can now back that
+ * word with a minute; the vocabulary did not.
+ *
+ * ⚠ The last-result card is fed from `/cronogol/fixtures`, not the scoreboard —
+ * the scoreboard cannot say which match is yours (ADR 0027).
  *
  * ⚠⚠ **The LAST-RESULT card expands into its match timeline; the LIVE card does
  * not** (ADR 0045). The design asked for the opposite — its expanded panel was
@@ -36,10 +48,35 @@ import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
 
 export interface MatchBoardProps {
-  /** A match in play at the last sweep, if any. */
+  /** A match in play, if any. See the two paths in this file's docblock. */
   live?: {
     home: ScoreSide;
     away: ScoreSide;
+    /**
+     * ⚠ **The LIVE path only.** `true` when this came from `/cronogol/live`, in
+     * which case `FeedAge` is dropped — that molecule prints whole HOURS, which
+     * for a feed that moves every thirty seconds reads `0` for the entire match.
+     */
+    isLive: boolean;
+    /**
+     * Already formatted through `copy.minute` — `"67′"`. Null whenever there is
+     * nothing honest to print: the sweep path, a row before kick-off or after
+     * full time, or a `status: 'unknown'` row whose in-play state the upstream
+     * did not recognise. ⚠ **Never `0′`.**
+     */
+    minute: string | null;
+    /**
+     * ⚠ Dims the minute rather than hiding it. A frozen number removed looks
+     * like a match that ended; a frozen number dimmed, beside a note that says
+     * updates are paused, is what actually happened.
+     */
+    stalled: boolean;
+    /**
+     * The note under the rule. The caller owns the wording, the language AND
+     * which of the three truths it states: live · live-but-stalled · sweep.
+     */
+    note: string;
+    /** ⚠ SWEEP path only, and always null there too — see `FeedAge`. */
     lastUpdateAt: string | null;
   } | null;
   /** The most recent finished match of a followed club. */
@@ -78,7 +115,6 @@ export interface MatchBoardProps {
   } | null;
   copy: {
     inProgress: string;
-    inPlayNote: string;
     kickoffIn: string;
     lastResult: string;
     noScore: string;
@@ -96,12 +132,24 @@ export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) 
       <View style={[styles.card, styles.liveCard]}>
         <View style={styles.headRow}>
           <Pill label={copy.inProgress} tone="live" />
+          {/* ⚠ `tabular` is not optional: this digit changes every minute, and
+              proportional numerals make it shift under the reader's eye. */}
+          {live.minute ? (
+            <Text variant="title3" tabular color={live.stalled ? 'textDim' : 'live'}>
+              {live.minute}
+            </Text>
+          ) : null}
         </View>
         <ScoreLine home={live.home} away={live.away} noScoreLabel={copy.noScore} />
         <View style={styles.rule} />
-        <FeedAge lastUpdateAt={live.lastUpdateAt} render={copy.scoreAge} />
+        {/* ⚠ `FeedAge` is the SWEEP path's alone — it renders whole hours, so on
+            a feed that moves every ~30s it would print the same `0` all match.
+            The live path's freshness is the minute, plus `note` when it stops. */}
+        {live.isLive ? null : (
+          <FeedAge lastUpdateAt={live.lastUpdateAt} render={copy.scoreAge} />
+        )}
         <Text variant="footnote" color="textFaint">
-          {copy.inPlayNote}
+          {live.note}
         </Text>
       </View>
     );

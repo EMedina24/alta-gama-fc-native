@@ -27,4 +27,17 @@ export const keys = {
    * on Today and the same row opened on Matchdays share one cache entry.
    */
   fixtureEvents: (id: string) => ['fixture-events', id] as const,
+  /**
+   * What is being played right now — `GET /cronogol/live`.
+   *
+   * ⚠ **One key for the WHOLE APP, and it takes no argument.** The route
+   * returns every live match in a single response, so a per-fixture key would
+   * turn one request into N for data that arrives together anyway. The join
+   * happens client-side, on `fixtureId`, in `lib/cronogol/live.ts`.
+   *
+   * ⚠ No league argument either: the app deliberately asks for everything the
+   * route covers rather than pinning `laliga`, which would silently cap
+   * coverage the day the backend widens it.
+   */
+  live: () => ['live'] as const,
 } as const;

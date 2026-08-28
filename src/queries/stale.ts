@@ -24,6 +24,22 @@ export const STALE = {
    * is played or a kickoff is rescheduled.
    */
   feed: 15 * 60 * 1000,
+
+  /**
+   * In-play match state, from `GET /cronogol/live`. Moves every ~30s
+   * server-side while a match is being played; anything longer renders a minute
+   * that is visibly wrong on screen.
+   *
+   * ⚠ **`feed` does not fit and reusing it would be the bug.** Fifteen minutes
+   * is thirty stale cycles here — the card would sit on a minute half an hour
+   * behind the match. A third bucket is the file's own remedy: adding a query
+   * means choosing one and being able to say why.
+   *
+   * ⚠ **Never take this below 10 seconds.** The route's own header is
+   * `max-age=10` and the underlying data moves every ~30s, so a faster poll
+   * doubles the request count to be handed back the identical body.
+   */
+  live: 15 * 1000,
 } as const;
 
 /** Keep unused data around a while: tab switches should not re-fetch. */

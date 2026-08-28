@@ -14,7 +14,7 @@ sections) and wins on any disagreement.
 | `DELETE /cronogol/me` (account deletion) | **Live.** |
 | Server actually SENDING pushes | **Dark.** Ships behind `CRONOGOL_PUSH_CRON_ENABLED='false'` until the APNs sandbox probe + an operator dry-run pass — both gated on the Apple Developer account (which also gates the push entitlement for dev builds). **No push will arrive on any device until then.** Build and register anyway; nothing breaks. |
 | Kickoff reminders | **Never sent by the server, by design.** The app schedules them locally from fixture data (handoff SPEC §4 payload 1). |
-| Goal / score pushes | **Do not exist and are not coming with this** — no live feed. The type is reserved. Keep the goal switch drawn disabled with its reason (handoff rule). |
+| Goal / score pushes | **Still do not exist** — the type stays reserved and the goal switch stays drawn disabled (handoff rule). ⚠ But the REASON changed on 2026-08-27: there IS a live feed now (`GET /cronogol/live`, ~30s during a match, LaLiga only — [LIVE-SCORES.md](./LIVE-SCORES.md)). What is missing is delivery, not data. If the switch's disabled copy says "no live scores", it is now wrong; say "not yet" instead. Live Activities are the phase-2 path. |
 | Sign in with Apple | **Live in the app since 2026-08-26** ([0038](./decisions/0038-accounts-apple-and-google.md)). ⚠ It needed **no backend change** — `SupabaseUserGuard` verifies any Supabase JWT through JWKS whatever provider minted it, and native-only Apple needs no Services ID or `.p8`, only the bundle id under the Supabase Apple provider's *Client IDs*. The four backend docs saying it will never exist are now wrong. Google is the browser hop; email/password is deliberately not built here. |
 
 ## Registering a device

@@ -20,6 +20,19 @@ widgets, a device build, and the backend's push cron.
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
+> ⭐ **NEW 2026-08-27 — the app has live scores.** `GET /cronogol/live` carries
+> in-play status, score and a **minute**, refreshed every ~30s while a match is
+> played, and — unlike `/cronogol/scores` — every row **joins to a fixture** by
+> `fixtureId`. LaLiga only. **Today's in-progress card consumes it**
+> ([0048](./decisions/0048-live-scores-on-the-today-board.md)); Matchdays, the
+> club page and `FINISHED TODAY` do not, yet.
+>
+> ⚠⚠ It does **not** license un-suppressing liveness in
+> `src/lib/cronogol/scores.ts`. That suppression is about `/cronogol/scores`,
+> which is still a 4-hourly snapshot, and it stays exactly as it is. Read
+> **[LIVE-SCORES.md](./LIVE-SCORES.md) §1 first** — it is the one place these
+> two are told apart.
+
 **Read [ECOSYSTEM.md](./ECOSYSTEM.md) before touching data, naming or URLs.**
 Read the decision log — [decisions/](./decisions/) — before changing anything that
 looks arbitrary. Most of it isn't.
@@ -68,9 +81,18 @@ documented at the code that handles them; this is the index.
 7. **`/cronogol/scores` is a WORLD scoreboard** with no crosswalk to our clubs
    (Liga Argentina, friendlies). It cannot serve FINISHED TODAY — that comes from
    `/cronogol/fixtures`. See [0022](./decisions/0022-finished-today-from-fixtures.md).
-8. **No DATA is live.** Scores sweep ~4h, standings lag ~3h. No minute, no
-   pulsing dot, nothing that animates a *score* into looking current. Every score
-   states its age. **Never remove those lines.** ⚠ The next-up countdown is the
+8. **Almost no DATA is live, and the exception is exactly one route.**
+   `/cronogol/scores` sweeps ~4h, fixtures ~3h, standings lag ~3h. Every score
+   off those states its age. **Never remove those lines.**
+   ⚠⚠ **`GET /cronogol/live` is the exception and it is narrow**
+   ([0048](./decisions/0048-live-scores-on-the-today-board.md)): ~30s refresh,
+   joins to a fixture by `fixtureId`, carries a real minute — **LaLiga only**.
+   A minute may be printed **only** off that route, and only in the shape 0048
+   sets: the minute beside the pill, dimmed when stalled, and a note that states
+   either the ~30s cadence or that updates are paused. Drop the stalled branch
+   and a dead session looks identical to a live one, which is this trap by
+   another route. Everything else still lands on the fixture sweep's card, with
+   its `FeedAge` line intact — **that path is not dead code.** ⚠ The next-up countdown is the
    one exception and is not a counter-example: it is arithmetic on the device
    clock against a kickoff timestamp the API already gave us, so it cannot go
    stale — see [0034](./decisions/0034-next-up-card-live-seconds-countdown.md).
@@ -389,6 +411,27 @@ documented at the code that handles them; this is the index.
   - ⚠ **NOT seen, by anyone:** the Lock Screen accessories and the Edit Widget
     club picker. Both are behind a long-press that cannot be driven from a script.
     They compile and are wired; nobody has looked at them.
+- **Live scores reach the Today board** (2026-08-27,
+  [0048](./decisions/0048-live-scores-on-the-today-board.md)). The in-progress card
+  now has two paths: `/cronogol/live` with a real minute for LaLiga, and the ~3h
+  fixture sweep — unchanged, `FeedAge` and all — for every other league.
+  - `lib/cronogol/live.ts` is pure and **harness-proven, 25 assertions**: the
+    10-minute cache-age cutoff, both selection tiers, `status: 'unknown'`
+    withholding the minute, stoppage-inclusive minutes (`94`, never `90+4`), both
+    stall tells, and every unparseable-stamp branch.
+  - Contract checked against production: `400` on any undeclared query param, an
+    empty list rather than a 404 on an unknown league, `max-age=10`, and
+    `{"matches":[],"count":0,"polling":false}` — the normal answer.
+  - Gates clean: `tsc`, `expo export`, and lint at its **unchanged 6-error / 9-warning
+    baseline**.
+  - ⚠ **NOT seen against a real in-play match.** No LaLiga fixture was live while
+    this was built, so the `fixtureId` join is proven against the contract and the
+    harness but not against a live row — and the minute has never been watched to
+    advance. `/_debug/gallery` carries seven card states (six live, plus the sweep
+    fallback beside them) because the route is empty most of the day.
+  - ⚠ **`useIsFocused` under `NativeTabs` is unexercised.** It is the poll's gate;
+    if it misreports, the app polls every 15s from a background tab. Confirm the
+    network log goes quiet on a tab switch.
 - **The push cron is ON** (2026-08-26, Render dashboard; `render.yaml:91` agrees).
   ⚠ It dispatches only what the ~3h sync newly detects, so silence is the normal
   state. Every notification seen on 2026-08-26 was hand-sent.
@@ -725,6 +768,16 @@ the whole job of that screen.
   matchday is true of all of them. **Needs a product call**, not a fix.
 
 ### Known gaps, deliberately
+- ⚠ **Live scores are LaLiga-only, and live match EVENTS do not exist.**
+  `/cronogol/live` (2026-08-27) covers LaLiga alone — every other league renders
+  exactly as it does today, so the non-live path stays the fallback rather than
+  being replaced. Wired on Today only
+  ([0048](./decisions/0048-live-scores-on-the-today-board.md)); Matchdays rows and
+  the club page are the two other surfaces keyed on `fixtureId` and are unbuilt. And `/cronogol/fixtures/{id}/events` is still a 3-hourly
+  sweep: the expanded-row timeline ([0045](./decisions/0045-match-events-expanded-row.md),
+  [0046](./decisions/0046-match-events-grouping-tabs.md)) does **not** fill in
+  during a match. A live scoreline beside an empty timeline is the expected
+  shape — handle it explicitly so it does not read as a bug.
 - **Serie A has no mark** — text label, don't invent artwork.
 - **Qualification bands are unconfirmed for 2026/27** — coefficient-driven, worth
   checking against the real allocation before launch.

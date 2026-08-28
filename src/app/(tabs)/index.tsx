@@ -6,7 +6,7 @@
  * design's own rule (SPEC §3.1), and it is why this screen is fully buildable
  * before push exists: it is exactly what a new user sees.
  */
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -17,13 +17,15 @@ import { MatchBoard } from '@/components/organisms/match-board';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
 import {
-  boardOutcome,
-  involvesFollowed,
-  lastResult,
-  liveFixture,
-  upcomingRow,
-} from '@/lib/cronogol/board';
+  boardLive,
+  isStalled,
+  liveById,
+  liveMinute,
+  minutesSinceSeen,
+  type BoardLive,
+} from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
 import {
@@ -35,6 +37,7 @@ import {
 import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTeams } from '@/queries/use-teams';
+import { useLive } from '@/queries/use-live';
 import { useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
 import { usePreferences, useZone } from '@/store/preferences';
 
@@ -56,18 +59,51 @@ export default function TodayScreen() {
   const hasClubs = followed.length > 0;
 
   /**
-   * The in-play match of a followed club, as of the last sweep. Read from the
-   * fixture route, never the scoreboard — it is the only feed that knows which
-   * club is yours (ADR 0027). Today's window is the fresher of the two that
-   * contain it, so it is asked first.
+   * ⚠ **Both conditions, not either.** `useLive` polls every fifteen seconds
+   * while enabled, so it must be off whenever the result cannot reach the
+   * screen: on another tab (`useIsFocused`), and for a reader with nothing
+   * followed — the lead cards are suppressed entirely there, so there is no row
+   * to upgrade and the poll would be pure spend.
+   *
+   * ⚠ `useIsFocused` rather than a `useFocusEffect` + `useState` pair: the
+   * latter is a `setState` inside an effect, which is a lint error this repo
+   * already carries six of and does not need a seventh.
    */
-  const live = useMemo(() => {
+  const focused = useIsFocused();
+  const live = useLive(focused && hasClubs);
+
+  /**
+   * ⚠ **One instant for the whole render.** Every upcoming row is dated off it,
+   * and so is every live freshness test — read per site, a render straddling
+   * midnight would date two cards off different days, and one straddling the
+   * stall threshold would paint a live-toned minute above a note saying updates
+   * are paused.
+   */
+  const now = new Date();
+
+  /**
+   * The in-play match of a followed club, and whether it is genuinely live.
+   *
+   * ⚠ Which fixture is *yours* still comes from the fixture route — that is the
+   * only feed carrying our own slugs on both sides (ADR 0027), and today's
+   * window is the fresher of the two that contain it, so it is asked first.
+   * What `/cronogol/live` adds is the state INSIDE that match, joined by id.
+   *
+   * ⚠ `boardLive` falls back to the sweep's own `live` flag when the route has
+   * no row — which is every league except LaLiga. Nothing regresses there.
+   */
+  const board = ((): BoardLive | null => {
     if (!hasClubs) return null;
+    // ⚠ Not memoised, deliberately: the age cutoff reads the clock, so a
+    // `useMemo` would need `now` in its deps and recompute on every render
+    // regardless. A filter and a sort over one window of fixtures is cheaper
+    // than pretending otherwise.
+    const byId = liveById(live.data?.matches ?? [], now.getTime());
     return (
-      liveFixture(finished.data?.fixtures ?? [], followed) ??
-      liveFixture(recent.data?.fixtures ?? [], followed)
+      boardLive(finished.data?.fixtures ?? [], followed, byId) ??
+      boardLive(recent.data?.fixtures ?? [], followed, byId)
     );
-  }, [hasClubs, finished.data, recent.data, followed]);
+  })();
 
   /** The most recent finished match of a followed club, with a score. */
   const last = useMemo(() => {
@@ -90,9 +126,6 @@ export default function TodayScreen() {
 
   const picks = useMemo(() => (teams.data ?? []).slice(0, FOLLOW_PICKS), [teams.data]);
 
-  /** Read once per render so every upcoming row is dated off the same instant. */
-  const now = new Date();
-
   /** The losing side recedes; a draw or a missing score mutes nobody. */
   const loses = (mine: number | null, theirs: number | null) =>
     mine !== null && theirs !== null && mine < theirs;
@@ -113,6 +146,51 @@ export default function TodayScreen() {
   });
 
   /**
+   * The in-progress card's props, for whichever of the two paths this is.
+   *
+   * ⚠ **The goals come from the LIVE row when there is one.** A match that
+   * kicked off twenty minutes ago has a `1-0` on `/cronogol/live` and, very
+   * often, a `null-null` on the fixture sweep — reading the fixture would hide
+   * the score this whole feature exists to show. The sweep's goals are the
+   * fallback, not the source of truth, whenever the live row is set.
+   *
+   * ⚠ `loses()` is reused unchanged and already handles the nulls correctly:
+   * both sides stay full when either goal is null, so a pre-kick-off row mutes
+   * nobody. A null is never reasoned about as a zero.
+   */
+  const liveCard = (state: BoardLive) => {
+    const { fixture, live: match } = state;
+    const goalsHome = match ? match.score.home : fixture.goalsHome;
+    const goalsAway = match ? match.score.away : fixture.goalsAway;
+
+    // The screen's own instant, so the minute, the stall test and its caption
+    // all describe the same moment.
+    const checkedAt = now.getTime();
+    const stalled = match !== null && isStalled(match, live.data?.polling ?? false, checkedAt);
+    const minute = match ? liveMinute(match) : null;
+
+    return {
+      home: side(fixture.homeTeam, goalsHome, loses(goalsHome, goalsAway)),
+      away: side(fixture.awayTeam, goalsAway, loses(goalsAway, goalsHome)),
+      isLive: match !== null,
+      // ⚠ Null on the sweep path, and null for a `status: 'unknown'` row — the
+      // score is still true there, the minute is not.
+      minute: minute === null ? null : copy.today.minute(minute),
+      stalled,
+      note:
+        match === null
+          ? copy.today.inPlayNote
+          : stalled
+            ? copy.today.liveStalled(minutesSinceSeen(match, checkedAt))
+            : copy.today.liveNote,
+      // ⚠ SWEEP path only, and null even there: the fixture route carries no
+      // per-row stamp, and our own fetch time would UNDERSTATE the age — the
+      // wrong direction for an honesty line.
+      lastUpdateAt: null,
+    };
+  };
+
+  /**
    * The next-up pairing. Its own helper because the crest renders at
    * `Size.crestNext` — `side()` asks for `xsmall`, which is the row weight and
    * blurs at 56pt (ADR 0034).
@@ -131,22 +209,13 @@ export default function TodayScreen() {
         void finished.refetch();
         void upcoming.refetch();
         void recent.refetch();
+        void live.refetch();
       }}
       refreshing={finished.isRefetching || upcoming.isRefetching || recent.isRefetching}>
       {/* The lead cards only exist once there is a club to lead with. */}
-      {hasClubs && (live || last || next) ? (
+      {hasClubs && (board || last || next) ? (
         <MatchBoard
-          live={
-            live
-              ? {
-                  home: side(live.homeTeam, live.goalsHome, loses(live.goalsHome, live.goalsAway)),
-                  away: side(live.awayTeam, live.goalsAway, loses(live.goalsAway, live.goalsHome)),
-                  // ⚠ The fixture route carries no per-row stamp. Null, never
-                  // our own fetch time — that would understate the age.
-                  lastUpdateAt: null,
-                }
-              : null
-          }
+          live={board ? liveCard(board) : null}
           last={
             last
               ? {

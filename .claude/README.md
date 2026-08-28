@@ -11,6 +11,7 @@ Documentation Claude Code (and humans) should read before working in this repo.
 | [CONVENTIONS.md](./CONVENTIONS.md) | Code conventions in force (naming, imports, theming, platform splits) |
 | [GO-LIVE.md](./GO-LIVE.md) | **What to do when the Apple Developer account lands** — the licence-gated checklist |
 | [PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md) | Backend push + account-deletion hookup guide |
+| [LIVE-SCORES.md](./LIVE-SCORES.md) | **`GET /cronogol/live`** — in-play scores with a minute (new 2026-08-27, unconsumed). ⚠ Read §1 before touching `scores.ts` |
 | [settings.json](./settings.json) | Grants read access to the sibling repos |
 | [decisions/](./decisions/) | Decision log — one file per decision, newest number highest |
 
