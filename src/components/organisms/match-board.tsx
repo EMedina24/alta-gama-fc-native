@@ -30,12 +30,17 @@
  * ⚠ The last-result card is fed from `/cronogol/fixtures`, not the scoreboard —
  * the scoreboard cannot say which match is yours (ADR 0027).
  *
- * ⚠⚠ **The LAST-RESULT card expands into its match timeline; the LIVE card does
- * not** (ADR 0045). The design asked for the opposite — its expanded panel was
- * drawn on the live card's footer row — but the events ingest is finished-only
- * and three-hourly, so an in-play match has no events at all. A chevron there
- * would open on nothing, every time. **Do not add one back** without the live
- * events feed that the score-age line above is also waiting on.
+ * ⚠⚠ **BOTH the live and the last-result card expand into their timeline**
+ * (ADR 0050), which reverses 0045's divergence 1 — the design had asked for the
+ * panel on the live card's footer row all along, and 0045 struck it out because
+ * an in-play match had no events at all and a chevron would open on nothing.
+ *
+ * ⚠ **It still opens on nothing TODAY**, and that is expected rather than
+ * broken: `/cronogol/fixtures/{id}/events` served `count: 0` for a match that
+ * was 3-0 at 51 minutes on 2026-08-28. What changed is that the absence is now
+ * known to be temporary and scheduled to go away — the upstream does publish
+ * during play. The panel says "aren't published yet", which is true in both
+ * worlds, and fills in when the backend lands it. See `.claude/LIVE-SCORES.md` §6.
  */
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -43,13 +48,45 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Chevron, Crest, Pill, Text, VersusBadge } from '@/components/atoms';
 import { Countdown, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
-import type { TeamRef } from '@/lib/cronogol/types';
+import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
 
 export interface MatchBoardProps {
   /** A match in play, if any. See the two paths in this file's docblock. */
   live?: {
+    /**
+     * Our own fixture id, for the events panel — and `null` to withhold the
+     * disclosure entirely.
+     *
+     * ⚠ `null` is not a degradation, it is the honest state for a card built
+     * from something other than a fixture row: `/_debug/gallery` fabricates its
+     * live rows and has no fixture behind them. A chevron there would open a
+     * request for an id that does not exist and settle on the ERROR copy, which
+     * is the one thing worse than no chevron.
+     */
+    id: string | null;
+    /**
+     * ⚠ Needed for the events panel, exactly as on `last` below: the panel
+     * derives each event's side by comparing `teamSlug`, and the `ScoreSide`
+     * pair carries no slug.
+     */
+    homeTeam: TeamRef | null;
+    awayTeam: TeamRef | null;
+    /**
+     * The in-play timeline, straight off `GET /cronogol/live` (ADR 0051).
+     *
+     * ⚠⚠ **Set on the LIVE path, `undefined` on the SWEEP path**, and the
+     * difference is which source answers. Given events, the panel renders them
+     * and issues no request — they already arrived with the score, on the same
+     * ~30s refresh. Given `undefined`, it falls back to the durable
+     * finished-match route, which is right for every non-LaLiga league.
+     *
+     * ⚠ `[]` is a real answer and NOT the same as `undefined`: it means the live
+     * route is holding an empty timeline, so the panel says "not published yet"
+     * rather than going and asking a 3-hourly sweep that has nothing either.
+     */
+    suppliedEvents?: readonly TimelineEventView[];
     home: ScoreSide;
     away: ScoreSide;
     /**
@@ -124,33 +161,101 @@ export interface MatchBoardProps {
   events: Copy['events'];
 }
 
+/**
+ * The footer row that opens a match's timeline.
+ *
+ * ⚠ **The whole row is the tap target, as the design has it** — not the chevron.
+ * It carries the panel's name, which is also why `MatchEvents` is handed
+ * `showTitle={false}` on both cards: left on, the eyebrow printed the same words
+ * again one line below this.
+ *
+ * ⚠ Shared by the live and last-result cards rather than written twice (ADR
+ * 0050). Two copies of an accessibility contract is two chances for one of them
+ * to lose its `expanded` state, which is the half VoiceOver actually announces.
+ */
+function EventsDisclosure({
+  open,
+  onToggle,
+  copy,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  copy: Copy['events'];
+}) {
+  return (
+    <Pressable
+      onPress={onToggle}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      accessibilityLabel={open ? copy.collapse : copy.expand}
+      style={({ pressed }) => [styles.disclosure, pressed && { opacity: 0.75 }]}>
+      <Text variant="eyebrowSm" color="textFaint">
+        {copy.title}
+      </Text>
+      <Chevron expanded={open} />
+    </Pressable>
+  );
+}
+
 export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) {
-  /** One card, so a boolean — not the `openId` the list surfaces carry. */
+  /**
+   * One boolean, not the `openId` the list surfaces carry.
+   *
+   * ⚠ Still correct now that BOTH cards expand (ADR 0050): the live card
+   * early-returns, so the two are never on screen together and there is no
+   * second row for a shared flag to open by accident.
+   */
   const [showEvents, setShowEvents] = useState(false);
   if (live) {
     return (
-      <View style={[styles.card, styles.liveCard]}>
-        <View style={styles.headRow}>
-          <Pill label={copy.inProgress} tone="live" />
-          {/* ⚠ `tabular` is not optional: this digit changes every minute, and
-              proportional numerals make it shift under the reader's eye. */}
-          {live.minute ? (
-            <Text variant="title3" tabular color={live.stalled ? 'textDim' : 'live'}>
-              {live.minute}
-            </Text>
-          ) : null}
+      <View style={[styles.card, styles.flush, styles.liveCard]}>
+        <View style={styles.pad}>
+          <View style={styles.headRow}>
+            <Pill label={copy.inProgress} tone="live" />
+            {/* ⚠ `tabular` is not optional: this digit changes every minute, and
+                proportional numerals make it shift under the reader's eye. */}
+            {live.minute ? (
+              <Text variant="title3" tabular color={live.stalled ? 'textDim' : 'live'}>
+                {live.minute}
+              </Text>
+            ) : null}
+          </View>
+          <ScoreLine home={live.home} away={live.away} noScoreLabel={copy.noScore} />
+          <View style={styles.rule} />
+          {/* ⚠ `FeedAge` is the SWEEP path's alone — it renders whole hours, so on
+              a feed that moves every ~30s it would print the same `0` all match.
+              The live path's freshness is the minute, plus `note` when it stops. */}
+          {live.isLive ? null : (
+            <FeedAge lastUpdateAt={live.lastUpdateAt} render={copy.scoreAge} />
+          )}
+          {/* ⚠⚠ The honesty note stays INSIDE the padded block and ABOVE the
+              disclosure. It is the line that says which of the three truths this
+              card is telling (HANDOFF trap 8), and pushing it under an expanded
+              panel is how it stops being read. */}
+          <Text variant="footnote" color="textFaint">
+            {live.note}
+          </Text>
         </View>
-        <ScoreLine home={live.home} away={live.away} noScoreLabel={copy.noScore} />
-        <View style={styles.rule} />
-        {/* ⚠ `FeedAge` is the SWEEP path's alone — it renders whole hours, so on
-            a feed that moves every ~30s it would print the same `0` all match.
-            The live path's freshness is the minute, plus `note` when it stops. */}
-        {live.isLive ? null : (
-          <FeedAge lastUpdateAt={live.lastUpdateAt} render={copy.scoreAge} />
-        )}
-        <Text variant="footnote" color="textFaint">
-          {live.note}
-        </Text>
+
+        {live.id !== null ? (
+          <>
+            <EventsDisclosure
+              open={showEvents}
+              onToggle={() => setShowEvents((open) => !open)}
+              copy={events}
+            />
+            {showEvents ? (
+              <MatchEvents
+                fixtureId={live.id}
+                home={live.homeTeam}
+                away={live.awayTeam}
+                copy={events}
+                supplied={live.suppliedEvents}
+                showTitle={false}
+              />
+            ) : null}
+          </>
+        ) : null}
       </View>
     );
   }
@@ -158,7 +263,7 @@ export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) 
   return (
     <View style={styles.stack}>
       {last ? (
-        <View style={[styles.card, styles.resultCard]}>
+        <View style={[styles.card, styles.flush, styles.resultCard]}>
           <View style={styles.pad}>
             <View style={styles.headRow}>
               <Text variant="eyebrowSm" color="textFaint">
@@ -169,19 +274,11 @@ export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) 
             <ScoreLine home={last.home} away={last.away} noScoreLabel={copy.noScore} />
           </View>
 
-          {/* The footer row IS the tap target, as the design has it — just on
-              the card that has data to show. */}
-          <Pressable
-            onPress={() => setShowEvents((open) => !open)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showEvents }}
-            accessibilityLabel={showEvents ? events.collapse : events.expand}
-            style={({ pressed }) => [styles.disclosure, pressed && { opacity: 0.75 }]}>
-            <Text variant="eyebrowSm" color="textFaint">
-              {events.title}
-            </Text>
-            <Chevron expanded={showEvents} />
-          </Pressable>
+          <EventsDisclosure
+            open={showEvents}
+            onToggle={() => setShowEvents((open) => !open)}
+            copy={events}
+          />
 
           {showEvents ? (
             <MatchEvents
@@ -298,11 +395,15 @@ const styles = StyleSheet.create({
   },
   liveCard: { borderColor: Colors.dark.live },
   /**
-   * ⚠ The result card drops the shared `card` padding and gap: its events panel
-   * must run edge to edge inside the rounded corners, so the padding moves onto
-   * `pad` and the card clips instead.
+   * ⚠ An expandable card drops the shared `card` padding and gap: its events
+   * panel must run edge to edge inside the rounded corners, so the padding moves
+   * onto `pad` and the card clips instead.
+   *
+   * ⚠ `overflow: 'hidden'` is the load-bearing half. Without it the panel's
+   * ground squares off the two bottom corners the card just rounded, which reads
+   * as a rendering fault rather than a style choice.
    */
-  resultCard: { padding: 0, gap: 0, overflow: 'hidden' },
+  flush: { padding: 0, gap: 0, overflow: 'hidden' },
   pad: { padding: Spacing.four, gap: Spacing.three },
   disclosure: {
     flexDirection: 'row',
@@ -313,6 +414,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.dark.hairlineMid,
   },
+  /** Kept beside `liveCard` / `nextCard` as this card's own slot; the flush
+   *  geometry the two expandable cards share lives in `flush`. */
+  resultCard: {},
   nextCard: { borderColor: Colors.dark.accentRing },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.hairlineMid },

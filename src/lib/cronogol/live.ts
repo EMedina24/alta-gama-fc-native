@@ -144,24 +144,33 @@ export function liveMinute(match: LiveMatchView): number | null {
 /**
  * Whether the live data has stopped moving.
  *
- * Two independent tells, and the first is the one that cannot be seen any other
- * way: `polling: false` beside a non-empty `matches` means the backend has rows
- * it believes are in play and nothing refreshing them. Without that flag it is
- * indistinguishable from a quiet afternoon.
+ * `lastSeenAt` is the whole test, and it is honest precisely because it advances
+ * every ~30s whether or not the SCORE moved — so a frozen stamp means we stopped
+ * looking, rather than that nothing happened.
  *
- * The second is `lastSeenAt` falling behind — which is honest precisely because
- * it advances every ~30s whether or not the SCORE moved, so a frozen stamp means
- * we stopped looking rather than that nothing happened.
+ * ⚠⚠ **`polling` is deliberately NOT read, reversing 0048 decision 4.**
+ * `.claude/LIVE-SCORES.md` §4 presents `polling: false` beside a non-empty
+ * `matches` as the one failure mode this feature has, and 0048 trusted it as
+ * authoritative. **Production contradicted that within a day.** Racing v Elche
+ * on 2026-08-28 served `polling: false` on every sample across 17:05–17:35 UTC
+ * while the rows moved perfectly — minute 4 → 22, score 0-0 → 2-0, `lastSeenAt`
+ * advancing normally throughout. The flag reported a stall that was not
+ * happening, and the card said so on a match that was updating every thirty
+ * seconds.
+ *
+ * A freshness signal that cries wolf is worse than none: it teaches the reader
+ * to ignore the one line on the card that is load-bearing. `lastSeenAt` measures
+ * the thing we actually care about — whether our copy is moving — and it
+ * measured it correctly the whole time the flag was wrong.
+ *
+ * ⚠ **This is not permission to stop caring about the two silences.** If the
+ * backend's `polling` becomes trustworthy, the right change is to reinstate it
+ * as a SECOND tell beside this one, not to swap back. See 0049.
  *
  * ⚠ An unparseable stamp counts as stalled. Erring toward "this may be out of
  * date" is the only direction an honesty signal may err in.
  */
-export function isStalled(
-  match: LiveMatchView,
-  polling: boolean,
-  now: number,
-): boolean {
-  if (!polling) return true;
+export function isStalled(match: LiveMatchView, now: number): boolean {
   const seen = Date.parse(match.lastSeenAt);
   if (Number.isNaN(seen)) return true;
   return now - seen > STALL_AFTER_MS;

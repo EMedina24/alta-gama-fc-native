@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin:0; background:#08090a; -webkit-font-smoothing:antialiased; }
+  a { color:#c8f25a; text-decoration:none; }
+  a:hover { color:#dcff86; }
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;gap:30px;padding:56px 64px 96px;font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:#f4f6f6">
+
+  <div style="display:flex;flex-direction:column;gap:9px">
+    <div style="font:600 12px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#7c858b">Handoff · live match</div>
+    <div style="font:640 30px/1.1 -apple-system,system-ui;letter-spacing:-.025em">Live event notification</div>
+    <div style="font:400 15px/1.55 -apple-system,system-ui;color:#a3abb0;max-width:740px;text-wrap:pretty">The goal alert sent while a followed club is playing, taken from option 2a. Standard iOS notification — no content extension, no custom view. Only three data points appear: goals, cards, and time left. Read <span style="font:500 13.5px ui-monospace,Menlo,monospace;color:#c8f25a">LIVE-MATCH-NOTIFICATIONS.md</span> beside this file before estimating.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:14px;padding:24px;background:#15171a;border:1px solid rgba(255,255,255,.07);border-radius:24px">
+      <div style="font:600 15px/1 -apple-system,system-ui">On the lockscreen</div>
+
+      <div style="width:393px;height:430px;border-radius:36px;overflow:hidden;position:relative;background:linear-gradient(168deg,#20272e 0%,#0e1216 62%,#080a0c 100%)">
+        <div style="position:absolute;inset:0;background:radial-gradient(118% 62% at 50% -8%,rgba(200,242,90,.11) 0%,rgba(200,242,90,0) 64%)"></div>
+
+        <div style="position:relative;padding:44px 0 0;text-align:center">
+          <div style="font:500 17px/1 -apple-system,system-ui;color:rgba(244,246,246,.72)">Saturday 5 September</div>
+          <div style="font:200 76px/1 -apple-system,system-ui;letter-spacing:-.02em;margin-top:6px;color:#f7f9f9">19:32</div>
+        </div>
+
+        <div data-shot="goal-alert" style="position:relative;padding:38px 12px 0">
+          <div style="background:rgba(30,37,44,.72);backdrop-filter:blur(28px);border:.5px solid rgba(255,255,255,.09);border-radius:22px;padding:13px 14px;display:flex;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+                <img src="icons/app-icon-60.png" alt="" style="width:16px;height:16px;border-radius:4.5px;display:block;flex:none">
+                <span style="font:500 12px/1 -apple-system,system-ui;color:rgba(244,246,246,.62);text-transform:uppercase">Alta Gama FC</span>
+                <span style="flex:1"></span>
+                <span style="font:500 12px/1 -apple-system,system-ui;color:rgba(244,246,246,.52)">now</span>
+              </div>
+              <div style="font:600 15px/1.28 -apple-system,system-ui;letter-spacing:-.012em;color:#fff">GOAL · Athletic Club 2–1 Getafe</div>
+              <div style="font:400 15px/1.34 -apple-system,system-ui;letter-spacing:-.012em;color:rgba(244,246,246,.78);margin-top:2px;text-wrap:pretty">Nico Williams 58', assisted by Sancet. Athletic ahead for the first time.</div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:9px">
+                <span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.62)">28' left</span>
+                <span style="width:1px;height:10px;background:rgba(255,255,255,.14)"></span>
+                <span style="display:flex;align-items:center;gap:5px"><svg width="7" height="10" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#f2c14e"></rect></svg><span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.62)">3</span></span>
+                <span style="display:flex;align-items:center;gap:5px"><svg width="7" height="10" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#ff5c47"></rect></svg><span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.62)">1</span></span>
+                <span style="width:1px;height:10px;background:rgba(255,255,255,.14)"></span>
+                <span style="font:600 11px/1 -apple-system,system-ui;color:#ff8f7c">Getafe 10 men</span>
+              </div>
+            </div>
+            <div style="width:38px;height:38px;border-radius:9px;background:rgba(200,242,90,.13);border:.5px solid rgba(200,242,90,.3);flex:none;display:flex;align-items:center;justify-content:center">
+              <svg width="21" height="18" viewBox="0 0 24 20" fill="none" style="display:block">
+                <circle cx="15.2" cy="10" r="8" fill="#c8f25a"></circle>
+                <path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path>
+                <path d="M1.1 10h4.5M3 6.6h3.4M3 13.4h3.4" stroke="#c8f25a" stroke-width="1.6" stroke-linecap="round"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;max-width:393px;text-wrap:pretty">The wallpaper, clock and blur material are approximated — the system owns them. Everything inside the card is yours.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;padding:24px;background:#15171a;border:1px solid rgba(255,255,255,.07);border-radius:24px;width:520px">
+      <div style="font:600 15px/1 -apple-system,system-ui">Anatomy</div>
+
+      <div style="display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
+        <div style="background:#101215;padding:14px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:baseline">
+          <div style="font:700 9.5px/1.4 -apple-system,system-ui;letter-spacing:.13em;color:#c8f25a">CARD</div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#a3abb0">Radius 22, padding 13 / 14, 12px gap to the attachment. System material; the mock uses <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">rgba(30,37,44,.72)</span> + blur 28 and a 0.5px <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">rgba(255,255,255,.09)</span> hairline.</div>
+        </div>
+        <div style="background:#101215;padding:14px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:baseline">
+          <div style="font:700 9.5px/1.4 -apple-system,system-ui;letter-spacing:.13em;color:#c8f25a">HEADER</div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#a3abb0">App icon 16×16 radius 4.5 · app name 12/500 uppercase 62% white · relative time 12/500 52% white, trailing. 5px below.</div>
+        </div>
+        <div style="background:#101215;padding:14px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:baseline">
+          <div style="font:700 9.5px/1.4 -apple-system,system-ui;letter-spacing:.13em;color:#c8f25a">TITLE</div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#a3abb0">15/600, −.012em, <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">#fff</span>. Event word uppercase, then the running score: <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">GOAL · Athletic Club 2–1 Getafe</span>. Score always in the title so the alert is useful unread.</div>
+        </div>
+        <div style="background:#101215;padding:14px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:baseline">
+          <div style="font:700 9.5px/1.4 -apple-system,system-ui;letter-spacing:.13em;color:#c8f25a">BODY</div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#a3abb0">15/400, −.012em, 78% white, 2px below the title. Scorer and minute, then assist if known, then one clause of consequence. Two lines maximum.</div>
+        </div>
+        <div style="background:#101215;padding:14px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:baseline">
+          <div style="font:700 9.5px/1.4 -apple-system,system-ui;letter-spacing:.13em;color:#c8f25a">META ROW</div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#a3abb0">9px below the body. Time left, then total yellows, then total reds, then a red-card consequence in <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">#ff8f7c</span>. All 11/600 tabular at 62% white; card glyphs 7×10; 1px 10-tall dividers at 14% white; 10px gaps. Segments drop out when zero — the row itself disappears if only the clock is left.</div>
+        </div>
+        <div style="background:#101215;padding:14px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:baseline">
+          <div style="font:700 9.5px/1.4 -apple-system,system-ui;letter-spacing:.13em;color:#c8f25a">ATTACHMENT</div>
+          <div style="font:400 12.5px/1.5 -apple-system,system-ui;color:#a3abb0">38×38, radius 9. Goal: accent plate <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">rgba(200,242,90,.13)</span> on a <span style="font:500 11.5px ui-monospace,Menlo,monospace;color:#dfe6e7">rgba(200,242,90,.3)</span> hairline, struck-ball glyph 21×18 centred. Cards: same plate in the card colour with the card glyph. One attachment only — see the MD.</div>
+        </div>
+      </div>
+
+      <div style="font:600 15px/1 -apple-system,system-ui;margin-top:8px">Glyphs</div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:#101215;border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <svg width="30" height="25" viewBox="0 0 24 20" fill="none" style="display:block">
+            <circle cx="15.2" cy="10" r="8" fill="#c8f25a"></circle>
+            <path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path>
+            <path d="M1.1 10h4.5M3 6.6h3.4M3 13.4h3.4" stroke="#c8f25a" stroke-width="1.6" stroke-linecap="round"></path>
+          </svg>
+          <div style="font:600 11px/1.3 -apple-system,system-ui;color:#a3abb0;text-align:center">Goal<br><span style="font-weight:400;color:#7c858b">24×20 viewBox</span></div>
+        </div>
+        <div style="flex:1;background:#101215;border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <svg width="18" height="25" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#f2c14e"></rect></svg>
+          <div style="font:600 11px/1.3 -apple-system,system-ui;color:#a3abb0;text-align:center">Yellow<br><span style="font-weight:400;color:#7c858b">#f2c14e</span></div>
+        </div>
+        <div style="flex:1;background:#101215;border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <svg width="18" height="25" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#ff5c47"></rect></svg>
+          <div style="font:600 11px/1.3 -apple-system,system-ui;color:#a3abb0;text-align:center">Red<br><span style="font-weight:400;color:#7c858b">#ff5c47</span></div>
+        </div>
+      </div>
+      <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Same three glyphs already used in the match-events timeline — take them from <span style="font:500 12.5px ui-monospace,Menlo,monospace;color:#dfe6e7">export/match-events/</span>, do not redraw.</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -67,7 +67,18 @@ a 400. ⚠ Any *other* query parameter is a **400**, not a no-op.
       "injuryTime": null,
       "score": { "home": 1, "away": 0 },
       "halftime": { "home": null, "away": null },
-      "lastSeenAt": "2026-08-27T20:07:31.402+00:00"
+      "lastSeenAt": "2026-08-27T20:07:31.402+00:00",
+
+      // ⚠⚠ NOT SERVED YET — backend §98 is written but its migration is
+      // unapplied and it has never run against a real match. Shape is frozen
+      // enough to plan against; do not ship a render path until §6 says it is
+      // deployed.
+      "events": [
+        { "type": "goal", "subtype": null, "minute": 20, "minuteExtra": null,
+          "period": "FirstHalf",
+          "player": { "name": "Yassir Zabiri", "slug": "yassir-zabiri" },
+          "related": null, "teamSlug": "racing" }
+      ]
     }
   ],
   "count": 1,
@@ -76,7 +87,24 @@ a 400. ⚠ Any *other* query parameter is a **400**, not a no-op.
 ```
 
 Types are in `senpai-backend/CRONOGOL-API.md` under *live (added 2026-08-27)*,
-ready to copy into `src/lib/cronogol/types.ts` verbatim.
+ready to copy into `src/lib/cronogol/types.ts` verbatim. The `events` types are
+there too, under the same heading — `LiveMatchEventView`,
+`LiveMatchEventPersonView`, `LiveMatchEventTypeView`.
+
+### ⚠ `events`, when it lands (backend §98)
+
+Same field names as `/cronogol/fixtures/{id}/events` **minus its stored-row
+`id`**, so `MatchEvents` renders both with no second component. Four things that
+differ from the durable route and will bite if assumed away:
+
+| | |
+| --- | --- |
+| `[]` | means "no events **or** not fetched yet" — the two are **not** distinguished. `score` is the tell: a non-zero score with `[]` means a fetch has not landed, not that the goals were unattributed. |
+| `player.slug` | **often `null` while live** — resolves only when the person matches a squad row the backend holds. Render `name`; treat `slug` as an optional link, never an identity. |
+| `teamSlug` on an own goal | the **scorer's** team, not the side that benefited. Passed through from the source, not derived — do not infer which score it moved. Unverified upstream. |
+| lifetime | these **vanish with the row** at full time. `/cronogol/fixtures/{id}/events` is the record afterwards, and §98 writes it at the whistle rather than up to 3h later. |
+
+⚠ `type` can be `"unknown"` — render the minute and the name, skip the icon.
 
 ---
 
@@ -213,6 +241,25 @@ returns the identical body.
 `Matchdays` and the club page are the second — all three already render fixture
 rows keyed by the id this route joins on.
 
+### Wiring `events` when §98 deploys
+
+⚠ **No app change is needed to find out.** Two landing shapes, and the backend
+does both:
+
+1. **`match_events` at the whistle** — the expanded row fills in from
+   `/cronogol/fixtures/{id}/events` **with zero app change**, just sooner than
+   the ~3h it takes today.
+2. **Inline on `/cronogol/live`** — one line passing `match.events` into
+   `MatchEvents.supplied`, since the shapes match.
+
+⚠ The two are not alternatives: (1) is the durable record after full time and
+(2) is what fills the timeline *during* the match. Expect both, and expect the
+inline array to disappear when the row does.
+
+⚠⚠ **Do not add a second query for this.** The events arrive on the live payload
+you are already polling; a per-fixture events fetch during a match would be N
+requests per cycle for data you were handed.
+
 ---
 
 ## 6. What this does NOT give you
@@ -222,11 +269,103 @@ rows keyed by the id this route joins on.
   exist" is still true — but its stated *reason* ("no live feed") is now out of
   date, and Live Activities are a real phase-2 option that were not viable
   before this landed.
-- ⛔ **No live match EVENTS.** No scorer, no card, no substitution as it happens.
+- ⭐⭐ **LIVE MATCH EVENTS — DEPLOYED AND CONSUMED, 2026-08-28.** This entry was
+  ⛔ for a single day. `/cronogol/live` now carries an `events` array per match,
+  and the Today board's in-progress card renders it
+  ([0051](./decisions/0051-live-match-events-inline.md)). Confirmed in
+  production at 19:07 UTC. The ⛔ entry is kept below, struck through, because
+  its reasoning is why the card was built to survive the absence in the first
+  place.
+
+  ⚠ **It took two deploys.** The first was red: the backend shipped the
+  migration and the code that reads `events`, but not the regenerated
+  `database.types.ts`, and the column had not been applied to the database.
+
+- ⛔ ~~**No live match EVENTS — today.**~~ No scorer, no card, no substitution as it
+  happens. `/cronogol/live` carries no timeline, and
   `/cronogol/fixtures/{id}/events` is a 3-hourly sweep, so the timeline the
   expanded row renders ([0045](./decisions/0045-match-events-expanded-row.md),
   [0046](./decisions/0046-match-events-grouping-tabs.md)) does **not** fill in
   during a match. A live scoreline beside an empty timeline is the expected
   shape, and worth handling explicitly so it does not read as a bug.
+
+  > ⭐⭐ **DEPLOYED 2026-08-28, and the app consumes it.**
+  > `CRONOGOL.md` §98 / `decisions/0032`. `/cronogol/live` carries an `events`
+  > array per match, and the durable timeline is written **at the whistle**
+  > instead of up to three hours later.
+  >
+  > ⚠ ~~Do not build against it until it is live.~~ It is live. The migration was
+  > applied and the second deploy is green; the first was red for exactly the
+  > reason the migration's own header warns about — code committed without the
+  > regenerated `database.types.ts`, against a column that was not yet there.
+  >
+  > **How the app takes it** ([0051](./decisions/0051-live-match-events-inline.md)):
+  > `suppliedEvents: match?.events` on the live path — one expression, and
+  > `MatchEvents` renders it with the same tabs and rows as the durable route.
+  > ⚠ `undefined` on the sweep path is what falls back to
+  > `/cronogol/fixtures/{id}/events`; `[]` is a real answer and must not be
+  > defaulted to.
+  > ⚠ Shapes match that route minus its stored-row `id`, which is why
+  > `eventKey()` keys **both** sources — the panel swaps source at full time and
+  > an id-vs-index split would remount every row at that moment.
+  >
+  > ⚠⚠ **Still unverified against a real scorer.** No LaLiga match had scored
+  > while this was wired — Tenerife v Sporting sat 0-0 at 6′ with `events: []`.
+  > The triggers, the full-time hand-off, and "the event set grows during play"
+  > remain inferred. `/_debug/gallery` proves the rendering, not the feed.
+  >
+  > ⚠ `player.slug` is often `null` while live, and `teamSlug` on an own goal is
+  > the **scorer's** team, not the side that benefited — passed through, not
+  > derived.
+  >
+  > <details><summary>The evidence it was built on</summary>
+  >
+  > **Verified possible on 2026-08-28.** The
+  > upstream publishes the timeline *during* play: sampled on Racing Santander v
+  > Elche at 31 minutes, `FirstHalf`, 2-0, the events route returned both goals
+  > with the scorer named (Yassir Zabiri, 14' and 20'). Backend plan is
+  > `senpai-backend/.claude/cronogol/live-phase-2.md` strand A, speccing
+  > `CRONOGOL.md` §98: `/cronogol/live` gains an `events` array, and the durable
+  > timeline lands **at the whistle** instead of up to three hours later.
+  >
+  > </details>
+  >
+  > ⭐ **The app surface is BUILT and waiting, 2026-08-28** —
+  > [0050](./decisions/0050-match-events-on-the-in-progress-card.md). The Today
+  > board's in-progress card expands into the same `MatchEvents` panel the
+  > last-result card and the matchday rows use, on the existing
+  > `/cronogol/fixtures/{id}/events`, polling every 60s (`STALE.liveEvents`)
+  > while the panel is open on a live match and the tab is focused.
+  >
+  > ⚠ **This is not building against §98.** It reads only the route that exists
+  > today, which is why the panel currently shows *"aren't published yet"* for a
+  > whole match — confirmed against a 3-0 at 51 minutes on 2026-08-28, where the
+  > route served `{"events":[],"count":0}`. **That empty panel is the explicit
+  > handling this section asked for**, not a defect.
+  >
+  > ⚠ The backend's choice of where live events land decides our next move, and
+  > only one of the three costs anything: writing to `match_events` (its options
+  > 1 and 2) fills this panel with **no app change**; serving them inline on
+  > `/cronogol/live` (option 3) means passing them to `MatchEvents.supplied`,
+  > the prop 0050 added for exactly that fork.
+
+- ⛔⛔ **No player STATISTICS, live or otherwise — and match events are not
+  them.** This distinction is load-bearing in the backend and is, in its own
+  words, "the claim most likely to be lost in retelling"
+  (`senpai-backend/.claude/decisions/0030`,
+  `src/providers/match-event-provider.ts`).
+
+  - **Match events** = discrete things that happened in one match — a goal, a
+    card, a substitution. Available, and §98 above will make them live.
+  - **Player statistics** = season aggregates — appearances, season goal totals,
+    minutes played, pass accuracy, xG. **These do not exist at any price point
+    we have found**, on any source, live or historical
+    (`senpai-backend/.claude/cronogol/player-data-findings.md`). They are not
+    coming with §98 and are not a backlog item; they are a purchase.
+
+  ⚠ So the Players tab and a squad page can show identity — name, position,
+  photo, age — and never a stat line. A live match will be able to show *who
+  scored*; it will not show *how many they have scored this season*.
+
 - ⛔ **No half-time score, no possession, no shots, no lineups.**
 - ⛔ **Nothing outside LaLiga.**

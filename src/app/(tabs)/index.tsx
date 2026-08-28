@@ -166,10 +166,30 @@ export default function TodayScreen() {
     // The screen's own instant, so the minute, the stall test and its caption
     // all describe the same moment.
     const checkedAt = now.getTime();
-    const stalled = match !== null && isStalled(match, live.data?.polling ?? false, checkedAt);
+    const stalled = match !== null && isStalled(match, checkedAt);
     const minute = match ? liveMinute(match) : null;
 
     return {
+      // ⚠ The fixture's own id and its two `TeamRef`s, for the events panel
+      // (ADR 0050) — the same three the last-result card already passes, and
+      // for the same reason: `ScoreSide` below carries no slug, and the panel
+      // derives each event's side by comparing one.
+      id: fixture.id,
+      homeTeam: fixture.homeTeam,
+      awayTeam: fixture.awayTeam,
+      /**
+       * The in-play timeline, straight off the live row (ADR 0051).
+       *
+       * ⚠⚠ **`undefined` on the sweep path, and that is what selects the other
+       * source.** `match?.events` is the whole rule: a LaLiga match in play
+       * hands the panel its events — already fetched, on the same poll as the
+       * score — while every other league passes `undefined` and the panel falls
+       * back to the durable finished-match route exactly as before.
+       *
+       * ⚠ Do not default this to `[]`. An empty array is a claim that we hold
+       * the answer; the sweep path holds nothing and must go and ask.
+       */
+      suppliedEvents: match?.events,
       home: side(fixture.homeTeam, goalsHome, loses(goalsHome, goalsAway)),
       away: side(fixture.awayTeam, goalsAway, loses(goalsAway, goalsHome)),
       isLive: match !== null,

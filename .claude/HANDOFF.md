@@ -424,14 +424,51 @@ documented at the code that handles them; this is the index.
     `{"matches":[],"count":0,"polling":false}` — the normal answer.
   - Gates clean: `tsc`, `expo export`, and lint at its **unchanged 6-error / 9-warning
     baseline**.
-  - ⚠ **NOT seen against a real in-play match.** No LaLiga fixture was live while
-    this was built, so the `fixtureId` join is proven against the contract and the
-    harness but not against a live row — and the minute has never been watched to
-    advance. `/_debug/gallery` carries seven card states (six live, plus the sweep
-    fallback beside them) because the route is empty most of the day.
+  - ⭐ **VERIFIED against a real in-play match, 2026-08-28** — Racing v Elche,
+    LaLiga, kickoff 17:00 UTC. Seen on the **simulator** and on a **physical
+    device** via the `preview` build `12e1c602`. The `fixtureId` join holds against
+    a real row: `/cronogol/live` and `/cronogol/fixtures` served the same
+    `d70bfe7b…`, with the sweep still reading `scheduled` — which is exactly the
+    case tier 1 exists for, now proven rather than argued.
   - ⚠ **`useIsFocused` under `NativeTabs` is unexercised.** It is the poll's gate;
     if it misreports, the app polls every 15s from a background tab. Confirm the
     network log goes quiet on a tab switch.
+  - ⚠⚠ **KNOWN GAP — the card is hostage to the fixture window, and it cost an
+    hour on 2026-08-28.** `boardLive` tier 1 iterates FIXTURES and looks the live
+    row up by id, so a match can only be shown if it is already in
+    `useFinishedToday`'s payload. That query is keyed on the DAY
+    (`keys.fixtureWindow(from.slice(0,10), 'today')`) while its `to` bound is
+    whenever the queryFn last ran — and with `staleTime` 15 min, no interval and
+    `refetchOnWindowFocus: false` globally, nothing re-asks it. **A match that
+    kicks off after the last fetch is invisible for up to 15 minutes**, which is
+    precisely when a live card earns its place. Measured: the window fetched at
+    16:50 returned **zero** fixtures for a 17:00 kickoff. Pull-to-refresh is the
+    workaround. ⚠ The real fix is to stop joining at all — `/cronogol/live`
+    already carries `fixtureId`, both slugs, names, `shortName`, kickoff, score
+    and minute; the ONLY thing the fixture adds is crests, and those come from
+    `useTeams()` (catalogue, 24h) keyed by the same slugs. That revises decision 2
+    of 0048 and needs its own entry.
+  - ⚠ **KNOWN GAP — `liveMinute` would render `0′`.** It returns whatever the API
+    sends for a `live` row, so a `minute: 0` in the opening seconds prints `0′`,
+    which LIVE-SCORES.md §4 explicitly forbids. The null case is guarded; a
+    literal zero is not.
+  - ~~⚠ **`polling: false` was CONSTANT on a genuinely live match**~~ — **ROOT
+    CAUSE FOUND AND FIXED IN THE BACKEND, 2026-08-28.** It was never an app
+    question: `LiveSessionService.acquireLease()` stamped `lease_started_at`
+    **once**, while `LiveReadService.isPolling()` reads that same stamp against
+    the same 120s window — so a session running for hours reported itself dead
+    from ~two minutes in. `senpai-backend@60b0ebf` renews the lease every poll
+    cycle, and the renewal doubles as an ownership check.
+    ⭐ **Verified in production at 18:39 UTC**: `polling: true` on Racing v Elche,
+    the first `true` ever observed from this route.
+    ⚠ **This does NOT reverse [0049](./decisions/0049-stall-is-lastseenat-not-polling.md).**
+    `isStalled` still reads `lastSeenAt` alone. 0049 already says what a
+    trustworthy flag would license — reinstating it as a **second** tell beside
+    the stamp, never a swap back — and one afternoon's observation is not yet
+    that. ⚠ The invariant it now rests on: `livePollIntervalMs` (30s) must stay
+    comfortably under `liveLeaseSeconds` (120s).
+    ⚠ The minute still lagged the wall clock (`minute: 4` at 17:07 on a 17:00
+    kickoff); that half is unexplained and is a `senpai-backend` question.
 - **The push cron is ON** (2026-08-26, Render dashboard; `render.yaml:91` agrees).
   ⚠ It dispatches only what the ~3h sync newly detects, so silence is the normal
   state. Every notification seen on 2026-08-26 was hand-sent.
@@ -443,9 +480,12 @@ documented at the code that handles them; this is the index.
 1. ~~**Widgets**~~ — DONE 2026-08-27, [0047](./decisions/0047-widgets.md).
    Both home-screen sizes, the Lock Screen accessories, and a per-club picker.
    Verified on the simulator; see "Done and verified" above for what was and was
-   not seen. ⚠ **The remaining widget work is a device build** — a third
-   extension bundle id (`com.altagamafc.app.widget`) needs its own provisioning
-   profile, exactly as the two notification targets did.
+   not seen. ⚠ ~~The remaining widget work is a device build~~ — **that profile is
+   minted.** `widget phase 2` landed 15:44 on 2026-08-27 and the `preview` build at
+   15:51 the same day succeeded with the widget target in it, as did `12e1c602` on
+   2026-08-28. The third bundle id (`com.altagamafc.app.widget`) signs. What is
+   still unseen is the widgets themselves ON a device — only the simulator has
+   shown them.
 1b. **`REMINDER_HORIZON_DAYS` is 21 over a 7-day dataset**, so it never binds:
    `selectReminders` filters `useUpcoming`'s seven days, and reminders therefore
    cover a week rather than three. Found while sizing the widget's own window
@@ -672,6 +712,15 @@ card takes no chevron (in-progress matches have no events at all, so design rule
 gated on **status, not data**, because gating on data means pre-fetching a whole
 matchday; and all six wire types are drawn, not four.
 
+⚠ **The first of those three was reversed on 2026-08-28** —
+[0050](./decisions/0050-match-events-on-the-in-progress-card.md). The
+in-progress card expands too now. Its premise expired rather than being wrong:
+the upstream **does** publish the timeline during play, so an in-play match
+having no events is a gap in our ingest, not a fact about football. ⚠⚠ **Nothing
+serves it yet**, so that panel opens on *"aren't published yet"* on real data —
+by design, and the state LIVE-SCORES.md §6 has been asking us to render
+explicitly. The other two divergences stand.
+
 ⚠ **`react-native-svg` is now in use** — its first import in `src/`, for the
 event glyphs and the chevron. It autolinks, so no config changed, but it is a
 NATIVE module: a dev client built before it was declared throws rather than
@@ -768,7 +817,7 @@ the whole job of that screen.
   matchday is true of all of them. **Needs a product call**, not a fix.
 
 ### Known gaps, deliberately
-- ⚠ **Live scores are LaLiga-only, and live match EVENTS do not exist.**
+- ⚠ **Live scores are LaLiga-only, and live match EVENTS do not exist YET.**
   `/cronogol/live` (2026-08-27) covers LaLiga alone — every other league renders
   exactly as it does today, so the non-live path stays the fallback rather than
   being replaced. Wired on Today only
@@ -778,6 +827,41 @@ the whole job of that screen.
   [0046](./decisions/0046-match-events-grouping-tabs.md)) does **not** fill in
   during a match. A live scoreline beside an empty timeline is the expected
   shape — handle it explicitly so it does not read as a bug.
+  ⭐⭐ **Backend §98 is now WRITTEN** (2026-08-28, later the same day —
+  `senpai-backend/CRONOGOL.md` §98, its `decisions/0032`). This supersedes
+  "planned": `/cronogol/live` gains a per-match `events` array, and the durable
+  timeline is written **at the whistle** instead of ≤3h later.
+  ⭐⭐ **DEPLOYED, and the app consumes it** (2026-08-28, same day —
+  [0051](./decisions/0051-live-match-events-inline.md)). `/cronogol/live` carries
+  a per-match `events` array; the in-progress card renders it through 0050's
+  `supplied` seam, in one expression: `suppliedEvents: match?.events`.
+  ⚠ **It took two deploys.** The first was red — the backend committed the
+  migration and the code that reads `events` but not the regenerated
+  `database.types.ts`, against a column not yet applied to the database. Exactly
+  what that migration's own header warns about.
+  ⚠ **`undefined` vs `[]` selects the source and must not be collapsed.**
+  `undefined` (the sweep path, every non-LaLiga league) falls back to the durable
+  `/cronogol/fixtures/{id}/events`; `[]` means the live route holds an empty
+  timeline and the panel says so. Never default it to `[]`.
+  ⚠ **`eventKey()` keys BOTH sources**, and not because live events lack an
+  `id`: the panel swaps source at full time, and keying one on `id` and the other
+  on an index would remount every row at that moment.
+  ⚠ **0050's 60s durable-route poll is GONE** (`STALE.liveEvents`, the `polling`
+  option). Events ride the 15s live poll now; the second poll would be a request
+  a minute at a finished-only sweep that cannot have anything for a live match.
+  ⚠⚠ **Never verified against a real scorer.** No LaLiga match scored while this
+  was wired — Tenerife v Sporting was 0-0 at 6′ with `events: []`. The triggers,
+  the full-time hand-off, and "the event set grows during play" are all still
+  inferred. `/_debug/gallery` proves the rendering, not the feed. **This is the
+  first thing to watch on the next matchday.**
+  [LIVE-SCORES.md](./LIVE-SCORES.md) §2 (shape) and §5 (wiring).
+- ⛔⛔ **Player STATISTICS do not exist, and match events are NOT them.** Squads
+  carry identity only — name, position, photo, age — never appearances, season
+  goals, minutes or xG. No source has them at any price point yet found, so this
+  is a purchase, not a backlog item. §98 will let a live match say *who scored*;
+  it will never say *how many they have scored this season*. Per the backend's
+  own decision log this is "the claim most likely to be lost in retelling"
+  (`senpai-backend/.claude/decisions/0030`).
 - **Serie A has no mark** — text label, don't invent artwork.
 - **Qualification bands are unconfirmed for 2026/27** — coefficient-driven, worth
   checking against the real allocation before launch.

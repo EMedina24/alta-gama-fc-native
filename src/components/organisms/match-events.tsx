@@ -20,9 +20,15 @@
  * array encodes each source's own chronology; a client-side sort on `minute`
  * flips substitution pairs between renders.
  *
- * ⚠ In-progress matches have no events at all, so they get no chevron and
- * never reach this component. That is the design's rule 3 struck out — live
- * events are a separate backend project.
+ * ⚠⚠ **An IN-PROGRESS match reaches this component now** (ADR 0050), reversing
+ * the line that stood here. It is still true that `/cronogol/fixtures/{id}/events`
+ * serves nothing during play — checked against a real live match on 2026-08-28 —
+ * so what a live panel shows today is `notPublished`, which is the honest answer
+ * for exactly the reason above. What changed is that the absence is now known to
+ * be TEMPORARY: the upstream does publish during play and the backend is
+ * building on it (`senpai-backend/.claude/cronogol/live-phase-2.md` strand A).
+ *
+ * ⚠ **`supplied` is the seam for where that lands.** See the prop.
  *
  * ⚠ **One group at a time, behind the tabs** (ADR 0046). A 4-1 with six bookings
  * and ten substitutions is twenty rows, and a panel that long pushes the matches
@@ -38,6 +44,7 @@ import { Colors, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc } from '@/lib/cronogol/derive';
 import {
   detailLine,
+  eventKey,
   eventKind,
   eventSide,
   eventsInGroup,
@@ -46,7 +53,7 @@ import {
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
-import type { TeamRef } from '@/lib/cronogol/types';
+import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { useFixtureEvents } from '@/queries/use-fixture-events';
 
@@ -77,6 +84,21 @@ export interface MatchEventsProps {
    * so do need it.
    */
   showTitle?: boolean;
+  /**
+   * Events already in hand, bypassing the fetch entirely.
+   *
+   * ⭐ **This is now the LIVE path, and the seam did its job** (ADR 0051). The
+   * backend chose the third of `live-phase-2.md`'s three landing places —
+   * events inline on `GET /cronogol/live` — and consuming it cost exactly this
+   * prop. Nothing in `EventTabs`, `EventRow` or `lib/cronogol/events` moved.
+   *
+   * ⚠ An empty array is NOT the same as `undefined`. `[]` means "I hold the
+   * answer and it is empty" — the `notPublished` branch. `undefined` means
+   * "fetch it yourself", which is every existing caller.
+   *
+   * ⚠ It is also how `/_debug/gallery` draws an expanded panel with no network.
+   */
+  supplied?: readonly TimelineEventView[];
 }
 
 export function MatchEvents({
@@ -86,9 +108,12 @@ export function MatchEvents({
   copy,
   bleed = false,
   showTitle = true,
+  supplied,
 }: MatchEventsProps) {
-  const query = useFixtureEvents(fixtureId);
-  const events = query.data?.events ?? [];
+  const held = supplied !== undefined;
+  // ⚠ `null` disables the query outright — a supplied set must cost no request.
+  const query = useFixtureEvents(held ? null : fixtureId);
+  const events = supplied ?? query.data?.events ?? [];
 
   /**
    * ⚠ **`null` until the reader taps, and the shown group is DERIVED from it.**
@@ -117,9 +142,12 @@ export function MatchEvents({
         </Text>
       ) : null}
 
-      {query.isPending ? (
+      {/* ⚠⚠ `held` FIRST, and it is not a tidy-up. A disabled query reports
+          `isPending` for ever, so without this a supplied set would paint
+          skeletons on top of data we are already holding. */}
+      {!held && query.isPending ? (
         <SkeletonRows count={3} height={Size.rowSkeleton} />
-      ) : query.isError ? (
+      ) : !held && query.isError ? (
         /* ⚠ A failed request is NOT an empty one. Falling through to
            `notPublished` would have the app state, as fact, that the backend
            holds nothing for a match it never managed to ask about. */
@@ -139,13 +167,13 @@ export function MatchEvents({
             onSelect={setPicked}
           />
           <View style={styles.rows}>
-            {eventsInGroup(events, active).map((event) => {
+            {eventsInGroup(events, active).map((event, index) => {
               const side = eventSide(event, home, away);
               const team = side === 'home' ? home : side === 'away' ? away : null;
 
               return (
                 <EventRow
-                  key={event.id}
+                  key={eventKey(event, index)}
                   minute={minuteLabel(event)}
                   kind={eventKind(event)}
                   name={event.player.name}

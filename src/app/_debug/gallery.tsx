@@ -28,14 +28,20 @@ import {
   detailLine,
   eventKind,
   eventSide,
+  eventKey,
   eventsInGroup,
   groupCounts,
   initialGroup,
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
-import { isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
-import type { LiveMatchView, MatchEventView, TeamRef } from '@/lib/cronogol/types';
+import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
+import type {
+  LiveMatchEventView,
+  LiveMatchView,
+  MatchEventView,
+  TeamRef,
+} from '@/lib/cronogol/types';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useState } from 'react';
 
@@ -122,8 +128,20 @@ const liveRow = (over: Partial<LiveMatchView> = {}): LiveMatchView => ({
   score: { home: 1, away: 0 },
   halftime: { home: null, away: null },
   lastSeenAt: new Date(NOW - 1000 * 12).toISOString(),
+  events: [],
   ...over,
 });
+
+/**
+ * The same timeline as `EVENTS`, in the shape `GET /cronogol/live` actually
+ * sends it — **no `id`** (ADR 0051).
+ *
+ * ⚠ Derived from `EVENTS` rather than written out again, so the two can never
+ * disagree about what a goal looks like. What it proves is narrow and worth
+ * proving: that the panel renders the id-less shape production will send, and
+ * that `eventKey` tells the rows apart without one.
+ */
+const LIVE_EVENTS: LiveMatchEventView[] = EVENTS.map(({ id: _id, ...rest }) => rest);
 
 const LIVE_SIDE = (name: string, abbr: string, goals: number | null, muted: boolean) => ({
   name,
@@ -161,38 +179,35 @@ const LIVE_CASES = (
     {
       label: 'live · 67′ — the ordinary case, /cronogol/live',
       match: liveRow(),
-      polling: true,
     },
     {
       label: 'live · 94′ — ⚠ stoppage is INCLUDED, never rendered 90+4′',
       match: liveRow({ minute: 94 }),
-      polling: true,
     },
     {
       label: 'live · before kick-off — ⚠ a dash, never 0 (null is not a zero)',
       match: liveRow({ minute: null, score: { home: null, away: null } }),
-      polling: true,
     },
     {
       label: 'unknown status — ⚠ the score is still true, the minute is not',
       match: liveRow({ status: 'unknown', minute: null }),
-      polling: true,
     },
     {
-      label: 'stalled · polling false — the one failure mode this feature has',
-      match: liveRow(),
-      polling: false,
+      // ⚠ The case that used to be `polling: false`. That flag is no longer read
+      // (0049) — production served it `false` for a whole match that was
+      // updating fine, so `lastSeenAt` is the only stall signal now.
+      label: 'stalled · lastSeenAt just past the 2-min threshold',
+      match: liveRow({ lastSeenAt: new Date(NOW - (STALL_AFTER_MS + 30_000)).toISOString() }),
     },
     {
-      label: 'stalled · lastSeenAt fell behind — dimmed minute, paused note',
+      label: 'stalled · lastSeenAt 9 min behind — dimmed minute, paused note',
       match: liveRow({ lastSeenAt: new Date(NOW - 1000 * 60 * 9).toISOString() }),
-      polling: true,
     },
   ] as const
-).map(({ label, match, polling }) => ({
+).map(({ label, match }) => ({
   label,
   match,
-  stalled: isStalled(match, polling, NOW),
+  stalled: isStalled(match, NOW),
   minute: liveMinute(match),
   minutesAgo: minutesSinceSeen(match, NOW),
 }));
@@ -410,9 +425,9 @@ export default function GalleryScreen() {
             onSelect={setPicked}
           />
           <View style={styles.eventRows}>
-            {eventsInGroup(EVENTS, evGroup).map((event) => (
+            {eventsInGroup(EVENTS, evGroup).map((event, index) => (
               <EventRow
-                key={event.id}
+                key={eventKey(event, index)}
                 minute={minuteLabel(event)}
                 kind={eventKind(event)}
                 name={event.player.name}
@@ -447,6 +462,11 @@ export default function GalleryScreen() {
         <Case key={label} label={label}>
           <MatchBoard
             live={{
+              // ⚠ No fixture behind a fabricated row, so no chevron. A real id
+              // is what the two dedicated cases below supply instead.
+              id: null,
+              homeTeam: null,
+              awayTeam: null,
               home: LIVE_SIDE('Barcelona', 'BAR', match.score.home, false),
               away: LIVE_SIDE(
                 'Athletic Club',
@@ -473,12 +493,65 @@ export default function GalleryScreen() {
       <Case label="sweep fallback · /cronogol/fixtures — no minute, FeedAge, cadence note">
         <MatchBoard
           live={{
+            id: null,
+            homeTeam: null,
+            awayTeam: null,
             home: LIVE_SIDE('Bayern München', 'FCB', 2, false),
             away: LIVE_SIDE('RB Leipzig', 'RBL', 1, true),
             isLive: false,
             minute: null,
             stalled: false,
             note: copy.today.inPlayNote,
+            lastUpdateAt: null,
+          }}
+          copy={copy.today}
+          events={copy.events}
+        />
+      </Case>
+
+      {/* ⚠⚠ The two cases below are the ONLY way to see an expanded in-progress
+          card (ADR 0050). `/cronogol/fixtures/{id}/events` serves nothing during
+          play today, so on real data the panel can only ever show the second of
+          them — the first is what the card becomes when the backend lands live
+          events, and it is here so that shape is looked at before it ships.
+
+          ⚠ Both go through `supplied`, so neither fires a request off a fake
+          fixture id — which would settle on the ERROR copy and show nothing. */}
+      <Case label="in-progress · EXPANDED — the LIVE timeline off /cronogol/live; ⚠ id-less, no network">
+        <MatchBoard
+          live={{
+            id: 'gallery-live',
+            homeTeam: EV_HOME,
+            awayTeam: EV_AWAY,
+            suppliedEvents: LIVE_EVENTS,
+            home: LIVE_SIDE('Arsenal', 'ARS', 2, false),
+            away: LIVE_SIDE('Chelsea', 'CHE', 1, true),
+            isLive: true,
+            minute: copy.today.minute(67),
+            stalled: false,
+            note: copy.today.liveNote,
+            lastUpdateAt: null,
+          }}
+          copy={copy.today}
+          events={copy.events}
+        />
+      </Case>
+
+      <Case label="in-progress · EXPANDED, empty — ⚠ what a REAL live match shows today">
+        <MatchBoard
+          live={{
+            id: 'gallery-live-empty',
+            homeTeam: EV_HOME,
+            awayTeam: EV_AWAY,
+            // ⚠ `[]`, not undefined: "we hold the answer and it is empty".
+            // Never "no goals" — the copy is the only place that holds the line.
+            suppliedEvents: [],
+            home: LIVE_SIDE('Arsenal', 'ARS', 0, false),
+            away: LIVE_SIDE('Chelsea', 'CHE', 0, false),
+            isLive: true,
+            minute: copy.today.minute(8),
+            stalled: false,
+            note: copy.today.liveNote,
             lastUpdateAt: null,
           }}
           copy={copy.today}

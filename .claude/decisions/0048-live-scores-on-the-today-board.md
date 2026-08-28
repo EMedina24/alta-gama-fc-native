@@ -71,6 +71,14 @@ is the single failure this feature could introduce. Those rows fall through to t
 
 ### 4 · The stalled state is a first-class rendering, not an error
 
+> ⚠ **REVISED by [0049](./0049-stall-is-lastseenat-not-polling.md), 2026-08-28.**
+> The `polling` half of this decision did not survive contact with production —
+> the flag read `false` for an entire match that was updating correctly, so the
+> card showed a stall that was not happening. `isStalled` now reads `lastSeenAt`
+> alone. The rest of this decision — that the stalled state is rendered rather
+> than hidden, and that the minute dims rather than disappearing — stands.
+
+
 `polling: false` beside a non-empty `matches` means the backend has rows it believes
 are in play and nothing refreshing them. That is the one failure mode this feature
 has, and without the flag it is indistinguishable from a quiet afternoon.

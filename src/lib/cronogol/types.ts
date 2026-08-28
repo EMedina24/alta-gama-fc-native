@@ -725,6 +725,33 @@ export interface LiveMatchView {
    * `lastSourceUpdate()` in `./scores` must never be pointed at this.
    */
   lastSeenAt: string;
+  /**
+   * ⭐ **The in-play timeline** — who scored, who was booked, who came off
+   * (backend §98, added 2026-08-28). It rides this route's own ~30s refresh, so
+   * the panel needs no request of its own.
+   *
+   * ⚠⚠ **`[]` does NOT distinguish "nothing happened" from "not fetched yet."**
+   * The backend is explicit that both render as nothing, which is the same thing
+   * on screen. `score` is the tell if you ever need the difference: a non-zero
+   * score beside an empty array means a fetch has not landed, **not** that the
+   * goals were unattributed. ⚠ Never phrase either as "no goals".
+   *
+   * ⚠ `player.slug` is **usually null while live** — it resolves only when the
+   * person matches a squad row the backend holds. Render `name`; treat the slug
+   * as an optional link, never an identity. (The panel does not link at all
+   * today — ADR 0045 defers it.)
+   *
+   * ⚠ **On an OWN GOAL, `teamSlug` is the SCORER's team, not the side that
+   * benefited.** Passed through from the source rather than derived, and
+   * unverified as of 2026-08-28. `eventKind` already draws `own-goal` as its own
+   * mark precisely so the crest is not read as "who this helped".
+   *
+   * ⚠ **These VANISH at full time**, with the row itself. The durable
+   * `/cronogol/fixtures/{id}/events` is the record from then on.
+   *
+   * ⚠ **LaLiga only**, like everything else on this route.
+   */
+  events: LiveMatchEventView[];
 }
 
 /**
@@ -1146,6 +1173,29 @@ export interface MatchEventView {
    */
   related: MatchEventPersonView | null;
 }
+
+/**
+ * Everything the timeline RENDERS from: every field of `MatchEventView` except
+ * its stored-row `id`.
+ *
+ * ⚠⚠ **This exists because the panel now has TWO sources** (ADR 0051). The
+ * durable route serves stored rows with an `id`; `GET /cronogol/live` serves the
+ * in-play timeline WITHOUT one, deliberately — a live event has no stable id at
+ * every source, and a client keying on one would break at full time when the
+ * durable row replaces it. Every pure function in `./events` takes this, so one
+ * set of rules serves both.
+ */
+export type TimelineEventView = Omit<MatchEventView, "id">;
+
+/**
+ * One event in the in-play timeline on `GET /cronogol/live` (backend §98).
+ *
+ * ⚠ **An alias, not a copy, and deliberately so.** The backend states the two
+ * shapes are identical but for `id` — *"same field names … so you render it
+ * with the same component"* — and two hand-maintained copies of one wire shape
+ * is how they drift. If they ever genuinely diverge, this is the line to split.
+ */
+export type LiveMatchEventView = TimelineEventView;
 
 /** GET /cronogol/fixtures/{id}/events */
 export interface FixtureEventsView {

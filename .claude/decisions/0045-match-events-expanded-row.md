@@ -38,6 +38,14 @@ neutral row was needed regardless, drawing the other two cost almost nothing.
 An eighth mark, `own-goal`, was split off `goal` because painting an own goal in
 the scoring side's lime credits the wrong club at a glance.
 
+> ⚠ **REVISED by [0050](./0050-match-events-on-the-in-progress-card.md),
+> 2026-08-28.** The in-progress card has its chevron back. The reasoning below
+> was correct and its premise expired: the upstream was found to publish the
+> timeline *during* play, so "an in-progress match has no events at all" is no
+> longer a property of football data — it is a gap in our own ingest, and one the
+> backend is closing. ⚠ Nothing serves it yet, so the panel there opens on
+> `notPublished` today. The rest of this decision — and decisions 1 and 3 — stand.
+
 **2. The live board card gets no chevron; the last-result card gets one instead.**
 The design put the panel on the live card's footer — that is what
 `17-events-live-expanded.png` shows. It cannot be built: the ingest selects

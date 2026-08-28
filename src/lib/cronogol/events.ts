@@ -21,7 +21,7 @@
  * without the flipping point 4 warns about — but it is a reversal of an explicit
  * backend instruction and belongs in a new ADR, not in a quiet edit here.
  */
-import type { MatchEventView, TeamRef } from './types';
+import type { TeamRef, TimelineEventView } from './types';
 
 /**
  * The marks the panel draws. Seven, from the wire's six `type`s.
@@ -57,7 +57,7 @@ export type EventKind =
  * ⚠ `null` rather than `'0'` when the source did not say. The row loses its
  * minute; it never claims kick-off.
  */
-export function minuteLabel(event: MatchEventView): string | null {
+export function minuteLabel(event: TimelineEventView): string | null {
   if (event.minute === null) return null;
   return event.minuteExtra ? `${event.minute}+${event.minuteExtra}` : String(event.minute);
 }
@@ -77,7 +77,7 @@ export function minuteLabel(event: MatchEventView): string | null {
  *
  * ⚠ `second-yellow` is a RED. It is a sending-off, not a booking.
  */
-export function eventKind(event: MatchEventView): EventKind {
+export function eventKind(event: TimelineEventView): EventKind {
   switch (event.type) {
     case 'goal':
       return event.subtype === 'own' ? 'own-goal' : 'goal';
@@ -147,7 +147,7 @@ export function groupOf(kind: EventKind): EventGroup {
  * ⚠ A zero is INFORMATION, not an absence: no bookings in a four-goal game is
  * worth seeing, which is why the tab renders it rather than hiding itself.
  */
-export function groupCounts(events: MatchEventView[]): Record<EventGroup, number> {
+export function groupCounts(events: readonly TimelineEventView[]): Record<EventGroup, number> {
   const counts: Record<EventGroup, number> = { goals: 0, cards: 0, subs: 0, other: 0 };
   for (const event of events) counts[groupOf(eventKind(event))] += 1;
   return counts;
@@ -174,7 +174,10 @@ export function initialGroup(counts: Record<EventGroup, number>): EventGroup {
  * a filter. The no-sort rule at the top of this file still stands: narrowing the
  * feed does not reorder it, and nothing here may start to.
  */
-export function eventsInGroup(events: MatchEventView[], group: EventGroup): MatchEventView[] {
+export function eventsInGroup(
+  events: readonly TimelineEventView[],
+  group: EventGroup,
+): readonly TimelineEventView[] {
   return events.filter((event) => groupOf(eventKind(event)) === group);
 }
 
@@ -196,7 +199,7 @@ export function eventsInGroup(events: MatchEventView[], group: EventGroup): Matc
  * provider. `null` back means **render the row with no crest** — never guess.
  */
 export function eventSide(
-  event: MatchEventView,
+  event: TimelineEventView,
   home: TeamRef | null,
   away: TeamRef | null,
 ): 'home' | 'away' | null {
@@ -223,7 +226,7 @@ export interface EventCopy {
  * ⚠ On a substitution that is the player coming **ON**, not the one going off —
  * that is the name the reader is looking for.
  */
-export function primaryName(event: MatchEventView): string {
+export function primaryName(event: TimelineEventView): string {
   return event.player.name;
 }
 
@@ -243,7 +246,7 @@ export function primaryName(event: MatchEventView): string {
  * rather than the raw slug. A reader should see the bare mark, never
  * `penalty-not-awarded`.
  */
-export function detailLine(event: MatchEventView, copy: EventCopy): string | null {
+export function detailLine(event: TimelineEventView, copy: EventCopy): string | null {
   switch (eventKind(event)) {
     case 'goal':
       if (event.subtype === 'penalty') return copy.penalty;
@@ -261,4 +264,29 @@ export function detailLine(event: MatchEventView, copy: EventCopy): string | nul
     default:
       return null;
   }
+}
+
+/**
+ * The React key for one timeline row.
+ *
+ * ⚠⚠ **Composed, never `id` — and that is not a workaround for the live shape
+ * lacking one** (ADR 0051). The panel switches SOURCE mid-match: live events
+ * while the match is played, the durable stored rows once it ends. Keying the
+ * first on an index and the second on `id` would remount every row at exactly
+ * that handover. One rule for both keeps it seamless, and the durable `id` is
+ * simply not needed to tell two rows apart on screen.
+ *
+ * ⚠ `index` is the tiebreaker, not the identity: two substitutions can share a
+ * minute, a team and even a period, and a genuine duplicate must still render
+ * twice rather than collapsing into one row.
+ */
+export function eventKey(event: TimelineEventView, index: number): string {
+  return [
+    event.type,
+    event.minute ?? '',
+    event.minuteExtra ?? '',
+    event.teamSlug ?? '',
+    event.player.name,
+    index,
+  ].join('|');
 }

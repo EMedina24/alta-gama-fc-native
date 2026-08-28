@@ -126,7 +126,9 @@ building a screen. The ones that bite hardest:
   Added 2026-08-27. It is the only route with a **minute**, the only live data
   that **joins to a fixture** (`fixtureId` + team slugs), and it is **LaLiga
   only**. It refreshes every ~30s *during a match* and rows **disappear** when
-  the match ends — it is not a results feed. It does **not** license
+  the match ends — it is not a results feed. ⭐ A per-match `events` timeline is
+  WRITTEN on the backend (§98, 2026-08-28) but **not yet deployed** — same
+  shapes as `/cronogol/fixtures/{id}/events` minus its stored-row `id`. It does **not** license
   un-suppressing liveness on `/cronogol/scores`, which is still a 4-hourly
   snapshot: see [.claude/LIVE-SCORES.md](./LIVE-SCORES.md) §1 before touching
   `src/lib/cronogol/scores.ts`.
