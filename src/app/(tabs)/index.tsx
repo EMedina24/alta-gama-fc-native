@@ -276,6 +276,34 @@ export default function TodayScreen() {
                 }
               : null
           }
+          /**
+           * Kick-off, announced by the next-up card's own countdown (ADR 0052).
+           *
+           * ⚠⚠ **Nothing else on this screen knows a match has started.**
+           * `todayBounds` and `recentBounds` both END at the instant they were
+           * fetched, so a fixture that kicks off after that fetch is in NEITHER
+           * window — and `boardLive` tier 1 joins the live row onto a fixture it
+           * holds, so with no fixture there is nothing for `/cronogol/live` to
+           * upgrade no matter how often it polls. The countdown was already
+           * counting to the one moment that fixes it.
+           *
+           * ⚠⚠ **`upcoming` is deliberately NOT refetched, on two grounds.**
+           * Its window starts at `now`, so refetching it drops the match that
+           * just kicked off — and until the live row lands (the backend re-reads
+           * every ~30s) the board would replace this card with the match AFTER
+           * it, which reads as the fixture having vanished. It is also what
+           * keeps this safe: `next` is fed by `upcoming` alone, so nothing here
+           * can change `next.kickoffUtc`, re-arm the countdown's guard and loop.
+           *
+           * ⚠ One shot, not a burst. `useLive` is already polling every 15s
+           * while this screen is focused; what it was missing is the fixture to
+           * join to, and that arrives with these two.
+           */
+          onKickoff={() => {
+            void finished.refetch();
+            void recent.refetch();
+            void live.refetch();
+          }}
           copy={copy.today}
           events={copy.events}
         />

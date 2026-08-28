@@ -12,6 +12,14 @@
  * It cannot say which match is *yours* (no crosswalk to our clubs, and name
  * matching is forbidden), so the live and last-result cards read the same
  * fixture route. See ADR 0027.
+ *
+ * ⚠⚠ **Every window here is BOUNDED BY `now`, and the bounds are computed in the
+ * `queryFn` — at the moment the request is made — not during render** (ADR
+ * 0052). The key stays the DAY, so this mints no new cache entry; what it fixes
+ * is `refetch()`. Rendered bounds are frozen at whichever render last ran, which
+ * on this screen can be a minute old, so a refetch fired at kick-off was asking
+ * for a window that ENDED BEFORE the match started — and `to` is exclusive, so
+ * the fixture came back missing from the very refetch that went looking for it.
  */
 import { useQuery } from '@tanstack/react-query';
 
@@ -27,22 +35,24 @@ const RECENT_DAYS = 14;
 
 /** Today's played matches, in the reader's own day. */
 export function useFinishedToday(zone: string) {
-  // ⚠ Bounds are computed per render but keyed to the DAY, not the instant, so a
-  // re-render does not mint a new cache entry every second.
-  const { from, to } = todayBounds(new Date(), zone);
+  // ⚠ Keyed to the DAY, not the instant, so a re-render does not mint a new
+  // cache entry every second. Only `from` is needed for that — the window the
+  // request actually asks for is built inside `queryFn`.
+  const { from } = todayBounds(new Date(), zone);
   return useQuery({
     queryKey: keys.fixtureWindow(from.slice(0, 10), 'today'),
-    queryFn: () => getFixtureWindow({ from, to }),
+    // ⚠ Bounds re-read at request time — see this file's docblock.
+    queryFn: () => getFixtureWindow(todayBounds(new Date(), zone)),
     staleTime: STALE.feed,
   });
 }
 
 /** The next week, for "upcoming from your clubs". */
 export function useUpcoming(zone: string) {
-  const { from, to } = upcomingBounds(new Date(), zone, UPCOMING_DAYS);
+  const { from } = upcomingBounds(new Date(), zone, UPCOMING_DAYS);
   return useQuery({
     queryKey: keys.fixtureWindow(from.slice(0, 10), 'upcoming'),
-    queryFn: () => getFixtureWindow({ from, to }),
+    queryFn: () => getFixtureWindow(upcomingBounds(new Date(), zone, UPCOMING_DAYS)),
     staleTime: STALE.feed,
   });
 }
@@ -65,20 +75,20 @@ export function useUpcoming(zone: string) {
  * downloads on launch to serve a surface most of them cannot see.
  */
 export function useWidgetWindow(zone: string) {
-  const { from, to } = upcomingBounds(new Date(), zone, WIDGET_WINDOW_DAYS);
+  const { from } = upcomingBounds(new Date(), zone, WIDGET_WINDOW_DAYS);
   return useQuery({
     queryKey: keys.fixtureWindow(from.slice(0, 10), 'widget'),
-    queryFn: () => getFixtureWindow({ from, to }),
+    queryFn: () => getFixtureWindow(upcomingBounds(new Date(), zone, WIDGET_WINDOW_DAYS)),
     staleTime: STALE.feed,
   });
 }
 
 /** The past fortnight, for the LAST RESULT card (and the live card's snapshot). */
 export function useRecent(zone: string) {
-  const { from, to } = recentBounds(new Date(), zone, RECENT_DAYS);
+  const { from } = recentBounds(new Date(), zone, RECENT_DAYS);
   return useQuery({
     queryKey: keys.fixtureWindow(from.slice(0, 10), 'recent'),
-    queryFn: () => getFixtureWindow({ from, to }),
+    queryFn: () => getFixtureWindow(recentBounds(new Date(), zone, RECENT_DAYS)),
     staleTime: STALE.feed,
   });
 }

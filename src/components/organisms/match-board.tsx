@@ -150,6 +150,18 @@ export interface MatchBoardProps {
     zoneLabel: string;
     venue: string | null;
   } | null;
+  /**
+   * Kickoff, announced by the next-up card's own countdown (ADR 0052).
+   *
+   * ⚠ **The board cannot detect this for itself.** Nothing in the props changes
+   * when a match starts — the fixture windows behind them were fetched before
+   * it did — so the timer that is already counting to the instant is the only
+   * thing on screen that knows. The caller refetches on it.
+   *
+   * ⚠ Whatever it refetches must not change `next.kickoffUtc`: a new target
+   * re-arms the countdown's once-per-kickoff guard, and the pair would loop.
+   */
+  onKickoff?: () => void;
   copy: {
     inProgress: string;
     kickoffIn: string;
@@ -197,7 +209,7 @@ function EventsDisclosure({
   );
 }
 
-export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) {
+export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchBoardProps) {
   /**
    * One boolean, not the `openId` the list surfaces carry.
    *
@@ -374,7 +386,7 @@ export function MatchBoard({ live, last, next, copy, events }: MatchBoardProps) 
               <Text variant="eyebrowSm" color="textFaint">
                 {copy.kickoffIn}
               </Text>
-              <Countdown kickoffUtc={next.kickoffUtc} />
+              <Countdown kickoffUtc={next.kickoffUtc} onElapsed={onKickoff} />
             </View>
           )}
         </View>

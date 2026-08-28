@@ -346,6 +346,22 @@ documented at the code that handles them; this is the index.
     side is the useful half: **entries inside one timeline are free**, which is why
     the countdown can tick per minute in its last hour while still reloading at
     most once per kickoff. "Never per-minute" (0025) is about reloads.
+35. **The board's fixture windows END AT `now`, so a match that kicks off after
+    they were fetched is in NONE of them.** `todayBounds` is
+    `[local midnight, now]` and `recentBounds` `[midnight-14d, now]`, `to` is
+    exclusive (trap 5), and neither query carries an interval — so at kick-off the
+    Today board held no row for the match that was starting, `boardLive` tier 1
+    had nothing to join `/cronogol/live` onto, and the in-progress card **never
+    appeared** however long the poll ran. The next-up countdown now announces
+    kick-off (`onElapsed` → `onKickoff`) and the board refetches `finished`,
+    `recent` and `live` on it. ⚠ **Never `upcoming` too** — its window starts at
+    `now`, so refetching it drops the match that just started, and it is also the
+    only query feeding `next`: leaving it alone is what stops a new
+    `next.kickoffUtc` re-arming the countdown's guard into a request loop.
+    ⚠ And the reason the obvious fix was not enough: window bounds used to be
+    computed **during render** and closed over, so a `refetch()` re-asked for a
+    window that had already ended. They are built inside the `queryFn` now. See
+    [0052](./decisions/0052-kickoff-triggers-the-live-refetch.md).
 
 ---
 

@@ -16,11 +16,18 @@
  * standing in for "a date, time unknown", so a countdown to it is counting down
  * to a fiction. Callers gate on the flag.
  *
+ * ⚠ **It also announces kickoff** (`onElapsed`, ADR 0052). The board has no
+ * other way to learn that a match has started: every fixture window it holds
+ * ends at the instant it was fetched, so the fixture that just kicked off is
+ * outside all of them and the live route's row has nothing to join to. This
+ * timer is already counting to that exact moment; the callback is that fact
+ * handed to the one caller that can act on it.
+ *
  * ⚠ `d`/`h`/`m`/`s` are not routed through `copy.ts`. They are the same letters
  * in both languages the app ships; a copy key would only invite a translation
  * that breaks the fixed-width row.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/atoms';
@@ -56,12 +63,48 @@ function groups(msRemaining: number): Group[] {
   return out;
 }
 
-export function Countdown({ kickoffUtc }: { kickoffUtc: string }) {
+export function Countdown({
+  kickoffUtc,
+  onElapsed,
+}: {
+  kickoffUtc: string;
+  /**
+   * Fired ONCE per kickoff, the moment this card observes that it has passed —
+   * on the tick that crosses it, or on the mount or resume that finds it
+   * already behind us.
+   *
+   * ⚠ **The already-passed cases fire too, and that is deliberate.** A reader
+   * who switches tabs at kick-off minus one minute and comes back at plus one
+   * is in exactly the state this callback exists to repair; a guard that only
+   * accepted the live crossing would leave them staring at `00m 00s`.
+   *
+   * ⚠ Whatever this triggers must not change `kickoffUtc`, or the new target
+   * re-arms the guard and the pair loops. The caller owns that; ADR 0052 states
+   * it as the rule.
+   */
+  onElapsed?: () => void;
+}) {
   const target = Date.parse(kickoffUtc);
   const [now, setNow] = useState(() => Date.now());
 
+  /**
+   * ⚠ Held in a ref, not read from the closure: the caller passes an inline
+   * arrow, so a dependency on it would tear down and rebuild the timer on every
+   * render of the board — losing the wall-second schedule and re-arming `fired`
+   * each time, which is the one thing that would turn this into a request loop.
+   */
+  const elapsed = useRef(onElapsed);
+  useEffect(() => {
+    elapsed.current = onElapsed;
+  });
+
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
+    /**
+     * ⚠ Once per TARGET, not once per tick — `tick` runs again on every resume,
+     * and past kickoff every one of those runs takes the elapsed branch.
+     */
+    let fired = false;
 
     const stop = () => {
       if (timer !== undefined) clearTimeout(timer);
@@ -71,7 +114,14 @@ export function Countdown({ kickoffUtc }: { kickoffUtc: string }) {
     const tick = () => {
       const at = Date.now();
       setNow(at);
-      if (at >= target) return; // kicked off — nothing left to count
+      if (at >= target) {
+        // Kicked off — nothing left to count, and the one thing left to say.
+        if (!fired) {
+          fired = true;
+          elapsed.current?.();
+        }
+        return;
+      }
       timer = setTimeout(tick, SECOND - (at % SECOND));
     };
 
