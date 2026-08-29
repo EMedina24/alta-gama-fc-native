@@ -11,9 +11,10 @@
  *   Those three are load-bearing — see their own comments.
  * - **Added:** a request timeout. The web version had none because it ran on a
  *   server; a phone on a train needs one.
- * - **Dropped:** the `*ForRender` variants (they existed for OG-image routes) and
- *   the news reads (no news surface in the v1 design — add them back with the
- *   screen, not before).
+ * - **Dropped:** the `*ForRender` variants (they existed for OG-image routes),
+ *   `getTeamNews` and `getNewsLeagues` (the app reads the global feed only).
+ *   `getNews` came back with the NEWS widget (ADR 0061) — the "add them back
+ *   with the screen" rule held until a surface existed, and the widget is one.
  */
 
 import type {
@@ -23,6 +24,7 @@ import type {
   LeagueRef,
   SeasonJornadasView,
   LiveView,
+  NewsFeedView,
   ScoreboardDayView,
   StandingsView,
   TeamFixturesView,
@@ -390,4 +392,35 @@ export async function getFixtureEvents(
     `/cronogol/fixtures/${encodeURIComponent(fixtureId)}/events`,
     toQuery({}),
   );
+}
+
+// ---------------------------------------------------------------- news
+
+/**
+ * ⚠ Every field here is the route's DTO verbatim (`news-query.dto.ts`). The
+ * pipe is `forbidNonWhitelisted`, so a param not on this list — `offset`,
+ * `page`, `category`, `locale`, a `utm_source` — is a 400 for the whole call.
+ */
+export type GetNewsParams = {
+  /** 1–100, default 30. */
+  limit?: number;
+  /** Keyset cursor — the previous page's `nextBefore`, ISO 8601. */
+  before?: string;
+  /** Registry key, `^[a-z0-9-]{1,32}$`. `marca`, `espn`. */
+  publisher?: string;
+  /** `true` narrows to first-party editorial. ⚠ `false` means UNFILTERED. */
+  featured?: 'true' | 'false';
+  /** A `/cronogol/news/leagues` id — `laliga`, `premier-league`. */
+  league?: string;
+};
+
+/**
+ * The global feed, newest first.
+ *
+ * ⚠ Nothing here is live: aggregated ingest runs hourly at :20, first-party
+ * indexing every two hours, and the route is `max-age=60`. Polling under a
+ * minute is handed back the identical body.
+ */
+export async function getNews(params: GetNewsParams = {}): Promise<NewsFeedView> {
+  return get<NewsFeedView>('/cronogol/news', toQuery(params));
 }

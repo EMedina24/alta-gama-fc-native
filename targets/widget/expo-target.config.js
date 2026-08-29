@@ -30,8 +30,9 @@ module.exports = {
   displayName: 'AltaGama FC Widgets',
   deploymentTarget: '17.0',
   entitlements: {
-    // The only channel this extension has. It reads `widget/snapshot.json` and
-    // `crests/{fixtureId}/{slot}.png`, both written by the app.
+    // The only channel this extension has. It reads `widget/snapshot.json`,
+    // `crests/{fixtureId}/{slot}.png`, and since ADR 0061 `widget/news.json` and
+    // `news/{id}.jpg` — all written by the app.
     'com.apple.security.application-groups': ['group.com.altagamafc.app'],
   },
 };

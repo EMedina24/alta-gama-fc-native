@@ -78,6 +78,10 @@ export interface Copy {
      */
     homeTag: string;
     awayTag: string;
+    /** The NEWS widget's eyebrow (ADR 0061). */
+    news: string;
+    /** The feed is empty, or every story aged past 48h. */
+    noHeadlines: string;
   };
   onboarding: {
     pickTitle: string;
@@ -451,6 +455,8 @@ export const esCopy: Copy = {
     away: 'en',
     homeTag: 'CASA',
     awayTag: 'FUERA',
+    news: 'NOTICIAS',
+    noHeadlines: 'Aún no hay titulares',
   },
 
   onboarding: {
@@ -746,6 +752,8 @@ export const enCopy: Copy = {
     away: 'at',
     homeTag: 'HOME',
     awayTag: 'AWAY',
+    news: 'NEWS',
+    noHeadlines: 'No headlines yet',
   },
 
   onboarding: {

@@ -1,0 +1,48 @@
+{
+  "v": 1,
+  "writtenAt": "2026-08-29T04:05:12Z",
+  "copy": {
+    "news": "NEWS",
+    "clubCount": "5 CLUBS",
+    "noHeadlines": "No headlines yet",
+    "followPrompt": "Open Alta Gama FC"
+  },
+  "items": [
+    {
+      "id": "marca-6a92121e79c8b",
+      "topic": "Sevilla",
+      "publisher": "MARCA",
+      "title": "El Sevilla vuelve a preguntar por Zeballos",
+      "filedAt": "2026-08-29T00:56:00Z",
+      "url": "https://www.marca.com/futbol/sevilla/2026/08/29/sevilla-vuelve-preguntar-zeballos.html",
+      "hasImage": true
+    },
+    {
+      "id": "marca-6a91d2d76f4a3",
+      "topic": "Atlético",
+      "publisher": "MARCA",
+      "title": "Sevilla - Atlético: Y pese al lío... hay partidazo",
+      "filedAt": "2026-08-29T00:52:00Z",
+      "url": "https://www.marca.com/futbol/atletico/2026/08/29/sevilla-atletico-pese-lio-hay-partidazo.html",
+      "hasImage": true
+    },
+    {
+      "id": "marca-6a9208e530bd8",
+      "topic": "Alavés",
+      "publisher": "MARCA",
+      "title": "El Alavés vuela alto: igualan el mejor arranque en Primera de la historia",
+      "filedAt": "2026-08-29T00:17:00Z",
+      "url": "https://www.marca.com/futbol/alaves/2026/08/29/alaves-vuela-alto-igualan-mejor-arranque-primera-historia.html",
+      "hasImage": true
+    },
+    {
+      "id": "sport-f012b8ea",
+      "topic": null,
+      "publisher": "SPORT",
+      "title": "Acuerdo del Deportivo con la Federación de Peñas y los colectivos de Marathón Inferior: vuelve la normalidad a Riazor",
+      "filedAt": "2026-08-28T22:32:00Z",
+      "url": "https://www.sport.es/es/noticias/futbol/acuerdo-deportivo-federacion-penas-riazor-133751140",
+      "hasImage": true
+    }
+  ]
+}

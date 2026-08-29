@@ -261,7 +261,8 @@ export function buildSnapshot(
   };
 }
 
-const SNAPSHOT_DIR = 'widget';
+/** ⚠ Also `news.json`'s directory — see `features/news/snapshot.ts`. */
+export const SNAPSHOT_DIR = 'widget';
 const SNAPSHOT_NAME = 'snapshot.json';
 
 /** Where `_debug/widgets` and `Snapshot.swift` both look. */
@@ -272,40 +273,48 @@ export function snapshotFile(): File | null {
 }
 
 /**
- * Write the snapshot where the extension can read it.
+ * Write a JSON contract file where an extension can read it.
  *
  * ⚠ **Temp file then rename.** `File.write` is not documented atomic, and a
  * widget that reads a half-written file gets a decode failure and falls all the
- * way back to the gallery sample — which looks like real data for someone else's
- * clubs. A rename inside one volume is atomic, so the extension sees either the
- * old snapshot or the new one.
+ * way back to its empty state. A rename inside one volume is atomic, so the
+ * extension sees either the old file or the new one.
+ *
+ * ⚠ Shared with `features/news/snapshot.ts` (ADR 0061) — the NEWS widget has a
+ * second file in the same directory with the same hazard. One rename routine,
+ * not two.
  *
  * Returns false when there is no container (Android, or a simulator without the
  * group provisioned). That is a normal answer — see `groupContainer`.
  */
-export function writeSnapshot(snapshot: WidgetSnapshot): boolean {
+export function writeGroupJson(directoryName: string, fileName: string, data: unknown): boolean {
   const container = groupContainer();
   if (!container) return false;
 
   try {
-    const directory = new Directory(container, SNAPSHOT_DIR);
+    const directory = new Directory(container, directoryName);
     if (!directory.exists) directory.create({ intermediates: true, idempotent: true });
 
-    const temp = new File(directory, `${SNAPSHOT_NAME}.tmp`);
+    const temp = new File(directory, `${fileName}.tmp`);
     if (temp.exists) temp.delete();
     temp.create();
-    temp.write(JSON.stringify(snapshot));
+    temp.write(JSON.stringify(data));
 
     // ⚠ `moveSync`, not `move`. The async form returns a promise this function
     // does not await, which would put the rename in a race with the widget
     // reload fired immediately after it.
-    temp.moveSync(new File(directory, SNAPSHOT_NAME), { overwrite: true });
+    temp.moveSync(new File(directory, fileName), { overwrite: true });
     return true;
   } catch {
-    // A snapshot that will not write leaves the previous one in place, which is
+    // A file that will not write leaves the previous one in place, which is
     // the better of the two failures.
     return false;
   }
+}
+
+/** Write the fixture snapshot where `Snapshot.swift` reads it. */
+export function writeSnapshot(snapshot: WidgetSnapshot): boolean {
+  return writeGroupJson(SNAPSHOT_DIR, SNAPSHOT_NAME, snapshot);
 }
 
 /**

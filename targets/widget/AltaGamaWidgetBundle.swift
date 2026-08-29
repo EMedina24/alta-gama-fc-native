@@ -11,6 +11,8 @@ struct AltaGamaWidgetBundle: WidgetBundle {
   var body: some Widget {
     NextFixtureWidget()
     YourWeekWidget()
+    // NEWS, large only (ADR 0061). Static — no club picker; the feed is global.
+    NewsWidget()
     // ⚠⚠ **Gated HERE rather than by raising the target's `deploymentTarget`.**
     // The broadcast channel a Live Activity subscribes to is iOS 18; the two
     // widgets above are 17.0 on purpose (ADR 0047), and lifting the whole target

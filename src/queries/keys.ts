@@ -40,4 +40,9 @@ export const keys = {
    * coverage the day the backend widens it.
    */
   live: () => ['live'] as const,
+  /**
+   * The global news feed — `GET /cronogol/news`. One key, no argument: the
+   * widget is the only consumer and it wants the whole feed (ADR 0061).
+   */
+  news: () => ['news'] as const,
 } as const;

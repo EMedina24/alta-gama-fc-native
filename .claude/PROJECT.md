@@ -56,8 +56,14 @@ src/
   lib/{format,timezones}.ts  lib/i18n/{phrases,copy,use-i18n}
   queries/                      React Query hooks + staleTime buckets (ADR 0017)
   store/preferences.ts          device follows, language, clock, timezone
+  features/push/                registration · reminders · crest cache · the re-arm effect
+  features/widgets/             fixture snapshot → App Group (ADR 0047)
+  features/news/                news snapshot + downscaled pictures → App Group (ADR 0061)
+targets/                        Swift for the extensions (@bacons/apple-targets, ADR 0037)
+  _shared/  widget/  notification-{service,content}/
 assets/images/                  icon-{light,dark,tinted}.png (ADR 0036) + Android adaptive
 handoff_AG-ios/                 the design handoff (SPEC, prototype, screenshots)
+handoff_*/  icon-handoff/       later design handoffs — source only, no build step reads them
 ```
 
 Tab icons are **SF Symbols**, not assets (ADR 0016).

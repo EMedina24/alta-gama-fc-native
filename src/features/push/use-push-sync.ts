@@ -10,11 +10,13 @@ import { AppState } from 'react-native';
 
 import { formatKickoffTime, formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
+import { useNews } from '@/queries/use-news';
 import { useUpcoming, useWidgetWindow } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
 import { useSession } from '@/store/session';
 import { useRouter } from 'expo-router';
 
+import { scheduleNewsSync } from '@/features/news/sync';
 import { pinWidgetCrests } from '@/features/widgets/pins';
 import { buildSnapshot } from '@/features/widgets/snapshot';
 import { scheduleWidgetSync } from '@/features/widgets/sync';
@@ -34,6 +36,8 @@ export function usePushSync(): void {
   // ⚠ A SECOND, WIDER window (21 days). The widget must not go blank over an
   // international break — see `useWidgetWindow`.
   const widgetWindow = useWidgetWindow(zone);
+  // The NEWS widget's feed (ADR 0061). Global, one request, `STALE.feed`.
+  const news = useNews();
   const session = useSession();
 
   // Cold launch: tokens rotate on restore and reinstall, so always re-assert.
@@ -156,6 +160,10 @@ export function usePushSync(): void {
       // ⚠ Debounced and change-guarded inside — WidgetKit rations reloads and
       // this runs on every single foreground.
       if (snapshot) scheduleWidgetSync(snapshot);
+
+      // ⚠ Same re-arm, own file, own debounce and own change guard — the two
+      // snapshots refresh on different clocks and must not hold each other up.
+      if (WIDGETS_AVAILABLE && news.data) scheduleNewsSync(news.data.articles, now, copy);
     };
 
     sync();
@@ -172,6 +180,7 @@ export function usePushSync(): void {
   }, [
     upcoming.data,
     widgetWindow.data,
+    news.data,
     prefs.followed,
     prefs.alertReminder,
     prefs.reminderLeads,

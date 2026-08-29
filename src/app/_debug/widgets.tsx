@@ -20,6 +20,10 @@ import { APP_GROUP, groupContainer } from '@/features/app-group';
 import { WIDGETS_AVAILABLE, reloadWidgets } from '@/features/push/capability';
 import { buildSnapshot, snapshotFile, type WidgetSnapshot } from '@/features/widgets/snapshot';
 import { applyWidgetSnapshot, forgetWidgetSnapshot } from '@/features/widgets/sync';
+import { newsImageExists } from '@/features/news/images';
+import { newsSnapshotFile, type NewsSnapshot } from '@/features/news/snapshot';
+import { applyNewsSnapshot, forgetNewsSnapshot } from '@/features/news/sync';
+import { useNews } from '@/queries/use-news';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
@@ -31,8 +35,11 @@ export default function DebugWidgets() {
   const zone = useZone();
   const { copy, locale, phrases } = useI18n();
   const widgetWindow = useWidgetWindow(zone);
+  const news = useNews();
 
   const [onDisk, setOnDisk] = useState<string>('…');
+  const [newsOnDisk, setNewsOnDisk] = useState<string>('…');
+  const [newsImages, setNewsImages] = useState<string[]>([]);
   const [written, setWritten] = useState<string>('…');
   const [crests, setCrests] = useState<string[]>([]);
   const [status, setStatus] = useState('idle');
@@ -64,6 +71,9 @@ export default function DebugWidgets() {
     setOnDisk(next.summary);
     setWritten(next.written);
     setCrests(next.crests);
+    const nextNews = await readNews();
+    setNewsOnDisk(nextNews.summary);
+    setNewsImages(nextNews.images);
   }, []);
 
   // ⚠ `react-hooks/set-state-in-effect` fires on any effect that reaches a
@@ -142,6 +152,42 @@ export default function DebugWidgets() {
           setStatus('reload requested');
         }}
       />
+
+      <Text variant="title">News</Text>
+      <Row
+        label="feed"
+        value={
+          news.data
+            ? `${news.data.count} articles`
+            : news.isLoading
+              ? 'loading…'
+              : 'error'
+        }
+      />
+      {/* ⚠ Read back from DISK, same argument as the fixture snapshot above. */}
+      <Row label="news.json on disk" value={newsOnDisk} />
+
+      <Text variant="eyebrowSm" color="textFaint">
+        Items as written · ✓ has news/{'{id}'}.jpg (✗ is normal past the fourth)
+      </Text>
+      <View style={styles.box}>
+        <Text variant="micro" color="textSecondary" style={styles.mono}>
+          {newsImages.length ? newsImages.join('\n') : '(none)'}
+        </Text>
+      </View>
+
+      <Button
+        label="Write news.json + warm images + reload"
+        tone="secondary"
+        onPress={async () => {
+          if (!news.data) return;
+          setStatus('writing news…');
+          forgetNewsSnapshot();
+          await applyNewsSnapshot(news.data.articles, new Date(), copy);
+          setStatus('news written');
+          await inspect();
+        }}
+      />
       <Button label="Re-inspect" tone="quiet" onPress={() => void inspect()} />
     </ScrollView>
   );
@@ -187,6 +233,30 @@ async function readContainer(): Promise<{
       summary: `unreadable: ${error instanceof Error ? error.message : String(error)}`,
       written: '—',
       crests: [],
+    };
+  }
+}
+
+/** `news.json` as it sits on disk, plus whether each item's picture is there. */
+async function readNews(): Promise<{ summary: string; images: string[] }> {
+  const file = newsSnapshotFile();
+  if (!file) return { summary: '(no App Group container)', images: [] };
+  if (!file.exists) return { summary: '(not written yet)', images: [] };
+
+  try {
+    const raw = await file.text();
+    const parsed = JSON.parse(raw) as NewsSnapshot;
+    return {
+      summary: `${raw.length} B · v${parsed.v} · ${parsed.items.length} items · ${parsed.writtenAt.replace('T', ' ').replace(/\.\d+Z$/, 'Z')}`,
+      images: parsed.items.map(
+        (item) =>
+          `${newsImageExists(item.id) ? '✓' : '✗'} ${item.hasImage ? 'h' : '-'} ${item.publisher.padEnd(6)} ${item.title.slice(0, 40)}`,
+      ),
+    };
+  } catch (error) {
+    return {
+      summary: `unreadable: ${error instanceof Error ? error.message : String(error)}`,
+      images: [],
     };
   }
 }

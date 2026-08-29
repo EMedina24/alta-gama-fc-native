@@ -481,6 +481,18 @@ documented at the code that handles them; this is the index.
     real clubs. ⚠ Names are CONTRACTED (`widgetName`: `R. Madrid`) — the full
     forms truncated one side or the other. Not yet checked on an SE-width
     simulator, nor with a hand-edited v1 `snapshot.json`.
+- **The NEWS widget is built** (2026-08-28, [0061](./decisions/0061-news-widget.md)) —
+  `systemLarge`, the whole of `handoff_news-widget/`: lead story with picture, three
+  headlines, age derived in Swift. Global `GET /cronogol/news`, tap opens the
+  publisher in Safari. `expo-image-manipulator` downscales each picture to
+  924×348 before it reaches the App Group (`news/{id}.jpg`, `widget/news.json`).
+  `tsc`, lint (baseline unchanged), `expo export` and a 14-assertion harness on
+  `lib/cronogol/news.ts` are clean. **Verified on the simulator** with real
+  MARCA/SPORT headlines — lead, gradient, topic chips, ages, no chip on a
+  topicless row. ⚠ Not yet seen: cold-cache layout, empty state, Spanish, a tap
+  reaching Safari. ⚠ **`expo-image-manipulator` is a NATIVE module** — a dev client built before
+  it throws on import, exactly as `react-native-svg` did (§3b). Rebuild first.
+  `/_debug/widgets` has a News section that reads `news.json` back from disk.
 - **Live scores reach the Today board** (2026-08-27,
   [0048](./decisions/0048-live-scores-on-the-today-board.md)). The in-progress card
   now has two paths: `/cronogol/live` with a real minute for LaLiga, and the ~3h
