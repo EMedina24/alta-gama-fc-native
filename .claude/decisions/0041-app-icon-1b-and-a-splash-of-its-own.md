@@ -1,7 +1,7 @@
 # 0041 — App icon 1b: three opaque appearance masters, and a splash asset of its own
 
 - **Date:** 2026-08-26
-- **Status:** Accepted
+- **Status:** Accepted — icon bytes superseded by [0060](./0060-app-icon-1a-floodlight.md); the splash arrangement stands
 - **Decided by:** Ed Medina
 
 ## Context

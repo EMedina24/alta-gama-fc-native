@@ -33,6 +33,11 @@ widgets, a device build, and the backend's push cron.
 > **[LIVE-SCORES.md](./LIVE-SCORES.md) §1 first** — it is the one place these
 > two are told apart.
 
+> **2026-08-28 — the app icon is now set 1a "Floodlight"**
+> ([0060](./decisions/0060-app-icon-1a-floodlight.md)): graphite field, lime glow,
+> lime mark on every appearance. Same geometry as 1b, so nothing else re-cut.
+> Source at `icon-handoff/AppIcon-1a-floodlight/`; not yet on a device.
+
 **Read [ECOSYSTEM.md](./ECOSYSTEM.md) before touching data, naming or URLs.**
 Read the decision log — [decisions/](./decisions/) — before changing anything that
 looks arbitrary. Most of it isn't.
@@ -222,17 +227,19 @@ documented at the code that handles them; this is the index.
     — only `dark` keeps its alpha. A tinted export drawn the usual way (a pale
     glyph on transparency) comes out white-on-white, and since iOS 18 maps
     *luminance* to the user's tint, the home-screen tile renders as flat colour
-    with **no mark in it**. The icon-1b masters arrive pre-composited on opaque
+    with **no mark in it**. The icon-1a masters (0060; 1b before them) arrive pre-composited on opaque
     `#0b0b0b`, so the flatten is currently a no-op — **but the requirement did not
     go away, it just became the design source's default.** Any tinted export that
     comes back transparent reverts the bug. ⚠ It fails silently: nothing errors,
     `expo-doctor` passes, and it is visible only under Settings → Display &
     Brightness → **Tinted** on a real build. See
     [0036](./decisions/0036-app-icon-appearance-variants.md) →
-    [0041](./decisions/0041-app-icon-1b-and-a-splash-of-its-own.md).
+    [0041](./decisions/0041-app-icon-1b-and-a-splash-of-its-own.md) →
+    [0060](./decisions/0060-app-icon-1a-floodlight.md).
     ⚠ **And the `dark` master is OPAQUE now, so it is no longer splash-safe.**
     0036 had the splash reuse `icon-dark.png` because that variant was the glyph
-    alone on transparency. Icon 1b's dark variant is a full-bleed `#0f1216` field
+    alone on transparency. Icon 1b's dark variant was a full-bleed `#0f1216` field
+    (1a's is `#0a0b0c`, same shape of problem)
     — deliberately, so the lime stays the Home Screen signal — and 184pt of it
     centred on the `#0a0b0c` ground is a **visible dark square**. The splash has
     its own asset now: `assets/images/splash-lockup.png`, the full logo lockup. ⚠ It
