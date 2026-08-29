@@ -22,10 +22,17 @@ open, and nothing reaches a locked phone.
 This work builds that delivery: `match_goal`, `match_red_card` and
 `match_full_time` APNs pushes, gated by a new `alertGoals` switch.
 
+⚠ **And since then, the Live Activity too** — the same moments on a card that
+stays on the Lock Screen for the match instead of a banner that scrolls away. See
+Phase 2 below; it is built, not planned.
+
 **Design:** [`handoff_live-notification/LIVE-MATCH-NOTIFICATIONS.md`](./handoff_live-notification/LIVE-MATCH-NOTIFICATIONS.md)
+and `handoff_AG-ios/SPEC.md` §196 for the card.
 **Decisions:** native [0053](./.claude/decisions/0053-live-match-push-alerts.md),
-[0054](./.claude/decisions/0054-live-activities-still-deferred.md) ·
-backend `0033-live-match-push.md`
+[0054](./.claude/decisions/0054-live-activities-still-deferred.md) (superseded),
+[0055](./.claude/decisions/0055-live-activities-broadcast-channels.md),
+[0057](./.claude/decisions/0057-local-expo-module.md) ·
+backend `0033-live-match-push.md`, `0034-live-activities-broadcast-channels.md`
 
 ---
 
@@ -40,12 +47,17 @@ Two working trees, both dirty. **Commit or stash before anything else.**
 
 ### Verified
 
-- Backend: **189 suites / 4907 tests pass.** Typecheck at the **pre-existing
-  baseline of 71 errors** — all in unrelated spec files, confirmed by stashing.
-- New tests: `live-alert.policy.spec.ts` (20) and `live-push.mapper.spec.ts` (18).
+- Backend: **192 suites / 4950 tests pass**, and `eslint src` is **clean**.
+  Typecheck at **77 errors, every one of them in a `.spec.ts` or an
+  `e2e-spec.ts`** and none in `src/` production code.
+  ⚠ The "71" this file originally claimed counts differently; what matters is
+  that the number did not move across either feature.
+- New tests: `live-alert.policy.spec.ts` (20), `live-push.mapper.spec.ts` (18),
+  and for the card `live-activity.mapper.spec.ts` (14) and
+  `live-activity.service.spec.ts` (12).
 - App: typechecks clean; `expo lint` **identical to baseline** (6 errors, 9
   warnings, all pre-existing).
-- All five Swift files pass `swiftc -parse`.
+- All Swift files pass `swiftc -parse`.
 
 ### ⚠ NOT verified — read this before trusting anything above
 
@@ -57,9 +69,19 @@ Two working trees, both dirty. **Commit or stash before anything else.**
    module context, i.e. `expo prebuild`, and `ios/` is gitignored deliberately
    (ADR 0025). First real compile is an EAS build.
 3. **Nothing has touched a device.** No push has been sent, end to end, ever.
-4. **`scripts/probe-apns.mjs` was NOT extended.** The plan called for adding the
-   three live payloads to it. I did not do it. That is the fastest path to a
-   device test and it is still open work.
+   ⚠ But APNs itself is now proven, twice: the provider credentials answer
+   `400 BadDeviceToken` (good auth, garbage token), and a **channel create/delete
+   round-trip returns 201 then 204**. What is unproven is everything from the
+   device token onward.
+4. ~~**`scripts/probe-apns.mjs` was NOT extended.**~~ **DONE 2026-08-28.** It now
+   carries `--live=goal|red|ft` (the three §99 banners),
+   `--channel` (create + delete round-trip, no device needed), `--start <token>`
+   (the whole card lifecycle: channel → push-to-start → publish → end → delete)
+   and `--delete-channel <id>` for litter.
+5. ⚠ **`parseChannels()` guesses.** Apple documents the `all-channels` response
+   body only as "empty", which cannot be right for a listing endpoint, so it
+   handles two plausible shapes and answers `[]` for anything else. Re-verify
+   against a real response and delete the wrong branch.
 5. **No app-side unit tests.** The app has **no test harness at all** — no jest
    config, 297 files scanned, zero test files. The three tests the plan promised
    (`buildRegistration` carries `alertGoals`, `registrationChanged` fires on it,
@@ -115,7 +137,12 @@ fixture we store, it is a moment inside a match. `live_push_sent`
 | `src/cronogol/live-push.service.ts` | Fan-out, dedupe claim, dead-token pruning |
 | `supabase/migrations/20261002000000_push_alert_goals.sql` | `alert_goals` + rebuilt `updated_at` trigger |
 | `supabase/migrations/20261003000000_live_push_sent.sql` | The dedupe table |
-| `.claude/decisions/0033-live-match-push.md` | |
+| `src/apns/apns-channels.ts` | Channel create/delete/list. ⚠ A different host, on port 2195 |
+| `src/cronogol/live-activity.mapper.ts` | `LiveAlert` → `content-state`. ⚠ Holds the clock anchor |
+| `src/cronogol/live-activity.service.ts` | start / update / end / prune |
+| `supabase/migrations/20261004000000_push_to_start_token.sql` | The column 0054 said did not exist |
+| `supabase/migrations/20261005000000_live_activity_channels.sql` | Channels + the banner-suppression table |
+| `.claude/decisions/0033-live-match-push.md`, `0034-live-activities-broadcast-channels.md` | |
 
 Modified: `apns.types.ts` (union 2 → 5 types, `time-sensitive`, the live meta
 keys), `push-device.dto.ts`, `push-device.service.ts`, `push-payload.mapper.ts`
@@ -128,14 +155,20 @@ exported), `live-session.service.ts`, `configuration.ts`, `render.yaml`,
 | New | |
 |---|---|
 | `targets/_shared/EventPlate.swift` | Draws the 38pt glyph plate with CoreGraphics |
-| `.claude/LIVE-ACTIVITIES.md` | Phase-2 research — **read before touching ActivityKit** |
-| `.claude/decisions/0053…`, `0054…` | |
+| `targets/_shared/MatchAttributes.swift` | ⚠ The activity contract, compiled into TWO binaries by two unrelated mechanisms |
+| `targets/widget/MatchActivity.swift` | Lock Screen + Dynamic Island, `@available(iOS 18.0, *)` |
+| `modules/live-activity/` | ⚠ The app target's ONLY Swift — a local Expo module (0057) |
+| `.claude/LIVE-ACTIVITIES.md` | Phase-2 research. ⚠ **Three of its claims are wrong; read 0055 first** |
+| `.claude/decisions/0053…`, `0054…`, `0055…`, `0057…` | |
 
-Modified: `preferences.ts` (v3 + `alertGoals`), `push.ts`, `sync.ts`,
-`registration.ts`, `account-sheet.tsx` (switch enabled), `copy.ts`,
-`categories.ts` (3 → 6), `app.json` (entitlement), `NotificationService.swift`,
+Modified: `preferences.ts` (v3 + `alertGoals`), `push.ts` (`activityToken` +
+`normaliseActivityToken`), `sync.ts`, `registration.ts`, `capability.ts` (the
+Live Activity seam), `use-push-sync.ts` (token rotation), `_debug/push.tsx`,
+`account-sheet.tsx` (switch enabled), `copy.ts`, `categories.ts` (3 → 6),
+`app.json` (entitlement + `NSSupportsLiveActivities`), `tsconfig.json`
+(`@/modules/*`), `AltaGamaWidgetBundle.swift`, `NotificationService.swift`,
 `MatchCard.swift` (the meta row), `Payload.swift`, `Tokens.swift`, `Info.plist`,
-both `.lproj`, `.claude/{HANDOFF,LIVE-SCORES,PUSH-AND-ACCOUNTS}.md`.
+both `.lproj`, `.claude/{HANDOFF,LIVE-ACTIVITIES,LIVE-SCORES,PUSH-AND-ACCOUNTS}.md`.
 
 ---
 
@@ -158,9 +191,14 @@ both `.lproj`, `.claude/{HANDOFF,LIVE-SCORES,PUSH-AND-ACCOUNTS}.md`.
    scorer, right minute, no repeats. **This is the gate on everything.**
 6. Only then flip it.
 
-### The two flags
+### The flags — ⚠ FOUR now, not two
 
-Both ship `false`. ⚠ `render.yaml:81` warns the **Render dashboard value wins
+⚠ `CRONOGOL_LIVE_ACTIVITY_ENABLED` ships `false` and is **not** implied by
+`CRONOGOL_LIVE_PUSH_ENABLED`; `CRONOGOL_LIVE_ACTIVITY_DRY_RUN` ships `true` and
+defaults to the dry run when UNSET — the opposite polarity to every other flag,
+deliberately, so an unset variable is the safe state.
+
+The original two, unchanged. Both ship `false`. ⚠ `render.yaml:81` warns the **Render dashboard value wins
 over the file** — check the dashboard, not the repo.
 
 - `CRONOGOL_LIVE_CRON_ENABLED` — whether we watch a match at all.
@@ -191,50 +229,65 @@ they were wrong first, so treat the surrounding claims with the same suspicion.
 
 ---
 
-## Phase 2: Live Activities — deferred, but the road got much shorter
+## Phase 2: Live Activities — ⚠ BUILT 2026-08-28, and this section's plan was wrong twice
 
-Full research and citations: [`.claude/LIVE-ACTIVITIES.md`](./.claude/LIVE-ACTIVITIES.md).
+⚠⚠ **This is no longer a plan.** It was built the same day, on the answers below
+plus three corrections that only appeared once the code existed. The authorities
+are [0055](./.claude/decisions/0055-live-activities-broadcast-channels.md),
+[0057](./.claude/decisions/0057-local-expo-module.md) and the backend's
+`0034-live-activities-broadcast-channels.md`. The list below is kept because the
+corrections are the useful part.
 
-**Broadcast channels (iOS 18+) delete the blocker `GO-LIVE.md` named.** There is
-no per-Activity push token to store: an activity subscribes with
-`pushType: .channel(id)`, the server publishes once to a channel id, APNs fans it
-out. Apple names shared sporting events as the case channels exist for. One
-channel per fixture.
+### What this section got wrong
 
-⚠ **The design exists** — `handoff_AG-ios/SPEC.md` §4 plus
-`screenshots/16-live-activity-widgets.png`. The live-notification handoff's "not
-in this export" refers only to *its own* export. ⚠⚠ **But it was drawn for a
-world with no live feed**: its footer is a check-age, *"the honest part of the
-design"*. With a 30 s feed that footer answers a question nobody is asking. The
-layout survives; the premise needs re-deciding.
+1. ⚠⚠ **"There is no per-Activity push token to store" — half true, wrong half.**
+   Channels remove the UPDATE token. The **push-to-start** token is still needed
+   (nobody opens the app at kickoff) and it is per device and per activity TYPE,
+   so it is one nullable column on `device_tokens`. Planned against "no token",
+   this feature has no way to begin.
+2. ⚠⚠ **Item 1 below — "raise `deploymentTarget` to 18.0" — is wrong.**
+   `targets/widget/` is ONE extension holding both widgets and both Lock Screen
+   accessories; raising its floor removes the WIDGETS from every iOS 17 reader,
+   which is the exact cost ADR 0047 paid 17.0 to avoid. `@available(iOS 18.0, *)`
+   at the call sites costs nothing. **The floor did not move.**
+3. ⚠ **Item 3 below — "decide what replaces the check-age footer" — has an answer
+   the plan did not anticipate.** It is the last alertable moment, and **no stall
+   line goes with it**: a card goes stale by the ABSENCE of pushes, so no push
+   can carry that fact. `aps.stale-date` is the mechanism and iOS greys the card
+   itself.
 
-⚠ **The Watch, CarPlay and menu bar are free.** From iOS 18 an iPhone Live
-Activity appears in the Watch Smart Stack automatically, reusing the Dynamic
-Island views. `supplementalActivityFamilies` only *replaces* that with something
-hand-made. Not a gate.
+Also: the channel ceiling is **10,000 per app per environment**, not "limited".
+And there are **four APNs hosts**, not one — sends, broadcast publishes and
+channel management each have their own, the last on port 2195. Every path and
+header was verified against Apple's documentation on 2026-08-28.
 
-**What is actually left:**
+### What was right, and load-bearing
 
-1. Raise `targets/widget/expo-target.config.js` from `deploymentTarget: '17.0'`
-   to `'18.0'`. ⚠ It was lowered from the plugin's 18.0 default deliberately, so
-   this is a decision. Supporting both means reintroducing the token table
-   channels exist to delete.
-2. ⚠ **Enable the broadcast capability by hand in the Apple Developer portal** —
-   the one thing here EAS capability sync does *not* cover.
-3. Decide what replaces the check-age footer.
-4. Server: `apns.service.ts` hard-codes `apns-push-type: 'alert'` and one topic;
-   Live Activities need `liveactivity` and
-   `<bundleId>.push-type.liveactivity`. `ApnsPayload` is a closed interface with
-   no `aps.event` / `content-state` / `stale-date` / `dismissal-date`.
-5. Channels are limited per app and outlive their activities — the server must
-   delete them via APNs' channel management API. `prune()` is the obvious home.
+- Channels really do delete the update-token table. Item 4 (widening
+  `apns.service.ts` and `ApnsPayload`) and item 5 (channel management and
+  pruning) were both exactly right and are both done.
+- ⚠⚠ **"APNs is not a ticker"** is the single most important line in this file.
+  Only what `decideLiveAlerts` returns is published; the clock is drawn on device.
+- ⚠ The broadcast capability really is the one MANUAL Apple Developer portal
+  step, and it is still not done.
 
-⚠⚠ **APNs is not a ticker.** Discrete events only — goal, half time, full time.
-`live-alert.policy.ts` already emits exactly those, which is the single reason
-phase 2 is now tractable. The clock is drawn client-side from
-`Text(timerInterval:)`; never push a per-minute update.
+### What is left
 
----
+1. ~~**Enable the broadcast capability**~~ — **DONE, and VERIFIED 2026-08-28.**
+   `node scripts/probe-apns.mjs --channel` answers `201` with a channel id and
+   `204` on the delete. The capability is on and the prune path works.
+2. `yarn db:push && yarn db:types`, now covering **four** migrations, and diff
+   `database.types.ts` — it was hand-edited again, for the new column and both
+   new tables.
+3. `expo prebuild` locally: confirm `modules/live-activity/` compiles into the
+   app target and that `MatchAttributes.swift` reaches BOTH binaries. This is the
+   first real Swift typecheck; everything before it is `swiftc -parse`.
+4. EAS build, then read the push-to-start token off `/_debug/push` and run
+   `node scripts/probe-apns.mjs --start <that-token>`. ⚠ **That command is the
+   milestone** — it is the first time a card can appear on a phone, and it needs
+   no matchday, no cron and no flags.
+5. A matchday with `CRONOGOL_LIVE_ACTIVITY_DRY_RUN=true`, reading the
+   `[dry-run] live activity` lines. Only then flip it.
 
 ## Known limits, stated plainly
 
@@ -249,3 +302,9 @@ phase 2 is now tractable. The clock is drawn client-side from
 - The meta row exists **only on the long-look card**, not the banner — iOS has no
   third styled row. Consistent with the design's rule that the score is always in
   the title.
+- ⚠ **iOS 18+ for the Live Activity.** A reader on 17.x keeps the banners and
+  gets no card, and nothing in the UI says so.
+- ⚠⚠ **One language per Live Activity channel.** A broadcast reaches every
+  subscriber with identical bytes, so per-device copy is impossible by
+  construction. Spanish wins — so an English reader gets an English BANNER and a
+  Spanish CARD. Recorded in the backend's 0034 §6, not discovered later.

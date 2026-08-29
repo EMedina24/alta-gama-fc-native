@@ -17,6 +17,8 @@ import {
   PUSH_AVAILABLE,
   apnsEnvironment,
   getDeviceToken,
+  getPushToStartToken,
+  liveActivitiesAvailable,
   requestPushPermission,
 } from '@/features/push/capability';
 import { normaliseToken } from '@/lib/cronogol/push';
@@ -60,7 +62,12 @@ export default function DebugPush() {
   }, []);
 
   const normalised = token ? normaliseToken(token) : null;
-  const body = normalised ? buildRegistration(prefs, locale, normalised) : null;
+  // ⚠ Read on every render rather than into state: the native side caches it and
+  // the call is synchronous, so there is nothing to await and nothing to stale.
+  const activityToken = getPushToStartToken();
+  const body = normalised
+    ? buildRegistration(prefs, locale, normalised, activityToken)
+    : null;
 
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
@@ -68,6 +75,16 @@ export default function DebugPush() {
 
       <Row label="PUSH_AVAILABLE" value={String(PUSH_AVAILABLE)} />
       <Row label="environment" value={apnsEnvironment()} />
+      {/* ⚠ Both gates are runtime (ADR 0055): iOS 18 for the broadcast channel,
+          and the reader's own per-app Live Activities setting. `false` here on a
+          real iPhone 18+ means they switched it off in Settings, not a bug. */}
+      <Row label="live activities" value={String(liveActivitiesAvailable())} />
+      {/* ⚠ NOT the 64-hex device token — a different token, and longer. Length
+          only: this is a credential and the screen must not print it. */}
+      <Row
+        label="push-to-start token"
+        value={activityToken ? `${activityToken.length} hex chars` : '(none)'}
+      />
       <Row label="status" value={status} />
       <Row label="last registered slugs" value={lastSent} />
       <Row label="local reminders" value={scheduled} />

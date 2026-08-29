@@ -21,7 +21,7 @@ import { WIDGETS_AVAILABLE, reloadWidgets } from '@/features/push/capability';
 import { buildSnapshot, snapshotFile, type WidgetSnapshot } from '@/features/widgets/snapshot';
 import { applyWidgetSnapshot, forgetWidgetSnapshot } from '@/features/widgets/sync';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { formatWidgetKickoff } from '@/lib/format';
+import { formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useWidgetWindow } from '@/queries/use-today';
 import { usePreferences, useZone } from '@/store/preferences';
@@ -42,8 +42,13 @@ export default function DebugWidgets() {
   // The snapshot this device WOULD write right now — pure, so it renders even
   // with no container at all.
   const built: WidgetSnapshot | null = widgetWindow.data
-    ? buildSnapshot(widgetWindow.data.fixtures, prefs.followed, new Date(), copy, (iso) =>
-        formatWidgetKickoff(iso, zone, prefs.clock, phrases),
+    ? buildSnapshot(
+        widgetWindow.data.fixtures,
+        prefs.followed,
+        new Date(),
+        copy,
+        (iso) => formatWidgetKickoff(iso, zone, prefs.clock, phrases),
+        (iso) => formatWidgetKickoffParts(iso, zone, prefs.clock, phrases),
       )
     : null;
 

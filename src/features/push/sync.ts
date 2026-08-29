@@ -27,7 +27,7 @@ import {
   writeLastRegistration,
 } from '@/store/registration';
 import { getAccessToken, getSessionUserId } from '@/store/session';
-import { apnsEnvironment, getDeviceToken } from './capability';
+import { apnsEnvironment, getDeviceToken, getPushToStartToken } from './capability';
 
 /**
  * ⚠ 20/min on this route, and a reader scrolling the club browser toggling
@@ -48,11 +48,16 @@ export type SyncResult = 'sent' | 'unchanged' | 'no-token' | 'failed';
  * the server, by design — the app schedules them locally. That switch is local
  * state and must not leak into this body, where it would be an undeclared field
  * and a 400.
+ *
+ * ⚠ `activityToken` is passed IN rather than read here, so this stays pure and
+ * stays exercisable from `_debug` with no native module in sight — the same
+ * split `token` already uses.
  */
 export function buildRegistration(
   prefs: Preferences,
   locale: Locale,
   token: string,
+  activityToken: string | null,
 ): PushRegistration | null {
   const normalised = normaliseToken(token);
   if (!normalised) return null;
@@ -66,6 +71,11 @@ export function buildRegistration(
     alertPostponed: prefs.alertPostponed,
     alertGoals: prefs.alertGoals,
     environment: apnsEnvironment(),
+    // ⚠ OMITTED, never null. `JSON.stringify` drops an undefined value, so a
+    // device with no token sends no key at all — which is what the DTO's
+    // `@ValidateIf` expects. Sending an explicit `null` would 400 the whole
+    // registration and take the follow list down with it.
+    ...(activityToken ? { activityToken } : {}),
   };
 }
 
@@ -85,7 +95,10 @@ export async function syncPushRegistration(
   const token = await getDeviceToken();
   if (!token) return 'no-token';
 
-  const body = buildRegistration(prefs, locale, token);
+  // ⚠ Read alongside the device token, never gated on it being present: a
+  // device below iOS 18 has one and not the other, and that is the ordinary
+  // case rather than a failure. `getPushToStartToken` answers null for it.
+  const body = buildRegistration(prefs, locale, token, getPushToStartToken());
   if (!body) return 'failed';
 
   /**

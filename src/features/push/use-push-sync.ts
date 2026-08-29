@@ -8,7 +8,7 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
-import { formatKickoffTime, formatWidgetKickoff } from '@/lib/format';
+import { formatKickoffTime, formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useUpcoming, useWidgetWindow } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
@@ -22,7 +22,7 @@ import { registerNotificationCategories } from './categories';
 import { applyReminders, selectReminders } from './reminders';
 import { initialRoute, onNotificationTap } from './routing';
 import { schedulePushSync, syncPushRegistration } from './sync';
-import { PUSH_AVAILABLE, WIDGETS_AVAILABLE } from './capability';
+import { PUSH_AVAILABLE, WIDGETS_AVAILABLE, onPushToStartToken } from './capability';
 
 export function usePushSync(): void {
   const router = useRouter();
@@ -59,6 +59,21 @@ export function usePushSync(): void {
     schedulePushSync(prefs, locale);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.userId]);
+
+  // The ActivityKit push-to-start token arrived or rotated (ADR 0055).
+  //
+  // ⚠⚠ **This is not optional plumbing.** The token rotates on reinstall and on
+  // restore-from-backup, and a start push to a stale one is ACCEPTED by APNs and
+  // simply never produces a card — so without this effect a restored phone stops
+  // getting Live Activities forever, with nothing anywhere saying why.
+  //
+  // ⚠ Debounced through the same path as everything else: the token can land in
+  // the same tick as the cold-launch registration above, and the route is 20/min.
+  // `registrationChanged` makes the redundant one free.
+  useEffect(() => {
+    return onPushToStartToken(() => schedulePushSync(prefs, locale));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   // Categories — the long-look card and the action button both key off these.
   // ⚠ Re-runs on a language change: iOS caches a category by identifier, so a
@@ -115,6 +130,7 @@ export function usePushSync(): void {
               // (`Sat 21:00`), because a tile with no date on it cannot say
               // whether `21:00` is tonight or a week on Tuesday.
               (iso) => formatWidgetKickoff(iso, zone, prefs.clock, phrases),
+              (iso) => formatWidgetKickoffParts(iso, zone, prefs.clock, phrases),
             )
           : null;
 

@@ -70,32 +70,106 @@ struct YourWeekView: View {
   /// carry one — the two together are a documented conflict where the row taps
   /// silently lose. The small widget has exactly one fixture, so it uses
   /// `widgetURL` instead.
+  ///
+  /// **Both sides named, home first, the followed one lit and tagged** (ADR
+  /// 0059). The first cut drew only the followed crest and `at Girona`, which
+  /// made the reader infer their own club from a crest and a preposition. Home
+  /// is always on the left — the same rule `W.pairLabel` states — so the followed
+  /// club can land on either side, and the accent name plus the `HOME`/`AWAY`
+  /// pill are what say which end is yours.
+  ///
+  /// ⚠ Unlike ADR 0043's upcoming cards, marking the followed side here is
+  /// correct: those cards ALL involve a followed club, so a mark would light
+  /// every card; this widget is a per-club list, and the mark is its point.
   private func fixtureRow(_ row: WidgetSnapshot.Entry) -> some View {
     Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
-      HStack(spacing: 9) {
-        // The FOLLOWED club's crest leads and the OPPONENT is named — the row
-        // answers "who are we playing", which is what a per-club list is for.
-        CrestView(
-          fixtureId: row.fixtureId,
-          slot: row.isHome ? "home" : "away",
-          abbr: row.isHome ? row.homeAbbr : row.awayAbbr,
-          size: 22
-        )
+      HStack(spacing: 8) {
+        side(row, slot: "home", followed: row.isHome)
 
-        Text(W.opponentLabel(row, copy: entry.copy))
-          .font(.system(size: 13.5, weight: .semibold))
-          .foregroundStyle(Tok.ink)
-          .lineLimit(1)
-          .minimumScaleFactor(0.75)
+        Text(entry.copy.versus)
+          .font(Tok.micro(9))
+          .foregroundStyle(Tok.ink45)
+          .fixedSize()
+
+        side(row, slot: "away", followed: !row.isHome)
 
         Spacer(minLength: 6)
 
-        Text(row.kickoffLabel)
-          .font(Tok.numerals(14, .semibold))
-          .foregroundStyle(Tok.ink78)
-          .lineLimit(1)
+        kickoff(row)
       }
-      .padding(.vertical, 7)
+      .padding(.vertical, 5)
+    }
+  }
+
+  /// One side of the fixture: crest, name, and the pill if it is the reader's.
+  ///
+  /// ⚠ The pill is `fixedSize()` and the NAME carries `minimumScaleFactor` — on
+  /// an SE the row is ~300pt for two crests, two names, a pill and a two-line
+  /// kickoff, and the thing that gives way must be the name, never the tag
+  /// that says which side is yours.
+  ///
+  /// ⚠ `homeName`/`awayName` are nil on a v1 snapshot; the abbr is the fallback,
+  /// never a blank.
+  private func side(_ row: WidgetSnapshot.Entry, slot: String, followed: Bool) -> some View {
+    let isHome = slot == "home"
+    let abbr = isHome ? row.homeAbbr : row.awayAbbr
+    let name = (isHome ? row.homeName : row.awayName) ?? abbr
+    let tag = isHome ? entry.copy.homeTag : entry.copy.awayTag
+
+    return HStack(spacing: 6) {
+      CrestView(fixtureId: row.fixtureId, slot: slot, abbr: abbr, size: 22)
+
+      Text(name)
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(followed ? Tok.accent : Tok.ink)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+
+      if followed, let tag {
+        pill(tag)
+      }
+    }
+    // ⚠ On the SIDE, not on the name. The width fight is between the two sides
+    // in the row's outer HStack; a priority on the inner Text only competes with
+    // its own crest and pill and changes nothing — the first simulator run drew
+    // `Real Mad…` beside a full-width `Málaga`, the inverse of the mock. With the
+    // followed side prioritised the OPPONENT is what gives way.
+    .layoutPriority(followed ? 1 : 0)
+  }
+
+  /// `HOME` / `AWAY` — theme.ts's `accentWash` + `accentRing` capsule, the
+  /// same one `versus-badge.tsx` draws in the app.
+  private func pill(_ text: String) -> some View {
+    Text(text)
+      .font(Tok.micro(8))
+      .tracking(0.8)
+      .foregroundStyle(Tok.accent)
+      .padding(.horizontal, 5)
+      .padding(.vertical, 2)
+      .background(Capsule().fill(Tok.accentWash))
+      .overlay(Capsule().strokeBorder(Tok.accentRing, lineWidth: 1))
+      .fixedSize()
+  }
+
+  /// `SAT` over `21:00`, right-aligned — or the v1 `Sat 21:00` on one line
+  /// when the snapshot predates the split.
+  @ViewBuilder
+  private func kickoff(_ row: WidgetSnapshot.Entry) -> some View {
+    if let day = row.kickoffDay, let time = row.kickoffTime {
+      VStack(alignment: .trailing, spacing: 0) {
+        W.eyebrow(day, color: Tok.ink45, size: 10)
+        Text(time)
+          .font(Tok.numerals(18, .heavy))
+          .foregroundStyle(Tok.ink)
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+      }
+      .fixedSize()
+    } else {
+      Text(row.kickoffLabel)
+        .font(Tok.numerals(14, .semibold))
+        .foregroundStyle(Tok.ink78)
+        .lineLimit(1)
     }
   }
 }

@@ -5,6 +5,7 @@ export { FeedAge } from './feed-age';
 export { FixtureTiming } from './fixture-timing';
 export { FormStrip } from './form-strip';
 export { HomeAwayTag } from './home-away-tag';
+export { LeagueChips, type LeagueChipsProps } from './league-chips';
 export { LeagueSwitch, type LeagueOption } from './league-switch';
 export { ListRow } from './list-row';
 export { MatchdayPager } from './matchday-pager';

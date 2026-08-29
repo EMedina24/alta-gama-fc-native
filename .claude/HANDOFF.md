@@ -466,6 +466,14 @@ documented at the code that handles them; this is the index.
   - ⚠ **NOT seen, by anyone:** the Lock Screen accessories and the Edit Widget
     club picker. Both are behind a long-press that cannot be driven from a script.
     They compile and are wired; nobody has looked at them.
+  - **The medium row was redrawn 2026-08-28**
+    ([0059](./decisions/0059-your-week-widget-names-both-sides.md)): both sides
+    named home-first, the followed side in accent with a `HOME`/`AWAY` pill, and
+    `SAT` over `21:00` on the right. Snapshot bumped to **v2**; every new field
+    is optional in Swift. **Verified on an iPhone 17 Pro simulator** with four
+    real clubs. ⚠ Names are CONTRACTED (`widgetName`: `R. Madrid`) — the full
+    forms truncated one side or the other. Not yet checked on an SE-width
+    simulator, nor with a hand-edited v1 `snapshot.json`.
 - **Live scores reach the Today board** (2026-08-27,
   [0048](./decisions/0048-live-scores-on-the-today-board.md)). The in-progress card
   now has two paths: `/cronogol/live` with a real minute for LaLiga, and the ~3h
@@ -596,9 +604,24 @@ documented at the code that handles them; this is the index.
    session was hand-sent; the cron removes the last manual step, it does not
    create traffic.
    ⚠ Cadence is `:15` and `:45`, offset so it never stacks on the hour crons.
-5. **Live Activity** — deferred to v1.1 ([0024](./decisions/0024-push-enabled.md)).
-   SPEC §4's version needs a minute the API cannot supply, an ActivityKit token
-   the push DTO rejects, and a push-to-start the dark cron cannot send.
+5. ~~**Live Activity**~~ — **BUILT 2026-08-28**, dark
+   ([0055](./decisions/0055-live-activities-broadcast-channels.md),
+   [0057](./decisions/0057-local-expo-module.md); backend `0034`). Broadcast
+   channels, one per fixture, iOS 18+. The card REPLACES the goal banner for a
+   device that has one.
+   ⚠ **Never on a device, and gated behind three flags.** Nothing appears until
+   `CRONOGOL_LIVE_CRON_ENABLED`, `CRONOGOL_LIVE_PUSH_ENABLED` and
+   `CRONOGOL_LIVE_ACTIVITY_ENABLED` are all on, and the last one additionally
+   needs `CRONOGOL_LIVE_ACTIVITY_DRY_RUN=false`.
+   ⚠⚠ **The broadcast capability is a MANUAL Apple Developer portal step** —
+   under Push Notifications on `com.altagamafc.app`. EAS capability sync does
+   NOT cover it, and without it every channel create fails.
+   ⚠ **First real Swift typecheck is `expo prebuild`**, and it now has a THIRD
+   native input: `modules/live-activity/`, the app target's only Swift. A
+   prebuild that skips it produces an app that compiles, runs, and never reports
+   a push-to-start token.
+   ⚠ `.claude/LIVE-ACTIVITIES.md` and 0054 both carry claims 0055 corrects —
+   read 0055 first, not them.
 6. ~~**Accounts**~~ — **shipped 2026-08-26**, Apple + Google, sign-in optional
    ([0038](./decisions/0038-accounts-apple-and-google.md),
    [0039](./decisions/0039-auth-goes-direct-to-supabase.md)). Guideline **4.8**

@@ -11,6 +11,9 @@ import { ExtensionStorage } from '@bacons/apple-targets';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 
+import LiveActivity from '@/modules/live-activity';
+import { normaliseActivityToken } from '@/lib/cronogol/push';
+
 /**
  * ⚠ **Simulators cannot register for remote notifications**, so there is no APNs
  * token to be had there — `getDevicePushTokenAsync()` rejects. Everything else
@@ -93,6 +96,74 @@ export async function getDeviceToken(): Promise<string | null> {
   } catch {
     // No entitlement, no network at registration time, or a simulator.
     return null;
+  }
+}
+
+/**
+ * Whether this device can show a match Live Activity (ADR 0055).
+ *
+ * ⚠ **Two gates, both real and both runtime.** iOS 18 for the broadcast channel
+ * the activity subscribes to, and the reader's own per-app Live Activities
+ * setting, which they can switch off in Settings at any time. Neither is a build
+ * flag, so unlike `PUSH_AVAILABLE` and `WIDGETS_AVAILABLE` this is a FUNCTION —
+ * a constant would be read once at import and go stale the moment the reader
+ * changes their mind.
+ *
+ * ⚠ A device that fails either keeps the ADR 0053 banners. It does not lose the
+ * feature, it gets the older shape of it.
+ */
+export function liveActivitiesAvailable(): boolean {
+  try {
+    return LiveActivity.isSupported();
+  } catch {
+    // No native module: Expo Go, a web build, or a bundle predating ADR 0056.
+    return false;
+  }
+}
+
+/**
+ * This device's ActivityKit push-to-start token, or null.
+ *
+ * ⚠ **Null is the ordinary answer, not a failure.** Below iOS 18, on a
+ * simulator, with activities switched off, or simply before the first emission,
+ * there is no token — and the caller treats "no token" as "this device cannot
+ * show a card", which is the truth. Exactly `getDeviceToken()`'s posture.
+ *
+ * ⚠ Normalised HERE, once, so `buildRegistration` stays pure and nothing
+ * downstream has to know the shape. See `normaliseActivityToken` for why it is
+ * not `normaliseToken` — the two tokens are different lengths and running the
+ * 64-hex check over this one discards every token silently.
+ */
+export function getPushToStartToken(): string | null {
+  try {
+    const raw = LiveActivity.getPushToStartToken();
+    return raw ? normaliseActivityToken(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fire `onToken` whenever the push-to-start token changes.
+ *
+ * ⚠⚠ **The token rotates, and a stale one starts nothing.** It changes on
+ * reinstall and on restore-from-backup, exactly like the APNs device token — and
+ * the failure is silent, because a start push to a dead token is accepted by
+ * APNs and simply never produces a card. `use-push-sync` re-registers on it.
+ *
+ * ⚠ Returns the unsubscribe. The native side begins observing at module
+ * creation, not on the first subscriber, so a token minted before React mounted
+ * is already cached and `getPushToStartToken()` will answer it.
+ */
+export function onPushToStartToken(onToken: (token: string) => void): () => void {
+  try {
+    const subscription = LiveActivity.addListener('onPushToStartToken', ({ token }) => {
+      const normalised = normaliseActivityToken(token);
+      if (normalised) onToken(normalised);
+    });
+    return () => subscription.remove();
+  } catch {
+    return () => {};
   }
 }
 

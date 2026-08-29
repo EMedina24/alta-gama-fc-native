@@ -251,6 +251,28 @@ export function displayName(name: string): string {
   return kept.length > 0 ? kept.join(" ") : name;
 }
 
+/**
+ * `R. Madrid`, `Athletic`, `Girona` — the medium widget's row name (ADR 0059).
+ *
+ * `displayName` first, then a multi-word name longer than nine characters
+ * contracts its first word to an initial. Two crests, two names and a
+ * `HOME`/`AWAY` pill share one ~300pt row; on the simulator the full
+ * `Real Madrid HOME v Málaga` truncated whichever side lost the layout fight.
+ * The mock draws `R. Madrid` for exactly this reason.
+ *
+ * ⚠ Display only, like `displayName` — `A. Madrid` and `R. Madrid` are told
+ * apart by the crest beside them, never by this string.
+ */
+export function widgetName(name: string): string {
+  const shown = displayName(name);
+  const words = shown.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || shown.length <= 9) return shown;
+  const contracted = `${words[0].charAt(0)}. ${words.slice(1).join(" ")}`;
+  // ⚠ `R. Vallecano` (12) still drew as `R. Val…` beside `Barcelona HOME`. Past
+  // eleven characters the initial buys nothing; the last word alone does.
+  return contracted.length <= 11 ? contracted : words[words.length - 1];
+}
+
 export interface HomeGround {
   venue: string | null;
   city: string | null;

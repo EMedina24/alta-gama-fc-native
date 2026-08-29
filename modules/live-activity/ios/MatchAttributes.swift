@@ -1,0 +1,1 @@
+../../../targets/_shared/MatchAttributes.swift

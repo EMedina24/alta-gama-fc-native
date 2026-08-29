@@ -40,6 +40,11 @@ struct WidgetSnapshot: Codable {
     let versus: String
     /// Prefix for an away row: `at Girona` / `en Girona`.
     let away: String
+    /// The pill after the followed side on the medium widget: `HOME` / `CASA`
+    /// (ADR 0059). ⚠ Optional — absent from a v1 snapshot, and a missing pill
+    /// is the honest degradation.
+    let homeTag: String?
+    let awayTag: String?
   }
 
   struct Entry: Codable, Identifiable {
@@ -49,6 +54,10 @@ struct WidgetSnapshot: Codable {
     let isHome: Bool
     let homeAbbr: String
     let awayAbbr: String
+    /// Both sides named, home first (ADR 0059). ⚠ Optional: a v1 snapshot
+    /// written by an older app has neither, and the row falls back to the abbrs.
+    let homeName: String?
+    let awayName: String?
     let opponentName: String
     let opponentAbbr: String
     /// Which crest file in the App Group is the opponent's: `home` or `away`.
@@ -56,6 +65,11 @@ struct WidgetSnapshot: Codable {
     let kickoffUtc: Date
     /// Pre-formatted in the reader's zone and clock preference. `Sat 21:00`.
     let kickoffLabel: String
+    /// `SAT` over `21:00` — the medium widget's stacked column (ADR 0059).
+    /// ⚠ Optional for the same reason as `homeName`; the row falls back to
+    /// `kickoffLabel` on one line.
+    let kickoffDay: String?
+    let kickoffTime: String?
     /// `J4`. Null for a competition without rounds.
     let roundLabel: String?
     let venue: String?
@@ -136,7 +150,9 @@ extension WidgetSnapshot {
     followPrompt: "Open Alta Gama FC",
     noFixtures: "No matches scheduled",
     versus: "v",
-    away: "at"
+    away: "at",
+    homeTag: "HOME",
+    awayTag: "AWAY"
   )
 
   /// No snapshot on disk at all — the app has never run, or the App Group is not
@@ -149,7 +165,7 @@ extension WidgetSnapshot {
   /// may not live in, presented exactly like real data. The sample belongs in
   /// the picker, where everything is obviously a preview, and nowhere else.
   static func unavailable(relativeTo now: Date) -> WidgetSnapshot {
-    WidgetSnapshot(v: 1, writtenAt: now, clubs: [], copy: fallbackCopy, entries: [])
+    WidgetSnapshot(v: 2, writtenAt: now, clubs: [], copy: fallbackCopy, entries: [])
   }
 
   /// The gallery preview.
@@ -159,7 +175,7 @@ extension WidgetSnapshot {
   /// which reads as broken to someone who simply has not opened the app yet.
   static func placeholder(relativeTo now: Date) -> WidgetSnapshot {
     WidgetSnapshot(
-      v: 1,
+      v: 2,
       writtenAt: now,
       clubs: [
         .init(slug: "valencia", name: "Valencia CF", abbr: "VAL"),
@@ -173,29 +189,37 @@ extension WidgetSnapshot {
         followPrompt: "Follow a club",
         noFixtures: "No fixtures scheduled",
         versus: "v",
-        away: "at"
+        away: "at",
+        homeTag: "HOME",
+        awayTag: "AWAY"
       ),
       entries: [
         .init(
           fixtureId: "preview-1", clubSlug: "valencia", isHome: true,
           homeAbbr: "VAL", awayAbbr: "RMA",
+          homeName: "Valencia", awayName: "R. Madrid",
           opponentName: "Real Madrid", opponentAbbr: "RMA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(100_800),
-          kickoffLabel: "Sat 21:00", roundLabel: "J4", venue: "Mestalla"
+          kickoffLabel: "Sat 21:00", kickoffDay: "SAT", kickoffTime: "21:00",
+          roundLabel: "J4", venue: "Mestalla"
         ),
         .init(
           fixtureId: "preview-2", clubSlug: "sevilla", isHome: true,
           homeAbbr: "SEV", awayAbbr: "OSA",
+          homeName: "Sevilla", awayName: "Osasuna",
           opponentName: "Osasuna", opponentAbbr: "OSA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(169_200),
-          kickoffLabel: "Sun 16:15", roundLabel: "J4", venue: "Sánchez-Pizjuán"
+          kickoffLabel: "Sun 16:15", kickoffDay: "SUN", kickoffTime: "16:15",
+          roundLabel: "J4", venue: "Sánchez-Pizjuán"
         ),
         .init(
           fixtureId: "preview-3", clubSlug: "athletic", isHome: false,
           homeAbbr: "GIR", awayAbbr: "ATH",
+          homeName: "Girona", awayName: "Athletic",
           opponentName: "Girona", opponentAbbr: "GIR", opponentSlot: "home",
           kickoffUtc: now.addingTimeInterval(177_300),
-          kickoffLabel: "Sun 18:30", roundLabel: "J4", venue: "Montilivi"
+          kickoffLabel: "Sun 18:30", kickoffDay: "SUN", kickoffTime: "18:30",
+          roundLabel: "J4", venue: "Montilivi"
         ),
       ]
     )

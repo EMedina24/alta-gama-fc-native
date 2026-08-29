@@ -82,6 +82,11 @@ export function registrationChanged(
     previous.alertMoved !== next.alertMoved ||
     previous.alertPostponed !== next.alertPostponed ||
     previous.alertGoals !== next.alertGoals ||
+    // ⚠ The push-to-start token rotates on reinstall and on restore, and a stale
+    // one starts nothing: APNs ACCEPTS a start push to a dead token and simply
+    // never produces a card. Omitting this comparison is a device that quietly
+    // stops getting Live Activities and never recovers (ADR 0055).
+    previous.activityToken !== next.activityToken ||
     previous.clubSlugs.length !== next.clubSlugs.length ||
     previous.clubSlugs.some((slug, i) => slug !== next.clubSlugs[i])
   );

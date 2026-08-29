@@ -193,6 +193,18 @@ export const Size = {
   /** League filter tiles: artwork only, four across inside the screen gutter. */
   leagueTileW: 80, leagueTileH: 56, leagueMarkW: 52, leagueMarkH: 28,
   /**
+   * Onboarding's league chips — artwork PLUS the league's name, 2-up (ADR 0056).
+   * Bigger than the filter tile because it is a first-run choice, not a filter.
+   *
+   * ⚠ `leagueChipMarkH` is a HEIGHT ONLY and there is deliberately no matching
+   * width. The four marks have wildly different aspect ratios — LaLiga's LL
+   * monogram is 1:1, the Premier League's is ~4:5 — so capping height keeps them
+   * optically the same size, while capping width shrinks the portrait ones to
+   * slivers. `leagueMarkW`/`leagueMarkH` above are a fixed box because that row
+   * is artwork-only and needs every tile identical; this one is not.
+   */
+  leagueChipH: 84, leagueChipMarkH: 32,
+  /**
    * The time column, per clock format. Fixed *within* a format so no single row
    * reflows against its neighbours — every row on screen shares one `clock`, so
    * one of these two is in force at a time and the pairing column always aligns.

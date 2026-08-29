@@ -32,6 +32,10 @@ enum Tok {
 
   // Alert types — theme.ts `accent`, `moved`, `postponed`.
   static let accent = Color(red: 0.784, green: 0.949, blue: 0.353) // #c8f25a
+  /// theme.ts `accentWash` / `accentRing` — the HOME/AWAY pill on the medium
+  /// widget (ADR 0059), the same pair `versus-badge.tsx` draws in the app.
+  static let accentWash = Color(red: 0.784, green: 0.949, blue: 0.353).opacity(0.14)
+  static let accentRing = Color(red: 0.784, green: 0.949, blue: 0.353).opacity(0.45)
   static let moved = Color(red: 0.435, green: 0.788, blue: 1.000) // #6fc9ff
   static let postponed = Color(red: 1.000, green: 0.561, blue: 0.420) // #ff8f6b
   static let postponedWash = Color(red: 1.0, green: 0.561, blue: 0.420).opacity(0.14)

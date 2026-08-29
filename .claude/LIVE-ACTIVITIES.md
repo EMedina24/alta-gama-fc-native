@@ -1,15 +1,43 @@
-# Live Activities — the phase-2 path, not yet started
+# Live Activities — BUILT 2026-08-28. ⚠ This file is the research, and parts of it are wrong
 
-**Status: deferred** ([0054](./decisions/0054-live-activities-still-deferred.md),
-reaffirming [0024](./decisions/0024-push-enabled.md)). No ActivityKit code exists
-in this repo. This file is what the next person needs so they do not re-derive it.
+⚠⚠ **Status: no longer deferred.** It was built on 2026-08-28 —
+[0055](./decisions/0055-live-activities-broadcast-channels.md) and
+[0057](./decisions/0057-local-expo-module.md), with the backend's
+`0034-live-activities-broadcast-channels.md`. **0055 is the authority; this file
+is the research that preceded it and it is kept for its citations, not its
+conclusions.**
+
+⚠⚠ **THREE CLAIMS BELOW ARE WRONG AND COST TIME.** They are annotated inline, but
+read them here first:
+
+1. **"There is no token to put anywhere" (⭐ section below) is half true, and the
+   wrong half.** Channels remove the per-activity UPDATE token. The
+   **push-to-start** token is still required — nobody opens the app at kickoff —
+   and it is per device and per activity TYPE, so it is one nullable column on
+   `device_tokens`. Planned against "no token", this feature has no way to begin.
+2. **"Raising the floor is almost certainly the right call" is wrong.**
+   `targets/widget/` is ONE extension holding both widgets and both Lock Screen
+   accessories; raising it to 18.0 would take the widgets away from every iOS 17
+   reader, which is the exact cost [0047](./decisions/0047-widgets.md) paid 17.0
+   to avoid. `@available(iOS 18.0, *)` at the call sites costs nothing. The floor
+   did not move.
+3. **The channel ceiling is 10,000 per app PER ENVIRONMENT**, not the small
+   number "limited per app" implies below. Still finite, still leaking, still
+   needs the prune — but the shape of the risk is different.
+
+⚠ Also: the check-age footer is retired and **no stall line replaces it** — see
+0055 §6. A card goes stale by the ABSENCE of pushes, so no push can carry that.
+
+⚠ Every APNs host, path, header and status code was **verified against Apple's
+provider documentation on 2026-08-28** while building. Where this file and
+0034/0055 disagree on a wire detail, they are right.
 
 Seeded from `senpai-backend/.claude/cronogol/live-phase-2.md` §2 and this repo's
 `GO-LIVE.md`.
 
 ---
 
-## Why it is not built, in one paragraph
+## Why it WAS not built, in one paragraph — ⚠ historical, it is built now
 
 0024 deferred it because there was no live data. That reason is gone —
 `/cronogol/live` carries a minute, a score and an event timeline, and
@@ -32,6 +60,9 @@ building the per-device path." **It applies, and it changes the design.**
 
 `GO-LIVE.md`'s named blocker was: *"there is nowhere to put an ActivityKit push
 token — that is a new table, not a new column."*
+
+⚠⚠ **WRONG — see the header. With channels there is no UPDATE token to put
+anywhere; the push-to-start token is still a column.** Original text follows:
 
 **With channels there is no token to put anywhere.** An activity subscribes with
 `pushType: .channel(channelId)`; the server publishes one push to the channel id
@@ -60,6 +91,10 @@ per-device token on 17.x) which reintroduces exactly the token table channels
 were meant to delete. **Raising the floor is almost certainly the right call**,
 but it is a decision, not a detail.
 
+⚠⚠ **WRONG — see the header.** Raising it removes the WIDGETS from iOS 17, which
+this paragraph does not consider. 0055 gates at the call site and the floor stays
+at 17.0.
+
 ### ⚠⚠ This one DOES need the Apple Developer portal
 
 Unlike the time-sensitive entitlement — which EAS syncs from `ios.entitlements`
@@ -71,7 +106,8 @@ it is a setting on the push configuration, not an entitlement in the app.
 
 - Created and deleted through APNs' **channel management API**, with the same
   token auth `apns-jwt.ts` already mints.
-- ⚠ **Total active channels are limited per app.** A channel outlives the
+- ⚠ **10,000 active channels per app, PER ENVIRONMENT** (this file originally
+  said only "limited per app"), and a channel cannot be used across environments. A channel outlives the
   activities on it, so a fixture channel left behind is permanent litter — the
   server has to delete them. `LiveSessionService.prune()` is the obvious home,
   beside the two prunes it already runs.
@@ -156,10 +192,10 @@ send.
 
 ---
 
-## The app side
+## The app side — ⚠ ALL OF THIS IS NOW DONE; kept for the reasoning
 
-- No `NSSupportsLiveActivities` in `app.json`.
-- No ActivityKit target. The widget extension at `targets/widget/` is where an
+- ~~No `NSSupportsLiveActivities` in `app.json`.~~ Added (0055).
+- ~~No ActivityKit target.~~ The widget extension at `targets/widget/` is where an
   `ActivityConfiguration` would live — it is already `deploymentTarget: '17.0'`
   and already carries the App Group.
 - ⚠ **`Tokens.swift` is a hand-maintained copy of `theme.ts`** (HANDOFF trap 15)
@@ -195,7 +231,7 @@ Two smaller corrections to that spec: `fixtureId` is a **uuid string**, not an
 
 ---
 
-## Gate
+## Gate — ⚠ STILL BINDING, and nothing about it changed
 
 ⚠ Nothing here starts before `CRONOGOL_LIVE_CRON_ENABLED` and
 `CRONOGOL_LIVE_PUSH_ENABLED` are both on and verified on a real matchday. An

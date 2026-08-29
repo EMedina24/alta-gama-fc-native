@@ -13,11 +13,6 @@ enum W {
       .minimumScaleFactor(0.8)
   }
 
-  /// `at Girona` / `Girona` — an away row names the ground it is played on.
-  static func opponentLabel(_ row: WidgetSnapshot.Entry, copy: WidgetSnapshot.Copy) -> String {
-    row.isHome ? row.opponentName : "\(copy.away) \(row.opponentName)"
-  }
-
   /// `VAL v RMA`, in the fixture's own order — never the followed club first.
   ///
   /// ⚠ Home side on the left, always. Flipping it so "your" club leads would

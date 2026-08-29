@@ -197,11 +197,18 @@ export function byEditorialOrder(a: League, b: League): number {
 /**
  * The league catalogue as a filter row's options, in editorial order.
  *
- * ⚠ `LeagueRef.logoUrls` is keyed SEMANTICALLY (`primary`/`icon`/`wordmark`),
- * the opposite of `TeamView`'s size keys. `icon` is the icon-only cut and is
- * LaLiga's alone today; `primary` is the full lockup, which carries its own
- * wordmark. Picking wrong is a layout mistake, not a resolution one — so the
- * order lives here once rather than at each screen that draws the row.
+ * ⚠ `LeagueRef.logoUrls` is keyed SEMANTICALLY (`primary`/`icon`/`wordmark`/
+ * `onDark`/`onLight`), the opposite of `TeamView`'s size keys. `icon` is the
+ * icon-only cut and is LaLiga's alone today; `primary` is the full lockup, which
+ * carries its own wordmark. Picking wrong is a layout mistake, not a resolution
+ * one — so the order lives here once rather than at each screen that draws the row.
+ *
+ * ⚠ `onDark` comes FIRST because every surface in this app is dark (the theme's
+ * `light` is an alias of `dark`). It exists for the Premier League alone, whose
+ * `primary` became a PURE WHITE mark on 2026-08-08 — correct for a dark UI, and
+ * the one league whose `logoUrl` cannot be dropped onto an arbitrary background.
+ * Today `onDark` EQUALS `primary`, so this changes nothing; it is insurance for
+ * the next time that artwork changes ink, which it already has once.
  *
  * Artwork is optional: a league with none renders as its name (ADR 0031), and
  * the row is still usable while `useLeagueArtwork` is in flight.
@@ -215,7 +222,12 @@ export function leagueOptions(
     return {
       slug: league.slug,
       name: league.name,
-      logoUrl: art?.logoUrls?.icon ?? art?.logoUrls?.primary ?? art?.logoUrl ?? null,
+      logoUrl:
+        art?.logoUrls?.onDark ??
+        art?.logoUrls?.icon ??
+        art?.logoUrls?.primary ??
+        art?.logoUrl ??
+        null,
     };
   });
 }

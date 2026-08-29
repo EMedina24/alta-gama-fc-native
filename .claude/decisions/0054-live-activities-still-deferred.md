@@ -1,7 +1,7 @@
 # 0054 — Live Activities remain deferred; the phase-2 path is written down
 
 - **Date:** 2026-08-28
-- **Status:** Accepted
+- **Status:** ⚠ **Superseded by [0055](./0055-live-activities-broadcast-channels.md)** — built 2026-08-28
 - **Decided by:** Ed Medina
 - **Builds on:** [0024](./0024-push-enabled.md) (the original deferral),
   [0047](./0047-widgets.md), [0053](./0053-live-match-push-alerts.md)
@@ -91,3 +91,46 @@ refinements, not requirements** — the Watch Smart Stack adapts the Dynamic Isl
 views automatically with no code.
 
 Detail and citations: [`LIVE-ACTIVITIES.md`](../LIVE-ACTIVITIES.md).
+
+---
+
+## Update — 2026-08-28: BUILT, and two of this entry's claims were wrong
+
+⚠ **This decision is superseded by [0055](./0055-live-activities-broadcast-channels.md).**
+Nothing above is edited — the reasoning is left as it stood — but two claims in
+it, and in `LIVE-ACTIVITIES.md`, cost real time to disprove and must not be read
+forward.
+
+### ⚠⚠ 1. "The token blocker is gone" is HALF true, and the wrong half
+
+The first update above says broadcast channels *"remove the per-Activity token
+entirely"* and that *"there is no token to store"*. Channels remove the
+**update** token. They do not remove the **push-to-start** token, and that is the
+one that starts the feature: nobody opens the app at kickoff, so the server must
+be able to start a card on a locked phone with the app closed.
+
+It is per device **and per activity type**, so it is one nullable column on
+`device_tokens` — much cheaper than the table `GO-LIVE.md` feared, but not zero.
+Planned against "no token", this feature has no way to begin.
+
+### ⚠⚠ 2. "Raising the deployment floor is almost certainly the right call" is wrong
+
+The first update, and `LIVE-ACTIVITIES.md`, both frame `targets/widget/`'s
+`deploymentTarget: '17.0'` as a floor that channels require raising to 18.
+
+`targets/widget/` is **one extension** holding both home-screen widgets and both
+Lock Screen accessories. Raising it to 18 for the activity would silently take
+the WIDGETS away from every iOS 17 reader — the exact cost
+[0047](./0047-widgets.md) deliberately paid 17.0 to avoid, and the doc frames it
+as a detail about the activity alone.
+
+`@available(iOS 18.0, *)` on the `ActivityConfiguration` and `if #available` in
+the widget bundle cost nothing and keep 0047 intact. **The floor did not move.**
+
+### Also corrected in 0055
+
+- The check-age footer is retired, and **no stall line replaces it** — a card
+  goes stale by the absence of pushes, so no push can carry that fact.
+- Item 4 above ("no design exists") was already corrected in the first update.
+- Apple's channel ceiling is **10,000 per app per environment**, not the small
+  number `LIVE-ACTIVITIES.md` implies.

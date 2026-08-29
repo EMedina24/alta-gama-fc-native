@@ -29,6 +29,16 @@ enum Cadence {
 
   private static func pad(_ value: Int) -> String { value < 10 ? "0\(value)" : "\(value)" }
 
+  /// How close to kickoff the SMALL widget swaps `countdown(from:to:)` for a
+  /// live, system-ticked `Text(timerInterval:)` (ADR 0058).
+  ///
+  /// ⚠ 12 hours, because the system's timer format has no days unit — hours
+  /// accumulate — so past a day out it renders `38:14:23` where the design says
+  /// `1d 14h`. Tried at `.infinity` first and a fixture days out read
+  /// `288:14:23` on the simulator, which is what settled it. Inside 12h the
+  /// figure is `9:34:12`, ticking every second at zero reload cost.
+  static let liveTickWithin: TimeInterval = 12 * 3_600
+
   /// `1d` · `4h` · `18m` — the Lock Screen's circular accessory, where there is
   /// room for two glyphs and no more.
   static func compact(from now: Date, to kickoff: Date) -> String {

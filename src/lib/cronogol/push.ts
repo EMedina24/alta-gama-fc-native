@@ -42,6 +42,23 @@ export interface PushRegistration {
    * EAS build is.
    */
   environment: ApnsEnvironment;
+  /**
+   * This device's ActivityKit **push-to-start** token (ADR 0055).
+   *
+   * ⚠ **A different token from `token` above, and a different SHAPE.** That one
+   * is the 64-hex APNs device token. This one is per device and per activity
+   * TYPE, it is what lets the server start a Live Activity on a locked phone
+   * with the app closed, and it is materially longer — see
+   * `normaliseActivityToken`.
+   *
+   * ⚠ Optional, and absent is the normal case: below iOS 18, on a simulator, or
+   * with Live Activities switched off in Settings there is no token to send. The
+   * DTO must treat absent as "this device cannot show a card", never as an error.
+   *
+   * ⚠⚠ **THE BACKEND DTO MUST CARRY THIS BEFORE THIS APP SHIPS IT** — the same
+   * ordering trap `alertGoals` documents above, with the same consequence.
+   */
+  activityToken?: string;
 }
 
 export interface PushRegistrationView {
@@ -57,6 +74,9 @@ export interface PushRegistrationView {
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
+/** ⚠ Bounded, not fixed. See `normaliseActivityToken`. */
+const ACTIVITY_TOKEN = /^[0-9a-f]{64,512}$/;
+
 /**
  * ⚠ **The backend does NOT lowercase the token, and its own migration comment
  * wrongly claims the DTO does.** `@Matches(/^[0-9a-f]{64}$/)` rejects uppercase,
@@ -69,6 +89,25 @@ const HEX64 = /^[0-9a-f]{64}$/;
 export function normaliseToken(raw: string): string | null {
   const cleaned = raw.replace(/[<>\s]/g, '').toLowerCase();
   return HEX64.test(cleaned) ? cleaned : null;
+}
+
+/**
+ * ⚠⚠ **A push-to-start token is NOT 64 hex characters, and reusing
+ * `normaliseToken` for it silently drops every one of them.**
+ *
+ * An APNs *device* token is 32 bytes and its length is fixed. An ActivityKit
+ * push-to-start token is not that shape at all — it is materially longer and
+ * Apple does not document a fixed size, so pinning an exact length here would
+ * turn a future change on their side into a feature that stops working with no
+ * error anywhere.
+ *
+ * Bounded rather than open: hex only, and a ceiling, so a garbage value is
+ * rejected here instead of becoming a 400 on the registration that also carries
+ * the follow list. ⚠ The ceiling must match the backend's `@Matches`.
+ */
+export function normaliseActivityToken(raw: string): string | null {
+  const cleaned = raw.replace(/[<>\s]/g, '').toLowerCase();
+  return ACTIVITY_TOKEN.test(cleaned) ? cleaned : null;
 }
 
 /**

@@ -203,6 +203,27 @@ export function formatWidgetKickoff(
   return sentence ? `${sentence} ${time}` : time;
 }
 
+/**
+ * `{ day: 'SAT', time: '21:00' }` — the medium widget's stacked kickoff column
+ * (ADR 0059).
+ *
+ * ⚠ UPPERCASE where `formatWidgetKickoff` is sentence case, and that is the
+ * same rule applied to a different placement: this is a stacked date block,
+ * which is where caps are the design (`formatFixtureDate`, the season spine).
+ * The inline `Sat 21:00` still serves the small widget and the accessories.
+ *
+ * ⚠ Same `kickoffTbd` precondition as `formatWidgetKickoff`.
+ */
+export function formatWidgetKickoffParts(
+  iso: string,
+  zone: string,
+  clock: '24' | '12',
+  phrases: Phrases,
+): { day: string; time: string } {
+  const { weekday } = zonedParts(iso, zone, phrases);
+  return { day: weekday.toUpperCase(), time: formatKickoffTime(iso, zone, clock) };
+}
+
 /** "Saturday" / "Sábado" — the Today board's eyebrow. */
 export function formatWeekdayLong(iso: string, zone: string, phrases: Phrases): string {
   return new Intl.DateTimeFormat(phrases.intl, { timeZone: zone, weekday: 'long' })

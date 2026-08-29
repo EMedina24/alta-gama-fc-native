@@ -71,6 +71,13 @@ export interface Copy {
     versus: string;
     /** Prefix for an away row: `at Girona`. ⚠ A preposition, not `awayWord`. */
     away: string;
+    /**
+     * The pill after the FOLLOWED side's name on the medium widget (ADR 0059):
+     * `HOME` / `AWAY`. ⚠ Short on purpose — it shares a 13.5pt row with two
+     * club names. Not `homeWord`/`awayWord`, which are sentence fragments.
+     */
+    homeTag: string;
+    awayTag: string;
   };
   onboarding: {
     pickTitle: string;
@@ -442,6 +449,8 @@ export const esCopy: Copy = {
     // both languages; the widget is the same fixture named the same way.
     versus: 'v',
     away: 'en',
+    homeTag: 'CASA',
+    awayTag: 'FUERA',
   },
 
   onboarding: {
@@ -735,6 +744,8 @@ export const enCopy: Copy = {
     noFixtures: 'No matches scheduled',
     versus: 'v',
     away: 'at',
+    homeTag: 'HOME',
+    awayTag: 'AWAY',
   },
 
   onboarding: {

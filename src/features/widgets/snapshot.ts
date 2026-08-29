@@ -24,12 +24,12 @@ import { Directory, File } from 'expo-file-system';
 
 import { groupContainer } from '@/features/app-group';
 import { involvesFollowed, upcomingRow } from '@/lib/cronogol/board';
-import { abbreviate, matchday } from '@/lib/cronogol/derive';
+import { abbreviate, matchday, widgetName } from '@/lib/cronogol/derive';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 
 /** Bump when `WidgetEntry`/`WidgetSnapshot` changes shape. Swift tolerates both. */
-export const SNAPSHOT_VERSION = 1;
+export const SNAPSHOT_VERSION = 2;
 
 /**
  * How many fixtures travel.
@@ -61,6 +61,14 @@ export interface WidgetEntry {
   /** ⚠ Home-first, the way the match is named — never "your club" first. */
   homeAbbr: string;
   awayAbbr: string;
+  /**
+   * Both sides named via `widgetName` (`R. Madrid`, `Athletic`) for the medium
+   * widget's row (ADR 0059) — contracted, because two names and a pill share
+   * one row and the full forms truncated on the simulator. ⚠ Optional in `Snapshot.swift` — a v1
+   * file has neither, and the extension falls back to the abbrs.
+   */
+  homeName: string;
+  awayName: string;
   opponentName: string;
   opponentAbbr: string;
   /** Which crest file in the App Group is the opponent's. */
@@ -68,6 +76,9 @@ export interface WidgetEntry {
   /** ⚠ The only raw instant. Everything else is a finished string. */
   kickoffUtc: string;
   kickoffLabel: string;
+  /** `SAT` over `21:00` — the medium widget's stacked column (ADR 0059). */
+  kickoffDay: string;
+  kickoffTime: string;
   roundLabel: string | null;
   venue: string | null;
 }
@@ -84,6 +95,8 @@ export interface WidgetSnapshot {
     noFixtures: string;
     versus: string;
     away: string;
+    homeTag: string;
+    awayTag: string;
   };
   entries: WidgetEntry[];
 }
@@ -156,6 +169,7 @@ export function buildSnapshot(
   now: Date,
   copy: Copy,
   formatKickoff: (iso: string) => string,
+  formatKickoffParts: (iso: string) => { day: string; time: string },
 ): WidgetSnapshot {
   const picked = selectWidgetFixtures(fixtures, followed, now);
 
@@ -179,6 +193,7 @@ export function buildSnapshot(
     if (!clubs.has(club.slug)) clubs.set(club.slug, club);
 
     const md = matchday(fixture.round) ?? fixture.matchweek;
+    const parts = formatKickoffParts(fixture.kickoffUtc);
 
     entries.push({
       fixtureId: fixture.id,
@@ -190,6 +205,8 @@ export function buildSnapshot(
       awayAbbr: fixture.awayTeam
         ? abbreviate(fixture.awayTeam.name, fixture.awayTeam.slug, fixture.awayTeam.shortName)
         : '',
+      homeName: fixture.homeTeam ? widgetName(fixture.homeTeam.name) : '',
+      awayName: fixture.awayTeam ? widgetName(fixture.awayTeam.name) : '',
       opponentName: row.opponent.name,
       opponentAbbr: abbreviate(
         row.opponent.name,
@@ -199,6 +216,8 @@ export function buildSnapshot(
       opponentSlot: row.isHome ? 'away' : 'home',
       kickoffUtc: fixture.kickoffUtc,
       kickoffLabel: formatKickoff(fixture.kickoffUtc),
+      kickoffDay: parts.day,
+      kickoffTime: parts.time,
       // ⚠ `copy.today.md` — the SAME matchday label the last-result card uses
       // (`J 4` / `MD 4`). The mock draws `J4` closed up; one source of truth for
       // the label is worth more than one space.
@@ -235,6 +254,8 @@ export function buildSnapshot(
       noFixtures: copy.widgets.noFixtures,
       versus: copy.widgets.versus,
       away: copy.widgets.away,
+      homeTag: copy.widgets.homeTag,
+      awayTag: copy.widgets.awayTag,
     },
     entries,
   };
