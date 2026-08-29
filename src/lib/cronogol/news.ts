@@ -56,6 +56,10 @@ export function plainText(value: string): string {
  * missing topic, and a dash reads as a value that failed to load.
  */
 export function articleTopic(article: NewsArticleView): string | null {
+  // ⚠ On a FIRST-PARTY row `categories[0]` is the editorial KIND — `story`,
+  // `matchday-briefing` — not a topic (CRONOGOL-API.md). Printing it drew a
+  // `STORY` chip on every one of our own pieces (seen 2026-08-29, ADR 0064).
+  if (article.publisher.isFirstParty) return null;
   const topic = article.categories[0] ? plainText(article.categories[0]) : '';
   return topic || null;
 }
@@ -99,4 +103,105 @@ export function selectNewsItems(
     })
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
     .slice(0, budget);
+}
+
+// ---------------------------------------------------------------- app screens (ADR 0064)
+
+/**
+ * `12m` / `3h` / `2d` — a headline's age at render time.
+ *
+ * ⚠ Mirrors the widget's `W.age(from:to:)` in Swift, unit for unit, so the
+ * card and the tile never disagree about the same story. Locale-neutral on
+ * purpose: `m`/`h`/`d` read the same in both languages and the widget already
+ * prints them under a Spanish reader's `NOTICIAS`. Never stored — computed
+ * against `now` on every render, or a `3h` is a lie for the next twelve hours.
+ */
+export function newsAge(filedAt: string, now: Date): string {
+  const seconds = Math.max(0, (now.getTime() - Date.parse(filedAt)) / 1000);
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 48 * 3600) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86_400)}d`;
+}
+
+export interface NewsDayGroup {
+  /** `today` / `yesterday` get a word; `date` gets the day formatted. */
+  kind: 'today' | 'yesterday' | 'date';
+  /** `YYYY-MM-DD` in the reader's zone. */
+  dayKey: string;
+  items: NewsArticleView[];
+}
+
+/**
+ * Today / Yesterday / date groups, newest first, in the READER's zone.
+ *
+ * ⚠ `dayKey(iso)` is injected rather than computed here so this module stays
+ * free of `Intl`-dependent code the harness cannot pin — the screen passes
+ * `zonedDayKey` from `lib/format.ts`. The handoff's version bucketed on
+ * `toISOString().slice(0, 10)`, which is UTC: a story filed at 23:30 Madrid
+ * would have sat under TODAY until 02:00 the next day.
+ *
+ * ⚠ Compute against `now` at RENDER, not at fetch: a list opened at 00:05 must
+ * move last night's stories into YESTERDAY without a refetch.
+ */
+export function groupNewsByDay(
+  items: readonly NewsArticleView[],
+  now: Date,
+  dayKey: (iso: string) => string,
+): NewsDayGroup[] {
+  const today = dayKey(now.toISOString());
+  const yesterday = dayKey(new Date(now.getTime() - 86_400_000).toISOString());
+  const buckets = new Map<string, NewsArticleView[]>();
+
+  for (const item of [...items].sort(
+    (a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
+  )) {
+    const key = dayKey(item.publishedAt);
+    const bucket = buckets.get(key);
+    if (bucket) bucket.push(item);
+    else buckets.set(key, [item]);
+  }
+
+  return [...buckets.entries()].map(([key, group]) => ({
+    kind: key === today ? 'today' : key === yesterday ? 'yesterday' : 'date',
+    dayKey: key,
+    items: group,
+  }));
+}
+
+export interface NewsCardPick {
+  lead: NewsArticleView | null;
+  rows: NewsArticleView[];
+  /** Stories filed after the reader last opened News. */
+  newCount: number;
+}
+
+/**
+ * What the Today card shows: the newest story with its picture, two more as
+ * single lines, and how many arrived since the reader last opened News.
+ *
+ * ⚠ THREE, hard. The card is a doorway, not a feed — a fourth row pushes the
+ * rest of the round off the first screen, and scores come first on that board.
+ *
+ * ⚠ `seenAt === null` (never opened News) counts ZERO, not everything. A first
+ * run announcing `20 NEW` is noise dressed as a signal.
+ */
+export function newsCardPick(items: readonly NewsArticleView[], seenAt: string | null): NewsCardPick {
+  const fresh = [...items].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const seen = seenAt === null ? Number.NaN : Date.parse(seenAt);
+  return {
+    lead: fresh[0] ?? null,
+    rows: fresh.slice(1, 3),
+    newCount: Number.isNaN(seen) ? 0 : fresh.filter((i) => Date.parse(i.publishedAt) > seen).length,
+  };
+}
+
+/**
+ * The ONE branch point between our own editorial and aggregated reporting.
+ *
+ * ⚠ `publisher.isFirstParty`, never the URL's host and never
+ * `publisher.id === 'cronogol'` — the registry belongs to the API, exactly as
+ * the league list does (CRONOGOL-API.md, "`isFirstParty` decides how you link").
+ */
+export function isOurs(article: NewsArticleView): boolean {
+  return article.publisher.isFirstParty;
 }

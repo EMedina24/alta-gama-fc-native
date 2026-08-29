@@ -492,6 +492,22 @@ documented at the code that handles them; this is the index.
     real clubs. ⚠ Names are CONTRACTED (`widgetName`: `R. Madrid`) — the full
     forms truncated one side or the other. Not yet checked on an SE-width
     simulator, nor with a hand-edited v1 `snapshot.json`.
+- **News is IN THE APP** (2026-08-29, [0064](./decisions/0064-news-card-and-screen.md)) —
+  the whole of `handoff_news-card-page/`, phase 1: a NEWS card on the Today board
+  (lead + two rows + `n NEW`, one tap) pushing `src/app/news.tsx` (chips ·
+  TODAY/YESTERDAY groups · attribution line) and a `(sheets)/news-link` sheet
+  that names the publisher before `Linking.openURL`. Reads the SAME `useNews()`
+  the widget writer fills — one feed, three consumers. `tsc`, lint (baseline
+  unchanged), `expo export` and a 20-assertion harness on `lib/cronogol/news.ts`
+  are clean. **Verified on the simulator** (card, screen, sheet — see 0064 for
+  what was and was not seen). ⚠ First-party rows drew a `STORY` chip until
+  `articleTopic` learned that `categories[0]` is the editorial KIND there — the
+  widget shared the bug. ⚠ Header is NEWS, not
+  the handoff's AROUND YOUR CLUBS: the wire carries NO club slugs, so "Your
+  clubs" is phase 2 (per-club fan-out). ⚠ Phase 2's in-app browser is one line
+  in `features/news/open.ts` (`expo-web-browser` is already installed).
+  ⚠ Preferences schema is **4** now (`newsSeenAt`); `FOLLOWED_RULE_VERSION`
+  untouched.
 - **The NEWS widget is built** (2026-08-28, [0061](./decisions/0061-news-widget.md)) —
   `systemLarge`, the whole of `handoff_news-widget/`: lead story with picture, three
   headlines, age derived in Swift. Global `GET /cronogol/news`, tap opens the

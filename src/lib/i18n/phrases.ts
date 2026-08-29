@@ -46,6 +46,8 @@ export const es = {
   clubs: (n: number): string => `${n} ${n === 1 ? 'club' : 'clubes'}`,
   players: (n: number): string => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`,
   matchdays: (n: number): string => `${n} ${n === 1 ? 'jornada' : 'jornadas'}`,
+  /** A News day-group's count. Uppercased by the eyebrow token, not here. */
+  stories: (n: number): string => `${n} ${n === 1 ? 'noticia' : 'noticias'}`,
 
   justNow: 'ahora mismo',
   kickoffTbd: 'hora de inicio por confirmar',
@@ -78,6 +80,7 @@ export const en: Phrases = {
   clubs: (n: number): string => `${n} ${n === 1 ? 'club' : 'clubs'}`,
   players: (n: number): string => `${n} ${n === 1 ? 'player' : 'players'}`,
   matchdays: (n: number): string => `${n} ${n === 1 ? 'matchday' : 'matchdays'}`,
+  stories: (n: number): string => `${n} ${n === 1 ? 'story' : 'stories'}`,
 
   justNow: 'just now',
   kickoffTbd: 'kickoff time to be confirmed',

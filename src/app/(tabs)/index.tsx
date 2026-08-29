@@ -14,6 +14,7 @@ import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
 import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { MatchBoard } from '@/components/organisms/match-board';
+import { NewsCard } from '@/components/organisms/news-card';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
@@ -27,6 +28,13 @@ import {
   type BoardLive,
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
+import {
+  articleTopic,
+  newsAge,
+  newsCardPick,
+  plainText,
+  selectNewsItems,
+} from '@/lib/cronogol/news';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
 import {
   formatFixtureDate,
@@ -38,6 +46,7 @@ import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTeams } from '@/queries/use-teams';
 import { useLive } from '@/queries/use-live';
+import { useNews } from '@/queries/use-news';
 import { useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
 import { usePreferences, useZone } from '@/store/preferences';
 
@@ -49,12 +58,14 @@ export default function TodayScreen() {
   const { copy, phrases } = useI18n();
   const zone = useZone();
   const initials = useIdentityInitials();
-  const { followed, clock } = usePreferences();
+  const { followed, clock, newsSeenAt } = usePreferences();
 
   const finished = useFinishedToday(zone);
   const upcoming = useUpcoming(zone);
   const recent = useRecent(zone);
   const teams = useTeams();
+  // ⚠ The SAME query `PushSync` already holds for the widget — a cache read.
+  const news = useNews();
 
   const hasClubs = followed.length > 0;
 
@@ -125,6 +136,21 @@ export default function TodayScreen() {
   }, [hasClubs, upcoming.data, followed]);
 
   const picks = useMemo(() => (teams.data ?? []).slice(0, FOLLOW_PICKS), [teams.data]);
+
+  /**
+   * The news card's three stories (ADR 0064). Not memoised for the same
+   * reason `board` is not: the 48h cutoff and every age read `now`.
+   */
+  const newsPick = hasClubs
+    ? newsCardPick(selectNewsItems(news.data?.articles ?? [], now, 3), newsSeenAt)
+    : null;
+  const story = (article: NonNullable<typeof newsPick>['rows'][number]) => ({
+    title: plainText(article.title),
+    imageUrl: article.imageUrl,
+    topic: articleTopic(article),
+    publisher: article.publisher.name,
+    age: newsAge(article.publishedAt, now),
+  });
 
   /** The losing side recedes; a draw or a missing score mutes nobody. */
   const loses = (mine: number | null, theirs: number | null) =>
@@ -306,6 +332,19 @@ export default function TodayScreen() {
           }}
           copy={copy.today}
           events={copy.events}
+        />
+      ) : null}
+
+      {/* ⚠ Under the match, above the rest of the round: scores first, always.
+          A headline is never why someone opened this app (ADR 0064). */}
+      {newsPick?.lead ? (
+        <NewsCard
+          lead={story(newsPick.lead)}
+          rows={newsPick.rows.map(story)}
+          newLabel={newsPick.newCount > 0 ? copy.news.newCount(newsPick.newCount) : null}
+          title={copy.news.title}
+          allNews={copy.news.allNews}
+          onPress={() => router.push('/news')}
         />
       ) : null}
 

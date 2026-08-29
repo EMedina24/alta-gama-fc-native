@@ -411,6 +411,39 @@ export interface Copy {
     error: string;
     retry: string;
   };
+  /**
+   * The news card and screen (ADR 0064).
+   *
+   * ⚠ FURNITURE only. Headlines, publisher names and topics come off the wire
+   * verbatim and are never localised — they are quotes. Only these strings
+   * follow the reader's language.
+   */
+  news: {
+    /** Section eyebrow on the card AND the pushed screen's title. */
+    title: string;
+    allNews: string;
+    /** `4 NEW` — fully formed, uppercased by the eyebrow token. */
+    newCount: (n: number) => string;
+    /** The filter chips' first entry. */
+    all: string;
+    today: string;
+    yesterday: string;
+    /** Feed empty, or every story aged out. Chips stay visible above it. */
+    quiet: string;
+    /**
+     * The aggregation line at the end of the list. ⚠ Must stay true about
+     * BOTH kinds of row — third-party headlines that link out and our own
+     * editorial that opens on altagamafc.com. Not a footnote to trim.
+     */
+    attribution: string;
+    /** Link-out sheet. */
+    openAt: (publisher: string) => string;
+    noteExternal: (publisher: string) => string;
+    share: string;
+    cancel: string;
+    /** The sheet opened on a story the cache no longer holds. */
+    gone: string;
+  };
 }
 
 export const esCopy: Copy = {
@@ -711,6 +744,23 @@ export const esCopy: Copy = {
     error: 'No se ha podido cargar la clasificación.',
     retry: 'Reintentar',
   },
+  news: {
+    title: 'Noticias',
+    allNews: 'Todas las noticias',
+    newCount: (n: number) => `${n} ${n === 1 ? 'nueva' : 'nuevas'}`,
+    all: 'Todas',
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    quiet: 'Sin noticias por ahora. Vuelve dentro de un rato.',
+    attribution:
+      'Los titulares de medios externos se recogen aquí y se abren en el artículo original; Alta Gama FC no aloja ni edita esa información. Nuestras propias piezas se abren en altagamafc.com.',
+    openAt: (publisher: string) => `Abrir en ${publisher}`,
+    noteExternal: (publisher: string) =>
+      `Se abre en ${publisher}, en tu navegador. La información es suya; la app solo ha recogido el titular.`,
+    share: 'Compartir',
+    cancel: 'Cancelar',
+    gone: 'Esta noticia ya no está disponible.',
+  },
 };
 
 export const enCopy: Copy = {
@@ -1004,6 +1054,23 @@ export const enCopy: Copy = {
     empty: 'No table for this league yet.',
     error: 'Could not load the table.',
     retry: 'Try again',
+  },
+  news: {
+    title: 'News',
+    allNews: 'All news',
+    newCount: (n: number) => `${n} new`,
+    all: 'All',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    quiet: 'Nothing new right now. Check back in a while.',
+    attribution:
+      'Headlines from third-party publishers are collected here and open at the original article; Alta Gama FC does not host or edit that reporting. Our own pieces open on altagamafc.com.',
+    openAt: (publisher: string) => `Open at ${publisher}`,
+    noteExternal: (publisher: string) =>
+      `Opens at ${publisher} in your browser. The reporting is theirs; the app only collected the headline.`,
+    share: 'Share',
+    cancel: 'Cancel',
+    gone: 'This story is no longer available.',
   },
 };
 

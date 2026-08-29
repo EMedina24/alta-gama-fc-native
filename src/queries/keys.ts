@@ -42,7 +42,12 @@ export const keys = {
   live: () => ['live'] as const,
   /**
    * The global news feed — `GET /cronogol/news`. One key, no argument: the
-   * widget is the only consumer and it wants the whole feed (ADR 0061).
+   * widget and the Today card / News screen all read the whole feed (ADR
+   * 0061, 0064) — one feed, three consumers, one request.
    */
   news: () => ['news'] as const,
+  /** The feed sliced to one news-league id (`?league=`) — the screen's chips. */
+  newsLeague: (leagueId: string) => ['news', 'league', leagueId] as const,
+  /** `GET /cronogol/news/leagues` — the chip set, server-ordered. */
+  newsLeagues: () => ['news-leagues'] as const,
 } as const;

@@ -80,6 +80,11 @@ export default function RootLayout() {
           <Stack.Screen name="(sheets)/alerts" options={sheet} />
           <Stack.Screen name="(sheets)/calendar" options={sheet} />
           <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />
+          {/* The news link-out sheet (ADR 0064): one headline and three buttons. */}
+          <Stack.Screen
+            name="(sheets)/news-link"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
           {/* ⚠ `fitToContents` rather than a fraction: the player sheet is one
               fixed block, and a 0.6 detent would either clip its Done button or
               leave dead space under the footnote. */}

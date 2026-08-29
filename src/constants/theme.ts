@@ -212,6 +212,13 @@ export const Size = {
   crestNext: 64, versusBadge: 34,
   tabIcon: 22, avatar: 36, sheetGrabber: 38,
   /**
+   * News pictures (ADR 0064): the lead's square and the two row thumbs on the
+   * Today card, and the row thumbnail on the News screen. Squares, cover-cropped — the publisher's
+   * originals are 16:9 and any size, and a fixed frame is what stops a missing
+   * or hotlink-blocked image from reflowing the headline beside it.
+   */
+  newsLead: 96, newsCardRow: 56, newsThumb: 64,
+  /**
    * Player portraits. ⚠ The SOURCE aspect ratio varies by league — 256×278
    * (LaLiga), 110×140 (Premier League), and an operator stopgap has no
    * guaranteed size at all. These are the FRAME; the image is fitted inside

@@ -32,7 +32,7 @@ const STORAGE_KEY = 'altagama:preferences';
  * `FOLLOWED_RULE_VERSION` did NOT move — that separation is what stops a shape
  * bump from emptying every reader's follow list.
  */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -136,6 +136,13 @@ export interface Preferences {
    * kickoff reminder and this never reaches `PUT /cronogol/push/device`.
    */
   reminderLeads: readonly ReminderLead[];
+  /**
+   * The instant the News screen was last opened (ADR 0064). Drives the Today
+   * card's `n NEW` count; `null` (never opened) counts nothing, so a first run
+   * does not open on `20 NEW`. Marked on OPENING the screen, not on scrolling
+   * past a row — the handoff's open question, resolved the simple way.
+   */
+  newsSeenAt: string | null;
 }
 
 const DEFAULTS: Preferences = {
@@ -151,6 +158,7 @@ const DEFAULTS: Preferences = {
   // ⚠ The one alert that defaults OFF. See the field's docblock.
   alertGoals: false,
   reminderLeads: [30],
+  newsSeenAt: null,
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -188,6 +196,8 @@ function parse(raw: string | null): Preferences {
       // Migrating to `[30]` UNCONDITIONALLY — including when the master is off —
       // is what makes turning it back on behave as it did before the upgrade.
       reminderLeads: parseLeads(data.reminderLeads),
+      // Absent on every v1–v3 payload; absent means "never opened".
+      newsSeenAt: typeof data.newsSeenAt === 'string' ? data.newsSeenAt : null,
     };
   } catch {
     return DEFAULTS;
@@ -219,6 +229,7 @@ function same(a: Preferences, b: Preferences): boolean {
     a.alertPostponed === b.alertPostponed &&
     a.alertGoals === b.alertGoals &&
     sameLeads(a.reminderLeads, b.reminderLeads) &&
+    a.newsSeenAt === b.newsSeenAt &&
     a.followed.length === b.followed.length &&
     a.followed.every((slug, i) => slug === b.followed[i])
   );
@@ -320,6 +331,11 @@ export function setLanguage(lang: Locale | null) {
 
 export function setOnboarded(onboarded: boolean) {
   update({ onboarded });
+}
+
+/** The reader opened the News screen — everything filed before `iso` is seen. */
+export function setNewsSeenAt(iso: string) {
+  update({ newsSeenAt: iso });
 }
 
 /**

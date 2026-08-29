@@ -25,6 +25,7 @@ import type {
   SeasonJornadasView,
   LiveView,
   NewsFeedView,
+  NewsLeagueView,
   ScoreboardDayView,
   StandingsView,
   TeamFixturesView,
@@ -423,4 +424,15 @@ export type GetNewsParams = {
  */
 export async function getNews(params: GetNewsParams = {}): Promise<NewsFeedView> {
   return get<NewsFeedView>('/cronogol/news', toQuery(params));
+}
+
+/**
+ * The league filter the News screen renders — `GET /cronogol/news/leagues`.
+ *
+ * ⚠ NOT the same dimension as `LEAGUES`: this is "how can the FEED be sliced"
+ * and answers nine leagues, seven of which we hold no clubs for. Render the
+ * array's order; never re-sort it (the contract says so twice).
+ */
+export async function getNewsLeagues(): Promise<NewsLeagueView[]> {
+  return get<NewsLeagueView[]>('/cronogol/news/leagues', toQuery({}));
 }
