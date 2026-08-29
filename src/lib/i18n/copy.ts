@@ -323,6 +323,66 @@ export interface Copy {
     notFound: string;
   };
   /**
+   * The Starting XI builder (ADR 0065). Position codes (`GK`, `LCB`) and
+   * formation ids (`4-3-3`) are protocol values and never appear here.
+   *
+   * ⚠ `hint*` are the ONLY instruction on the screen and they change with
+   * state — see `handoff_squad-builder/STARTING-XI.md`. `squadNote` is
+   * league-neutral because the builder serves two leagues.
+   */
+  startingXi: {
+    /** The club-page row. */
+    rowTitle: string;
+    rowBody: string;
+    /** The builder's nav title and the eyebrow under the club name. */
+    title: string;
+    sourceLine: (league: string) => string;
+    placed: (n: number) => string;
+    hintIdle: string;
+    hintPick: (slot: string) => string;
+    hintSwap: (slot: string) => string;
+    hintFull: string;
+    remove: string;
+    shape: string;
+    look: string;
+    autoFill: string;
+    clear: string;
+    clearTitle: string;
+    clearBody: string;
+    clearConfirm: string;
+    cancel: string;
+    filterAll: string;
+    lines: Record<'gk' | 'def' | 'mid' | 'fwd', string>;
+    squadNote: string;
+    squadEmptyTitle: string;
+    squadEmptyBody: string;
+    /** Long-press menu. */
+    menuSwap: string;
+    menuRemove: string;
+    menuPlayer: string;
+    /** Sheets. */
+    shapeTitle: string;
+    shapeNote: string;
+    lookTitle: string;
+    looks: Record<'lines' | 'turf' | 'angled', string>;
+    exportTitle: string;
+    export: string;
+    cardTitleLabel: string;
+    defaultTitle: string;
+    sizeLabels: Record<'4:5' | '1:1' | '9:16', string>;
+    save: string;
+    share: string;
+    exportNote: string;
+    saved: string;
+    exportFailed: string;
+    photosDenied: string;
+    /** On the card itself. */
+    cardLabel: string;
+    cardFormation: string;
+    cardUrl: string;
+    done: string;
+  };
+  /**
    * The player sheet.
    *
    * ⚠ `positionNames` is SINGULAR and is NOT `club.bandLabels` — the list groups
@@ -662,6 +722,56 @@ export const esCopy: Copy = {
     roundPrefix: 'J',
     notFound: 'No encontramos este club.',
   },
+  startingXi: {
+    rowTitle: 'Once inicial',
+    rowBody: 'Coloca tus once en el campo y comparte la imagen.',
+    title: 'Once inicial',
+    sourceLine: (league) => `Inscripciones oficiales · ${league}`,
+    placed: (n) => `${n} / 11`,
+    hintIdle: 'Toca una posición, o toca un jugador para ocupar la siguiente',
+    hintPick: (slot) => `Elige al ${slot}`,
+    hintSwap: (slot) => `Toca un jugador para ponerlo de ${slot}`,
+    hintFull: 'Once colocados: exporta o sigue ajustando',
+    remove: 'Quitar',
+    shape: 'Dibujo',
+    look: 'Estilo',
+    autoFill: 'Completar',
+    clear: 'Vaciar',
+    clearTitle: '¿Vaciar el campo?',
+    clearBody: 'Se quitan los once del campo. La plantilla no cambia.',
+    clearConfirm: 'Vaciar el campo',
+    cancel: 'Cancelar',
+    filterAll: 'Todos',
+    lines: { gk: 'Por', def: 'Def', mid: 'Med', fwd: 'Del' },
+    squadNote:
+      'Inscripciones oficiales de la liga. Un fichaje recién anunciado puede tardar unos días en aparecer.',
+    squadEmptyTitle: 'Sin plantilla publicada',
+    squadEmptyBody:
+      'La liga publica las inscripciones, pero las de este club aún no han llegado.',
+    menuSwap: 'Cambiar',
+    menuRemove: 'Quitar del campo',
+    menuPlayer: 'Ver jugador',
+    shapeTitle: 'Formación',
+    shapeNote: 'Cambiar el dibujo mantiene a los once jugadores y los recoloca en la nueva rejilla.',
+    lookTitle: 'Campo',
+    looks: { lines: 'Líneas', turf: 'Césped', angled: 'Perspectiva' },
+    exportTitle: 'Exportar',
+    export: 'Exportar',
+    cardTitleLabel: 'Título de la tarjeta',
+    defaultTitle: 'Mi once inicial',
+    sizeLabels: { '4:5': 'Feed', '1:1': 'Cuadrado', '9:16': 'Historia' },
+    save: 'Guardar en Fotos',
+    share: 'Compartir',
+    exportNote:
+      'Se dibuja a 1080 px reales fuera de pantalla, no es una captura de este campo. Instagram, Threads, WhatsApp y Fotos salen de la hoja del sistema.',
+    saved: 'Guardada en Fotos',
+    exportFailed: 'No se pudo generar la imagen. Inténtalo de nuevo.',
+    photosDenied: 'Sin permiso para guardar en Fotos. Actívalo en Ajustes.',
+    cardLabel: 'Once inicial',
+    cardFormation: 'Formación',
+    cardUrl: 'ALTAGAMAFC.COM',
+    done: 'Hecho',
+  },
 
   player: {
     done: 'Listo',
@@ -975,6 +1085,56 @@ export const enCopy: Copy = {
     bandLabels: { GK: 'Goalkeepers', DEF: 'Defenders', MID: 'Midfielders', FWD: 'Forwards' },
     roundPrefix: 'J',
     notFound: 'We could not find this club.',
+  },
+  startingXi: {
+    rowTitle: 'Starting XI',
+    rowBody: 'Put your eleven on a pitch and share the card.',
+    title: 'Starting XI',
+    sourceLine: (league) => `Official registrations · ${league}`,
+    placed: (n) => `${n} / 11`,
+    hintIdle: 'Tap a slot, or tap a player to fill the next one',
+    hintPick: (slot) => `Pick the ${slot}`,
+    hintSwap: (slot) => `Tap a player to swap into ${slot}`,
+    hintFull: 'Eleven placed — export or keep tinkering',
+    remove: 'Remove',
+    shape: 'Shape',
+    look: 'Look',
+    autoFill: 'Auto fill',
+    clear: 'Clear',
+    clearTitle: 'Clear the pitch?',
+    clearBody: 'All eleven come off the pitch. The squad is unchanged.',
+    clearConfirm: 'Clear pitch',
+    cancel: 'Cancel',
+    filterAll: 'All',
+    lines: { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Fwd' },
+    squadNote:
+      'Official league registrations. A newly announced signing can take a few days to appear.',
+    squadEmptyTitle: 'No squad published',
+    squadEmptyBody:
+      "The league publishes registrations, but this club's have not landed yet.",
+    menuSwap: 'Swap',
+    menuRemove: 'Remove from pitch',
+    menuPlayer: 'Player page',
+    shapeTitle: 'Formation',
+    shapeNote: 'Changing shape keeps the eleven players and re-seats them on the new grid.',
+    lookTitle: 'Pitch',
+    looks: { lines: 'Line art', turf: 'Turf', angled: 'Angled' },
+    exportTitle: 'Export',
+    export: 'Export',
+    cardTitleLabel: 'Card title',
+    defaultTitle: 'My starting XI',
+    sizeLabels: { '4:5': 'Feed', '1:1': 'Square', '9:16': 'Story' },
+    save: 'Save to Photos',
+    share: 'Share',
+    exportNote:
+      'Rendered at a true 1080 px off-screen, not a screenshot of this pitch. Instagram, Threads, WhatsApp and Photos all come from the system sheet.',
+    saved: 'Saved to Photos',
+    exportFailed: 'The image could not be rendered. Try again.',
+    photosDenied: 'No permission to save to Photos. Allow it in Settings.',
+    cardLabel: 'Starting XI',
+    cardFormation: 'Formation',
+    cardUrl: 'ALTAGAMAFC.COM',
+    done: 'Done',
   },
 
   player: {

@@ -62,7 +62,15 @@
           "faceIDPermission": false
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Alta Gama FC saves the Starting XI card you export to your photo library.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+  body{margin:0;background:#0a0b0c}
+  a{color:#c8f25a;text-decoration:none}
+  a:hover{color:#dcff7a}
+  *{-webkit-tap-highlight-color:transparent}
+  .rail::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+
+<section style="padding:56px 64px 72px;background:#0a0b0c;color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:36px">
+    <div style="font:600 12px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#7c858b">Turn 1 · Starting XI — iOS</div>
+    <div style="font:640 30px/1.1 -apple-system,system-ui;letter-spacing:-.025em">Squad builder, rebuilt for one thumb</div>
+    <div style="font:400 15px/1.55 -apple-system,system-ui;color:#a3abb0;max-width:840px;text-wrap:pretty">The web builder is a drag-and-drop board with the squad in a column beside the pitch. Neither survives a phone: there is no room for a second column, and a finger dragging a name is a finger covering the slot it is aiming at. So placement is a tap, the squad lives on a rail under the pitch instead of in a modal, and everything that was a side panel is a sheet. Live prototype — tap a slot, tap a player, change the shape.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.12em;color:#101806;background:#c8f25a;border-radius:6px;padding:6px 9px">1A</span>
+        <span style="font:600 14px/1 -apple-system,system-ui;color:#f4f6f6">Tap to place · squad on a rail</span>
+      </div>
+
+      <div style="width:393px;height:852px;border-radius:44px;overflow:hidden;background:#0a0b0c;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 70px rgba(0,0,0,.55);color:#f4f6f6">
+
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 -apple-system,system-ui">
+          <span>9:41</span>
+          <span style="display:flex;align-items:center;gap:6px;color:#f4f6f6"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span>
+        </div>
+
+        <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 8px">
+          <a href="AltaGama FC iOS.dc.html" style="display:flex;align-items:center;gap:2px;font:400 17px/1 -apple-system,system-ui;color:#c8f25a;text-decoration:none;padding:8px 6px">
+            <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="#c8f25a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5L2 9l7 7.5"></path></svg>Athletic
+          </a>
+          <span style="font:600 17px/1 -apple-system,system-ui;letter-spacing:-.01em">Starting XI</span>
+          <span onClick="{{ openExport }}" style="display:flex;align-items:center;gap:6px;font:600 15px/1 -apple-system,system-ui;color:#c8f25a;padding:8px 6px;cursor:pointer">Export</span>
+        </div>
+
+        <div style="padding:6px 16px 10px;display:flex;align-items:center;gap:11px">
+          <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ab6e8befd691a039ddda4f07fc63c97b5d656711a1579a673c41d45a1bf9ba0d.png" alt="" style="width:30px;height:30px;object-fit:contain;display:block">
+          <div style="min-width:0;flex:1">
+            <div style="font:600 15px/1.2 -apple-system,system-ui">Athletic Club</div>
+            <div style="font:500 12px/1.3 -apple-system,system-ui;color:#7c858b">Official registrations · LaLiga</div>
+          </div>
+          <div style="font:700 13px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:{{ countInk }};background:{{ countBg }};border-radius:9px;padding:7px 10px">{{ countLabel }}</div>
+        </div>
+
+        <div style="margin:0 16px;height:424px;border-radius:22px;position:relative;overflow:hidden;background:{{ pitch.bg }}">
+          <div style="position:absolute;inset:0;background:{{ pitch.stripes }};transform:{{ pitch.tilt }};transform-origin:50% 100%"></div>
+          <div style="position:absolute;inset:0;transform:{{ pitch.tilt }};transform-origin:50% 100%">
+            <div style="position:absolute;left:12px;right:12px;top:12px;bottom:12px;border:1.5px solid {{ pitch.line }};border-radius:4px"></div>
+            <div style="position:absolute;left:12px;right:12px;top:50%;height:1.5px;background:{{ pitch.line }}"></div>
+            <div style="position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border:1.5px solid {{ pitch.line }};border-radius:50%"></div>
+            <div style="position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:3px;background:{{ pitch.line }}"></div>
+            <div style="position:absolute;left:50%;transform:translateX(-50%);top:12px;width:150px;height:52px;border:1.5px solid {{ pitch.line }};border-top:none;border-radius:0 0 4px 4px"></div>
+            <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:12px;width:150px;height:52px;border:1.5px solid {{ pitch.line }};border-bottom:none;border-radius:4px 4px 0 0"></div>
+            <div style="position:absolute;left:50%;transform:translateX(-50%);top:12px;width:70px;height:20px;border:1.5px solid {{ pitch.line }};border-top:none"></div>
+            <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:12px;width:70px;height:20px;border:1.5px solid {{ pitch.line }};border-bottom:none"></div>
+          </div>
+
+          <sc-for list="{{ slots }}" as="s" hint-placeholder-count="11">
+            <div onClick="{{ s.onTap }}" style="position:absolute;left:{{ s.x }};top:{{ s.y }};transform:translate(-50%,-50%);width:64px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer">
+              <div style="width:46px;height:46px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:{{ s.tokenBg }};border:{{ s.tokenBorder }};box-shadow:{{ s.tokenShadow }};font:{{ s.tokenFont }};letter-spacing:.04em;font-variant-numeric:tabular-nums;color:{{ s.tokenInk }}">{{ s.token }}</div>
+              <span style="display:{{ s.nameShow }};font:{{ s.nameFont }};letter-spacing:.02em;color:{{ s.nameInk }};background:{{ s.nameBg }};border-radius:6px;padding:3px 5px;max-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">{{ s.name }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="padding:12px 16px 8px;display:flex;align-items:center;gap:8px">
+          <div onClick="{{ openShape }}" style="flex:1;height:44px;border-radius:14px;background:#15171a;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer">
+            <span style="font:500 11px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b">SHAPE</span>
+            <span style="font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ formation }}</span>
+          </div>
+          <div onClick="{{ openLook }}" style="width:44px;height:44px;border-radius:14px;background:#15171a;display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="#c8f25a" stroke-width="1.7" stroke-linecap="round"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5"></rect><path d="M2.5 10h15M10 3.5v13"></path></svg>
+          </div>
+          <div onClick="{{ autoFill }}" style="width:44px;height:44px;border-radius:14px;background:#15171a;display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="#c8f25a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5l1.9 4.1 4.6.5-3.4 3.1.9 4.4L10 12.6l-4 2 .9-4.4L3.5 7.1l4.6-.5z"></path></svg>
+          </div>
+          <div onClick="{{ clearAll }}" style="width:44px;height:44px;border-radius:14px;background:#15171a;display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="#ff8f7c" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h12M8 6V4.5h4V6M6.5 6l.7 9.5h5.6L13.5 6"></path></svg>
+          </div>
+        </div>
+
+        <div style="padding:4px 16px 0;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="font:600 13px/1.3 -apple-system,system-ui;color:{{ hintInk }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ hint }}</span>
+          <span onClick="{{ removeSel }}" style="display:{{ removeShow }};font:600 13px/1 -apple-system,system-ui;color:#ff8f7c;padding:4px 2px;cursor:pointer;flex-shrink:0">Remove</span>
+        </div>
+
+        <div class="rail" style="display:flex;gap:8px;padding:10px 16px 6px;overflow-x:auto;scrollbar-width:none">
+          <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+            <div onClick="{{ f.onTap }}" style="flex-shrink:0;height:30px;border-radius:15px;padding:0 13px;display:flex;align-items:center;background:{{ f.bg }};color:{{ f.ink }};font:600 13px/1 -apple-system,system-ui;cursor:pointer">{{ f.label }}</div>
+          </sc-for>
+        </div>
+
+        <div class="rail" style="display:flex;gap:9px;padding:6px 16px 58px;overflow-x:auto;scrollbar-width:none">
+          <sc-for list="{{ bench }}" as="p" hint-placeholder-count="8">
+            <div onClick="{{ p.onTap }}" style="flex-shrink:0;width:74px;padding:10px 6px 9px;border-radius:16px;background:{{ p.bg }};border:{{ p.border }};display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;opacity:{{ p.opacity }}">
+              <span style="width:30px;height:30px;border-radius:16px;background:{{ p.numBg }};color:{{ p.numInk }};display:flex;align-items:center;justify-content:center;font:700 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums">{{ p.num }}</span>
+              <span style="font:600 11.5px/1.15 -apple-system,system-ui;color:{{ p.ink }};text-align:center;max-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.32);z-index:40;pointer-events:none"></div>
+
+        <div style="position:absolute;inset:0;display:{{ sheetShow }};z-index:5">
+          <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,.5);cursor:pointer"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#15171a;border-radius:26px 26px 44px 44px;box-shadow:0 -12px 40px rgba(0,0,0,.5);padding:8px 0 30px">
+            <div style="width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:0 auto 8px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 18px 12px">
+              <span style="font:640 19px/1 -apple-system,system-ui;letter-spacing:-.01em">{{ sheet.title }}</span>
+              <span onClick="{{ closeSheet }}" style="font:600 15px/1 -apple-system,system-ui;color:#c8f25a;cursor:pointer">Done</span>
+            </div>
+
+            <sc-if value="{{ sheet.isShape }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 18px 4px">
+                <sc-for list="{{ shapes }}" as="sh" hint-placeholder-count="6">
+                  <div onClick="{{ sh.onTap }}" style="height:52px;border-radius:14px;background:{{ sh.bg }};border:{{ sh.border }};display:flex;align-items:center;justify-content:center;font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:{{ sh.ink }};cursor:pointer">{{ sh.label }}</div>
+                </sc-for>
+              </div>
+              <div style="font:400 12.5px/1.45 -apple-system,system-ui;color:#7c858b;padding:12px 18px 0;text-wrap:pretty">Changing shape keeps the eleven players and re-seats them on the new grid.</div>
+            </sc-if>
+
+            <sc-if value="{{ sheet.isLook }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:10px;padding:0 18px">
+                <sc-for list="{{ looks }}" as="lk" hint-placeholder-count="3">
+                  <div onClick="{{ lk.onTap }}" style="flex:1;display:flex;flex-direction:column;gap:8px;cursor:pointer">
+                    <div style="height:96px;border-radius:14px;background:{{ lk.bg }};border:{{ lk.border }};position:relative;overflow:hidden">
+                      <div style="position:absolute;inset:0;background:{{ lk.stripes }};transform:{{ lk.tilt }};transform-origin:50% 100%"></div>
+                      <div style="position:absolute;left:8px;right:8px;top:8px;bottom:8px;border:1.2px solid {{ lk.line }};border-radius:3px;transform:{{ lk.tilt }};transform-origin:50% 100%"></div>
+                      <div style="position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border:1.2px solid {{ lk.line }};border-radius:50%;transform:{{ lk.tilt }};transform-origin:50% 100%"></div>
+                    </div>
+                    <span style="font:600 13px/1 -apple-system,system-ui;color:{{ lk.ink }};text-align:center">{{ lk.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ sheet.isExport }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 18px">
+                <div style="display:flex;gap:9px;padding-bottom:16px">
+                  <sc-for list="{{ sizes }}" as="sz" hint-placeholder-count="3">
+                    <div onClick="{{ sz.onTap }}" style="flex:1;height:46px;border-radius:14px;background:{{ sz.bg }};border:{{ sz.border }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer">
+                      <span style="font:700 13px/1 -apple-system,system-ui;color:{{ sz.ink }}">{{ sz.label }}</span>
+                      <span style="font:500 10px/1 -apple-system,system-ui;color:#7c858b">{{ sz.px }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="height:44px;border-radius:14px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px/1 -apple-system,system-ui;margin-bottom:9px">
+                  <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="#101806" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v9m0 0l3.4-3.4M9 11L5.6 7.6M3 12.5V15h12v-2.5"></path></svg>Save to Photos
+                </div>
+                <div style="height:44px;border-radius:14px;background:#1e2126;display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px/1 -apple-system,system-ui;color:#f4f6f6">
+                  <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="#f4f6f6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12V2.5m0 0L5.8 5.7M9 2.5l3.2 3.2M3 11v4h12v-4"></path></svg>Share sheet
+                </div>
+                <div style="font:400 12.5px/1.45 -apple-system,system-ui;color:#7c858b;padding-top:12px;text-wrap:pretty">Rendered at a true 1080 × 1350 off-screen, not a screenshot of this pitch. Instagram, Threads, WhatsApp and Photos all come from the system sheet — no per-app buttons to maintain.</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:520px;display:flex;flex-direction:column;gap:26px">
+      <div style="padding:24px 26px;border-radius:22px;background:#101215;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:14px">
+        <div style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">WHAT CHANGED FROM THE WEB BUILDER</div>
+        <div style="display:flex;flex-direction:column;gap:13px;font:400 13.5px/1.55 -apple-system,system-ui;color:#a3abb0">
+          <div><span style="color:#f4f6f6;font-weight:600">Tap, don't drag.</span> A dragged finger covers the slot it is aiming for, and a 46pt token is smaller than the hand moving it. Tap a slot, tap a player. Dragging still works for <em>re-arranging</em> — a placed token can be dragged onto a teammate to swap, which is the one gesture where the target is already visible.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">The squad is a rail, not a modal.</span> The web version's mobile fallback opens a sheet per placement — eleven sheets to fill a pitch. A horizontal rail under the pitch keeps the board visible while you fill it, and it filters itself to the line you tapped.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Placed players leave the rail.</span> On the web they grey out in place; here the rail is short enough that removing them is the clearer signal, and the count chip carries progress.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Panels become sheets.</span> Shape, look and export are three detented sheets instead of three side panels, each closing on <em>Done</em> — no chrome on the pitch itself.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">One share path.</span> The web page needs its own Instagram, Facebook and X buttons because the browser has no share target. iOS has one: render at 1080×1350 and hand it to the system sheet.</div>
+        </div>
+      </div>
+
+      <div style="padding:24px 26px;border-radius:22px;background:#101215;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:14px">
+        <div style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">NATIVE NOTES FOR BUILD</div>
+        <div style="display:flex;flex-direction:column;gap:13px;font:400 13.5px/1.55 -apple-system,system-ui;color:#a3abb0">
+          <div><span style="color:#f4f6f6;font-weight:600">Haptics carry the state change.</span> Light impact on place, rigid on swap, warning on clear-pitch — the pitch is too small for an animation to read as confirmation.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Long-press a token</span> for the context menu: Swap, Remove, Player page. Keeps three actions off the toolbar.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Clear pitch asks.</span> Destructive confirmation in an action sheet — eleven taps are behind it.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">The XI survives backgrounding.</span> Persist formation, look and placements per club; a half-built lineup that vanishes is the reason people stop mid-build.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Squad data is the site's.</span> Official league registrations, same caveat copy — a newly announced signing takes days to appear, and the app must say so where the rail ends, not silently omit him.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Export is off-screen.</span> Draw the 1080×1350 card in code at full size, never a screenshot of a 361pt pitch scaled up.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;formation&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;4-3-3&quot;,&quot;4-2-3-1&quot;,&quot;4-4-2&quot;,&quot;4-1-4-1&quot;,&quot;3-4-3&quot;,&quot;3-5-2&quot;,&quot;5-3-2&quot;,&quot;5-4-1&quot;,&quot;4-5-1&quot;],&quot;default&quot;:&quot;4-3-3&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Board&quot;},&quot;look&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;lines&quot;,&quot;turf&quot;,&quot;angled&quot;],&quot;default&quot;:&quot;lines&quot;,&quot;tsType&quot;:&quot;'lines'|'turf'|'angled'&quot;,&quot;section&quot;:&quot;Board&quot;},&quot;startFilled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Board&quot;}}">
+class Component extends DCLogic {
+  /* Squad and numbers exactly as /en/starting-xi/athletic-club publishes them. */
+  SQUAD = [
+    {n:1,name:'Unai Simon',line:'gk'},{n:13,name:'Padilla',line:'gk'},
+    {n:2,name:'Gorosabel',line:'def'},{n:3,name:'Vivian',line:'def'},{n:4,name:'Paredes',line:'def'},
+    {n:5,name:'Yeray',line:'def'},{n:12,name:'Areso',line:'def'},{n:14,name:'Laporte',line:'def'},
+    {n:15,name:'H. Rincón',line:'def'},{n:17,name:'Yuri',line:'def'},{n:20,name:'Rego',line:'def'},
+    {n:31,name:'Johaneko',line:'def'},
+    {n:6,name:'Prados',line:'mid'},{n:8,name:'O. Sancet',line:'mid'},{n:16,name:'R. De Galarreta',line:'mid'},
+    {n:18,name:'Jauregizar',line:'mid'},{n:19,name:'Adama',line:'mid'},{n:23,name:'Navarro',line:'mid'},
+    {n:24,name:'Gerenabarrena',line:'mid'},
+    {n:7,name:'Berenguer',line:'fwd'},{n:9,name:'Williams',line:'fwd'},{n:10,name:'Williams Jr',line:'fwd'},
+    {n:11,name:'Guruzeta',line:'fwd'},{n:21,name:'Maroan',line:'fwd'},{n:22,name:'Nico Serrano',line:'fwd'},
+    {n:25,name:'Djalo',line:'fwd'},{n:28,name:'Canales',line:'fwd'}
+  ];
+
+  /* Slots run back to front, so re-seating on a shape change keeps a defender a
+     defender. x/y are percentages of the pitch box; attack is up. */
+  /* ⚠ A token is 46px with a ~19px caption under it — ~70px of a 442px pitch,
+     so two slots that share a column need 16% of vertical room between them and
+     two on the same line need 19% of horizontal. The keeper sits at 89 (his
+     caption lands 2px inside the touchline) and no defender goes below 72. */
+  FORMS = {
+    '4-3-3':[['GK',50,89],['LB',13,67],['LCB',37,72],['RCB',63,72],['RB',87,67],['LCM',26,49],['CM',50,53],['RCM',74,49],['LW',17,25],['ST',50,17],['RW',83,25]],
+    '4-2-3-1':[['GK',50,89],['LB',13,67],['LCB',37,72],['RCB',63,72],['RB',87,67],['LDM',35,53],['RDM',65,53],['LAM',16,34],['CAM',50,34],['RAM',84,34],['ST',50,15]],
+    '4-4-2':[['GK',50,89],['LB',13,67],['LCB',37,72],['RCB',63,72],['RB',87,67],['LM',13,48],['LCM',38,50],['RCM',62,50],['RM',87,48],['LST',36,22],['RST',64,22]],
+    '4-1-4-1':[['GK',50,89],['LB',13,67],['LCB',37,72],['RCB',63,72],['RB',87,67],['DM',50,55],['LM',13,38],['LCM',38,38],['RCM',62,38],['RM',87,38],['ST',50,16]],
+    '3-4-3':[['GK',50,89],['LCB',24,71],['CB',50,71],['RCB',76,71],['LM',12,50],['LCM',38,52],['RCM',62,52],['RM',88,50],['LW',17,25],['ST',50,17],['RW',83,25]],
+    '3-5-2':[['GK',50,89],['LCB',24,71],['CB',50,71],['RCB',76,71],['LM',10,50],['LCM',30,50],['CM',50,50],['RCM',70,50],['RM',90,50],['LST',36,22],['RST',64,22]],
+    '5-3-2':[['GK',50,89],['LWB',10,64],['LCB',30,72],['CB',50,72],['RCB',70,72],['RWB',90,64],['LCM',28,48],['CM',50,48],['RCM',72,48],['LST',36,22],['RST',64,22]],
+    '5-4-1':[['GK',50,89],['LWB',10,64],['LCB',30,72],['CB',50,72],['RCB',70,72],['RWB',90,64],['LM',13,46],['LCM',38,46],['RCM',62,46],['RM',87,46],['ST',50,16]],
+    '4-5-1':[['GK',50,89],['LB',13,67],['LCB',37,72],['RCB',63,72],['RB',87,67],['LM',10,50],['LCM',30,50],['CM',50,50],['RCM',70,50],['RM',90,50],['ST',50,16]]
+  };
+
+  LOOKS = {
+    lines:  {label:'Line art', bg:'#0f1216', line:'rgba(200,242,90,.34)', stripes:'none', tilt:'none'},
+    turf:   {label:'Turf', bg:'#17301d', line:'rgba(255,255,255,.34)', tilt:'none',
+             stripes:'repeating-linear-gradient(180deg, rgba(255,255,255,.045) 0 34px, rgba(0,0,0,0) 34px 68px)'},
+    angled: {label:'Angled', bg:'#0f1216', line:'rgba(200,242,90,.34)', tilt:'perspective(760px) rotateX(13deg)',
+             stripes:'repeating-linear-gradient(180deg, rgba(200,242,90,.05) 0 34px, rgba(0,0,0,0) 34px 68px)'}
+  };
+
+  FILTERS = [['all','All'],['gk','GK'],['def','Def'],['mid','Mid'],['fwd','Fwd']];
+
+  state = {
+    formation: null, look: null, placed: {}, sel: null, filter: 'all', sheet: null, size: '4:5'
+  };
+
+  componentDidMount(){
+    if (this.props.startFilled) this.setState({placed: this.autoMap(this.form())});
+  }
+
+  form(){ return this.state.formation || this.props.formation || '4-3-3'; }
+  lookKey(){ return this.state.look || this.props.look || 'lines'; }
+
+  lineOf(label){
+    if (label === 'GK') return 'gk';
+    if (/B$/.test(label)) return 'def';
+    if (/M$/.test(label)) return 'mid';
+    return 'fwd';
+  }
+
+  /* Fill by line, in squad order — the same order the site's list uses, so the
+     auto XI is predictable rather than clever. */
+  autoMap(formation){
+    const used = [], out = {};
+    this.FORMS[formation].forEach(([label], i) => {
+      const want = this.lineOf(label);
+      const pick = this.SQUAD.find(p => p.line === want && !used.includes(p.n))
+        || this.SQUAD.find(p => !used.includes(p.n));
+      if (pick){ used.push(pick.n); out[i] = pick.n; }
+    });
+    return out;
+  }
+
+  place(num){
+    const st = this.state, slots = this.FORMS[this.form()];
+    const placed = Object.assign({}, st.placed);
+    Object.keys(placed).forEach(k => { if (placed[k] === num) delete placed[k]; });
+    let target = st.sel;
+    if (target === null || target === undefined){
+      const want = this.SQUAD.find(p => p.n === num).line;
+      target = slots.findIndex((s, i) => this.lineOf(s[0]) === want && placed[i] === undefined);
+      if (target < 0) target = slots.findIndex((s, i) => placed[i] === undefined);
+      if (target < 0) return;
+    }
+    placed[target] = num;
+    this.setState({placed, sel: null, filter: 'all'});
+  }
+
+  tapSlot(i){
+    const st = this.state;
+    if (st.sel === i) return this.setState({sel: null, filter: 'all'});
+    this.setState({sel: i, filter: this.lineOf(this.FORMS[this.form()][i][0])});
+  }
+
+  setShape(f){
+    const old = this.FORMS[this.form()], next = this.FORMS[f];
+    const players = old.map((s, i) => this.state.placed[i]).filter(n => n !== undefined);
+    const placed = {};
+    // Re-seat back-to-front: keeper first, then the rest in their old order.
+    players.forEach((n, i) => { if (i < next.length) placed[i] = n; });
+    this.setState({formation: f, placed, sel: null});
+  }
+
+  renderVals(){
+    const st = this.state, f = this.form(), look = this.LOOKS[this.lookKey()];
+    const slotDefs = this.FORMS[f];
+    const placedNums = Object.values(st.placed);
+    const count = placedNums.length;
+    const full = count === 11;
+
+    const slots = slotDefs.map(([label, x, y], i) => {
+      const num = st.placed[i];
+      const p = num !== undefined ? this.SQUAD.find(q => q.n === num) : null;
+      const on = st.sel === i;
+      return {
+        x: x + '%', y: y + '%',
+        /* An empty slot names itself ONCE, inside the token — the caption is the
+           player's name, so there is nothing to print until there is one. */
+        token: p ? String(p.n) : label,
+        name: p ? p.name : '',
+        nameShow: p ? 'block' : 'none',
+        tokenBg: p ? '#c8f25a' : 'rgba(10,11,12,.42)',
+        tokenInk: p ? '#101806' : (on ? '#c8f25a' : '#e7ebec'),
+        tokenFont: p ? '700 17px/1 -apple-system,system-ui' : '800 11px/1 -apple-system,system-ui',
+        tokenBorder: p ? '2px solid rgba(10,11,12,.35)' : (on ? '2px solid #c8f25a' : '1.5px dashed rgba(255,255,255,.42)'),
+        tokenShadow: on ? '0 0 0 4px rgba(200,242,90,.22)' : (p ? '0 4px 12px rgba(0,0,0,.4)' : 'none'),
+        nameFont: p ? '600 11.5px/1.1 -apple-system,system-ui' : '700 9.5px/1 -apple-system,system-ui',
+        nameInk: p ? '#f4f6f6' : (on ? '#c8f25a' : '#a3abb0'),
+        nameBg: p ? 'rgba(10,11,12,.55)' : 'transparent',
+        onTap: () => this.tapSlot(i)
+      };
+    });
+
+    const selLabel = st.sel !== null && st.sel !== undefined ? slotDefs[st.sel][0] : null;
+    const selFilled = st.sel !== null && st.sel !== undefined && st.placed[st.sel] !== undefined;
+
+    const bench = this.SQUAD
+      .filter(p => !placedNums.includes(p.n))
+      .filter(p => st.filter === 'all' || p.line === st.filter)
+      .map(p => ({
+        num: String(p.n), name: p.name,
+        bg: '#15171a', border: '1px solid rgba(255,255,255,.06)', opacity: 1,
+        numBg: '#1e2126', numInk: '#c8f25a', ink: '#e7ebec',
+        onTap: () => this.place(p.n)
+      }));
+
+    const filters = this.FILTERS.map(([id, label]) => ({
+      label, bg: st.filter === id ? '#c8f25a' : '#15171a', ink: st.filter === id ? '#101806' : '#a3abb0',
+      onTap: () => this.setState({filter: id})
+    }));
+
+    const shapes = Object.keys(this.FORMS).map(k => ({
+      label: k, bg: k === f ? 'rgba(200,242,90,.14)' : '#1a1d21',
+      border: k === f ? '1px solid rgba(200,242,90,.45)' : '1px solid rgba(255,255,255,.06)',
+      ink: k === f ? '#c8f25a' : '#e7ebec',
+      onTap: () => this.setShape(k)
+    }));
+
+    const looks = Object.keys(this.LOOKS).map(k => {
+      const l = this.LOOKS[k], on = k === this.lookKey();
+      return {label: l.label, bg: l.bg, line: l.line, stripes: l.stripes, tilt: l.tilt,
+        border: on ? '2px solid #c8f25a' : '1px solid rgba(255,255,255,.08)',
+        ink: on ? '#c8f25a' : '#a3abb0',
+        onTap: () => this.setState({look: k})};
+    });
+
+    const sizes = [['4:5','feed','1080×1350'],['1:1','square','1080×1080'],['9:16','story','1080×1920']].map(([id, , px]) => ({
+      label: id, px, bg: st.size === id ? 'rgba(200,242,90,.14)' : '#1a1d21',
+      border: st.size === id ? '1px solid rgba(200,242,90,.45)' : '1px solid rgba(255,255,255,.06)',
+      ink: st.size === id ? '#c8f25a' : '#e7ebec',
+      onTap: () => this.setState({size: id})
+    }));
+
+    const titles = {shape:'Formation', look:'Pitch', export:'Export'};
+    return {
+      slots, bench, filters, shapes, looks, sizes,
+      formation: f,
+      pitch: {bg: look.bg, line: look.line, stripes: look.stripes, tilt: look.tilt},
+      countLabel: count + ' / 11',
+      countInk: full ? '#101806' : '#a3abb0',
+      countBg: full ? '#c8f25a' : '#15171a',
+      hint: selLabel
+        ? (selFilled ? 'Tap a player to swap into ' + selLabel : 'Pick the ' + selLabel)
+        : (full ? 'Eleven placed — export or keep tinkering' : 'Tap a slot, or tap a player to fill the next one'),
+      hintInk: selLabel ? '#c8f25a' : '#7c858b',
+      removeShow: selFilled ? 'inline' : 'none',
+      removeSel: () => {
+        const placed = Object.assign({}, this.state.placed);
+        delete placed[this.state.sel];
+        this.setState({placed, sel: null, filter: 'all'});
+      },
+      autoFill: () => this.setState({placed: this.autoMap(f), sel: null, filter: 'all'}),
+      clearAll: () => this.setState({placed: {}, sel: null, filter: 'all'}),
+      /* Opening a sheet drops the slot selection, so the rail's filter goes with
+         it — a narrowed rail with nothing selected explains nothing. */
+      openShape: () => this.setState({sheet: 'shape', sel: null, filter: 'all'}),
+      openLook: () => this.setState({sheet: 'look', sel: null, filter: 'all'}),
+      openExport: () => this.setState({sheet: 'export', sel: null, filter: 'all'}),
+      closeSheet: () => this.setState({sheet: null}),
+      sheetShow: st.sheet ? 'block' : 'none',
+      sheet: {title: titles[st.sheet] || '', isShape: st.sheet === 'shape', isLook: st.sheet === 'look', isExport: st.sheet === 'export'}
+    };
+  }
+}
+
+</script>
+</body>
+</html>

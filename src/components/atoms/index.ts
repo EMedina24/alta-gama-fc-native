@@ -15,3 +15,5 @@ export { Skeleton, SkeletonRows } from './skeleton';
 export { Switch } from './switch';
 export { Text, type TextProps, type TypeVariant } from './text';
 export { VersusBadge } from './versus-badge';
+export { PitchGlyph, type PitchGlyphProps } from './pitch-glyph';
+export { SlotToken, type SlotTokenMode, type SlotTokenProps } from './slot-token';

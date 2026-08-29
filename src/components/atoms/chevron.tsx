@@ -17,16 +17,22 @@ export interface ChevronProps {
   /** Points up when open, down when closed. */
   expanded?: boolean;
   color?: ThemeColor;
+  /**
+   * `right` is a disclosure INTO a screen (the club-page Starting XI row, ADR
+   * 0065) rather than an expand/collapse; it ignores `expanded`.
+   */
+  direction?: 'down' | 'right';
 }
 
-export function Chevron({ expanded = false, color = 'textFaint' }: ChevronProps) {
+export function Chevron({ expanded = false, color = 'textFaint', direction = 'down' }: ChevronProps) {
+  const rotate = direction === 'right' ? '-90deg' : expanded ? '180deg' : null;
   return (
     <Svg
       width={Size.chevron}
       height={Size.chevron}
       viewBox="0 0 20 20"
       accessible={false}
-      style={expanded ? { transform: [{ rotate: '180deg' }] } : undefined}>
+      style={rotate ? { transform: [{ rotate }] } : undefined}>
       <Path
         d="M4.5 7.5l5.5 5.5 5.5-5.5"
         stroke={Colors.dark[color]}

@@ -8,6 +8,10 @@
  * `hasCompleteSchedule` exists and why this branch comes before the spine.
  *
  * ⚠ Sits outside `(tabs)/` so it pushes over the tab bar (ADR 0020).
+ *
+ * ⚠ A FOLDER route since ADR 0065 — `index.tsx` here, `starting-xi.tsx`
+ * beside it. No `_layout.tsx` in this folder: that would nest a stack inside
+ * the root stack, and the route string `/club/[slug]` is unchanged.
  */
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -15,6 +19,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SkeletonRows, Text } from '@/components/atoms';
+import { StartingXiRow } from '@/components/molecules';
 import { ClubHeader } from '@/components/organisms/club-header';
 import { SeasonSpine } from '@/components/organisms/season-spine';
 import { SquadList } from '@/components/organisms/squad-list';
@@ -93,6 +98,20 @@ export default function ClubScreen() {
                 calendar: copy.club.calendar,
                 note: copy.club.subscribeNote,
               }}
+            />
+
+            {/* ⚠ Between the subscribe block and the segmented control — a club
+                action, not a squad detail (ADR 0065). Enabled off the SQUAD, not
+                the league: the row stays and explains itself when there is none. */}
+            <StartingXiRow
+              enabled={(squad.data?.players.length ?? 0) > 0}
+              title={copy.startingXi.rowTitle}
+              body={
+                (squad.data?.players.length ?? 0) > 0
+                  ? copy.startingXi.rowBody
+                  : copy.club.squadEmpty
+              }
+              onPress={() => router.push({ pathname: '/club/[slug]/starting-xi', params: { slug } })}
             />
 
             <View style={styles.segmented}>

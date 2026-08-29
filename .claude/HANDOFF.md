@@ -492,6 +492,24 @@ documented at the code that handles them; this is the index.
     real clubs. ⚠ Names are CONTRACTED (`widgetName`: `R. Madrid`) — the full
     forms truncated one side or the other. Not yet checked on an SE-width
     simulator, nor with a hand-edited v1 `snapshot.json`.
+- **The Starting XI builder is IN THE APP** (2026-08-29, [0065](./decisions/0065-starting-xi-builder.md)) —
+  the whole of `handoff_squad-builder/`: a row on the club page (between the
+  subscribe block and Fixtures / Players) pushing `/club/[slug]/starting-xi` —
+  tap a slot, tap a player, rail filtered to the line, Shape / Look / Export as
+  root-stack sheets, drag a placed token onto a teammate to swap, long-press
+  for Swap / Remove / Player page, export a TRUE 1080-px card to the share
+  sheet or Photos. Eleven formations; the spacing rule is asserted in code.
+  `tsc`, lint (baseline unchanged), `expo export` and a **94-assertion
+  harness** on `features/starting-xi/` are clean. ⚠ **Four new NATIVE
+  modules** (`expo-haptics`, `react-native-view-shot`, `expo-sharing`,
+  `expo-media-library`) — a dev client built before 2026-08-29 throws at
+  import; rebuild first. ⚠ `GestureHandlerRootView` is now the outermost view
+  in `_layout.tsx`. ⚠ The club page is a FOLDER route now
+  (`club/[slug]/index.tsx`); no `_layout` in it, on purpose. ⚠ The row
+  enables off `players.length > 0`, not the league — squads exist for LaLiga
+  AND the Premier League. ⚠ Placements key on the person `id`, never the
+  shirt. ⚠ `tsconfig.json` excludes `handoff_*/**` — design source no longer
+  gates `tsc`.
 - **News is IN THE APP** (2026-08-29, [0064](./decisions/0064-news-card-and-screen.md)) —
   the whole of `handoff_news-card-page/`, phase 1: a NEWS card on the Today board
   (lead + two rows + `n NEW`, one tap) pushing `src/app/news.tsx` (chips ·

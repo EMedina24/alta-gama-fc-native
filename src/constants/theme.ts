@@ -76,6 +76,27 @@ const dark = {
   formWin: '#c8f25a',
   formDraw: '#3a4652',
   formLossBorder: 'rgba(255,107,94,0.7)',
+
+  // The Starting XI pitch (ADR 0065). The two grounds are the web builder's
+  // `xi-pitch` / `xi-turf`; lines and stripes are washes over them.
+  pitchArt: '#0f1216',
+  pitchTurf: '#17301d',
+  pitchLineArt: 'rgba(200,242,90,0.34)',
+  pitchLineTurf: 'rgba(255,255,255,0.34)',
+  pitchStripeArt: 'rgba(200,242,90,0.05)',
+  pitchStripeTurf: 'rgba(255,255,255,0.045)',
+  // An EMPTY slot token: a dark scrim so the label reads on turf, and a dashed ring.
+  slotEmpty: 'rgba(10,11,12,0.42)',
+  slotRing: 'rgba(255,255,255,0.42)',
+  // A filled token's inner border, and the scrim under a name caption.
+  slotEdge: 'rgba(10,11,12,0.35)',
+  captionScrim: 'rgba(10,11,12,0.55)',
+  // The Clear action. ⚠ Softer than `danger`: it sits in a toolbar of four
+  // quiet tiles and `danger` there out-shouts the lime it is next to.
+  clearInk: '#ff8f7c',
+  // The export card ground — one step above `background` so the pitch's own
+  // ground still reads as recessed.
+  cardGround: '#101215',
 } as const;
 
 export const Colors = { dark, light: dark } as const;
@@ -192,6 +213,18 @@ export const Type = {
   eventTab: { fontSize: 11, fontWeight: '700', letterSpacing: 0.22 },
   /** The count beside it. ⚠ A number — always with `tabular`. */
   eventTabCount: { fontSize: 10, fontWeight: '700' },
+
+  /**
+   * The Starting XI board (ADR 0065). A filled token's shirt number, an empty
+   * token's position label, and the two captions under them. Sizes are the
+   * handoff's, measured against the 46pt token; they are not on the scale
+   * because nothing else on screen is 46pt.
+   */
+  xiNumeral: { fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
+  xiSlotLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
+  xiCaption: { fontSize: 11.5, fontWeight: '600', letterSpacing: 0.2 },
+  /** The `SHAPE` word beside the formation in the toolbar. */
+  xiToolbarLabel: { fontSize: 11, fontWeight: '500', letterSpacing: 1.1, textTransform: 'uppercase' },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -311,6 +344,33 @@ export const Size = {
    */
   scoreRuleWidthBoard: 2,
   scoreRuleWidth: 1,
+
+  /**
+   * The Starting XI board (ADR 0065). ⚠ `xiToken` is THE number the formation
+   * tables were measured against — see `features/starting-xi/formations.ts`.
+   * Change it and every table needs re-measuring.
+   */
+  xiToken: 46,
+  /** The name caption under a token, capped so neighbours never touch. */
+  xiCaption: 66,
+  /** The selection halo drawn outside the ring. */
+  xiHalo: 4,
+  /** The pitch box: 361 wide inside a 393 screen, 424 tall. Height follows width by this ratio. */
+  xiPitchRatio: 424 / 361,
+  /** A squad card on the rail. */
+  xiRailCard: 74,
+  xiRailNum: 30,
+  /** The rail's bottom clearance so the last cards clear the corner radius. */
+  xiRailInset: 58,
+  /** The club-page row's glyph tile, and the glyph inside it. */
+  xiRowTile: 38,
+  xiRowGlyph: 20,
+  /** The toolbar's icon tiles are `minTouch`; the icon inside is this. */
+  xiToolIcon: 19,
+  /** The line-filter chip. */
+  xiFilterH: 30,
+  /** A look preview tile in the Look sheet. */
+  xiLookPreview: 96,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

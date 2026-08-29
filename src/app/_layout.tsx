@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments, type NativeStackNavigationOptions } from
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
@@ -12,6 +13,7 @@ import { watchAppStateForRefresh } from '@/lib/supabase/client';
 import { queryClient } from '@/queries/client';
 import { hydratePreferences, usePreferences } from '@/store/preferences';
 import { hydrateSession, useSession } from '@/store/session';
+import { hydrateStartingXi } from '@/store/starting-xi';
 
 // ⚠ Module scope, deliberately un-awaited — the docs are explicit that calling
 // this from inside a component or hook runs it too late to catch the auto-hide.
@@ -33,7 +35,7 @@ export default function RootLayout() {
   // already signed in.
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    Promise.all([hydratePreferences(), hydrateSession()]).finally(() => setReady(true));
+    Promise.all([hydratePreferences(), hydrateSession(), hydrateStartingXi()]).finally(() => setReady(true));
   }, []);
 
   // ⚠ This is what makes the `return null` below survivable. Without it the
@@ -55,6 +57,9 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
+    // ⚠ Outermost, for the Starting XI board's drag gesture (ADR 0065). A
+    // `GestureDetector` without this root throws at runtime, not compile time.
+    <GestureHandlerRootView style={styles.root}>
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <StatusBar style="light" />
@@ -92,9 +97,21 @@ export default function RootLayout() {
             name="(sheets)/player"
             options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
           />
+          {/* The Starting XI builder's three sheets (ADR 0065). Export gets a
+              tall detent because it holds a text field and a card preview. */}
+          <Stack.Screen
+            name="(sheets)/xi-shape"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
+          <Stack.Screen
+            name="(sheets)/xi-look"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
+          <Stack.Screen name="(sheets)/xi-export" options={{ ...sheet, sheetAllowedDetents: [1] }} />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -110,6 +127,8 @@ export default function RootLayout() {
  * ⚠ `sheetGrabberVisible` draws the grabber, so a sheet presented this way must
  * NOT also render the `Grabber` atom — that gives you two.
  */
+const styles = { root: { flex: 1 } } as const;
+
 const sheet: NativeStackNavigationOptions = {
   presentation: 'formSheet',
   sheetGrabberVisible: true,
