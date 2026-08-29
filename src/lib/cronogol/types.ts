@@ -251,6 +251,9 @@ export interface LeagueRef {
    * two together today. Re-picking the tints is a backend change, not a
    * front-end one — the values come from the database precisely so a fifth
    * league needs no deploy here.
+   *
+   * ⚠ The app does not consume this today: FINISHED TODAY's header bands come
+   * from `LeagueBand` in `@/constants/theme` instead (ADR 0062).
    */
   accentColor: string | null;
 }

@@ -81,6 +81,28 @@ const dark = {
 export const Colors = { dark, light: dark } as const;
 export type ThemeColor = keyof typeof dark;
 
+/**
+ * The league header band in FINISHED TODAY — one entry per competition we hold
+ * fixtures for, keyed by **API slug** (`laliga`, not `la-liga`; `segunda`; see
+ * `lib/cronogol/leagues.ts`). Never key on the provider's `name`.
+ *
+ * ⚠ These are the leagues' own brand colours, deliberately NOT `LeagueRef.accentColor`
+ * from the backend — that is null on Serie A and segunda and cannot carry a
+ * gradient (ADR 0062). Segunda shares LaLiga's red by choice. ⚠ LaLiga's is a
+ * DARK red, not the brand `#FF4B44`: the league mark is itself that red and
+ * vanished on it — the band must sit well below the mark's own tone. A slug missing here
+ * renders the neutral header; that is the fallback, not a bug.
+ */
+export const LeagueBand = {
+  laliga: { solid: '#A8231F' },
+  // ⚠ `segunda`, not `segunda-division` — the API's slug, whatever the docs' prose says.
+  segunda: { solid: '#A8231F' },
+  'premier-league': { solid: '#37003C' },
+  bundesliga: { solid: '#FF404A' },
+  'serie-a': { gradient: ['#225696', '#0D8EFE'] },
+} as const satisfies Record<string, LeagueBandSpec>;
+export type LeagueBandSpec = { solid: string } | { gradient: readonly [string, string] };
+
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */
 export const Spacing = {
   half: 2, one: 4, two: 8, three: 12, four: 16, five: 20, six: 24, seven: 32, eight: 44,
@@ -176,6 +198,12 @@ export const Type = {
 export const Size = {
   minTouch: 44, rowSkeleton: 44, pill: 34, switchW: 51, switchH: 31, switchKnob: 27,
   crestRow: 26, crestList: 30, crestCard: 40, crestHero: 58,
+  /**
+   * The league mark on a FINISHED TODAY band. ⚠ Must stay below `crestRow`:
+   * the band is a divider and has to read thinner than the match rows it
+   * separates — 18 + 2×`Spacing.two` = 34pt against a 50pt row (ADR 0062).
+   */
+  leagueBandMark: 18,
   /**
    * The next-up card's pairing. Deliberately larger than `crestCard` — that
    * one is the list/row size and stays where it is (ADR 0034). `versusBadge`

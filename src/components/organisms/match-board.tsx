@@ -274,39 +274,9 @@ export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchB
 
   return (
     <View style={styles.stack}>
-      {last ? (
-        <View style={[styles.card, styles.flush, styles.resultCard]}>
-          <View style={styles.pad}>
-            <View style={styles.headRow}>
-              <Text variant="eyebrowSm" color="textFaint">
-                {copy.lastResult} · {last.meta}
-              </Text>
-              {last.outcome ? <Pill label={last.outcome} /> : null}
-            </View>
-            <ScoreLine home={last.home} away={last.away} noScoreLabel={copy.noScore} />
-          </View>
-
-          <EventsDisclosure
-            open={showEvents}
-            onToggle={() => setShowEvents((open) => !open)}
-            copy={events}
-          />
-
-          {showEvents ? (
-            <MatchEvents
-              fixtureId={last.id}
-              home={last.homeTeam}
-              away={last.awayTeam}
-              copy={events}
-              // ⚠ The footer row above already reads `MATCH EVENTS`. Left on,
-              // the panel printed its own eyebrow directly beneath it — the
-              // same words twice, one line apart.
-              showTitle={false}
-            />
-          ) : null}
-        </View>
-      ) : null}
-
+      {/* ⚠ NEXT UP first, always. The reader opens the app to see what is
+          coming, not what happened — the result was already pushed to them.
+          Only the live card (above) outranks it (ADR 0063). */}
       {next ? (
         /**
          * ⚠ STACKED, not a row. Names sit UNDER their crest so each gets half the
@@ -389,6 +359,39 @@ export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchB
               <Countdown kickoffUtc={next.kickoffUtc} onElapsed={onKickoff} />
             </View>
           )}
+        </View>
+      ) : null}
+
+      {last ? (
+        <View style={[styles.card, styles.flush, styles.resultCard]}>
+          <View style={styles.pad}>
+            <View style={styles.headRow}>
+              <Text variant="eyebrowSm" color="textFaint">
+                {copy.lastResult} · {last.meta}
+              </Text>
+              {last.outcome ? <Pill label={last.outcome} /> : null}
+            </View>
+            <ScoreLine home={last.home} away={last.away} noScoreLabel={copy.noScore} />
+          </View>
+
+          <EventsDisclosure
+            open={showEvents}
+            onToggle={() => setShowEvents((open) => !open)}
+            copy={events}
+          />
+
+          {showEvents ? (
+            <MatchEvents
+              fixtureId={last.id}
+              home={last.homeTeam}
+              away={last.awayTeam}
+              copy={events}
+              // ⚠ The footer row above already reads `MATCH EVENTS`. Left on,
+              // the panel printed its own eyebrow directly beneath it — the
+              // same words twice, one line apart.
+              showTitle={false}
+            />
+          ) : null}
         </View>
       ) : null}
     </View>

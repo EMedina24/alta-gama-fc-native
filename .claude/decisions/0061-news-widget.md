@@ -1,7 +1,7 @@
 # 0061 — The NEWS widget: a large tile over the global feed, opening at the publisher
 
 - **Date:** 2026-08-28
-- **Status:** Accepted — verified on the simulator (iPhone 17 Pro, 2026-08-28)
+- **Status:** Accepted — verified on the simulator (iPhone 17 Pro, 2026-08-28); `preview` build `94e46736` signed with the widget in it, not yet seen on a device
 - **Decided by:** Ed Medina
 
 ## Context

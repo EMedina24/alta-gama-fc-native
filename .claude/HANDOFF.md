@@ -396,6 +396,13 @@ documented at the code that handles them; this is the index.
     `eas credentials` and regenerate the iOS profile before suspecting the
     payload. `EXPO_DEBUG=1 eas build` shows the sync; `EXPO_NO_CAPABILITY_SYNC=1`
     turns it off.
+    ⭐ **It bit, 2026-08-28.** The first `preview` build after the entitlement
+    landed (`090c552a`) failed in Xcode with *"doesn't include the Time
+    Sensitive Notifications capability"* while EAS had printed *All credentials
+    are ready*. Fixed by trap 29's recipe (`npx eas-cli credentials -p ios` →
+    delete the MAIN target's profile → set up all); the Portal ID moved
+    `N9WSK26LXP` → `9KB5277ZHF`. ⚠ `eas` is not installed globally here — it is
+    `npx eas-cli`, always.
     ⚠ This is why `reminders.ts` has always used `active`. The only way to
     confirm it works is to fire one at a device with a Focus on
     ([0053](./decisions/0053-live-match-push-alerts.md)).
@@ -414,6 +421,10 @@ documented at the code that handles them; this is the index.
 ## Where things stand
 
 ### Done and verified
+- **League header bands in FINISHED TODAY** ([0062](./decisions/0062-league-header-bands.md)):
+  `LeagueBand` in `@/constants/theme`, keyed by API slug; Serie A's gradient via
+  `react-native-svg`. ⚠ Not yet seen on the simulator — check the first band's
+  top corners clip under the card radius and the Svg does not eat row taps.
 - Phases 1–3 of the plan: foundation, all read-only screens, follows, sheets,
   onboarding, both languages.
 - Push: registration, local reminders, deep-link routing — verified on the
@@ -490,7 +501,7 @@ documented at the code that handles them; this is the index.
   `lib/cronogol/news.ts` are clean. **Verified on the simulator** with real
   MARCA/SPORT headlines — lead, gradient, topic chips, ages, no chip on a
   topicless row. ⚠ Not yet seen: cold-cache layout, empty state, Spanish, a tap
-  reaching Safari. ⚠ **`expo-image-manipulator` is a NATIVE module** — a dev client built before
+  reaching Safari. **`preview` build `94e46736` (2026-08-28) carries it** — the first build with `expo-image-manipulator`; install that, not an older client. ⚠ **`expo-image-manipulator` is a NATIVE module** — a dev client built before
   it throws on import, exactly as `react-native-svg` did (§3b). Rebuild first.
   `/_debug/widgets` has a News section that reads `news.json` back from disk.
 - **Live scores reach the Today board** (2026-08-27,

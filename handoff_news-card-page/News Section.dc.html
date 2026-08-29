@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+  body{margin:0;background:#0a0b0c}
+  a{color:#c8f25a;text-decoration:none}
+  a:hover{color:#dcff7a}
+  *{-webkit-tap-highlight-color:transparent}
+  .scr::-webkit-scrollbar{display:none}
+  .rail::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+
+<section style="padding:56px 64px 72px;background:#0a0b0c;color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:36px">
+    <div style="font:600 12px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#7c858b">Turn 1 · News in the app</div>
+    <div style="font:640 30px/1.1 -apple-system,system-ui;letter-spacing:-.025em">A card on Today, a screen behind it</div>
+    <div style="font:400 15px/1.55 -apple-system,system-ui;color:#a3abb0;max-width:840px;text-wrap:pretty">News does not get a fifth tab — the tab model is Today · Fixtures · Table · Clubs and that decision holds. It gets a card on the Today board, positioned under the match it belongs to, and the card pushes a full News screen. Live: tap the card, filter the list, tap a headline to see the link-out. Real headlines from the feed.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.12em;color:#101806;background:#c8f25a;border-radius:6px;padding:6px 9px">1A</span>
+        <span style="font:600 14px/1 -apple-system,system-ui;color:#f4f6f6">{{ screenLabel }}</span>
+      </div>
+
+      <div style="width:393px;height:852px;border-radius:44px;overflow:hidden;background:#0a0b0c;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 70px rgba(0,0,0,.55);color:#f4f6f6">
+
+        <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 -apple-system,system-ui">
+          <span>9:41</span>
+          <span style="display:flex;align-items:center;gap:6px;color:#f4f6f6"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span>
+        </div>
+
+        <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+          <div class="scr" style="height:712px;overflow-y:auto;padding:0 20px">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:6px 0 16px">
+              <div style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em">Board</div>
+              <div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;text-align:right">SATURDAY<br>MATCHDAY 4</div>
+            </div>
+
+            <div style="background:#15171a;border-radius:18px;padding:13px 15px 14px;margin-bottom:22px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">LALIGA · SAN MAMÉS</span>
+                <span style="flex:1"></span>
+                <span style="display:flex;align-items:center;gap:6px;font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#ff5c47"><span style="width:5px;height:5px;border-radius:3px;background:#ff5c47"></span>2ND HALF · 67'</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:11px">{{ crestAth }}<span style="font:600 15px/1.1 -apple-system,system-ui;letter-spacing:-.01em">Athletic Club</span></div>
+                  <div style="display:flex;align-items:center;gap:11px">{{ crestGet }}<span style="font:600 15px/1.1 -apple-system,system-ui;letter-spacing:-.01em;color:#a3abb0">Getafe CF</span></div>
+                </div>
+                <div style="font:700 26px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.03em">1–0</div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin:0 0 10px">
+              <span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">AROUND YOUR CLUBS</span>
+              <span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span>
+              <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a">{{ newCount }}</span>
+            </div>
+
+            <div onClick="{{ goNews }}" style="background:#15171a;border-radius:18px;padding:13px 15px 8px;cursor:pointer;margin-bottom:22px">
+              <div style="display:flex;gap:12px;padding-bottom:13px">
+                {{ lead.thumb }}
+                <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                    <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a;display:{{ lead.topicShow }}">{{ lead.topic }}</span>
+                    <span style="width:3px;height:3px;border-radius:2px;background:#4f575d;display:{{ lead.dotShow }}"></span>
+                    <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b">{{ lead.publisher }}</span>
+                    <span style="font:600 9px/1 -apple-system,system-ui;color:#59626a">{{ lead.age }}</span>
+                  </div>
+                  <div style="font:600 14px/1.3 -apple-system,system-ui;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty">{{ lead.title }}</div>
+                </div>
+              </div>
+              <sc-for list="{{ cardRows }}" as="c" hint-placeholder-count="2">
+                <div style="border-top:1px solid rgba(255,255,255,.07);padding:11px 0 10px;display:flex;flex-direction:column;gap:6px">
+                  <div style="font:500 12.5px/1.3 -apple-system,system-ui;color:#e7ebec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</div>
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a;display:{{ c.topicShow }}">{{ c.topic }}</span>
+                    <span style="width:3px;height:3px;border-radius:2px;background:#4f575d;display:{{ c.dotShow }}"></span>
+                    <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b">{{ c.publisher }}</span>
+                    <span style="font:600 9px/1 -apple-system,system-ui;color:#59626a">{{ c.age }}</span>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding:12px 0 11px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font:700 12.5px/1 -apple-system,system-ui;color:#c8f25a">All news</span>
+                <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="#c8f25a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5L6 6.5l-4.5 5"></path></svg>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin:0 0 10px">
+              <span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">REST OF THE ROUND</span>
+              <span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span>
+            </div>
+            <div style="background:#15171a;border-radius:18px;padding:13px 15px 14px;margin-bottom:20px">
+              <div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a;margin-bottom:12px">TOMORROW · 16:15</div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:11px">{{ crestSev }}<span style="font:600 15px/1.1 -apple-system,system-ui;letter-spacing:-.01em">Sevilla FC</span></div>
+                  <div style="display:flex;align-items:center;gap:11px">{{ crestOsa }}<span style="font:600 15px/1.1 -apple-system,system-ui;letter-spacing:-.01em;color:#a3abb0">CA Osasuna</span></div>
+                </div>
+                <div style="text-align:right"><div style="font:700 19px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em">16:15</div><div style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b;margin-top:6px">SUN</div></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isNews }}" hint-placeholder-val="{{ false }}">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 14px 0 8px">
+            <span onClick="{{ goToday }}" style="display:flex;align-items:center;gap:2px;font:400 17px/1 -apple-system,system-ui;color:#c8f25a;padding:8px 6px;cursor:pointer">
+              <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="#c8f25a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5L2 9l7 7.5"></path></svg>Board
+            </span>
+            <span style="font:600 17px/1 -apple-system,system-ui;letter-spacing:-.01em">News</span>
+            <span style="width:52px"></span>
+          </div>
+
+          <div class="rail" style="display:flex;gap:8px;padding:6px 20px 10px;overflow-x:auto;scrollbar-width:none">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+              <div onClick="{{ f.onTap }}" style="flex-shrink:0;height:32px;border-radius:16px;padding:0 14px;display:flex;align-items:center;background:{{ f.bg }};color:{{ f.ink }};font:600 13px/1 -apple-system,system-ui;cursor:pointer">{{ f.label }}</div>
+            </sc-for>
+          </div>
+
+          <div class="scr" style="height:660px;overflow-y:auto;padding:0 20px 20px">
+            <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px 0 10px">
+                  <span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0">{{ g.label }}</span>
+                  <span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span>
+                  <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#59626a">{{ g.count }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="4">
+                    <div onClick="{{ n.onTap }}" style="background:#15171a;border-radius:18px;padding:12px 14px;display:flex;gap:12px;cursor:pointer">
+                      {{ n.thumb }}
+                      <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:7px">
+                        <div style="font:600 14px/1.3 -apple-system,system-ui;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty">{{ n.title }}</div>
+                        <div style="display:flex;align-items:center;gap:7px">
+                          <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a;display:{{ n.topicShow }}">{{ n.topic }}</span>
+                          <span style="width:3px;height:3px;border-radius:2px;background:#4f575d;display:{{ n.dotShow }}"></span>
+                          <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b">{{ n.publisher }}</span>
+                          <span style="font:600 9px/1 -apple-system,system-ui;color:#59626a">{{ n.age }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div style="font:400 11.5px/1.45 -apple-system,system-ui;color:#59626a;margin:16px 0 0;max-width:44ch;text-wrap:pretty">{{ footNote }}</div>
+          </div>
+        </sc-if>
+
+        <div style="position:absolute;left:0;right:0;bottom:0;height:82px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:flex-start;justify-content:space-around;padding:10px 8px 0">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="16" height="15" rx="3"></rect><path d="M3 9h16M7.5 2v3M14.5 2v3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Today</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h14M4 11h14M4 16h9"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Fixtures</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 18V9M10 18V4M16 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Table</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="7.5" r="3.5"></circle><path d="M4 18.5c1.6-3.4 4-5 7-5s5.4 1.6 7 5"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">Clubs</span></div>
+        </div>
+
+        <div style="position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.32);z-index:40;pointer-events:none"></div>
+
+        <div style="position:absolute;inset:0;display:{{ sheetShow }};z-index:50">
+          <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,.55);cursor:pointer"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#15171a;border-radius:26px 26px 44px 44px;box-shadow:0 -12px 40px rgba(0,0,0,.5);padding:8px 0 30px">
+            <div style="width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:0 auto 14px"></div>
+            <div style="padding:0 20px">
+              <div style="display:flex;align-items:center;gap:7px;padding-bottom:9px">
+                <span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a;display:{{ open.topicShow }}">{{ open.topic }}</span>
+                <span style="width:3px;height:3px;border-radius:2px;background:#4f575d;display:{{ open.dotShow }}"></span>
+                <span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b">{{ open.publisher }}</span>
+                <span style="font:600 9px/1 -apple-system,system-ui;color:#59626a">{{ open.age }}</span>
+              </div>
+              <div style="font:640 18px/1.3 -apple-system,system-ui;letter-spacing:-.015em;padding-bottom:6px;text-wrap:pretty">{{ open.title }}</div>
+              <div style="font:400 12.5px/1.45 -apple-system,system-ui;color:#7c858b;padding-bottom:16px;text-wrap:pretty">{{ open.note }}</div>
+              <div style="height:46px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px/1 -apple-system,system-ui;margin-bottom:9px">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#101806" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3H3.5v11.5H15V11M10.5 2.5H15V7M15 2.5L8 9.5"></path></svg>{{ open.cta }}
+              </div>
+              <div style="display:flex;gap:9px">
+                <div style="flex:1;height:46px;border-radius:15px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:600 14px/1 -apple-system,system-ui;color:#e7ebec">Share</div>
+                <div onClick="{{ closeSheet }}" style="flex:1;height:46px;border-radius:15px;background:#1e2126;display:flex;align-items:center;justify-content:center;font:600 14px/1 -apple-system,system-ui;color:#e7ebec;cursor:pointer">Cancel</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:500px;display:flex;flex-direction:column;gap:26px">
+      <div style="padding:24px 26px;border-radius:22px;background:#101215;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:14px">
+        <div style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">HOW IT SITS IN THE APP</div>
+        <div style="display:flex;flex-direction:column;gap:13px;font:400 13.5px/1.55 -apple-system,system-ui;color:#a3abb0">
+          <div><span style="color:#f4f6f6;font-weight:600">No fifth tab.</span> Today · Fixtures · Table · Clubs stays. News is a card on the board and a pushed screen behind it — reachable in one tap from the place people already open, and out of the way of the four things the app is for.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">The card sits under the match.</span> Board order is live/next match, then <em>Around your clubs</em>, then the rest of the round. Scores first, always: a headline is never the reason someone opened this app.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Three stories, then out.</span> One with a picture, two as single lines, and a count of what is new since the last visit. The card is a doorway, not a feed.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Filters are the site's.</span> All · your clubs · a league. Club-level filtering lives on the club page, where the reader already picked a club.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Tap opens the publisher.</span> Third-party headlines open in a Safari view — the sheet says whose article it is before it loads, because the app is not the author. AltaGama's own pieces open in-app with no sheet.</div>
+        </div>
+      </div>
+
+      <div style="padding:24px 26px;border-radius:22px;background:#101215;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:14px">
+        <div style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.16em;color:#7c858b">NOTES FOR BUILD</div>
+        <div style="display:flex;flex-direction:column;gap:13px;font:400 13.5px/1.55 -apple-system,system-ui;color:#a3abb0">
+          <div><span style="color:#f4f6f6;font-weight:600">Headlines are quotes.</span> Publisher's language, never translated or trimmed — the same rule the news widget carries. Only the furniture follows the app's language.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Topic is optional.</span> Every SPORT item files under none; the chip is simply absent and the publisher leads. Row three on the list is that case.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Age is relative and recomputed</span> on appear, not stored as a string. Group headers are Today / Yesterday in the reader's zone.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Attribution is not a footnote.</span> Publisher on every row, and the aggregation line at the end of the list.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Same feed as the widget</span> — one endpoint, one cache. The widget's <code style="color:#c8f25a">news.json</code> writer can read this screen's query rather than fetch twice.</div>
+          <div><span style="color:#f4f6f6;font-weight:600">Empty states.</span> Follows nothing → the follow prompt already used on the board. Follows clubs, feed quiet → say so, and keep the filters visible.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;today&quot;,&quot;news&quot;],&quot;default&quot;:&quot;today&quot;,&quot;tsType&quot;:&quot;'today'|'news'&quot;,&quot;section&quot;:&quot;State&quot;},&quot;filter&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;all&quot;,&quot;clubs&quot;,&quot;laliga&quot;,&quot;premier&quot;],&quot;default&quot;:&quot;all&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;}}">
+class Component extends DCLogic {
+  CR = {athletic:'7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d',
+    getafe:'f83b1f13181443f96193c3c8e77ace37d5de4801d6a4053aa369a7f2674f2252',
+    sevilla:'187c6c09c22f7c3f09c57e8bcda2ae528237770ed30a63de38de7a5fd4d7e89a',
+    osasuna:'7f2d02469662b42632daa7f49123ec511cbbea7c23d1aab18382447d6af98553'};
+
+  /* Verbatim off /en/news — Spanish headlines under an English UI, which is the
+     honest shape: they are quoted, not translated. */
+  ITEMS = [
+    {topic:'SEVILLA', publisher:'MARCA', age:'3h', day:'today', clubs:true, league:'laliga',
+      title:'El Sevilla vuelve a preguntar por Zeballos',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/6a92121e79c8b.jpeg'},
+    {topic:'ATLÉTICO', publisher:'MARCA', age:'3h', day:'today', clubs:true, league:'laliga',
+      title:'Sevilla – Atlético: y pese al lío… hay partidazo',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/28/6a91d2d76f4a3.jpeg'},
+    {topic:'', publisher:'SPORT', age:'5h', day:'today', clubs:true, league:'laliga',
+      title:'Acuerdo del Deportivo con la Federación de Peñas y los colectivos de Marathón Inferior: vuelve la normalidad a Riazor',
+      img:'https://estaticos-cdn.prensaiberica.es/clip/f012b8ea-6eaf-42fc-87ea-57130a0d8b3f_media-libre-aspect-ratio_default_0.jpg'},
+    {topic:'ALAVÉS', publisher:'MARCA', age:'6h', day:'today', clubs:false, league:'laliga',
+      title:'El Alavés vuela alto: igualan el mejor arranque en Primera de la historia',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/6a9208e530bd8.jpeg'},
+    {topic:'CRYSTAL PALACE', publisher:'ESPN', age:'14h', day:'yday', clubs:false, league:'premier',
+      title:'De cabeza al gol: Haaland abrió la cuenta ante Crystal Palace',
+      img:'https://a.espncdn.com/photo/2026/0828/r1708203_1296x729_16-9.jpg'},
+    {topic:'VILLARREAL', publisher:'MARCA', age:'18h', day:'yday', clubs:true, league:'laliga',
+      title:'Mendizorroza se confirma como un campo maldito para el Villarreal',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/6a9205270c7f7.jpeg'}
+  ];
+
+  FILTERS = [['all','All'],['clubs','Your clubs'],['laliga','LaLiga'],['premier','Premier']];
+
+  state = {screen: null, filter: null, open: null};
+
+  scr(){ return this.state.screen || this.props.screen || 'today'; }
+  flt(){ return this.state.filter || this.props.filter || 'all'; }
+
+  crest(id, size){
+    return React.createElement('img', {src:'https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/' + this.CR[id] + '.png',
+      alt:'', style:{width:size, height:size, objectFit:'contain', display:'block', flexShrink:0}});
+  }
+
+  thumb(url, size, radius){
+    return React.createElement('img', {src:url, alt:'', style:{width:size, height:size, borderRadius:radius,
+      objectFit:'cover', display:'block', flexShrink:0, background:'#1e2126'}});
+  }
+
+  meta(it){ return {topicShow: it.topic ? 'inline' : 'none', dotShow: it.topic ? 'block' : 'none'}; }
+
+  renderVals(){
+    const st = this.state, screen = this.scr(), filter = this.flt();
+    const shown = this.ITEMS.filter(it =>
+      filter === 'all' || (filter === 'clubs' ? it.clubs : it.league === filter));
+
+    const row = (it, size) => Object.assign({}, it, this.meta(it), {
+      thumb: this.thumb(it.img, size, size > 60 ? 14 : 12),
+      onTap: () => this.setState({open: it})
+    });
+
+    const groups = [['today','TODAY'],['yday','YESTERDAY']]
+      .map(([id, label]) => {
+        const items = shown.filter(it => it.day === id).map(it => row(it, 64));
+        return {label, count: items.length + (items.length === 1 ? ' STORY' : ' STORIES'), items};
+      })
+      .filter(g => g.items.length);
+
+    const lead = row(this.ITEMS[0], 68);
+    const cardRows = this.ITEMS.slice(1, 3).map(it => Object.assign({}, it, this.meta(it)));
+
+    const open = st.open || this.ITEMS[0];
+    const ownArticle = open.publisher === 'ALTAGAMA FC';
+
+    return {
+      isToday: screen === 'today', isNews: screen === 'news',
+      screenLabel: screen === 'today' ? 'Today board · news card in place' : 'News screen · pushed from the card',
+      goNews: () => this.setState({screen: 'news'}),
+      goToday: () => this.setState({screen: 'today', open: null}),
+      crestAth: this.crest('athletic', 26), crestGet: this.crest('getafe', 26),
+      crestSev: this.crest('sevilla', 26), crestOsa: this.crest('osasuna', 26),
+      newCount: '4 NEW',
+      lead, cardRows, groups,
+      filters: this.FILTERS.map(([id, label]) => ({
+        label, bg: filter === id ? '#c8f25a' : '#15171a', ink: filter === id ? '#101806' : '#a3abb0',
+        onTap: () => this.setState({filter: id})
+      })),
+      footNote: 'Headlines from third-party publishers are collected here and open at the original article. AltaGama FC does not host or edit that reporting.',
+      sheetShow: st.open ? 'block' : 'none',
+      closeSheet: () => this.setState({open: null}),
+      open: Object.assign({}, open, this.meta(open), {
+        cta: ownArticle ? 'Read' : 'Open at ' + open.publisher,
+        note: ownArticle
+          ? 'Ours — opens inside the app.'
+          : 'Opens at ' + open.publisher + ' in a Safari view. The reporting is theirs; the app only collected the headline.'
+      })
+    };
+  }
+}
+
+</script>
+</body>
+</html>
