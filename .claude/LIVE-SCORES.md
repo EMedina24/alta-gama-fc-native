@@ -199,7 +199,14 @@ building it:
   stale response before the first fetch resolves — and a minute rendered off that
   is a frozen number presented as current. Those rows fall through to the fixture
   sweep's card instead, which at least states its age.
-- ⚠ **The selection is two-tier, and tier 1 does not consult the fixture sweep.**
+- ⭐ **Tier 0, 2026-08-29 ([0066](./decisions/0066-live-card-reads-the-live-route-directly.md)):
+  `routeLive` picks the card from the live route ALONE** — a followed slug on
+  either side, `status: 'live'`, earliest kickoff — and `teamRefFromLive` takes the
+  crests from the club catalogue by slug. No fixture window is involved, which is
+  the point: both windows end at `now`, and a kickoff-aligned refetch with an
+  exclusive `to` excluded the fixture on a real matchday (HANDOFF trap 39). The
+  two tiers below are now the fallback.
+- ⚠ **The selection below is two-tier, and tier 1 does not consult the fixture sweep.**
   The live route sees kick-off within ~30s and the sweep can be three hours
   behind it, so requiring `fixture.status === 'live'` would let the honest feed
   only ever confirm what the stale one already said.

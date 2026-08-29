@@ -1,7 +1,7 @@
 # 0048 — Live scores upgrade the Today board's in-progress card
 
 - **Date:** 2026-08-27
-- **Status:** Accepted — pure logic harness-proven; not yet seen against a real in-play match
+- **Status:** Accepted — verified against a real in-play match 2026-08-28. **Decision 2 (the `fixtureId` join) revised by [0066](./0066-live-card-reads-the-live-route-directly.md)** — the card now reads the live route directly; the join is the fallback
 - **Decided by:** Ed Medina
 
 ## Context

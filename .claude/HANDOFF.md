@@ -1,10 +1,11 @@
 # Handoff — read this first
 
-**As of 2026-08-26.** State of play for a session picking this up cold.
+**As of 2026-08-29.** State of play for a session picking this up cold.
 
 The app is a working iOS app: five screens on live production data, four sheets,
-onboarding, EN + ES, push wired and verified on a simulator build. What remains is
-widgets, a device build, and the backend's push cron.
+onboarding, EN + ES, push wired and verified on a device. What remains is the
+backend's push cron and flipping `CRONOGOL_LIVE_PUSH_ENABLED` — until that flag is on,
+**no goal banner can be sent**, whatever the app does (trap 39).
 
 ---
 
@@ -415,6 +416,24 @@ documented at the code that handles them; this is the index.
     would remain, the whole row goes — a lone `28' left` under a scoreline is a
     widow. ⚠ Its five new strings need a line in **both** `.lproj` files or iOS
     prints the raw key (trap 15, again).
+39. **An exclusive `to` on the kickoff MILLISECOND excludes the fixture — and the
+    live card is no longer allowed to depend on that window at all.** Levante v
+    Betis, 2026-08-29 15:00 UTC: the 0052 kickoff refetch fired from a tick
+    aligned to the wall second, its `to` could equal the kickoff exactly, and
+    measured against production `to=15:00:00.000Z` returns **zero** rows for a
+    15:00:00 kickoff while `.001Z` returns it. One shot, zero margin, and nothing
+    re-asks for fifteen minutes. The card sat on `00m 00s` for ninety minutes
+    beside a healthy `/cronogol/live`. Fixed twice
+    ([0066](./decisions/0066-live-card-reads-the-live-route-directly.md)):
+    `routeLive` (tier 0) now builds the card from the live route alone, crests
+    from the club catalogue, and `Countdown` fires strictly PAST the target.
+    ⚠ The 0052 refetch stays — it still feeds FINISHED TODAY and the LAST
+    RESULT card — and its "never `upcoming`" rule still holds.
+    ⚠⚠ **Goal pushes were the same report and are NOT this bug.** The backend's
+    `LivePushService` sends nothing until `CRONOGOL_LIVE_PUSH_ENABLED` is
+    `'true'` on Render (`render.yaml` ships `'false'`; the gate is a matchday of
+    `[dry-run] live push` log lines), and `alertGoals` defaults OFF in the app.
+    No app change can produce a goal banner while that flag is off.
 
 ---
 
@@ -503,7 +522,7 @@ documented at the code that handles them; this is the index.
   harness** on `features/starting-xi/` are clean. ⚠ **Four new NATIVE
   modules** (`expo-haptics`, `react-native-view-shot`, `expo-sharing`,
   `expo-media-library`) — a dev client built before 2026-08-29 throws at
-  import; rebuild first. ⚠ `GestureHandlerRootView` is now the outermost view
+  import; rebuild first — **`preview` build `e5b4405e` (2026-08-29) carries all four**; install that. ⚠ `GestureHandlerRootView` is now the outermost view
   in `_layout.tsx`. ⚠ The club page is a FOLDER route now
   (`club/[slug]/index.tsx`); no `_layout` in it, on purpose. ⚠ The row
   enables off `players.length > 0`, not the league — squads exist for LaLiga
@@ -560,25 +579,12 @@ documented at the code that handles them; this is the index.
   - ⚠ **`useIsFocused` under `NativeTabs` is unexercised.** It is the poll's gate;
     if it misreports, the app polls every 15s from a background tab. Confirm the
     network log goes quiet on a tab switch.
-  - ⚠⚠ **KNOWN GAP — the card is hostage to the fixture window, and it cost an
-    hour on 2026-08-28.** `boardLive` tier 1 iterates FIXTURES and looks the live
-    row up by id, so a match can only be shown if it is already in
-    `useFinishedToday`'s payload. That query is keyed on the DAY
-    (`keys.fixtureWindow(from.slice(0,10), 'today')`) while its `to` bound is
-    whenever the queryFn last ran — and with `staleTime` 15 min, no interval and
-    `refetchOnWindowFocus: false` globally, nothing re-asks it. **A match that
-    kicks off after the last fetch is invisible for up to 15 minutes**, which is
-    precisely when a live card earns its place. Measured: the window fetched at
-    16:50 returned **zero** fixtures for a 17:00 kickoff. Pull-to-refresh is the
-    workaround. ⚠ The real fix is to stop joining at all — `/cronogol/live`
-    already carries `fixtureId`, both slugs, names, `shortName`, kickoff, score
-    and minute; the ONLY thing the fixture adds is crests, and those come from
-    `useTeams()` (catalogue, 24h) keyed by the same slugs. That revises decision 2
-    of 0048 and needs its own entry.
-  - ⚠ **KNOWN GAP — `liveMinute` would render `0′`.** It returns whatever the API
-    sends for a `live` row, so a `minute: 0` in the opening seconds prints `0′`,
-    which LIVE-SCORES.md §4 explicitly forbids. The null case is guarded; a
-    literal zero is not.
+  - ~~⚠⚠ **KNOWN GAP — the card is hostage to the fixture window**~~ — **CLOSED
+    2026-08-29** by [0066](./decisions/0066-live-card-reads-the-live-route-directly.md):
+    `routeLive` builds the card from `/cronogol/live` alone, crests from
+    `useTeams()` by slug. It bit exactly as predicted (trap 39) before it was fixed.
+  - ~~⚠ **KNOWN GAP — `liveMinute` would render `0′`**~~ — closed in 0066; a
+    literal `0` now returns null like the non-live cases.
   - ~~⚠ **`polling: false` was CONSTANT on a genuinely live match**~~ — **ROOT
     CAUSE FOUND AND FIXED IN THE BACKEND, 2026-08-28.** It was never an app
     question: `LiveSessionService.acquireLease()` stamped `lease_started_at`

@@ -20,11 +20,13 @@ import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
 import {
+  boardFromRoute,
   boardLive,
   isStalled,
   liveById,
   liveMinute,
   minutesSinceSeen,
+  routeLive,
   type BoardLive,
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
@@ -95,13 +97,15 @@ export default function TodayScreen() {
   /**
    * The in-play match of a followed club, and whether it is genuinely live.
    *
-   * ⚠ Which fixture is *yours* still comes from the fixture route — that is the
-   * only feed carrying our own slugs on both sides (ADR 0027), and today's
-   * window is the fresher of the two that contain it, so it is asked first.
-   * What `/cronogol/live` adds is the state INSIDE that match, joined by id.
+   * ⚠⚠ **Tier 0 reads `/cronogol/live` ALONE** (ADR 0066). The route carries
+   * our own slugs on both sides, so a followed club's in-play match needs NO
+   * fixture window behind it — crests come from the club catalogue by slug.
+   * This is what makes the card independent of the windows, which both end at
+   * `now` and were the reason the card never appeared at a real kickoff
+   * (Levante v Betis, 2026-08-29; HANDOFF trap 39).
    *
-   * ⚠ `boardLive` falls back to the sweep's own `live` flag when the route has
-   * no row — which is every league except LaLiga. Nothing regresses there.
+   * ⚠ `boardLive` remains the fallback: the sweep's own `live` flag for every
+   * league the route does not cover. Nothing regresses there.
    */
   const board = ((): BoardLive | null => {
     if (!hasClubs) return null;
@@ -110,6 +114,8 @@ export default function TodayScreen() {
     // regardless. A filter and a sort over one window of fixtures is cheaper
     // than pretending otherwise.
     const byId = liveById(live.data?.matches ?? [], now.getTime());
+    const fromRoute = routeLive(byId, followed);
+    if (fromRoute) return boardFromRoute(fromRoute, teams.data ?? []);
     return (
       boardLive(finished.data?.fixtures ?? [], followed, byId) ??
       boardLive(recent.data?.fixtures ?? [], followed, byId)

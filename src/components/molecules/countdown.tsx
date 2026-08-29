@@ -114,7 +114,15 @@ export function Countdown({
     const tick = () => {
       const at = Date.now();
       setNow(at);
-      if (at >= target) {
+      /**
+       * ⚠ STRICTLY past, not `>=` (ADR 0066). The board's refetch sends `now`
+       * as an EXCLUSIVE `to`, and the tick is aligned to the wall second — so
+       * on the tick that lands on the kickoff millisecond exactly, `to` equals
+       * the kickoff and the fixture is excluded from the very request that
+       * went looking for it. Measured against production. That tick falls
+       * through to one more ordinary tick a second later instead.
+       */
+      if (at > target) {
         // Kicked off — nothing left to count, and the one thing left to say.
         if (!fired) {
           fired = true;
