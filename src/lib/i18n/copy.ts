@@ -137,6 +137,8 @@ export interface Copy {
     deleteAccountConfirm: string;
     deleteAccountNote: string;
     deleteAccountFailed: string;
+    /** Small link to the website's contact page (ADR 0067). */
+    contactUs: string;
   };
   auth: {
     title: string;
@@ -600,6 +602,7 @@ export const esCopy: Copy = {
     deleteAccountNote:
       'No se puede deshacer. Los calendarios que compartiste dejarán de actualizarse y quedarán vacíos, y seguirán en tu app de calendario hasta que los borres allí. Los avisos de este dispositivo siguen activos.',
     deleteAccountFailed: 'No se pudo eliminar la cuenta. Sigue activa — inténtalo de nuevo.',
+    contactUs: 'Contáctanos',
   },
 
   auth: {
@@ -964,6 +967,7 @@ export const enCopy: Copy = {
     deleteAccountNote:
       'This cannot be undone. Calendars you shared stop updating and go empty, and stay in your calendar app until you delete them there. Alerts on this device keep working.',
     deleteAccountFailed: 'Could not delete your account. It is still active — try again.',
+    contactUs: 'Contact us',
   },
 
   auth: {

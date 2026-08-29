@@ -91,6 +91,8 @@ export interface AccountSheetProps {
   onSetClock: (clock: ClockFormat) => void;
   onReplayOnboarding: () => void;
   onTurnOffAlerts: () => void;
+  /** Opens the website's contact page in the system browser. */
+  onContactUs: () => void;
   onClose: () => void;
   /** `null` when signed out — the identity slot and the footer both branch on it. */
   account: AccountIdentity | null;
@@ -214,6 +216,7 @@ export function AccountSheet({
   onSetClock,
   onReplayOnboarding,
   onTurnOffAlerts,
+  onContactUs,
   onClose,
   account,
   canSignIn,
@@ -434,6 +437,18 @@ export function AccountSheet({
             ) : null}
           </>
         ) : null}
+
+        {/* A small link, not a Button: it is a way out to the website, not an
+            action on the account, and it must not compete with the buttons above. */}
+        <Text
+          variant="footnote"
+          color="textDim"
+          accessibilityRole="link"
+          onPress={onContactUs}
+          style={styles.contact}
+        >
+          {a.contactUs}
+        </Text>
       </View>
     </ScrollView>
   );
@@ -484,4 +499,5 @@ const styles = StyleSheet.create({
   },
   segmentActive: { backgroundColor: Colors.dark.accent },
   footer: { gap: Spacing.two, marginTop: Spacing.four },
+  contact: { alignSelf: 'flex-start', marginTop: Spacing.two },
 });

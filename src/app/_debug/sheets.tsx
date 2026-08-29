@@ -76,6 +76,7 @@ export default function DebugSheets() {
         deleteAccountError={null}
         onReplayOnboarding={() => {}}
         onTurnOffAlerts={() => {}}
+        onContactUs={() => {}}
         onClose={() => router.back()}
       />
     </View>

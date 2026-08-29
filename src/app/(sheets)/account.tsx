@@ -1,6 +1,7 @@
 /** Account. Reached from the avatar in any tab's header. */
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { Linking } from 'react-native';
 
 import { AccountSheet, type AccountFeed } from '@/components/organisms/account-sheet';
 import { AUTH_AVAILABLE } from '@/features/auth/capability';
@@ -8,6 +9,7 @@ import { disablePushForDevice } from '@/features/push/sync';
 import { deleteAccount, NotSignedInError } from '@/lib/cronogol/account';
 import { displayName } from '@/lib/cronogol/derive';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
+import { contactUrl } from '@/lib/cronogol/site';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { zoneLabel } from '@/lib/timezones';
 import { useAccount } from '@/queries/use-account';
@@ -145,6 +147,7 @@ export default function AccountSheetRoute() {
         void disablePushForDevice();
         router.back();
       }}
+      onContactUs={() => void Linking.openURL(contactUrl(locale))}
       onClose={() => router.back()}
     />
   );
