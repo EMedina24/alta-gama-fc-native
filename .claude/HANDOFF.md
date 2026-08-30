@@ -1,6 +1,6 @@
 # Handoff — read this first
 
-**As of 2026-08-29.** State of play for a session picking this up cold.
+**As of 2026-08-30.** State of play for a session picking this up cold.
 
 The app is a working iOS app: five screens on live production data, four sheets,
 onboarding, EN + ES, push wired and verified on a device. `CRONOGOL_LIVE_PUSH_ENABLED`
@@ -35,6 +35,52 @@ first thing to verify on a device is the footnote under the alert switches.
 > which is still a 4-hourly snapshot, and it stays exactly as it is. Read
 > **[LIVE-SCORES.md](./LIVE-SCORES.md) §1 first** — it is the one place these
 > two are told apart.
+
+> ⭐ **NEW 2026-08-30 — onboarding redesigned, and an OPEN push-sync failure on the device.**
+>
+> **Shipped (committed `a0fef0a`, preview build `5dfdc4ed`):** welcome → 3-up club
+> picker → alert primer, the icon's "Floodlight" look
+> ([0076](./decisions/0076-onboarding-floodlight-redesign.md)); a language line on the
+> welcome written in the *other* language, and the primer's `Not now` is the flow's only
+> skip — a reader must follow one club ([0077](./decisions/0077-welcome-language-line-and-one-skip.md)).
+> Seen on the simulator; the picked-tile state, the crest stack in the CTA and the
+> language tap are **unverified** (taps can't be scripted — see the memory note). The
+> design canvas with the alternates: `claude.ai/code/artifact/07484219-562c-4405-a8a2-51ea3dad3b75`.
+>
+> **OPEN — "Alert settings could not be saved" on Ed's iPhone (preview build).** That
+> line is ADR 0079's verdict: the last `PUT /cronogol/push/device` from the phone got no
+> ACK (`src/features/push/sync.ts:136-163` — HTTP error, timeout, or the server's echo
+> differing from what was sent). It re-sends on every launch and switch change, so if it
+> is still there it is failing *repeatedly*. The simulator cannot reproduce it (no APNs
+> token → it shows the "saved on this device" line) and a preview build ships no console.
+>
+> **ROOT CAUSE FOUND, 2026-08-30 (Render logs via MCP) — it is the BACKEND DATABASE, not
+> the app.** Every `PUT /cronogol/push/device` from the phone since 2026-08-29 21:28Z is a
+> **500** thrown at `PushDeviceService.register` (the `device_tokens` upsert), message:
+> `Device registration failed: invalid regular expression: invalid repetition count(s)`.
+> That is Postgres rejecting the CHECK added by
+> `senpai-backend/supabase/migrations/20261004000000_push_to_start_token.sql:35` —
+> `push_to_start_token ~ '^[0-9a-f]{64,512}$'`. **Postgres regex bounds are capped at
+> 255**, so the pattern itself is invalid; the operator is strict, so it is only ever
+> compiled when the column is NON-NULL. That is why rows without an `activityToken` (the
+> 08-28 19:24Z write, the simulator, last session's curl probes) succeed and every
+> registration from the phone — which now sends its ActivityKit push-to-start token —
+> fails. Not a 404, not a stale bearer, not the body: candidates 1–3 above are all closed.
+>
+> **Fix WRITTEN in `senpai-backend` (uncommitted, 2026-08-30): migration
+> `supabase/migrations/20261006000000_push_to_start_token_check_fix.sql`, decision 0037,
+> CRONOGOL.md §104. Still needs a human `yarn db:push` + `yarn db:types` + commit.** It drops
+> constraint and re-add it as `push_to_start_token ~ '^[0-9a-f]+$' and
+> length(push_to_start_token) between 64 and 512` (or `{64,255}` if 255 is enough — the
+> DTO's JS regex `{64,512}` is fine, JS has no such cap). No app change is needed;
+> after the migration lands, one launch re-sends and the footnote must flip to
+> *saved · <time>*, and `device_tokens.alert_goals` will finally read `true`. Then a
+> goal banner is possible. ⚠ The 400s at 16:22–16:24Z on 08-30 (0–2 ms, no stack) are
+> last session's hand probes, not the phone.
+>
+> Ruled out earlier the same day (probed `crono-gol.com` directly): the route is up; the
+> body `buildRegistration` sends (`sync.ts:73-86`) matches production's DTO
+> field-for-field; `clubSlugs` is capped client-side at the server's 20.
 
 > **2026-08-28 — the app icon is now set 1a "Floodlight"**
 > ([0060](./decisions/0060-app-icon-1a-floodlight.md)): graphite field, lime glow,

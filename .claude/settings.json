@@ -5,5 +5,8 @@
       "/Users/ed/Desktop/repos/senpai-backend",
       "/Users/ed/Desktop/repos/cronogol"
     ]
+  },
+  "enabledPlugins": {
+    "render@claude-plugins-official": true
   }
 }
