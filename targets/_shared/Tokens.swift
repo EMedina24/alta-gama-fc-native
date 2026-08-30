@@ -36,6 +36,13 @@ enum Tok {
   /// widget (ADR 0059), the same pair `versus-badge.tsx` draws in the app.
   static let accentWash = Color(red: 0.784, green: 0.949, blue: 0.353).opacity(0.14)
   static let accentRing = Color(red: 0.784, green: 0.949, blue: 0.353).opacity(0.45)
+  /// theme.ts `live` / `liveWash` — the widget ledger's in-play marker
+  /// (ADR 0080). ⚠ The same hex as `cardYellow`'s sibling `cardRed` below, and
+  /// that is a documented COINCIDENCE in theme.ts, not an alias: a liveness
+  /// recolour must not repaint every red card, so the two stay separate names.
+  static let live = Color(red: 1.000, green: 0.361, blue: 0.278) // #ff5c47
+  static let liveWash = Color(red: 1.000, green: 0.361, blue: 0.278).opacity(0.14)
+
   static let moved = Color(red: 0.435, green: 0.788, blue: 1.000) // #6fc9ff
   static let postponed = Color(red: 1.000, green: 0.561, blue: 0.420) // #ff8f6b
   static let postponedWash = Color(red: 1.0, green: 0.561, blue: 0.420).opacity(0.14)

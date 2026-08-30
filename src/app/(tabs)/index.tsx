@@ -17,6 +17,7 @@ import { MatchBoard } from '@/components/organisms/match-board';
 import { NewsCard } from '@/components/organisms/news-card';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
+import { applyWidgetLive } from '@/features/widgets/live';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
 import { pairWash } from '@/lib/cronogol/club-wash';
@@ -143,6 +144,10 @@ export default function TodayScreen() {
       void refetchFinished();
       void refetchRecent();
     }
+
+    // The widget's live sidecar (ADR 0080) — keyed on score/state, so the
+    // 15-second poll costs a WidgetKit reload only when something moved.
+    applyWidgetLive(live.data?.matches ?? [], new Date());
   }, [live.data, refetchFinished, refetchRecent]);
 
   /**

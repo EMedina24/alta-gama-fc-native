@@ -385,3 +385,25 @@ requests per cycle for data you were handed.
 
 - ⛔ **No half-time score, no possession, no shots, no lineups.**
 - ⛔ **Nothing outside LaLiga.**
+
+---
+
+## 7. The widgets are a THIRD consumer — with their own network path (ADR 0080)
+
+Added 2026-08-30. The home-screen widgets draw a live ledger from
+`<AppGroup>/widget/live.json`, and — uniquely — the widget extension **polls this
+route itself**: `GET /cronogol/live?league=laliga` from `targets/widget/Live.swift`,
+only while a snapshot row is inside its 150-minute match window, on a 5-minute
+reload cadence. That is a deliberate, rationed carve-out from the "no network in a
+timeline provider" rule (0025 → 0080); it licenses nothing else.
+
+Three writers share the file: the provider's poll, the notification service
+extension (each goal / red card / full-time push), and the foregrounded app
+(`src/features/widgets/live.ts`, fed by `useLive`).
+
+⚠ Everything §1 says still stands — this is the `/cronogol/live` route, not the
+scoreboard, and nothing here un-suppresses `scores.ts`. ⚠ Two behaviours of this
+route become STATES on the widget: a row **vanishing** is rendered as full time
+(score held until the local day ends), and the missing break state is
+**derived** — minute frozen at 45 across two polls, or null >50 min after
+kickoff, reads as `HT`. Both are recorded as heuristics in 0080.

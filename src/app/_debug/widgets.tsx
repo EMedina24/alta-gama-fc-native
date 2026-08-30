@@ -12,13 +12,27 @@
  * build and no amount of Swift debugging will help.
  */
 import { Directory, File } from 'expo-file-system';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Text } from '@/components/atoms';
 import { APP_GROUP, groupContainer } from '@/features/app-group';
 import { WIDGETS_AVAILABLE, reloadWidgets } from '@/features/push/capability';
-import { buildSnapshot, snapshotFile, type WidgetSnapshot } from '@/features/widgets/snapshot';
+import {
+  LIVE_NAME,
+  LIVE_VERSION,
+  type WidgetLiveState,
+} from '@/features/widgets/live';
+import {
+  SNAPSHOT_DIR,
+  SNAPSHOT_VERSION,
+  buildSnapshot,
+  snapshotFile,
+  writeGroupJson,
+  writeSnapshot,
+  type WidgetSnapshot,
+} from '@/features/widgets/snapshot';
 import { applyWidgetSnapshot, forgetWidgetSnapshot } from '@/features/widgets/sync';
 import { newsImageExists } from '@/features/news/images';
 import { newsSnapshotFile, type NewsSnapshot } from '@/features/news/snapshot';
@@ -37,7 +51,19 @@ export default function DebugWidgets() {
   const widgetWindow = useWidgetWindow(zone);
   const news = useNews();
 
+  /**
+   * ⭐ ADR 0080 — `?sample=live` / `?sample=ft` writes a FABRICATED in-play
+   * snapshot + `live.json` and reloads, on mount. The point is scriptability:
+   * `xcrun simctl openurl booted "altagamafc://_debug/widgets?sample=live"`
+   * puts the ledger on a placed widget with no tap anywhere (taps cannot be
+   * scripted on the simulator; deep links can). ⚠ Fabricated data — the next
+   * real foreground overwrites the snapshot, and the fake fixture ids draw
+   * lettered crest tiles. That is fine: this is a preview, not a state.
+   */
+  const { sample } = useLocalSearchParams<{ sample?: string }>();
+
   const [onDisk, setOnDisk] = useState<string>('…');
+  const [liveOnDisk, setLiveOnDisk] = useState<string>('…');
   const [newsOnDisk, setNewsOnDisk] = useState<string>('…');
   const [newsImages, setNewsImages] = useState<string[]>([]);
   const [written, setWritten] = useState<string>('…');
@@ -71,10 +97,22 @@ export default function DebugWidgets() {
     setOnDisk(next.summary);
     setWritten(next.written);
     setCrests(next.crests);
+    setLiveOnDisk(await readLive());
     const nextNews = await readNews();
     setNewsOnDisk(nextNews.summary);
     setNewsImages(nextNews.images);
   }, []);
+
+  // The `?sample=` auto-writer — see the param's docblock above.
+  useEffect(() => {
+    if (sample !== 'live' && sample !== 'ft') return;
+    void (async () => {
+      await writeSample(sample);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStatus(`sample ${sample} written`);
+      await inspect();
+    })();
+  }, [sample, inspect]);
 
   // ⚠ `react-hooks/set-state-in-effect` fires on any effect that reaches a
   // `setState`, however many awaits deep — and reading another process's
@@ -150,6 +188,39 @@ export default function DebugWidgets() {
         onPress={async () => {
           await reloadWidgets();
           setStatus('reload requested');
+        }}
+      />
+
+      <Text variant="title">Live (ADR 0080)</Text>
+      {/* ⚠ Read back from DISK — three processes write this file, and the whole
+          question is what the widget will actually see. */}
+      <Row label="live.json on disk" value={liveOnDisk} />
+      <Button
+        label="Write LIVE sample + reload"
+        tone="secondary"
+        onPress={async () => {
+          await writeSample('live');
+          setStatus('sample live written');
+          await inspect();
+        }}
+      />
+      <Button
+        label="Write FT sample + reload"
+        tone="secondary"
+        onPress={async () => {
+          await writeSample('ft');
+          setStatus('sample ft written');
+          await inspect();
+        }}
+      />
+      <Button
+        label="Clear live.json + reload"
+        tone="quiet"
+        onPress={async () => {
+          clearLive();
+          await reloadWidgets();
+          setStatus('live.json cleared');
+          await inspect();
         }}
       />
 
@@ -235,6 +306,135 @@ async function readContainer(): Promise<{
       crests: [],
     };
   }
+}
+
+/** `live.json` as it sits on disk — writer, age, and one line per match. */
+async function readLive(): Promise<string> {
+  const container = groupContainer();
+  if (!container) return '(no App Group container)';
+  const file = new File(container, SNAPSHOT_DIR, LIVE_NAME);
+  if (!file.exists) return '(not written yet)';
+
+  try {
+    const parsed = JSON.parse(await file.text()) as WidgetLiveState;
+    const lines = parsed.matches.map(
+      (match) =>
+        `${match.fixtureId.slice(0, 8)} ${match.status} ${match.homeGoals ?? '–'}-${match.awayGoals ?? '–'} ${match.minute ?? ''}′`,
+    );
+    return `${parsed.source} · ${parsed.writtenAt.replace('T', ' ').replace(/\.\d+Z$/, 'Z')} · ${lines.join(' | ') || '(empty)'}`;
+  } catch (error) {
+    return `unreadable: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
+/**
+ * The fabricated preview pair — a snapshot with one in-play LaLiga fixture (plus
+ * its NEXT match, so the FT footer has something to point at) and a matching
+ * `live.json`. English copy, fixed clubs, fake fixture ids (lettered crest
+ * tiles) — a PREVIEW, deliberately unmistakable for live data on inspection.
+ */
+async function writeSample(kind: 'live' | 'ft'): Promise<void> {
+  const now = new Date();
+  const kickoff = new Date(now.getTime() - (kind === 'ft' ? 130 : 38) * 60 * 1000);
+  const next = new Date(now.getTime() + 4 * 24 * 3600 * 1000);
+
+  const snapshot: WidgetSnapshot = {
+    v: SNAPSHOT_VERSION,
+    writtenAt: now.toISOString(),
+    clubs: [{ slug: 'celta-vigo', name: 'Celta de Vigo', abbr: 'CEL' }],
+    copy: {
+      next: 'NEXT',
+      yourWeek: 'YOUR WEEK',
+      clubCount: '1 CLUB',
+      followPrompt: 'Follow a club',
+      noFixtures: 'No matches scheduled',
+      versus: 'v',
+      away: 'at',
+      homeTag: 'HOME',
+      awayTag: 'AWAY',
+      live: 'LIVE',
+      halfTime: 'HT',
+      fullTime: 'FT',
+    },
+    entries: [
+      {
+        fixtureId: 'debug-live-1',
+        clubSlug: 'celta-vigo',
+        isHome: true,
+        homeAbbr: 'CEL',
+        awayAbbr: 'ATH',
+        homeName: 'Celta',
+        awayName: 'Athletic',
+        opponentName: 'Athletic Club',
+        opponentAbbr: 'ATH',
+        opponentSlot: 'away',
+        kickoffUtc: kickoff.toISOString(),
+        kickoffLabel: 'Sun 3:30 pm',
+        kickoffDay: 'SUN',
+        kickoffTime: '3:30',
+        roundLabel: 'MD 3',
+        venue: 'Balaídos',
+        leagueSlug: 'la-liga',
+      },
+      {
+        fixtureId: 'debug-next-1',
+        clubSlug: 'celta-vigo',
+        isHome: false,
+        homeAbbr: 'GIR',
+        awayAbbr: 'CEL',
+        homeName: 'Girona',
+        awayName: 'Celta',
+        opponentName: 'Girona FC',
+        opponentAbbr: 'GIR',
+        opponentSlot: 'home',
+        kickoffUtc: next.toISOString(),
+        kickoffLabel: 'Wed 9:00 pm',
+        kickoffDay: 'WED',
+        kickoffTime: '9:00',
+        roundLabel: 'MD 4',
+        venue: 'Montilivi',
+        leagueSlug: 'la-liga',
+      },
+    ],
+  };
+
+  const live: WidgetLiveState = {
+    v: LIVE_VERSION,
+    writtenAt: now.toISOString(),
+    source: 'app',
+    matches: [
+      kind === 'ft'
+        ? {
+            fixtureId: 'debug-live-1',
+            status: 'finished',
+            minute: null,
+            minuteAt: now.toISOString(),
+            homeGoals: 2,
+            awayGoals: 1,
+            lastEvent: 'Iglesias 20′',
+          }
+        : {
+            fixtureId: 'debug-live-1',
+            status: 'live',
+            minute: 37,
+            minuteAt: now.toISOString(),
+            homeGoals: 1,
+            awayGoals: 0,
+            lastEvent: 'Iglesias 20′',
+          },
+    ],
+  };
+
+  writeSnapshot(snapshot);
+  writeGroupJson(SNAPSHOT_DIR, LIVE_NAME, live);
+  await reloadWidgets();
+}
+
+function clearLive(): void {
+  const container = groupContainer();
+  if (!container) return;
+  const file = new File(container, SNAPSHOT_DIR, LIVE_NAME);
+  if (file.exists) file.delete();
 }
 
 /** `news.json` as it sits on disk, plus whether each item's picture is there. */

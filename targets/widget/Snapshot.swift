@@ -2,7 +2,9 @@ import Foundation
 
 /// What the widgets can know.
 ///
-/// ⚠⚠ **`widget/snapshot.json` in the App Group is the ONLY input.** A widget
+/// ⚠⚠ **`widget/snapshot.json` in the App Group is the primary input** (plus,
+/// since ADR 0080, `widget/live.json` and one rationed poll — see `Live.swift`;
+/// nothing else). A widget
 /// extension is a separate process: it cannot call the API, read AsyncStorage,
 /// reach the TanStack Query cache (which is not persisted to disk), or import
 /// `@/constants/theme` or `@/lib/i18n`. Anything drawn here was put in the
@@ -45,6 +47,16 @@ struct WidgetSnapshot: Codable {
     /// is the honest degradation.
     let homeTag: String?
     let awayTag: String?
+    /// The live ledger's states (ADR 0080): `LIVE` / `EN JUEGO`, `HT` / `DESC`,
+    /// `FT` / `FIN`. ⚠ Optional — absent from a v2 snapshot; the English
+    /// fallbacks below are the degradation, matching `fallbackCopy`'s rule.
+    let live: String?
+    let halfTime: String?
+    let fullTime: String?
+
+    var liveLabel: String { live ?? "LIVE" }
+    var halfTimeLabel: String { halfTime ?? "HT" }
+    var fullTimeLabel: String { fullTime ?? "FT" }
   }
 
   struct Entry: Codable, Identifiable {
@@ -73,8 +85,15 @@ struct WidgetSnapshot: Codable {
     /// `J4`. Null for a competition without rounds.
     let roundLabel: String?
     let venue: String?
+    /// OUR league slug (`la-liga`), v3 (ADR 0080) — the poll gate: only LaLiga
+    /// goes live on `/cronogol/live`. ⚠ Optional: absent from a v2 snapshot,
+    /// and absence means "assume eligible", never "skip".
+    let leagueSlug: String?
 
     var id: String { fixtureId }
+
+    /// Whether `/cronogol/live` could ever serve this fixture.
+    var liveEligible: Bool { leagueSlug == nil || leagueSlug == "la-liga" }
   }
 
   let v: Int
@@ -134,6 +153,28 @@ extension WidgetSnapshot {
       .sorted { $0.kickoffUtc < $1.kickoffUtc }
   }
 
+  /// The rows a live ledger could be drawn for at `date` (ADR 0080): kickoff
+  /// has passed, and either play could still be running — inside the same
+  /// 150-minute hold the Today board uses (`KICKOFF_HOLD_MS`, ADR 0078) — or
+  /// the match kicked off earlier the SAME LOCAL DAY, which is how a `finished`
+  /// entry in `live.json` keeps its full-time card until midnight.
+  ///
+  /// ⚠ Live-eligible leagues only. A Premier League fixture in this window has
+  /// no live route behind it, and a ledger of dashes that never resolves is
+  /// worse than the old behaviour (the row simply dropping at kickoff).
+  ///
+  /// Earliest kickoff first — the small widget takes `.first`.
+  func rows(inPlayAt date: Date, clubSlug: String?, calendar: Calendar = .current) -> [Entry] {
+    entries
+      .filter { $0.kickoffUtc <= date && $0.liveEligible }
+      .filter {
+        date.timeIntervalSince($0.kickoffUtc) <= 150 * 60
+          || calendar.isDate($0.kickoffUtc, inSameDayAs: date)
+      }
+      .filter { clubSlug == nil || $0.clubSlug == clubSlug }
+      .sorted { $0.kickoffUtc < $1.kickoffUtc }
+  }
+
   /// Whether the reader follows anything at all — which is a different empty
   /// state from "follows clubs, none of them are playing".
   var followsNothing: Bool { clubs.isEmpty }
@@ -152,7 +193,10 @@ extension WidgetSnapshot {
     versus: "v",
     away: "at",
     homeTag: "HOME",
-    awayTag: "AWAY"
+    awayTag: "AWAY",
+    live: "LIVE",
+    halfTime: "HT",
+    fullTime: "FT"
   )
 
   /// No snapshot on disk at all — the app has never run, or the App Group is not
@@ -191,7 +235,10 @@ extension WidgetSnapshot {
         versus: "v",
         away: "at",
         homeTag: "HOME",
-        awayTag: "AWAY"
+        awayTag: "AWAY",
+        live: "LIVE",
+        halfTime: "HT",
+        fullTime: "FT"
       ),
       entries: [
         .init(
@@ -201,7 +248,7 @@ extension WidgetSnapshot {
           opponentName: "Real Madrid", opponentAbbr: "RMA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(100_800),
           kickoffLabel: "Sat 21:00", kickoffDay: "SAT", kickoffTime: "21:00",
-          roundLabel: "J4", venue: "Mestalla"
+          roundLabel: "J4", venue: "Mestalla", leagueSlug: "la-liga"
         ),
         .init(
           fixtureId: "preview-2", clubSlug: "sevilla", isHome: true,
@@ -210,7 +257,7 @@ extension WidgetSnapshot {
           opponentName: "Osasuna", opponentAbbr: "OSA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(169_200),
           kickoffLabel: "Sun 16:15", kickoffDay: "SUN", kickoffTime: "16:15",
-          roundLabel: "J4", venue: "Sánchez-Pizjuán"
+          roundLabel: "J4", venue: "Sánchez-Pizjuán", leagueSlug: "la-liga"
         ),
         .init(
           fixtureId: "preview-3", clubSlug: "athletic", isHome: false,
@@ -219,7 +266,7 @@ extension WidgetSnapshot {
           opponentName: "Girona", opponentAbbr: "GIR", opponentSlot: "home",
           kickoffUtc: now.addingTimeInterval(177_300),
           kickoffLabel: "Sun 18:30", kickoffDay: "SUN", kickoffTime: "18:30",
-          roundLabel: "J4", venue: "Montilivi"
+          roundLabel: "J4", venue: "Montilivi", leagueSlug: "la-liga"
         ),
       ]
     )

@@ -31,6 +31,11 @@ struct NextFixtureView: View {
 
   private var row: WidgetSnapshot.Entry? { entry.rows.first }
 
+  /// The match being played — earliest kickoff when two are (ADR 0080), and
+  /// it OUTRANKS the countdown: nothing outranks a match being played right
+  /// now, the same product rule as the Today board's lead card (ADR 0063).
+  private var live: FixtureEntry.LivePair? { entry.live.first }
+
   var body: some View {
     Group {
       switch family {
@@ -40,7 +45,7 @@ struct NextFixtureView: View {
       default: small
       }
     }
-    .widgetURL(row.flatMap(W.url))
+    .widgetURL((live?.row ?? row).flatMap(W.url))
   }
 
   // MARK: Home screen
@@ -52,7 +57,9 @@ struct NextFixtureView: View {
   /// corrected on the Today board. The clubs are what the reader is looking for.
   private var small: some View {
     Group {
-      if let row {
+      if let live {
+        smallLive(live)
+      } else if let row {
         VStack(alignment: .center, spacing: 0) {
           // ⚠ `maxWidth: .infinity` — without it the centred parent pulls this
           // row in on itself and the eyebrow and mark drift toward the middle
@@ -129,6 +136,69 @@ struct NextFixtureView: View {
     }
   }
 
+  // MARK: The live ledger (ADR 0080)
+
+  /// Direction B from the design canvas: header, two team rows, footnote.
+  private func smallLive(_ pair: FixtureEntry.LivePair) -> some View {
+    let finished = pair.match?.status == "finished"
+    let minute = Ledger.minuteText(pair, copy: entry.copy, at: entry.date, stale: entry.liveStale)
+
+    return VStack(alignment: .leading, spacing: 0) {
+      HStack(alignment: .center) {
+        if finished {
+          W.eyebrow(entry.copy.fullTimeLabel, color: Tok.ink55)
+        } else {
+          LiveEyebrow(text: entry.copy.liveLabel)
+        }
+        Spacer(minLength: 4)
+        if finished {
+          Mark(size: 18)
+        } else if let minute {
+          Text(minute.text)
+            .font(Tok.numerals(13, .heavy))
+            .foregroundStyle(minute.color)
+        }
+      }
+
+      LedgerRows(pair: pair, copy: entry.copy)
+        .padding(.top, 12)
+
+      Spacer(minLength: 4)
+
+      Text(finished ? nextFooter() ?? Ledger.footnote(pair) ?? "" : Ledger.footnote(pair) ?? "")
+        .font(.system(size: 11.5, weight: .medium))
+        .foregroundStyle(Tok.ink55)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+  }
+
+  /// The full-time card's hand-off: `NEXT · Sun 3:30 pm · GIR`. Nil when the
+  /// snapshot holds nothing ahead — the honest degradation is the venue.
+  private func nextFooter() -> String? {
+    guard let next = entry.rows.first else { return nil }
+    return "\(entry.copy.next) · \(next.kickoffLabel) · \(next.opponentAbbr)"
+  }
+
+  /// `CEL 1–0 ATH` — the accessory families' scoreline. ⚠ En dash, closed up,
+  /// matching the notification card's `scoreline`.
+  private func scoreLabel(_ pair: FixtureEntry.LivePair) -> String {
+    let home = Ledger.score(pair.match?.homeGoals)
+    let away = Ledger.score(pair.match?.awayGoals)
+    return "\(pair.row.homeAbbr) \(home)–\(away) \(pair.row.awayAbbr)"
+  }
+
+  /// `LIVE · 67′` / `HT` / `FT`, tint-agnostic for the Lock Screen.
+  private func liveStatusLabel(_ pair: FixtureEntry.LivePair) -> String {
+    let minute = Ledger.minuteText(pair, copy: entry.copy, at: entry.date, stale: entry.liveStale)
+    guard let minute else { return entry.copy.liveLabel }
+    if pair.match?.status == "live" {
+      return "\(entry.copy.liveLabel) · \(minute.text)"
+    }
+    return minute.text
+  }
+
   // MARK: Lock Screen
   //
   // ⚠ The accessory families are rendered by the system in a single vibrant
@@ -139,7 +209,21 @@ struct NextFixtureView: View {
 
   private var rectangular: some View {
     VStack(alignment: .leading, spacing: 1) {
-      if let row {
+      if let live {
+        Text(liveStatusLabel(live))
+          .font(.system(size: 11, weight: .semibold))
+          .textCase(.uppercase)
+          .widgetAccentable()
+          .lineLimit(1)
+        Text(scoreLabel(live))
+          .font(.system(size: 15, weight: .bold).monospacedDigit())
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+        Text(Ledger.footnote(live) ?? live.row.kickoffLabel)
+          .font(.system(size: 12, weight: .medium).monospacedDigit())
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+      } else if let row {
         Text(eyebrowText(row))
           .font(.system(size: 11, weight: .semibold))
           .textCase(.uppercase)
@@ -164,7 +248,23 @@ struct NextFixtureView: View {
 
   private var circular: some View {
     Group {
-      if let row {
+      if let live {
+        VStack(spacing: 0) {
+          Text("\(Ledger.score(live.match?.homeGoals))–\(Ledger.score(live.match?.awayGoals))")
+            .font(.system(size: 16, weight: .heavy).monospacedDigit())
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+          Text(
+            Ledger.minuteText(live, copy: entry.copy, at: entry.date, stale: entry.liveStale)?
+              .text ?? entry.copy.liveLabel
+          )
+          .font(.system(size: 11, weight: .bold).monospacedDigit())
+          .widgetAccentable()
+          .lineLimit(1)
+          .minimumScaleFactor(0.6)
+        }
+        .padding(2)
+      } else if let row {
         VStack(spacing: 0) {
           Text(row.opponentAbbr)
             .font(.system(size: 12, weight: .bold))
@@ -184,7 +284,9 @@ struct NextFixtureView: View {
 
   private var inline: some View {
     Group {
-      if let row {
+      if let live {
+        Text("\(scoreLabel(live)) · \(liveStatusLabel(live))")
+      } else if let row {
         Text("\(W.pairLabel(row, copy: entry.copy)) · \(Cadence.countdown(from: entry.date, to: row.kickoffUtc))")
       } else {
         Text(entry.followsNothing ? entry.copy.followPrompt : entry.copy.noFixtures)

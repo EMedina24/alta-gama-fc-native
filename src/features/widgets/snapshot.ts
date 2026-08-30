@@ -25,11 +25,12 @@ import { Directory, File } from 'expo-file-system';
 import { groupContainer } from '@/features/app-group';
 import { involvesFollowed, upcomingRow } from '@/lib/cronogol/board';
 import { abbreviate, matchday, widgetName } from '@/lib/cronogol/derive';
+import { KICKOFF_HOLD_MS } from '@/lib/cronogol/live';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 
-/** Bump when `WidgetEntry`/`WidgetSnapshot` changes shape. Swift tolerates both. */
-export const SNAPSHOT_VERSION = 2;
+/** Bump when `WidgetEntry`/`WidgetSnapshot` changes shape. Swift tolerates all. */
+export const SNAPSHOT_VERSION = 3;
 
 /**
  * How many fixtures travel.
@@ -81,6 +82,13 @@ export interface WidgetEntry {
   kickoffTime: string;
   roundLabel: string | null;
   venue: string | null;
+  /**
+   * OUR league slug (`la-liga`), v3 (ADR 0080). The widget's poll gate: only a
+   * LaLiga fixture can go live on `/cronogol/live`, so the extension polls only
+   * when an in-play row carries this slug. ⚠ Optional in `Snapshot.swift` —
+   * absent from a v2 file, and absence means "assume eligible", never "skip".
+   */
+  leagueSlug: string;
 }
 
 export interface WidgetSnapshot {
@@ -97,6 +105,10 @@ export interface WidgetSnapshot {
     away: string;
     homeTag: string;
     awayTag: string;
+    /** The live ledger's states (ADR 0080). ⚠ Optional in `Snapshot.swift`. */
+    live: string;
+    halfTime: string;
+    fullTime: string;
   };
   entries: WidgetEntry[];
 }
@@ -126,7 +138,11 @@ export function selectWidgetFixtures(
       if (fixture.status === 'cancelled' || fixture.status === 'postponed') return false;
 
       const kickoff = Date.parse(fixture.kickoffUtc);
-      if (Number.isNaN(kickoff) || kickoff <= now.getTime()) return false;
+      // ⚠ v3 (ADR 0080): a kickoff inside the last 150 minutes stays — that is
+      // a match IN PLAY, and the widget's live ledger renders it. The same
+      // `KICKOFF_HOLD_MS` the Today board's lead card uses (ADR 0078); beyond
+      // it the match is over and the old `kickoff <= now` rule applies.
+      if (Number.isNaN(kickoff) || kickoff <= now.getTime() - KICKOFF_HOLD_MS) return false;
 
       return involvesFollowed(fixture, followed);
     })
@@ -137,6 +153,18 @@ export function selectWidgetFixtures(
   const picked: WindowFixtureView[] = [];
 
   for (const fixture of eligible) {
+    // ⚠ An in-play fixture does NOT consume its club's slot. The slot means
+    // "this club's next match", and a club mid-match still has one — without
+    // this, the small widget's full-time card would have no NEXT row to point
+    // at until the app's next foreground, precisely when the app is closed.
+    if (Date.parse(fixture.kickoffUtc) <= now.getTime()) {
+      if (!seenFixtures.has(fixture.id)) {
+        seenFixtures.add(fixture.id);
+        picked.push(fixture);
+      }
+      continue;
+    }
+
     // ⚠ Both sides are checked, not just the one `upcomingRow` resolves. A match
     // is "the next one" for the home club AND the away club when both are
     // followed; taking only the resolved side would let the loser of that tie
@@ -223,6 +251,7 @@ export function buildSnapshot(
       // the label is worth more than one space.
       roundLabel: md !== null ? copy.today.md(md) : null,
       venue: fixture.venue,
+      leagueSlug: fixture.leagueSlug,
     });
   }
 
@@ -256,6 +285,9 @@ export function buildSnapshot(
       away: copy.widgets.away,
       homeTag: copy.widgets.homeTag,
       awayTag: copy.widgets.awayTag,
+      live: copy.widgets.live,
+      halfTime: copy.widgets.halfTime,
+      fullTime: copy.widgets.fullTime,
     },
     entries,
   };

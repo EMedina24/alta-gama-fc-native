@@ -78,6 +78,16 @@ export interface Copy {
      */
     homeTag: string;
     awayTag: string;
+    /**
+     * The live ledger's three states (ADR 0080). `live` is the red eyebrow on
+     * a card showing a match in play; the other two replace the minute at the
+     * break and the whistle. ⚠ Eyebrow-short on purpose — `live` shares the
+     * card's top row with the mark, and `halfTime`/`fullTime` sit in the
+     * minute's slot. Not `today.inProgress`, which is a sentence fragment.
+     */
+    live: string;
+    halfTime: string;
+    fullTime: string;
     /** The NEWS widget's eyebrow (ADR 0061). */
     news: string;
     /** The feed is empty, or every story aged past 48h. */
@@ -581,6 +591,11 @@ export const esCopy: Copy = {
     away: 'en',
     homeTag: 'CASA',
     awayTag: 'FUERA',
+    // ⚠ `FIN` matches `today.finished`; `DESC` is descanso. Both stay
+    // eyebrow-short — they share a 158pt card with the score.
+    live: 'EN JUEGO',
+    halfTime: 'DESC',
+    fullTime: 'FIN',
     news: 'NOTICIAS',
     noHeadlines: 'Aún no hay titulares',
   },
@@ -961,6 +976,9 @@ export const enCopy: Copy = {
     away: 'at',
     homeTag: 'HOME',
     awayTag: 'AWAY',
+    live: 'LIVE',
+    halfTime: 'HT',
+    fullTime: 'FT',
     news: 'NEWS',
     noHeadlines: 'No headlines yet',
   },

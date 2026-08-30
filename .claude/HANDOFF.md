@@ -96,6 +96,24 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > body `buildRegistration` sends (`sync.ts:73-86`) matches production's DTO
 > field-for-field; `clubSlugs` is capped client-side at the server's 20.
 
+> ⭐ **NEW 2026-08-30 (late) — the widgets show LIVE SCORES** ([0080](./decisions/0080-widgets-live-scores-poll-plus-push.md)).
+> Ed picked the "Ledger" layout on a design canvas
+> (`claude.ai/code/artifact/1005481e-6a05-45df-aef8-93985fb80344`); small + medium now
+> draw two team rows with scores, minute, HT/FT, kicked-off dashes and a stalled dim.
+> Data is `<AppGroup>/widget/live.json`, written three ways: the widget extension's own
+> **rationed poll** of `/cronogol/live` (5-min reloads inside a 150-min match window —
+> the ONE sanctioned network call in that target, a deliberate carve-out from 0025's
+> no-network rule), the notification service extension on every goal/red/FT push, and
+> the foregrounded app off `useLive`. Snapshot bumped to **v3** (`leagueSlug`,
+> `LIVE`/`HT`/`FT` copy; every Swift field optional, the 0059 pattern).
+> **Verified on the simulator** — `altagamafc://_debug/widgets?sample=live` (or `ft`)
+> writes a fabricated snapshot + `live.json` and reloads, tap-free; both ledgers drew
+> exactly the canvas, the FT merge fired against the real route (a fabricated fixture
+> the route does not serve → `finished`, which is why sample ids get a `debug-` guard
+> in `LiveMerge`), and a relaunch restored real data. **Still pending: a real match
+> end-to-end (HT heuristic, FT hold) and the push writer on a device.** ⚠ The per-minute timeline ENTRIES are free; the 5-minute RELOAD is the
+> rationed thing — do not "fix" the minute by shortening `Cadence.liveReload`.
+
 > **2026-08-28 — the app icon is now set 1a "Floodlight"**
 > ([0060](./decisions/0060-app-icon-1a-floodlight.md)): graphite field, lime glow,
 > lime mark on every appearance. Same geometry as 1b, so nothing else re-cut.

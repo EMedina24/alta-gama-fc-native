@@ -1,4 +1,5 @@
 import UserNotifications
+import WidgetKit
 
 /// Attaches the composed crest plate to a server push before iOS displays it.
 ///
@@ -39,6 +40,12 @@ class NotificationService: UNNotificationServiceExtension {
 
     let info = content.userInfo
     let fixtureId = info["fixtureId"] as? String
+
+    // ⭐ ADR 0080 — a goal, red card or full-time push is also the widget's
+    // fastest score source: merge it into `widget/live.json` and reload the two
+    // fixture widgets, BEFORE any early return below. Fire-and-forget and
+    // synchronous — a tiny file write, nothing fetched, nothing to wait for.
+    Self.updateWidgetLive(fixtureId: fixtureId, category: content.categoryIdentifier, info: info)
 
     // ⭐ ADR 0053 — the live match alerts take a different path entirely: their
     // attachment is DRAWN here, not downloaded, and they carry no crest urls at
@@ -96,6 +103,38 @@ class NotificationService: UNNotificationServiceExtension {
   }
 
   // MARK: - The live match plate (ADR 0053)
+
+  /// The widget's score, straight off the push (ADR 0080).
+  ///
+  /// ⚠ The three categories are the same contract `plateKind` names below —
+  /// `match_full_time` is absent THERE because a result gets no glyph, but it
+  /// very much belongs HERE: the vanishing row is the widget's full time.
+  /// ⚠ `NSNumber`, not `as? Int` — the same silent-Double trap `Payload.swift`
+  /// documents at length.
+  private static func updateWidgetLive(
+    fixtureId: String?,
+    category: String,
+    info: [AnyHashable: Any]
+  ) {
+    guard
+      let fixtureId,
+      ["match_goal", "match_red_card", "match_full_time"].contains(category)
+    else { return }
+
+    let score = info["score"] as? [AnyHashable: Any]
+    WidgetLiveState.applyPush(
+      fixtureId: fixtureId,
+      minute: (info["minute"] as? NSNumber)?.intValue,
+      homeGoals: (score?["home"] as? NSNumber)?.intValue,
+      awayGoals: (score?["away"] as? NSNumber)?.intValue,
+      finished: category == "match_full_time"
+    )
+
+    // ⚠ By KIND, both fixture widgets, never `reloadAllTimelines` — the NEWS
+    // widget has nothing to learn from a goal.
+    WidgetCenter.shared.reloadTimelines(ofKind: "NextFixture")
+    WidgetCenter.shared.reloadTimelines(ofKind: "YourWeek")
+  }
 
   /// ⚠ The category strings are the THREE-WAY contract — this file, the app's
   /// `categories.ts`, and the content extension's Info.plist. An unrecognised

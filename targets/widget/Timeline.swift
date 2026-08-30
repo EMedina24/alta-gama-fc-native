@@ -101,6 +101,26 @@ enum Cadence {
     return dates.filter { $0 >= now }.sorted().prefix(limit).map { $0 }
   }
 
+  /// The reload cadence while a match is IN PLAY (ADR 0080): every 5 minutes,
+  /// ~30 reloads across a match with stoppage, inside the ~40–70/day budget.
+  ///
+  /// ⚠ This is a RELOAD, the rationed thing — the minute still moves every
+  /// minute through per-minute ENTRIES (`liveEntryDates`), which are free, each
+  /// ticking the anchor in `WidgetLiveState.Match.displayMinute(at:)`. The next
+  /// poll re-anchors; a goal push reloads sooner.
+  static let liveReload: TimeInterval = 5 * 60
+
+  /// One entry per minute until the next live reload — the ledger's minute.
+  static func liveEntryDates(from now: Date) -> [Date] {
+    var dates = [now]
+    var cursor = ceilTo(now, unit: 60)
+    while cursor < now.addingTimeInterval(liveReload) {
+      dates.append(cursor)
+      cursor.addTimeInterval(60)
+    }
+    return dates
+  }
+
   /// When to ask for the next reload.
   ///
   /// ⚠ `.after(nextKickoff)` is the rule (ADR 0025): the moment a match starts,

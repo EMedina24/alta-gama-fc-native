@@ -8,6 +8,11 @@
 > **Every one of the six pick-up steps below was followed**, and the two ⚠ rules —
 > Swift outside `ios/`, and no network in a timeline provider — held. Nothing here
 > is rewritten: this is the record of what was planned, and it is what happened.
+>
+> **Update, 2026-08-30:** the no-network rule is PARTIALLY superseded by
+> [0080](./0080-widgets-live-scores-poll-plus-push.md) — one route
+> (`/cronogol/live`), only inside a match window, on a rationed 5-minute cadence.
+> Everything else it fenced off (crests, `AsyncImage`, the club query) stands.
 > The one addition 0047 makes is that the widgets are also CONFIGURABLE and reach
 > the Lock Screen, neither of which this ADR anticipated.
 >

@@ -21,13 +21,39 @@ struct YourWeekWidget: Widget {
 struct YourWeekView: View {
   let entry: FixtureEntry
 
-  private var rows: [WidgetSnapshot.Entry] { Array(entry.rows.prefix(3)) }
+  /// Two ledger blocks at most — each is two rows tall, and three would leave
+  /// no card. More than two followed clubs in play at once loses the third to
+  /// the same truth the small widget states: the card shows what fits.
+  private var live: [FixtureEntry.LivePair] { Array(entry.live.prefix(2)) }
+
+  /// Upcoming rows fill what the ledgers leave: 3 slots, a ledger costs 2.
+  private var rows: [WidgetSnapshot.Entry] {
+    Array(entry.rows.prefix(max(0, 3 - live.count * 2)))
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       header
 
-      if rows.isEmpty {
+      if !live.isEmpty {
+        // ⚠ The rows there are, centred — the same rule as below.
+        Spacer(minLength: 0)
+        ForEach(Array(live.enumerated()), id: \.element.id) { index, pair in
+          if index > 0 {
+            Rectangle()
+              .fill(Tok.hairline)
+              .frame(height: 1)
+          }
+          liveBlock(pair)
+        }
+        ForEach(rows) { row in
+          Rectangle()
+            .fill(Tok.hairline)
+            .frame(height: 1)
+          fixtureRow(row)
+        }
+        Spacer(minLength: 0)
+      } else if rows.isEmpty {
         EmptyState(copy: entry.copy, followsNothing: entry.followsNothing)
           .padding(.top, 10)
       } else {
@@ -57,12 +83,71 @@ struct YourWeekView: View {
 
   private var header: some View {
     HStack(spacing: 6) {
-      Mark(size: 16)
-      W.eyebrow(entry.copy.yourWeek)
-      Spacer(minLength: 4)
-      W.eyebrow(entry.copy.clubCount, color: Tok.ink45, size: 10)
+      if let first = live.first, live.contains(where: { $0.match?.isLive ?? true }) {
+        // A match is being played: the card leads with it (ADR 0063's product
+        // rule). `LIVE · MD 3`, the round from the earliest live row.
+        LiveEyebrow(
+          text: first.row.roundLabel.map { "\(entry.copy.liveLabel) · \($0)" }
+            ?? entry.copy.liveLabel
+        )
+        Spacer(minLength: 4)
+        Mark(size: 16)
+      } else if !live.isEmpty {
+        // Finished today, nothing in play: the eyebrow says so, quietly.
+        Mark(size: 16)
+        W.eyebrow(entry.copy.fullTimeLabel, color: Tok.ink55)
+        Spacer(minLength: 4)
+        W.eyebrow(entry.copy.clubCount, color: Tok.ink45, size: 10)
+      } else {
+        Mark(size: 16)
+        W.eyebrow(entry.copy.yourWeek)
+        Spacer(minLength: 4)
+        W.eyebrow(entry.copy.clubCount, color: Tok.ink45, size: 10)
+      }
     }
     .padding(.bottom, 8)
+  }
+
+  /// One live match, Direction B at medium width: the two-row ledger on the
+  /// left, a hairline, and a right-hand column of minute over scorer/venue.
+  ///
+  /// ⚠ A `Link` like every other row — the medium widget has several
+  /// destinations and `widgetURL` can only carry one.
+  private func liveBlock(_ pair: FixtureEntry.LivePair) -> some View {
+    let minute = Ledger.minuteText(pair, copy: entry.copy, at: entry.date, stale: entry.liveStale)
+
+    return Link(destination: W.url(pair.row) ?? URL(string: "altagamafc://")!) {
+      HStack(spacing: 12) {
+        LedgerRows(pair: pair, copy: entry.copy, crestSize: 24, nameSize: 14, scoreSize: 22)
+
+        Rectangle()
+          .fill(Tok.hairline)
+          .frame(width: 1)
+
+        VStack(alignment: .trailing, spacing: 2) {
+          if let minute {
+            Text(minute.text)
+              .font(Tok.numerals(18, .heavy))
+              .foregroundStyle(minute.color)
+              .lineLimit(1)
+          } else {
+            W.eyebrow(entry.copy.liveLabel, color: Tok.live, size: 10)
+          }
+          Spacer(minLength: 0)
+          if let note = Ledger.footnote(pair) {
+            Text(note)
+              .font(.system(size: 11, weight: .medium).monospacedDigit())
+              .foregroundStyle(Tok.ink55)
+              .multilineTextAlignment(.trailing)
+              .lineLimit(2)
+              .minimumScaleFactor(0.8)
+          }
+        }
+        .frame(width: 96)
+      }
+      .padding(.vertical, 6)
+      .fixedSize(horizontal: false, vertical: true)
+    }
   }
 
   /// ⚠ **`Link` per row, never one `widgetURL` on the body.** A medium widget

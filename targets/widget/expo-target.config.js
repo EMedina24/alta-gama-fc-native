@@ -30,9 +30,12 @@ module.exports = {
   displayName: 'AltaGama FC Widgets',
   deploymentTarget: '17.0',
   entitlements: {
-    // The only channel this extension has. It reads `widget/snapshot.json`,
-    // `crests/{fixtureId}/{slot}.png`, and since ADR 0061 `widget/news.json` and
-    // `news/{id}.jpg` — all written by the app.
+    // The main channel this extension has. It reads `widget/snapshot.json`,
+    // `crests/{fixtureId}/{slot}.png`, since ADR 0061 `widget/news.json` and
+    // `news/{id}.jpg`, and since ADR 0080 `widget/live.json` — which it also
+    // WRITES, alongside the app and the notification service extension. Since
+    // 0080 the container is no longer the *only* channel: the provider makes
+    // one rationed network call (`/cronogol/live`, match windows only).
     'com.apple.security.application-groups': ['group.com.altagamafc.app'],
   },
 };
