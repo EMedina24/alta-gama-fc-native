@@ -14,6 +14,7 @@ export { Score, type ScoreProps, type ScoreSize } from './score';
 export { Skeleton, SkeletonRows } from './skeleton';
 export { Switch } from './switch';
 export { Text, type TextProps, type TypeVariant } from './text';
-export { VersusBadge } from './versus-badge';
+export { VersusBadge, type VersusTone } from './versus-badge';
+export { WashGradient, type WashGradientProps, type WashStop } from './wash-gradient';
 export { PitchGlyph, type PitchGlyphProps } from './pitch-glyph';
 export { SlotToken, type SlotTokenMode, type SlotTokenProps } from './slot-token';

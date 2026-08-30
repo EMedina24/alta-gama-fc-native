@@ -10,15 +10,22 @@
  *
  * ⚠ `accessible={false}` — the pairing is labelled once, on the parent. A
  * VoiceOver stop that says only "Vs" between two club names is noise.
+ *
+ * `tone="onWash"` (ADR 0068): on a club-colour wash the ring goes white. Lime
+ * inside a card already carrying two club colours was a third colour fighting
+ * for the same frame; white is chrome, not a colour, and the accent keeps to
+ * the eyebrow and the countdown.
  */
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from './text';
 import { Colors, Radius, Size } from '@/constants/theme';
 
-export function VersusBadge() {
+export type VersusTone = 'accent' | 'onWash';
+
+export function VersusBadge({ tone = 'accent' }: { tone?: VersusTone }) {
   return (
-    <View style={styles.badge} accessible={false}>
+    <View style={[styles.badge, tone === 'onWash' && styles.onWash]} accessible={false}>
       <Text variant="eyebrow" color="text" style={styles.glyph}>
         Vs
       </Text>
@@ -37,6 +44,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  onWash: { borderColor: Colors.dark.washRing, backgroundColor: Colors.dark.washBadge },
   /**
    * ⚠ Overrides two things `Type.eyebrow` carries for column heads and that a
    * two-letter mark does not want: the uppercase transform (this reads `Vs`,

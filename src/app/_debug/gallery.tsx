@@ -6,6 +6,7 @@
  * Those are exactly the ones that ship broken, because nobody sees them until a
  * Tuesday in October.
  */
+import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, ChipButton, Hairline, Score, Switch, Text } from '@/components/atoms';
@@ -22,6 +23,7 @@ import {
   SectionHeader,
   StatRow,
 } from '@/components/molecules';
+import { FinishedToday } from '@/components/organisms/finished-today';
 import { MatchBoard } from '@/components/organisms/match-board';
 import { Colors, Spacing } from '@/constants/theme';
 import {
@@ -35,12 +37,15 @@ import {
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
+import { pairWash } from '@/lib/cronogol/club-wash';
 import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
 import type {
+  FixtureWindowView,
   LiveMatchEventView,
   LiveMatchView,
   MatchEventView,
   TeamRef,
+  WindowFixtureView,
 } from '@/lib/cronogol/types';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useState } from 'react';
@@ -151,6 +156,67 @@ const LIVE_SIDE = (name: string, abbr: string, goals: number | null, muted: bool
   muted,
 });
 
+/**
+ * The next-up card's four wash states (ADR 0068), on REAL club hexes copied
+ * from `/cronogol/teams` on 2026-08-29 — the point is the awkward ones.
+ *
+ * ⚠ Crests are null here on purpose: the monogram tile is the case where a
+ * grey plate sits on a coloured wash, which is the collision to look at.
+ */
+const WASH_TEAM = (primary: string | null, secondary: string | null) => ({
+  colorPrimary: primary,
+  colorSecondary: secondary,
+});
+const NEXT_SIDE = (name: string, abbr: string) => ({ name, crest: null, abbr, goals: null });
+const NEXT_CASES = [
+  { label: 'Real Madrid v Barcelona — both colours; ⚠ Barça is BLUE, never purple',
+    home: NEXT_SIDE('Real Madrid', 'RMA'), away: NEXT_SIDE('Barcelona', 'BAR'),
+    wash: pairWash(WASH_TEAM('#0f39b8', '#ffffff'), WASH_TEAM('#0f39b8', '#bc161c')) },
+  { label: 'Villarreal v Betis — #ffd301 clamped to gold',
+    home: NEXT_SIDE('Villarreal', 'VIL'), away: NEXT_SIDE('Real Betis', 'BET'),
+    wash: pairWash(WASH_TEAM('#ffd301', '#ffffff'), WASH_TEAM('#038316', '#ffffff')) },
+  { label: 'Athletic v Valencia — #000000 → graphite, the card leans red',
+    home: NEXT_SIDE('Athletic Club', 'ATH'), away: NEXT_SIDE('Valencia', 'VAL'),
+    wash: pairWash(WASH_TEAM('#f21e27', '#ffffff'), WASH_TEAM('#000000', '#ffffff')) },
+  { label: 'Arsenal v Liverpool — no colours on file: ⚠ must be TODAY\'S card, lime ring',
+    home: NEXT_SIDE('Arsenal', 'ARS'), away: NEXT_SIDE('Liverpool', 'LIV'),
+    wash: pairWash(WASH_TEAM(null, null), WASH_TEAM(null, null)) },
+];
+
+/**
+ * A FINISHED TODAY window on the pairs that used to truncate (ADR 0069): the
+ * longest tracked names, a draw (both lit), a null-crest pair (monogram tiles)
+ * and two leagues so the band-vs-row height rule (0062) is on screen too.
+ */
+const REF = (slug: string, name: string, shortName: string | null = null): TeamRef => ({
+  slug, name, shortName, logoUrl: null, logoUrls: null,
+});
+const FINISHED = (
+  id: string, leagueSlug: string, home: TeamRef | null, away: TeamRef | null, gh: number, ga: number,
+): WindowFixtureView => ({
+  id, homeTeam: home, awayTeam: away, competition: 'league', competitionName: null, round: null,
+  kickoffUtc: new Date(NOW - 3 * 60 * 60 * 1000).toISOString(), kickoffTbd: false, venue: null,
+  venueCity: null, status: 'finished', goalsHome: gh, goalsAway: ga, leagueSlug, season: 2026,
+  matchweek: 4,
+});
+const FINISHED_WINDOW: FixtureWindowView = {
+  from: new Date(NOW).toISOString(), to: new Date(NOW).toISOString(), count: 5, truncated: false,
+  nextKickoffUtc: null,
+  leagues: [
+    { slug: 'premier-league', name: 'PREMIER LEAGUE', logoUrl: null, logoUrls: null, accentColor: null },
+    { slug: 'bundesliga', name: 'BUNDESLIGA', logoUrl: null, logoUrls: null, accentColor: null },
+  ],
+  fixtures: [
+    FINISHED('f1', 'premier-league', REF('liverpool', 'Liverpool', 'LIV'), REF('nottingham-forest', 'Nottingham Forest', 'NFO'), 2, 2),
+    FINISHED('f2', 'premier-league', REF('brighton', 'Brighton & Hove Albion', 'BHA'), REF('manchester-united', 'Manchester United', 'MUN'), 1, 3),
+    // ⚠ A side that could not be resolved — the `?` monogram and an em dash.
+    FINISHED('f3', 'premier-league', REF('wolverhampton', 'Wolverhampton Wanderers', 'WOL'), null, 0, 1),
+    FINISHED('f4', 'bundesliga', REF('gladbach', 'Borussia Mönchengladbach', 'BMG'), REF('bayern', 'Bayern München', 'FCB'), 0, 4),
+    // ⚠ Double digits — the widest the goal column is asked to hold.
+    FINISHED('f5', 'bundesliga', REF('kiel', 'Holstein Kiel', 'KIE'), REF('leverkusen', 'Bayer 04 Leverkusen', 'B04'), 10, 1),
+  ],
+};
+
 function Case({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={styles.case}>
@@ -214,11 +280,68 @@ const LIVE_CASES = (
 
 export default function GalleryScreen() {
   const { copy, phrases } = useI18n();
+  /**
+   * `?only=next` / `?only=finished` render one section alone. The gallery is a long
+   * scroll and the shell cannot drive one (no `idb`, no Accessibility), so a
+   * section deep in it is otherwise unreachable from a deep link + screenshot.
+   */
+  const { only } = useLocalSearchParams<{ only?: string }>();
   const [on, setOn] = useState(true);
   // ⚠ `null` and derived, exactly as `MatchEvents` does it — the gallery must
   // exercise the real behaviour, not a simplified stand-in of it.
   const [picked, setPicked] = useState<EventGroup | null>(null);
   const evGroup = picked !== null && EV_COUNTS[picked] > 0 ? picked : initialGroup(EV_COUNTS);
+
+  const nextUp = (
+    <>
+      <SectionHeader title="Next up" meta="the club-colour wash (ADR 0068)" />
+      {NEXT_CASES.map(({ label, home, away, wash }) => (
+        <Case key={label} label={label}>
+          <MatchBoard
+            next={{
+              home,
+              away,
+              kickoffUtc: SOON,
+              kickoffTbd: false,
+              meta: copy.today.nextUp,
+              kickoffLabel: '21:00',
+              dateLabel: 'SAT 5 SEP',
+              zoneLabel: `CEST · ${copy.today.yourTime}`,
+              venue: 'Santiago Bernabéu',
+              wash,
+            }}
+            copy={copy.today}
+            events={copy.events}
+          />
+        </Case>
+      ))}
+    </>
+  );
+
+  const finishedToday = (
+    <>
+      <SectionHeader title="Finished today" meta="stacked pairs (ADR 0069)" />
+      <Case label="long names · a draw · a null side · double digits — nothing may truncate">
+        <FinishedToday window={FINISHED_WINDOW} eventsCopy={copy.events} />
+      </Case>
+    </>
+  );
+
+  if (only === 'finished') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {finishedToday}
+      </ScrollView>
+    );
+  }
+
+  if (only === 'next') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {nextUp}
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -456,6 +579,9 @@ export default function GalleryScreen() {
           </Text>
         </View>
       </Case>
+
+      {nextUp}
+      {finishedToday}
 
       <SectionHeader title="Live card" meta="the two paths (ADR 0048)" />
       {LIVE_CASES.map(({ label, match, stalled, minute, minutesAgo }) => (

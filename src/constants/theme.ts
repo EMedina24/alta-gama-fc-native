@@ -48,6 +48,17 @@ const dark = {
   liveWash: 'rgba(255,92,71,0.14)',
   danger: '#ff5c47',
 
+  // The club-colour wash behind the next-up card and the club header (ADR 0068).
+  // `washGraphite` is the neutral a club lands on when its own hexes are
+  // unusable (near-black, near-white, or absent on one side of a pairing that
+  // still has a colour on the other). The three inks are what the card's
+  // chrome switches to ON a wash: white, not lime, so the club colour and the
+  // brand accent never share a frame.
+  washGraphite: '#2b323b',
+  washInk: 'rgba(255,255,255,0.72)',
+  washRing: 'rgba(255,255,255,0.35)',
+  washBadge: 'rgba(255,255,255,0.10)',
+
   // Notification alert types (ADR 0036). ⚠ `moved` is the same hex as `bandUel`
   // and that is a coincidence, not a relationship — one means "Europa League
   // qualification", the other means "this kickoff shifted". Aliasing them would
@@ -123,6 +134,37 @@ export const LeagueBand = {
   'serie-a': { gradient: ['#225696', '#0D8EFE'] },
 } as const satisfies Record<string, LeagueBandSpec>;
 export type LeagueBandSpec = { solid: string } | { gradient: readonly [string, string] };
+
+/**
+ * The taming rule for a club's own colour (ADR 0068), consumed by
+ * `lib/cronogol/club-wash.ts`. `TeamView.colorPrimary` is "verbatim and
+ * unvalidated" — Valencia is `#000000`, RB Leipzig `#ffffff`, Villarreal
+ * `#ffd301` — so every hex is pulled into ONE lightness band before it goes
+ * behind white text. All values are HSL percentages except `yellowHue`
+ * (degrees) and `seam` (gradient offsets, 0–1).
+ *
+ * ⚠ Yellow and green are capped harder than every other hue: at the same
+ * lightness they read a step lighter, and Villarreal's gold and Betis's green
+ * both out-shouted the crest on them at the blue cards' cap.
+ */
+export const ClubWash = {
+  // ⚠ Measured on the simulator, not derived: the preview was set at 26–38 and
+  // the device rendered every corner a step louder than the browser had — a
+  // solid slab rather than a wash. 22–30 is where it matches the approved look.
+  lightMin: 22,
+  lightMax: 30,
+  lightMaxBright: 26,
+  satMin: 45,
+  /** Outside these a hex is "extreme" — the secondary is tried, then graphite. */
+  extremeLow: 10,
+  extremeHigh: 85,
+  /** Yellow through green — the hues that read lighter than their L says. */
+  brightHue: [40, 170],
+  /** Where the two-club diagonal returns to plain `card` between the colours. */
+  seam: [0.42, 0.58],
+  /** Where the club header's vertical wash has fully returned to `background`. */
+  heroEnd: 1,
+} as const;
 
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */
 export const Spacing = {
@@ -328,6 +370,13 @@ export const Size = {
   eventTab: 28,
   /** The disclosure chevron. ⚠ Its 44pt hit target is the ROW, not this. */
   chevron: 11,
+  /**
+   * The goal column on a FINISHED TODAY row (ADR 0069): one digit per line,
+   * right-aligned, and FIXED so the column lines up down a league group. Two
+   * digits at `Type.numeral` — measured on the simulator, and a 10-goal game
+   * is the widest this column will ever be asked to hold.
+   */
+  goalColumn: 22,
   /**
    * The vertical rule between a score's two digits (ADR 0044), per size. Set
    * against the digits' cap height on the simulator, not by arithmetic: a rule

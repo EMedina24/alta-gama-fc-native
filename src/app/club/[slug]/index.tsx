@@ -24,6 +24,7 @@ import { ClubHeader } from '@/components/organisms/club-header';
 import { SeasonSpine } from '@/components/organisms/season-spine';
 import { SquadList } from '@/components/organisms/squad-list';
 import { BottomTabInset, Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { tameClubColor } from '@/lib/cronogol/club-wash';
 import { hasCompleteSchedule } from '@/lib/cronogol/derive';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubFixtures, useClubSquad } from '@/queries/use-club';
@@ -81,6 +82,14 @@ export default function ClubScreen() {
               team={data.team}
               fixtures={data.fixtures}
               subscribed={subscribed}
+              // The club's own colour behind the identity block (ADR 0068).
+              // `tameClubColor` is null for a club with no usable hex — every
+              // Premier League and Serie A club today — and that is the
+              // unchanged header, not a missing one. The bleeds mirror this
+              // ScrollView's own padding exactly.
+              wash={tameClubColor(data.team.colorPrimary, data.team.colorSecondary)}
+              bleedX={Spacing.five}
+              bleedTop={insets.top + 44}
               // ⚠ Always via the sheet, in BOTH directions — the design confirms
               // a subscribe and a unsubscribe in the same place.
               onToggleAlerts={() =>

@@ -45,9 +45,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Chevron, Crest, Pill, Text, VersusBadge } from '@/components/atoms';
+import { Chevron, Crest, Pill, Text, VersusBadge, WashGradient } from '@/components/atoms';
 import { Countdown, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { ClubWash, Colors, Radius, Size, Spacing } from '@/constants/theme';
+import type { PairWash } from '@/lib/cronogol/club-wash';
 import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
@@ -149,6 +150,16 @@ export interface MatchBoardProps {
     /** "CEST · YOUR TIME" — states WHOSE clock this is. */
     zoneLabel: string;
     venue: string | null;
+    /**
+     * The two-club colour wash behind the card (ADR 0068): home top-left, away
+     * bottom-right, already TAMED by `lib/cronogol/club-wash.ts` — the screen
+     * resolves, this organism only paints (ADR 0013).
+     *
+     * ⚠ `null` / absent is a real state, not a degradation: neither club has a
+     * usable colour (every Premier League and Serie A club today) and the card
+     * renders exactly as it did before the wash existed — lime ring and all.
+     */
+    wash?: PairWash | null;
   } | null;
   /**
    * Kickoff, announced by the next-up card's own countdown (ADR 0052).
@@ -283,13 +294,31 @@ export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchB
          * card's width — a row layout truncated both sides of Real Madrid v Real
          * Sociedad to "Real…" against "Real…", which names neither club.
          */
-        <View style={[styles.card, styles.nextCard]}>
+        <View style={[styles.card, next.wash ? styles.nextCardWashed : styles.nextCard]}>
+          {/* ⚠ First child, so it paints under everything; `nextCardWashed`
+              clips it to the corners. The seam is plain `card` so the two
+              colours never mix into a third. */}
+          {next.wash ? (
+            <WashGradient
+              angle="diagonal"
+              stops={[
+                { offset: 0, color: next.wash.home },
+                { offset: ClubWash.seam[0], color: Colors.dark.card },
+                { offset: ClubWash.seam[1], color: Colors.dark.card },
+                { offset: 1, color: next.wash.away },
+              ]}
+            />
+          ) : null}
           <View style={styles.headRow}>
             <Text variant="eyebrowSm" color="accent">
               {next.meta}
             </Text>
             {next.venue ? (
-              <Text variant="eyebrowSm" color="textFaint" numberOfLines={1} style={styles.venue}>
+              <Text
+                variant="eyebrowSm"
+                color={next.wash ? 'washInk' : 'textFaint'}
+                numberOfLines={1}
+                style={styles.venue}>
                 {next.venue}
               </Text>
             ) : null}
@@ -313,7 +342,7 @@ export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchB
               </Text>
             </View>
             <View style={styles.versus}>
-              <VersusBadge />
+              <VersusBadge tone={next.wash ? 'onWash' : 'accent'} />
             </View>
             <View style={styles.pairSide}>
               <Crest
@@ -433,6 +462,16 @@ const styles = StyleSheet.create({
    *  geometry the two expandable cards share lives in `flush`. */
   resultCard: {},
   nextCard: { borderColor: Colors.dark.accentRing },
+  /**
+   * The same card ON a club wash (ADR 0068). The ring goes from lime to a white
+   * hairline — lime stays the accent, never the frame — and the card clips, or
+   * the gradient squares off the corners (the `flush` trap above, again).
+   */
+  nextCardWashed: {
+    borderColor: Colors.dark.hairlineStrong,
+    position: 'relative',
+    overflow: 'hidden',
+  },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.hairlineMid },
   venue: { flexShrink: 1, textAlign: 'right' },

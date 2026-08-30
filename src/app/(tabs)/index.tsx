@@ -19,6 +19,7 @@ import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaf
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
+import { pairWash } from '@/lib/cronogol/club-wash';
 import {
   boardFromRoute,
   boardLive,
@@ -252,6 +253,16 @@ export default function TodayScreen() {
     crest: crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'small'),
   });
 
+  /**
+   * The club-colour wash behind the next-up card (ADR 0068). `TeamRef` carries
+   * no colour, so each side is joined to the club catalogue by slug — the same
+   * join `boardFromRoute` makes for the live card's crests. An opponent-only
+   * club is not in the catalogue and resolves to nothing, which `pairWash`
+   * treats as "no colour on this side".
+   */
+  const catalogueTeam = (team: WindowFixtureView['homeTeam']) =>
+    team ? (teams.data ?? []).find((t) => t.slug === team.slug) ?? null : null;
+
   return (
     <ScreenScaffold
       title={copy.today.title}
@@ -305,6 +316,7 @@ export default function TodayScreen() {
                   dateLabel: formatFixtureDate(next.kickoffUtc, zone, phrases),
                   zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
                   venue: next.venue,
+                  wash: pairWash(catalogueTeam(next.homeTeam), catalogueTeam(next.awayTeam)),
                 }
               : null
           }
@@ -369,7 +381,6 @@ export default function TodayScreen() {
         <>
           <FinishedToday
             window={finished.data}
-            finishedLabel={copy.today.finished}
             eventsCopy={copy.events}
           />
           <Text variant="footnote" color="textFaint">

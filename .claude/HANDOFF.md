@@ -370,6 +370,13 @@ documented at the code that handles them; this is the index.
     computed **during render** and closed over, so a `refetch()` re-asked for a
     window that had already ended. They are built inside the `queryFn` now. See
     [0052](./decisions/0052-kickoff-triggers-the-live-refetch.md).
+40. **A gradient drawn behind a rounded card needs `overflow: 'hidden'` AND a
+    unique SVG `id`.** `finished-today.tsx` hard-codes `id="band"` and survives
+    only because one league has a gradient; a second `<LinearGradient id="band">`
+    in the same tree makes both `url(#band)` fills resolve to whichever mounted
+    first. `WashGradient` (0068) takes its id from `useId()` — use the atom, do
+    not copy the Svg block. And without `overflow: 'hidden'` the absolute fill
+    paints square corners over the card's radius (the `flush` trap, again).
 
 36. **A live push must not replay the first half.** `LiveSessionService` opens
     onto whatever is in its window — including a match already at 60 minutes,
@@ -440,6 +447,16 @@ documented at the code that handles them; this is the index.
 ## Where things stand
 
 ### Done and verified
+- **FINISHED TODAY rows are a stacked pair** ([0069](./decisions/0069-finished-today-stacked-rows.md)):
+  home over away, fixed goal column, no `FT` word. ⚠ Nothing may be added to the
+  right of the goals without re-measuring `Borussia Mönchengladbach` at 393pt.
+  `/_debug/gallery?only=finished` is the screenshot path.
+- **Club-colour wash on the next-up card and the club header**
+  ([0068](./decisions/0068-club-colour-wash.md)): `lib/cronogol/club-wash.ts`
+  tames `colorPrimary`/`colorSecondary` (harness-proven, 16 assertions); a
+  `WashGradient` atom on `react-native-svg`; `/_debug/gallery` shows the four
+  states. ⚠ Only LaLiga and Bundesliga carry colours — a Premier League or
+  Serie A card renders exactly as before, and that is correct.
 - **League header bands in FINISHED TODAY** ([0062](./decisions/0062-league-header-bands.md)):
   `LeagueBand` in `@/constants/theme`, keyed by API slug; Serie A's gradient via
   `react-native-svg`. ⚠ Not yet seen on the simulator — check the first band's

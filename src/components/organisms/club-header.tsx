@@ -9,11 +9,19 @@
  * ⚠ The eyebrow is `primaryCompetition(fixtures)` — the most common league
  * competition among the club's own fixtures — not the league it was browsed
  * from. Five of LaLiga's tracked clubs are actually in segunda.
+ *
+ * ⚠ The identity block sits on the club's own colour when `wash` is set
+ * (ADR 0068): a vertical gradient from the tamed colour at the top of the
+ * screen to `background` by the bottom of the block, bleeding through the
+ * screen's gutter and up under the transparent nav — which is what the two
+ * `bleed*` props are for. The subscribe block and everything below it are
+ * untouched. `wash: null` is the whole Premier League and Serie A, and renders
+ * the header exactly as before.
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Crest, Text } from '@/components/atoms';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Button, Crest, Text, WashGradient } from '@/components/atoms';
+import { ClubWash, Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import type { FixtureView, TeamView } from '@/lib/cronogol/types';
 import { homeGround, primaryCompetition } from '@/lib/cronogol/derive';
@@ -24,6 +32,15 @@ export interface ClubHeaderProps {
   subscribed: boolean;
   onToggleAlerts: () => void;
   onOpenCalendar: () => void;
+  /** Already tamed (`clubWash`); null → no wash, today's header. */
+  wash?: string | null;
+  /**
+   * How far the wash extends past the screen's content padding: the horizontal
+   * gutter, and the top inset the transparent header sits in. Passed by the
+   * screen because only it knows its own padding.
+   */
+  bleedX?: number;
+  bleedTop?: number;
   copy: {
     alertsOn: string;
     alertsOff: string;
@@ -39,6 +56,9 @@ export function ClubHeader({
   subscribed,
   onToggleAlerts,
   onOpenCalendar,
+  wash = null,
+  bleedX = 0,
+  bleedTop = 0,
   copy,
 }: ClubHeaderProps) {
   const ground = homeGround(team, fixtures);
@@ -47,6 +67,28 @@ export function ClubHeader({
 
   return (
     <View style={styles.wrap}>
+      <View
+        style={[
+          styles.identityWrap,
+          wash
+            ? {
+                marginHorizontal: -bleedX,
+                paddingHorizontal: bleedX,
+                marginTop: -bleedTop,
+                paddingTop: bleedTop + Spacing.four,
+                paddingBottom: Spacing.four,
+              }
+            : null,
+        ]}>
+        {wash ? (
+          <WashGradient
+            angle="vertical"
+            stops={[
+              { offset: 0, color: wash },
+              { offset: ClubWash.heroEnd, color: Colors.dark.background },
+            ]}
+          />
+        ) : null}
       <View style={styles.identity}>
         <Crest
           src={crestSrc(team.logoUrls, team.logoUrl, 'card')}
@@ -55,7 +97,7 @@ export function ClubHeader({
         />
         <View style={styles.names}>
           {competition ? (
-            <Text variant="eyebrowSm" color="textFaint">
+            <Text variant="eyebrowSm" color={wash ? 'washInk' : 'textFaint'}>
               {competition}
             </Text>
           ) : null}
@@ -66,6 +108,7 @@ export function ClubHeader({
             </Text>
           ) : null}
         </View>
+      </View>
       </View>
 
       <View style={styles.subscribe}>
@@ -91,6 +134,8 @@ export function ClubHeader({
 
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.four },
+  /** Relative + clipped so the wash fills exactly this block and no more. */
+  identityWrap: { position: 'relative', overflow: 'hidden' },
   identity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   names: { flex: 1, gap: Spacing.half, minWidth: 0 },
   subscribe: {

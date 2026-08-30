@@ -5,9 +5,18 @@
  * `queries/use-today.ts` for why. That is what makes the league group header
  * correct and the crests ours.
  *
- * ⚠ The losing side's name drops to `textDim`; **a draw leaves both at full
- * ink.** Score-driven, not status-driven — `scoreEmphasis`, which the `Score`
- * atom applies to the digits from the same two numbers (ADR 0044).
+ * ⚠ **Each match is a STACKED pair** (ADR 0069): home over away, one crest and
+ * one name per line, the goals in a fixed right-aligned column, the chevron in
+ * its own. There is no `FT` word — the section is titled "Finished today" and
+ * the row used to say it again, at the cost of the names: the trailing cell
+ * truncated `Nottingham Forest`, `Brighton & Hove Albion` and `Real Sociedad`.
+ * Nothing on this row may be added to the right of the goals without
+ * re-measuring the longest club name at 393pt.
+ *
+ * ⚠ The losing side's name AND goal drop to `textDim`; **a draw leaves both at
+ * full ink.** Score-driven, not status-driven — `scoreEmphasis`, the same rule
+ * the `Score` chip applies on the other cards (ADR 0044). The chip itself is
+ * not used here: a per-line digit is a different shape from a split pair.
  *
  * ⚠ Every row here expands into its match timeline (ADR 0045). Every row is
  * finished by construction, so every row discloses — the chevron is gated on
@@ -24,7 +33,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { Chevron, Crest, Hairline, Score, Text } from '@/components/atoms';
+import { Chevron, Crest, Hairline, Text } from '@/components/atoms';
 import { Colors, LeagueBand, Radius, Size, Spacing } from '@/constants/theme';
 import type { LeagueBandSpec } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
@@ -38,11 +47,10 @@ const SISTER_MARK = { segunda: 'laliga' } as const;
 
 export interface FinishedTodayProps {
   window: FixtureWindowView;
-  finishedLabel: string;
   eventsCopy: Copy['events'];
 }
 
-export function FinishedToday({ window: data, finishedLabel, eventsCopy }: FinishedTodayProps) {
+export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) {
   /** ⚠ One row open at a time — a single id, not a set (ADR 0045). */
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -123,38 +131,46 @@ export function FinishedToday({ window: data, finishedLabel, eventsCopy }: Finis
                     accessibilityRole="button"
                     accessibilityState={{ expanded }}
                     // One stop for the whole row: without this VoiceOver reads
-                    // crest, name, score, name, crest, "FT" as six.
+                    // crest, name, goal, crest, name, goal as six.
                     accessibilityLabel={`${homeName} ${fixture.goalsHome}, ${awayName} ${fixture.goalsAway}`}
                     accessibilityHint={expanded ? eventsCopy.collapse : eventsCopy.expand}
                     style={({ pressed }) => [styles.row, pressed && { opacity: 0.75 }]}>
-                    <Crest
-                      src={crestSrc(fixture.homeTeam?.logoUrls ?? null, fixture.homeTeam?.logoUrl ?? null, 'xsmall')}
-                      fallback={fixture.homeTeam ? abbreviate(fixture.homeTeam.name, fixture.homeTeam.slug, fixture.homeTeam.shortName) : '?'}
-                      size={Size.crestRow}
-                    />
-                    <Text variant="bodyStrong" color={dim.home === 'muted' ? 'textDim' : 'text'} numberOfLines={1} style={styles.name}>
-                      {homeName}
-                    </Text>
+                    <View style={styles.pair}>
+                      {(
+                        [
+                          { team: fixture.homeTeam, name: homeName, muted: dim.home === 'muted' },
+                          { team: fixture.awayTeam, name: awayName, muted: dim.away === 'muted' },
+                        ] as const
+                      ).map(({ team, name, muted }, i) => (
+                        <View key={i} style={styles.line}>
+                          <Crest
+                            src={crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'xsmall')}
+                            fallback={team ? abbreviate(team.name, team.slug, team.shortName) : '?'}
+                            size={Size.crestRow}
+                          />
+                          <Text
+                            variant="bodyStrong"
+                            color={muted ? 'textDim' : 'text'}
+                            numberOfLines={1}
+                            style={styles.name}>
+                            {name}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
 
-                    <Score home={fixture.goalsHome} away={fixture.goalsAway} size="row" chip />
-
-                    <Text
-                      variant="bodyStrong"
-                      color={dim.away === 'muted' ? 'textDim' : 'text'}
-                      numberOfLines={1}
-                      style={[styles.name, styles.awayName]}>
-                      {awayName}
-                    </Text>
-                    <Crest
-                      src={crestSrc(fixture.awayTeam?.logoUrls ?? null, fixture.awayTeam?.logoUrl ?? null, 'xsmall')}
-                      fallback={fixture.awayTeam ? abbreviate(fixture.awayTeam.name, fixture.awayTeam.slug, fixture.awayTeam.shortName) : '?'}
-                      size={Size.crestRow}
-                    />
-
-                    <View style={styles.ft}>
-                      <Text variant="eyebrowSm" color="textFaint">
-                        {finishedLabel}
+                    {/* ⚠ Both digits `tabular` and in a FIXED column: three
+                        matches in a group are read down, like a table. */}
+                    <View style={styles.goals}>
+                      <Text variant="numeral" tabular color={dim.home === 'muted' ? 'textDim' : 'text'} style={styles.goal}>
+                        {fixture.goalsHome}
                       </Text>
+                      <Text variant="numeral" tabular color={dim.away === 'muted' ? 'textDim' : 'text'} style={styles.goal}>
+                        {fixture.goalsAway}
+                      </Text>
+                    </View>
+
+                    <View style={styles.disclosure}>
                       <Chevron expanded={expanded} />
                     </View>
                   </Pressable>
@@ -197,21 +213,30 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    // ⚠ `one`, not `two`. The score chip (ADR 0044) is ~24pt wider than the
-    // `4–1` string it replaced and the two name columns are what pay for it —
-    // 4pt back at each of the five gaps is the difference between `Real Madrid`
-    // v `Real Sociedad` fitting and truncating, and a truncated club name is
-    // the failure ADR 0029 names.
-    gap: Spacing.one,
+    gap: Spacing.three,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.dark.hairline,
   },
+  /** The two club lines. `two` between them so the crests read as a pair. */
+  pair: { flex: 1, minWidth: 0, gap: Spacing.two },
+  line: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   name: { flex: 1, minWidth: 0 },
-  awayName: { textAlign: 'right' },
-  // ⚠ Was a 22pt text cell; the chevron (ADR 0045) makes it a row and costs the
-  // two name columns ~13pt between them. `half`, not `one`, keeps that bill as
-  // small as the disclosure can be — see the gap note on `row` above.
-  ft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
+  /**
+   * The goal column: a hairline on its left running the pair's full height, so
+   * the digits sit in a column of their own and not at the end of a name. The
+   * same `two` gap as the pair keeps each digit on its club's baseline.
+   */
+  goals: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingLeft: Spacing.three,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: Colors.dark.hairlineMid,
+  },
+  goal: { width: Size.goalColumn, textAlign: 'right' },
+  /** ⚠ Not a hit target — the row is. Its own column so it never crowds a digit. */
+  disclosure: { paddingLeft: Spacing.half },
 });
