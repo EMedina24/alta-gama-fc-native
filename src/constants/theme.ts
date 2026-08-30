@@ -336,17 +336,30 @@ export const Size = {
   /** League filter tiles: artwork only, four across inside the screen gutter. */
   leagueTileW: 80, leagueTileH: 56, leagueMarkW: 52, leagueMarkH: 28,
   /**
-   * Onboarding's league chips — artwork PLUS the league's name, 2-up (ADR 0056).
-   * Bigger than the filter tile because it is a first-run choice, not a filter.
+   * Onboarding's league PILLS — artwork PLUS the league's name, in a horizontal
+   * row (ADR 0076, replacing 0056's 2-up chip grid).
    *
-   * ⚠ `leagueChipMarkH` is a HEIGHT ONLY and there is deliberately no matching
+   * ⚠ `leaguePillMarkH` is a HEIGHT ONLY and there is deliberately no matching
    * width. The four marks have wildly different aspect ratios — LaLiga's LL
    * monogram is 1:1, the Premier League's is ~4:5 — so capping height keeps them
    * optically the same size, while capping width shrinks the portrait ones to
    * slivers. `leagueMarkW`/`leagueMarkH` above are a fixed box because that row
    * is artwork-only and needs every tile identical; this one is not.
    */
-  leagueChipH: 84, leagueChipMarkH: 32,
+  leaguePillH: 40, leaguePillMarkH: 20,
+  /**
+   * The onboarding picker's crest — 3-up tiles, crest above the name (ADR 0076).
+   * A step above `crestCard` because the crest IS the tile's identity here.
+   */
+  crestPick: 44,
+  /** The onboarding footer's primary button, and the crest discs inside it. */
+  ctaH: 50, ctaDisc: 34, ctaDiscCrest: 24,
+  /** The picked badge on a picker tile. */
+  pickBadge: 18,
+  /** The Alta Gama mark on the welcome screen, and the icon tile on the alert preview. */
+  markWelcome: 126, alertIconTile: 38,
+  /** The tinted glyph tile on the alert primer's rows. */
+  alertGlyphTile: 34,
   /**
    * The time column, per clock format. Fixed *within* a format so no single row
    * reflows against its neighbours — every row on screen shares one `clock`, so

@@ -138,7 +138,7 @@ export default function AccountSheetRoute() {
       onReplayOnboarding={() => {
         setOnboarded(false);
         router.dismissAll();
-        router.replace('/onboarding/clubs');
+        router.replace('/onboarding/welcome');
       }}
       onTurnOffAlerts={() => {
         clearFollows();

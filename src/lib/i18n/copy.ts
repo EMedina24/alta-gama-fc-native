@@ -95,6 +95,17 @@ export interface Copy {
     notNow: string;
     /** ⚠ Says alerts are not delivering yet. Honest, not a teaser. */
     pendingNote: string;
+    // The welcome screen and the step eyebrows (ADR 0076).
+    welcomeTitle: string;
+    welcomeBody: string;
+    welcomeCta: string;
+    welcomeSkip: string;
+    step: (n: number, of: number) => string;
+    /** The SAMPLE notification on the primer — a preview, not a fixture. */
+    previewEyebrow: string;
+    previewTitle: string;
+    previewBody: string;
+    previewTime: string;
   };
   account: {
     title: string;
@@ -569,6 +580,16 @@ export const esCopy: Copy = {
     notNow: 'Ahora no',
     pendingNote:
       'Los avisos se guardan en este dispositivo y empezarán a llegar cuando publiquemos la app.',
+    welcomeTitle: 'Tus clubes.\nTu calendario.',
+    welcomeBody:
+      'Cada partido de los clubes que sigues, en tu calendario — y un aviso cuando uno se mueve.',
+    welcomeCta: 'Elegir mis clubes',
+    welcomeSkip: 'Ahora no',
+    step: (n: number, of: number) => `Paso ${n} de ${of}`,
+    previewEyebrow: 'Horario cambiado',
+    previewTitle: 'Barcelona - Real Madrid',
+    previewBody: 'Ahora el domingo a las 21:00, no el sábado a las 18:30. Tu calendario ya está al día.',
+    previewTime: 'ahora',
   },
 
   account: {
@@ -935,6 +956,16 @@ export const enCopy: Copy = {
     notNow: 'Not now',
     pendingNote:
       'Alerts are saved on this device and start arriving once the app is released.',
+    welcomeTitle: 'Your clubs.\nYour calendar.',
+    welcomeBody:
+      'Every kickoff of every club you follow, in your calendar — and a word when one moves.',
+    welcomeCta: 'Pick your clubs',
+    welcomeSkip: 'Skip for now',
+    step: (n: number, of: number) => `Step ${n} of ${of}`,
+    previewEyebrow: 'Kickoff moved',
+    previewTitle: 'Barcelona v Real Madrid',
+    previewBody: 'Now Sunday 21:00, not Saturday 18:30. Your calendar is already updated.',
+    previewTime: 'now',
   },
 
   account: {

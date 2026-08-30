@@ -273,6 +273,28 @@ export function widgetName(name: string): string {
   return contracted.length <= 11 ? contracted : words[words.length - 1];
 }
 
+/**
+ * `Atlético`, `Espanyol`, `R. Vallecano` — the onboarding picker's tile name
+ * (ADR 0076). Three tiles across leave ~96pt at `caption`, about 13 characters.
+ *
+ * ⚠ NOT `widgetName`: that contracts to the LAST word when the initial does not
+ * help, which put `Madrid` under Atlético's crest and `Barcelona` under
+ * Espanyol's — twice on one grid. Here a `de` tail is dropped first (the part
+ * before it is the name people use), then the widget's initial contraction,
+ * and only then the last word.
+ */
+export function pickerName(name: string): string {
+  const shown = displayName(name);
+  if (shown.length <= PICKER_MAX) return shown;
+  const de = shown.split(/\s+de\s+/i)[0];
+  if (de.length > 0 && de.length < shown.length) return de;
+  const words = shown.split(/\s+/).filter(Boolean);
+  if (words.length < 2) return shown;
+  const contracted = `${words[0].charAt(0)}. ${words.slice(1).join(" ")}`;
+  return contracted.length <= PICKER_MAX ? contracted : words[words.length - 1];
+}
+const PICKER_MAX = 13;
+
 export interface HomeGround {
   venue: string | null;
   city: string | null;

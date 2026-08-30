@@ -1,7 +1,7 @@
 # 0056 — Onboarding browses every league, behind chips that name themselves
 
 - **Date:** 2026-08-28
-- **Status:** Accepted
+- **Status:** Accepted — amended by [0076](./0076-onboarding-floodlight-redesign.md) (the chip grid became a pill row; the rules stand)
 - **Decided by:** Ed Medina
 
 ## Context

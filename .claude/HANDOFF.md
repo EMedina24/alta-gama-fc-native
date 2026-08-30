@@ -60,7 +60,7 @@ src/
 
 **Screens:** Today (board + FINISHED TODAY + follow card) · Matchdays · Table ·
 Clubs · club page (season spine + squad). **Sheets:** alerts · calendar ·
-matchday calendar · account. **Onboarding:** club picker → alert primer.
+matchday calendar · account. **Onboarding:** welcome → club picker → alert primer ([0076](./decisions/0076-onboarding-floodlight-redesign.md)).
 
 ---
 
@@ -1003,10 +1003,9 @@ derives them from `displayName`, falling back to the email's local part, and
 ⚠ **Still only on Today.** The design puts it in every tab header, and that part
 is unchanged — it is now plain wiring, with no product question left in it.
 
-### 6 · Onboarding club picker is 2-up, SPEC §3.7 says 3-up
+### 6 · ~~Onboarding club picker is 2-up, SPEC §3.7 says 3-up~~
 
-Cosmetic, but it changes how many clubs are visible without scrolling, which is
-the whole job of that screen.
+Done 2026-08-30 in the onboarding redesign ([0076](./decisions/0076-onboarding-floodlight-redesign.md)).
 
 ### 7 · Accessibility pass
 

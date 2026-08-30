@@ -19,3 +19,7 @@ export { VersusBadge, type VersusTone } from './versus-badge';
 export { WashGradient, type WashGradientProps, type WashStop } from './wash-gradient';
 export { PitchGlyph, type PitchGlyphProps } from './pitch-glyph';
 export { SlotToken, type SlotTokenMode, type SlotTokenProps } from './slot-token';
+export { AlertGlyph, type AlertGlyphProps, type AlertKind } from './alert-glyph';
+export { Glow, type GlowProps } from './glow';
+export { Mark, MARK_RATIO, type MarkProps } from './mark';
+export { SearchGlyph } from './search-glyph';

@@ -20,6 +20,8 @@ export interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   full?: boolean;
+  /** `Size.ctaH` instead of `minTouch` — the onboarding footer's primary (ADR 0076). */
+  tall?: boolean;
 }
 
 export function Button({
@@ -30,6 +32,7 @@ export function Button({
   disabled = false,
   loading = false,
   full = true,
+  tall = false,
 }: ButtonProps) {
   const inert = disabled || loading;
   return (
@@ -42,6 +45,7 @@ export function Button({
         styles.base,
         styles[tone],
         full && styles.full,
+        tall && styles.tall,
         pressed && !inert && styles.pressed,
         inert && styles.inert,
       ]}>
@@ -77,6 +81,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.control,
   },
   full: { alignSelf: 'stretch' },
+  tall: { minHeight: Size.ctaH },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   pressed: { opacity: 0.75 },
   inert: { opacity: 0.4 },

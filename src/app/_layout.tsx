@@ -201,7 +201,7 @@ function OnboardingGate() {
     // Already there, or in dev tooling — `_debug` is deliberately not gated, so
     // a component can be previewed without completing a flow first.
     if (segments[0] === 'onboarding' || segments[0] === '_debug') return;
-    router.replace('/onboarding/clubs');
+    router.replace('/onboarding/welcome');
   }, [onboarded, segments, router]);
 
   return null;

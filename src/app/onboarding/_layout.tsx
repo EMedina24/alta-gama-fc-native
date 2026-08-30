@@ -1,5 +1,5 @@
 /**
- * Onboarding — two steps, before the tabs.
+ * Onboarding — a welcome, then two steps, before the tabs (ADR 0076).
  *
  * ⚠ Skipping still lands in the app **with the picks subscribed**. A skip is
  * "don't ask me the rest", not "discard what I just chose".

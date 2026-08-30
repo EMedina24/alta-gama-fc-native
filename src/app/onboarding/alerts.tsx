@@ -15,8 +15,9 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Hairline, Text } from '@/components/atoms';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { AlertGlyph, type AlertKind, Button, Check, Eyebrow, Glow, Hairline, Text } from '@/components/atoms';
+import { AlertPreview, StepDots } from '@/components/molecules';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { requestPushPermission } from '@/features/push/capability';
 import { setAlert, setOnboarded, usePreferences } from '@/store/preferences';
@@ -48,8 +49,9 @@ export default function OnboardingAlerts() {
     finish();
   };
 
-  const rows = [
+  const rows: { kind: AlertKind; title: string; note: string; on: boolean }[] = [
     {
+      kind: 'reminder',
       title: copy.account.reminder,
       /**
        * ⚠ Reads the ACTUAL lead times rather than naming 30 in prose (ADR 0040).
@@ -60,42 +62,56 @@ export default function OnboardingAlerts() {
       note: prefs.reminderLeads.map((lead) => copy.account.leads[lead]).join(' · '),
       on: prefs.alertReminder,
     },
-    { title: copy.account.moved, note: copy.account.movedNote, on: prefs.alertMoved },
-    { title: copy.account.postponed, note: copy.account.postponedNote, on: prefs.alertPostponed },
+    { kind: 'moved', title: copy.account.moved, note: copy.account.movedNote, on: prefs.alertMoved },
+    { kind: 'postponed', title: copy.account.postponed, note: copy.account.postponedNote, on: prefs.alertPostponed },
   ];
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.content, { paddingTop: insets.top + Spacing.eight }]}>
+      <Glow opacity={0.12} cx={0.5} cy={0.2} r={0.6} />
+      <View style={[styles.content, { paddingTop: insets.top + Spacing.six }]}>
+        <View style={styles.stepRow}>
+          <Eyebrow color="accent">{copy.onboarding.step(2, 2)}</Eyebrow>
+          <StepDots count={2} active={1} />
+        </View>
         <Text variant="largeTitle">{copy.onboarding.alertsTitle}</Text>
-        <Text variant="body" color="textDim">
+        <Text variant="body" color="textSecondary" style={styles.body}>
           {copy.onboarding.alertsBody}
         </Text>
+
+        {/* What a reader is saying yes to — a SAMPLE, before the prompt (ADR 0076). */}
+        <View style={styles.preview}>
+          <AlertPreview
+            eyebrow={copy.onboarding.previewEyebrow}
+            title={copy.onboarding.previewTitle}
+            body={copy.onboarding.previewBody}
+            time={copy.onboarding.previewTime}
+          />
+        </View>
 
         <View style={styles.group}>
           {rows.map((row, index) => (
             <View key={row.title}>
               {index > 0 ? <Hairline /> : null}
               <View style={styles.row}>
-                <Text variant="callout" color="accent" style={styles.check}>
-                  ✓
-                </Text>
+                <View style={styles.glyph}>
+                  <AlertGlyph kind={row.kind} />
+                </View>
                 <View style={styles.rowText}>
                   <Text variant="bodyStrong">{row.title}</Text>
-                  <Text variant="footnote" color="textFaint">
+                  <Text variant="footnote" color="textMuted">
                     {row.note}
                   </Text>
                 </View>
+                <Check color="accent" />
               </View>
             </View>
           ))}
         </View>
-
-
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
-        <Button label={copy.onboarding.allow} onPress={() => void allow()} loading={asking} />
+        <Button label={copy.onboarding.allow} onPress={() => void allow()} loading={asking} tall />
         {/* ⚠ Does not ask — see the header. The prompt stays unspent. */}
         <Button label={copy.onboarding.notNow} tone="quiet" onPress={finish} />
       </View>
@@ -106,20 +122,30 @@ export default function OnboardingAlerts() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.dark.background, justifyContent: 'space-between' },
   content: { paddingHorizontal: Spacing.five, gap: Spacing.three },
+  stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  body: { lineHeight: 21 },
+  preview: { marginTop: Spacing.four, marginBottom: Spacing.one },
   group: {
     backgroundColor: Colors.dark.card,
     borderRadius: Radius.group,
     overflow: 'hidden',
-    marginTop: Spacing.three,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.four,
+    gap: Spacing.three + 2,
+    paddingVertical: Spacing.three + 2,
+    paddingHorizontal: Spacing.four,
   },
-  check: { width: 16 },
-  rowText: { flex: 1, gap: Spacing.half },
+  glyph: {
+    width: Size.alertGlyphTile,
+    height: Size.alertGlyphTile,
+    borderRadius: Radius.seg + 1,
+    backgroundColor: Colors.dark.accentWash,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowText: { flex: 1, minWidth: 0, gap: Spacing.half },
   footer: {
     paddingHorizontal: Spacing.five,
     paddingTop: Spacing.three,

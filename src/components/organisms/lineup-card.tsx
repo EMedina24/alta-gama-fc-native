@@ -22,9 +22,8 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text as RNText, View } from 'react-native';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { SlotToken } from '@/components/atoms';
+import { Mark, SlotToken } from '@/components/atoms';
 import { PitchSlots, PitchSurface } from '@/components/molecules';
 import { Colors } from '@/constants/theme';
 import {
@@ -152,17 +151,10 @@ export function LineupCard({
         </View>
       </View>
 
-      {/* The Alta Gama mark, top-right (logos/mark-currentcolor.svg). */}
-      <Svg
-        width={s(CARD.mark)}
-        height={s(CARD.mark * (30 / 42))}
-        viewBox="0 0 42 30"
-        style={{ position: 'absolute', right: s(CARD.padX), top: s(CARD.padTop) }}
-        accessible={false}>
-        <Rect x={1.25} y={1.25} width={39.5} height={27.5} rx={4.75} stroke={Colors.dark.accent} strokeWidth={2.5} fill="none" />
-        <Path d="M21 1.25V8.5M21 21.5V28.75M0 8.25H4.75V21.75H0M42 8.25H37.25V21.75H42" stroke={Colors.dark.accent} strokeWidth={2.5} fill="none" />
-        <Circle cx={21} cy={15} r={5.25} stroke={Colors.dark.accent} strokeWidth={2.5} fill="none" />
-      </Svg>
+      {/* The Alta Gama mark, top-right (`atoms/mark`). */}
+      <View style={{ position: 'absolute', right: s(CARD.padX), top: s(CARD.padTop) }}>
+        <Mark width={s(CARD.mark)} strokeWidth={2.5} />
+      </View>
 
       {/* Pitch */}
       <View style={{ position: 'absolute', left: s(CARD.padX), top: s(pitchTop()) }}>
