@@ -484,6 +484,8 @@ export interface Copy {
     /** Section eyebrow on the card AND the pushed screen's title. */
     title: string;
     allNews: string;
+    /** The kicker on the front page's lead — `LEAD` / `DESTACADO` (ADR 0070). */
+    lead: string;
     /** `4 NEW` — fully formed, uppercased by the eyebrow token. */
     newCount: (n: number) => string;
     /** The filter chips' first entry. */
@@ -860,6 +862,7 @@ export const esCopy: Copy = {
   news: {
     title: 'Noticias',
     allNews: 'Todas las noticias',
+    lead: 'Destacado',
     newCount: (n: number) => `${n} ${n === 1 ? 'nueva' : 'nuevas'}`,
     all: 'Todas',
     today: 'Hoy',
@@ -1222,6 +1225,7 @@ export const enCopy: Copy = {
   news: {
     title: 'News',
     allNews: 'All news',
+    lead: 'Lead',
     newCount: (n: number) => `${n} new`,
     all: 'All',
     today: 'Today',

@@ -37,9 +37,23 @@ export function registerCapture(fn: CaptureFn | null): void {
   capture = fn;
 }
 
-/** Wraps `captureRef` so the screen does not import view-shot itself. */
+/**
+ * Wraps `captureRef` so the screen does not import view-shot itself.
+ *
+ * ⚠ `useRenderInContext: true` (ADR 0073). Without it iOS rasterises through
+ * `drawViewHierarchyInRect:afterScreenUpdates:`, which REFUSES a hierarchy that
+ * is not the foreground one — and at the moment Save is tapped the builder is
+ * the presenting controller under a full-detent sheet. That refusal was the
+ * "could not be rendered" error. `renderInContext` draws the layer tree
+ * directly and does not care who is on top.
+ */
 export async function captureView(ref: React.RefObject<unknown>): Promise<string> {
-  return captureRef(ref as never, { format: 'png', quality: 1, result: 'tmpfile' });
+  return captureRef(ref as never, {
+    format: 'png',
+    quality: 1,
+    result: 'tmpfile',
+    useRenderInContext: true,
+  });
 }
 
 export async function exportLineup(kind: ExportKind, size: ExportSize): Promise<ExportOutcome> {
@@ -54,6 +68,10 @@ export async function exportLineup(kind: ExportKind, size: ExportSize): Promise<
 
   const permission = await MediaLibrary.requestPermissionsAsync(true);
   if (!permission.granted) return 'denied';
-  await MediaLibrary.saveToLibraryAsync(uri);
+  // ⚠ SDK 57's `expo-media-library` REMOVED `saveToLibraryAsync` from its root
+  // entry — the name still exists there as a stub that throws "deprecated",
+  // which is what "could not be rendered" was (ADR 0073). The class API is
+  // the replacement; view-shot hands back a bare path, so give it a scheme.
+  await MediaLibrary.Asset.create(uri.startsWith('file://') ? uri : `file://${uri}`);
   return 'saved';
 }

@@ -20,6 +20,12 @@ export interface WashStop {
   /** 0–1 */
   offset: number;
   color: string;
+  /**
+   * 0–1, default 1. ⚠ The ONLY way to get a translucent stop: `react-native-svg`
+   * ignores the alpha channel of an `rgba()` `stopColor` and paints it opaque —
+   * the News lead's scrim shipped as a black slab over the picture that way.
+   */
+  opacity?: number;
 }
 
 export interface WashGradientProps {
@@ -43,7 +49,12 @@ export function WashGradient({ stops, angle }: WashGradientProps) {
       <Defs>
         <LinearGradient id={id} x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2}>
           {stops.map((s) => (
-            <Stop key={`${s.offset}-${s.color}`} offset={s.offset} stopColor={s.color} />
+            <Stop
+              key={`${s.offset}-${s.color}`}
+              offset={s.offset}
+              stopColor={s.color}
+              stopOpacity={s.opacity ?? 1}
+            />
           ))}
         </LinearGradient>
       </Defs>

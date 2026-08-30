@@ -1,5 +1,8 @@
 /**
- * One story on the News screen: thumbnail, a three-line headline, attribution.
+ * One story on the News screen, below the front page: a 56pt thumbnail, a
+ * two-line headline, attribution — a hairline ROW, not a card (ADR 0070). The
+ * card chrome went with the redesign: thirty cards of equal weight was the
+ * problem, and rows are what let the lead and the tiles above them lead.
  *
  * ⚠ The headline is a QUOTE in the publisher's language — clamped, never
  * trimmed or re-cased here. `numberOfLines` is the only cut it gets.
@@ -10,7 +13,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/atoms';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, Size, Spacing } from '@/constants/theme';
 
 import { NewsMeta } from './news-meta';
 import { NewsThumb } from './news-thumb';
@@ -31,9 +34,9 @@ export function NewsRow({ title, imageUrl, topic, publisher, age, onPress }: New
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${publisher}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-      <NewsThumb src={imageUrl} size={Size.newsThumb} />
+      <NewsThumb src={imageUrl} size={Size.newsCardRow} />
       <View style={styles.body}>
-        <Text variant="callout" numberOfLines={3}>
+        <Text variant="callout" numberOfLines={2}>
           {title}
         </Text>
         <NewsMeta topic={topic} publisher={publisher} age={age} />
@@ -45,11 +48,12 @@ export function NewsRow({ title, imageUrl, topic, publisher, age, onPress }: New
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.three,
-    backgroundColor: Colors.dark.card,
-    borderRadius: Radius.card,
-    padding: Spacing.three,
+    paddingVertical: Spacing.three,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.dark.hairlineMid,
   },
-  pressed: { backgroundColor: Colors.dark.rowActive },
+  pressed: { opacity: 0.75 },
   body: { flex: 1, minWidth: 0, gap: Spacing.two, justifyContent: 'center' },
 });

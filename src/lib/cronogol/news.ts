@@ -195,6 +195,33 @@ export function newsCardPick(items: readonly NewsArticleView[], seenAt: string |
   };
 }
 
+export interface NewsFrontPagePick {
+  lead: NewsArticleView | null;
+  /** Zero, one (rendered full width) or two. */
+  tiles: NewsArticleView[];
+  rows: NewsArticleView[];
+}
+
+/**
+ * The shape of the News screen's first day group (ADR 0070): one lead with its
+ * picture, up to two tiles, the rest as rows. Items arrive in the group's own
+ * order and are NOT re-sorted here — the screen already sorted them newest
+ * first through `selectNewsItems`.
+ *
+ * ⚠ Only the FIRST group on the screen is a front page. Every later day is
+ * rows: one front page per screen, or nothing on it leads.
+ *
+ * ⚠ A quiet league is a real state: two stories are a lead and ONE tile drawn
+ * full width, one story is a lead alone. Never pad the tiles from another day.
+ */
+export function frontPagePick(items: readonly NewsArticleView[]): NewsFrontPagePick {
+  return {
+    lead: items[0] ?? null,
+    tiles: items.slice(1, 3),
+    rows: items.slice(3),
+  };
+}
+
 /**
  * The ONE branch point between our own editorial and aggregated reporting.
  *

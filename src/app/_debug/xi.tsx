@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkeletonRows, Text } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
 import { LineupCard } from '@/components/organisms/lineup-card';
+import { SquadRail } from '@/components/organisms/squad-rail';
 import { StartingXiBoard } from '@/components/organisms/starting-xi-board';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { EXPORT_SIZES, type ExportSize } from '@/features/starting-xi/card-geometry';
@@ -33,7 +34,19 @@ export default function DebugXi() {
   const size = (params.size ?? '4:5') as ExportSize;
 
   const squad = useClubSquad(slug);
-  const players = useMemo(() => squad.data?.players ?? [], [squad.data]);
+  /**
+   * The real squad, with two portraits deliberately broken (ADR 0072): the
+   * second player loses his photo (→ number token) and the third gets a URL
+   * that 404s (→ number token via `onError`). Everything else is live, so
+   * the mixed pitch a Premier League squad produces is on screen here too.
+   */
+  const players = useMemo(
+    () =>
+      (squad.data?.players ?? []).map((p, i) =>
+        i === 1 ? { ...p, photoUrl: null } : i === 2 ? { ...p, photoUrl: 'https://altagamafc.crono-gol.com/missing.png' } : p,
+      ),
+    [squad.data],
+  );
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const placed = useMemo(
     () => autoFill(formation, {}, players.map((p) => ({ id: p.id, line: lineOfPosition(p.position) }))),
@@ -66,6 +79,14 @@ export default function DebugXi() {
         onDrop={() => {}}
         onLongPress={() => {}}
         slotLabel={(l) => l}
+      />
+      <SectionHeader title="Rail" meta="portrait tiles · number badge · two broken on purpose" />
+      <SquadRail
+        players={players}
+        filter="all"
+        onFilter={() => {}}
+        onPick={() => {}}
+        labels={{ all: xi.filterAll, lines: xi.lines, note: xi.squadNote }}
       />
       <SectionHeader title="Card" meta={`${size} at ${Math.round(scale * 100)}%`} />
       <View style={{ width: W, height: EXPORT_SIZES[size].h * scale }}>

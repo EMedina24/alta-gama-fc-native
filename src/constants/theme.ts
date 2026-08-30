@@ -147,6 +147,20 @@ export type LeagueBandSpec = { solid: string } | { gradient: readonly [string, s
  * lightness they read a step lighter, and Villarreal's gold and Betis's green
  * both out-shouted the crest on them at the blue cards' cap.
  */
+/**
+ * The scrim over the News lead's picture (ADR 0070): the page ground, clear
+ * until `clearTo`, `midOpacity` by `mid`, and solid at the foot so the text
+ * sits on the same ground as every other card. Never a flat overlay — a
+ * picture under 55 % black is a dead picture. Opacities are passed as
+ * `WashStop.opacity`, never baked into an `rgba()` — see the atom's warning.
+ */
+export const NewsScrim = {
+  color: '#0a0b0c',
+  clearTo: 0.25,
+  mid: 0.62,
+  midOpacity: 0.72,
+} as const;
+
 export const ClubWash = {
   // ⚠ Measured on the simulator, not derived: the preview was set at 26–38 and
   // the device rendered every corner a step louder than the browser had — a
@@ -267,6 +281,9 @@ export const Type = {
   xiCaption: { fontSize: 11.5, fontWeight: '600', letterSpacing: 0.2 },
   /** The `SHAPE` word beside the formation in the toolbar. */
   xiToolbarLabel: { fontSize: 11, fontWeight: '500', letterSpacing: 1.1, textTransform: 'uppercase' },
+  /** The shirt number on a portrait token's corner badge (ADR 0072), and the rail tile's. */
+  xiBadge: { fontSize: 9.5, fontWeight: '800' },
+  xiRailBadge: { fontSize: 8, fontWeight: '800' },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -287,12 +304,28 @@ export const Size = {
   crestNext: 64, versusBadge: 34,
   tabIcon: 22, avatar: 36, sheetGrabber: 38,
   /**
-   * News pictures (ADR 0064): the lead's square and the two row thumbs on the
-   * Today card, and the row thumbnail on the News screen. Squares, cover-cropped — the publisher's
-   * originals are 16:9 and any size, and a fixed frame is what stops a missing
-   * or hotlink-blocked image from reflowing the headline beside it.
+   * News row thumbnails (ADR 0064): the two rows on the Today card and every
+   * row on the News screen. Squares, cover-cropped — the publisher's originals
+   * are 16:9 and any size, and a fixed frame is what stops a missing or
+   * hotlink-blocked image from reflowing the headline beside it.
    */
-  newsLead: 96, newsCardRow: 56, newsThumb: 64,
+  newsCardRow: 56,
+  /**
+   * The Today card's lead picture (ADR 0071): full card width at 2:1.15, ~200pt
+   * tall at 393. Deliberately SHORTER than the page's `newsLeadRatio` — this is
+   * one card on a board of score cards and must stay below the next-up card in
+   * weight.
+   */
+  newsCardLeadRatio: 2 / 1.15,
+  /**
+   * The News screen's front page (ADR 0070). The lead's frame is a hair
+   * taller than square — 4:4.6 — so a three-line headline and a two-line
+   * excerpt fit UNDER the picture's subject rather than over it; the tiles'
+   * picture is 16:10, close to the publishers' native 16:9 with the top and
+   * bottom trimmed rather than the sides.
+   */
+  newsLeadRatio: 4 / 4.6,
+  newsTileRatio: 16 / 10,
   /**
    * Player portraits. ⚠ The SOURCE aspect ratio varies by league — 256×278
    * (LaLiga), 110×140 (Premier League), and an operator stopgap has no
@@ -420,6 +453,14 @@ export const Size = {
   xiFilterH: 30,
   /** A look preview tile in the Look sheet. */
   xiLookPreview: 96,
+  /**
+   * The number badge on a portrait token (ADR 0072), at board size; the card
+   * scales it with the ring. ⚠ Not part of the formation tables — it sits
+   * INSIDE the 46pt footprint.
+   */
+  xiBadge: 18,
+  /** The same badge on a 30pt rail tile. */
+  xiRailBadge: 14,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

@@ -17,22 +17,33 @@
  * ⚠ `newsSeenAt` is written on MOUNT — opening the screen is what clears the
  * card's NEW count. It is an effect with no setState, so it is not the lint
  * error this repo already carries six of.
+ *
+ * ⚠⚠ **The `N NEW` pill reads the stamp CAPTURED AT OPEN, never the live
+ * preference** (ADR 0070). The mount effect above overwrites `newsSeenAt`
+ * within the first frame; a pill computed from the store would say `6 NEW`
+ * for one render and `0` for the rest. `seenAtOpen` is a lazy `useState`
+ * initialiser and does not change while the screen is up.
+ *
+ * ⚠ The first day group is a FRONT PAGE (`frontPagePick`): lead, tiles, rows.
+ * Later groups are rows. One front page per screen.
  */
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text } from '@/components/atoms';
+import { Eyebrow, Text } from '@/components/atoms';
 import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { openArticle } from '@/features/news/open';
 import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import {
   articleTopic,
+  frontPagePick,
   groupNewsByDay,
   isOurs,
   newsAge,
+  newsCardPick,
   plainText,
   selectNewsItems,
 } from '@/lib/cronogol/news';
@@ -40,7 +51,7 @@ import type { NewsArticleView, NewsLeagueView } from '@/lib/cronogol/types';
 import { formatFixtureDate, zonedDayKey } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useNews, useNewsByLeague, useNewsLeagues } from '@/queries/use-news';
-import { setNewsSeenAt, useZone } from '@/store/preferences';
+import { setNewsSeenAt, usePreferences, useZone } from '@/store/preferences';
 
 const ALL = 'all';
 
@@ -67,6 +78,9 @@ export default function NewsScreen() {
   const zone = useZone();
 
   const [filter, setFilter] = useState<string>(ALL);
+  const { newsSeenAt } = usePreferences();
+  // ⚠ Captured once — see the docblock. Not `newsSeenAt` itself.
+  const [seenAtOpen] = useState(() => newsSeenAt);
 
   const global = useNews();
   const byLeague = useNewsByLeague(filter === ALL ? null : filter);
@@ -91,6 +105,8 @@ export default function NewsScreen() {
    */
   const articles = feed.data?.articles ?? [];
   const items = selectNewsItems(articles, now, articles.length);
+  /** Over the WHOLE selected feed, not the Today card's three. */
+  const newCount = newsCardPick(items, seenAtOpen).newCount;
 
   const open = (article: NewsArticleView) => {
     if (isOurs(article)) {
@@ -103,25 +119,38 @@ export default function NewsScreen() {
     });
   };
 
+  const row = (article: NewsArticleView) => ({
+    key: article.id,
+    title: plainText(article.title),
+    imageUrl: article.imageUrl,
+    topic: articleTopic(article),
+    publisher: article.publisher.name,
+    age: newsAge(article.publishedAt, now),
+    onPress: () => open(article),
+  });
+
   const groups: NewsGroup[] = groupNewsByDay(items, now, (iso) => zonedDayKey(iso, zone)).map(
-    (group) => ({
-      label:
+    (group, index) => {
+      const label =
         group.kind === 'today'
           ? copy.news.today
           : group.kind === 'yesterday'
             ? copy.news.yesterday
-            : formatFixtureDate(group.items[0].publishedAt, zone, phrases),
-      count: phrases.stories(group.items.length),
-      rows: group.items.map((article) => ({
-        key: article.id,
-        title: plainText(article.title),
-        imageUrl: article.imageUrl,
-        topic: articleTopic(article),
-        publisher: article.publisher.name,
-        age: newsAge(article.publishedAt, now),
-        onPress: () => open(article),
-      })),
-    }),
+            : formatFixtureDate(group.items[0].publishedAt, zone, phrases);
+      const count = phrases.stories(group.items.length);
+      if (index > 0) return { label, count, rows: group.items.map(row) };
+
+      const page = frontPagePick(group.items);
+      return {
+        label,
+        count,
+        lead: page.lead
+          ? { ...row(page.lead), excerpt: page.lead.excerpt, kicker: copy.news.lead }
+          : null,
+        tiles: page.tiles.map(row),
+        rows: page.rows.map(row),
+      };
+    },
   );
 
   return (
@@ -141,13 +170,21 @@ export default function NewsScreen() {
           styles.content,
           { paddingTop: insets.top + 44, paddingBottom: BottomTabInset },
         ]}>
-        <Text variant="largeTitle">{copy.news.title}</Text>
+        <View style={styles.masthead}>
+          <Text variant="largeTitle">{copy.news.title}</Text>
+          {/* The reader's own day, in their zone — the same formatter every
+              date on the app uses, so the two never disagree. */}
+          <Eyebrow color="textFaint" style={styles.date}>
+            {formatFixtureDate(now.toISOString(), zone, phrases)}
+          </Eyebrow>
+        </View>
         <NewsList
           chips={chips}
           activeChip={filter}
           onChip={setFilter}
           groups={groups}
           loading={feed.isPending}
+          newLabel={newCount > 0 ? copy.news.newCount(newCount) : null}
           copy={copy.news}
         />
       </ScrollView>
@@ -158,4 +195,6 @@ export default function NewsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.dark.background },
   content: { paddingHorizontal: Spacing.five, gap: Spacing.four },
+  masthead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  date: { paddingBottom: Spacing.one },
 });

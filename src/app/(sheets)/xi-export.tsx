@@ -45,8 +45,12 @@ export default function XiExportRoute() {
     setStatus(null);
     try {
       const outcome = await exportLineup(kind, size);
+      if (__DEV__) console.log('[xi-export]', kind, size, outcome);
       setStatus(outcome === 'saved' ? xi.saved : outcome === 'denied' ? xi.photosDenied : outcome === 'unavailable' ? xi.exportFailed : null);
-    } catch {
+    } catch (error) {
+      // ⚠ Never a bare catch on a native promise (ADR 0073): the rejection
+      // carries the module's own reason and it is the only diagnostic there is.
+      if (__DEV__) console.error('[xi-export]', kind, size, error);
       setStatus(xi.exportFailed);
     } finally {
       setBusy(false);

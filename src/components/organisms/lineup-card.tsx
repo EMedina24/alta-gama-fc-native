@@ -20,7 +20,7 @@
  * the middle of a cross-fade is a half-faded portrait.
  */
 import { Image } from 'expo-image';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, Text as RNText, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
@@ -85,8 +85,19 @@ export function LineupCard({
     settled.current += 1;
     if (settled.current >= expected) onImagesSettled?.();
   };
-  // Nothing to wait for: report on the next tick so the caller's ref is set.
-  if (expected === 0 && onImagesSettled) setTimeout(onImagesSettled, 0);
+  // ⚠ In an effect, not during render (ADR 0073): the old inline `setTimeout`
+  // fired on EVERY render and could report "settled" before the host's ref
+  // existed. Runs once per mount per `expected`, after layout — and resets the
+  // tally so a re-render with a different squad cannot short-count.
+  useEffect(() => {
+    settled.current = 0;
+    if (expected === 0 && onImagesSettled) {
+      const t = setTimeout(onImagesSettled, 0);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire per `expected`, not per callback identity
+  }, [expected]);
 
   const tSize = titleSize(title);
 

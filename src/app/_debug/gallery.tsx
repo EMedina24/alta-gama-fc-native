@@ -24,6 +24,8 @@ import {
   StatRow,
 } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
+import { NewsCard } from '@/components/organisms/news-card';
+import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
 import { MatchBoard } from '@/components/organisms/match-board';
 import { Colors, Spacing } from '@/constants/theme';
 import {
@@ -39,11 +41,13 @@ import {
 } from '@/lib/cronogol/events';
 import { pairWash } from '@/lib/cronogol/club-wash';
 import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
+import { frontPagePick } from '@/lib/cronogol/news';
 import type {
   FixtureWindowView,
   LiveMatchEventView,
   LiveMatchView,
   MatchEventView,
+  NewsArticleView,
   TeamRef,
   WindowFixtureView,
 } from '@/lib/cronogol/types';
@@ -217,6 +221,51 @@ const FINISHED_WINDOW: FixtureWindowView = {
   ],
 };
 
+/**
+ * The News front page (ADR 0070) on fabricated stories. Pictures are REAL
+ * MARCA URLs from 2026-08-29 — hot-linked, so they will 404 one day, and that
+ * day the first case turns into the second. That is a state, not a breakage.
+ */
+const MARCA = { id: 'marca', name: 'MARCA', siteUrl: 'https://www.marca.com', isFirstParty: false };
+const STORY = (
+  id: string, title: string, excerpt: string | null, imageUrl: string | null, hoursAgo: number,
+  category = 'Primera División',
+): NewsArticleView => ({
+  id, title, excerpt, imageUrl, url: `https://www.marca.com/${id}`,
+  publishedAt: new Date(NOW - hoursAgo * 60 * 60 * 1000).toISOString(),
+  publisher: MARCA, author: null, categories: [category],
+});
+const IMG = (f: string) => `https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/${f}.jpeg`;
+const NEWS_STORIES: NewsArticleView[] = [
+  STORY('n1', 'Sevilla 1-3 Atlético de Madrid | Resumen LaLiga',
+    'El Atlético se lleva el derbi andaluz con un doblete de Baena y un gol de Julián en el descuento.', IMG('6a932fb775b3a'), 1, 'Atlético'),
+  STORY('n2', 'Luis García Plaza: "Espero que saquen en el vídeo de LaLiga la acción del penalti"', null, IMG('6a932fb775b3a'), 1, 'Sevilla'),
+  STORY('n3', 'Simeone: "Me voy contento por el compromiso, la identidad de lo que somos y lo que queremos"',
+    'El técnico argentino valoró la victoria en el Sánchez-Pizjuán.', IMG('6a932fb775b3a'), 2, 'Atlético'),
+  STORY('n4', 'Kike Salas: "Noto que me golpean, pero me dicen que no es suficiente"', null, IMG('6a932fb775b3a'), 2, 'Sevilla'),
+  STORY('n5', 'Deportivo - Valencia | Riazor quiere tener la fiesta en paz: previa, análisis, pronóstico y predicción', null, IMG('6a932fb775b3a'), 3),
+  STORY('n6', 'Baena hace que se cumplan los sueños', null, null, 4, 'Atlético'),
+];
+/** The screen's own mapping, in miniature. */
+const newsGroup = (label: string, items: NewsArticleView[], count: string): NewsGroup => {
+  const row = (a: NewsArticleView) => ({
+    key: a.id, title: a.title, imageUrl: a.imageUrl, topic: a.categories[0] ?? null,
+    publisher: a.publisher.name, age: '2h', onPress: () => {},
+  });
+  const page = frontPagePick(items);
+  return {
+    label, count,
+    lead: page.lead ? { ...row(page.lead), excerpt: page.lead.excerpt, kicker: 'Lead' } : null,
+    tiles: page.tiles.map(row),
+    rows: page.rows.map(row),
+  };
+};
+const NEWS_CHIPS = [{ id: 'all', label: 'All' }, { id: 'laliga', label: 'LaLiga' }];
+/** The Today screen's `story()` mapper, in miniature. */
+const cardStory = (a: NewsArticleView) => ({
+  title: a.title, imageUrl: a.imageUrl, topic: a.categories[0] ?? null, publisher: a.publisher.name, age: '2h',
+});
+
 function Case({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={styles.case}>
@@ -281,7 +330,7 @@ const LIVE_CASES = (
 export default function GalleryScreen() {
   const { copy, phrases } = useI18n();
   /**
-   * `?only=next` / `?only=finished` render one section alone. The gallery is a long
+   * `?only=next` / `?only=finished` / `?only=news` render one section alone. The gallery is a long
    * scroll and the shell cannot drive one (no `idb`, no Accessibility), so a
    * section deep in it is otherwise unreachable from a deep link + screenshot.
    */
@@ -326,6 +375,61 @@ export default function GalleryScreen() {
       </Case>
     </>
   );
+
+  const news = (
+    <>
+      <SectionHeader title="Today's news card" meta="picture lead (ADR 0071)" />
+      <Case label="lead with its picture across the card · 3 NEW">
+        <NewsCard
+          lead={cardStory(NEWS_STORIES[0])}
+          rows={NEWS_STORIES.slice(1, 3).map(cardStory)}
+          newLabel={copy.news.newCount(3)}
+          title={copy.news.title}
+          allNews={copy.news.allNews}
+          onPress={() => {}}
+        />
+      </Case>
+      <Case label="lead with NO picture — headline-first, same story">
+        <NewsCard
+          lead={cardStory({ ...NEWS_STORIES[0], imageUrl: null })}
+          rows={NEWS_STORIES.slice(1, 3).map(cardStory)}
+          newLabel={null}
+          title={copy.news.title}
+          allNews={copy.news.allNews}
+          onPress={() => {}}
+        />
+      </Case>
+
+      <SectionHeader title="News front page" meta="lead · tiles · rows (ADR 0070)" />
+      <Case label="six stories — lead with excerpt, two tiles, three rows">
+        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading={false}
+          newLabel="4 new" copy={copy.news}
+          groups={[newsGroup('Today', NEWS_STORIES, '6 stories'), newsGroup('Yesterday', NEWS_STORIES.slice(3), '3 stories')]} />
+      </Case>
+      <Case label="lead with NO picture — a text lead, same story, same slot">
+        <NewsList chips={NEWS_CHIPS} activeChip="laliga" onChip={() => {}} loading={false}
+          newLabel={null} copy={copy.news}
+          groups={[newsGroup('Today', [{ ...NEWS_STORIES[0], imageUrl: null }, ...NEWS_STORIES.slice(1, 4)], '4 stories')]} />
+      </Case>
+      <Case label="two stories — lead and ONE wide tile">
+        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading={false}
+          newLabel={null} copy={copy.news} groups={[newsGroup('Today', NEWS_STORIES.slice(0, 2), '2 stories')]} />
+      </Case>
+      <Case label="one story — lead alone · then the loading skeleton">
+        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading={false}
+          newLabel={null} copy={copy.news} groups={[newsGroup('Today', NEWS_STORIES.slice(2, 3), '1 story')]} />
+        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading newLabel={null} copy={copy.news} groups={[]} />
+      </Case>
+    </>
+  );
+
+  if (only === 'news') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {news}
+      </ScrollView>
+    );
+  }
 
   if (only === 'finished') {
     return (
@@ -582,6 +686,7 @@ export default function GalleryScreen() {
 
       {nextUp}
       {finishedToday}
+      {news}
 
       <SectionHeader title="Live card" meta="the two paths (ADR 0048)" />
       {LIVE_CASES.map(({ label, match, stalled, minute, minutesAgo }) => (

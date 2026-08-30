@@ -145,6 +145,9 @@ export function StartingXiBoard({
         mode={mode}
         label={player.shirt === null ? initials(player.name) : String(player.shirt)}
         caption={tokenName(player)}
+        // The portrait when the league has one (ADR 0072); null is the
+        // number token, the designed fallback — never a silhouette.
+        portrait={player.photoUrl}
         ghosted={ghosted}
       />
     );

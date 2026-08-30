@@ -56,6 +56,7 @@ export function SquadRail({ players, filter, onFilter, onPick, labels }: SquadRa
           <RailCard
             tile={item.shirt === null ? initials(item.name) : String(item.shirt)}
             name={tokenName(item)}
+            photo={item.photoUrl}
             accessibilityLabel={item.shirt === null ? item.name : `${item.name}, ${item.shirt}`}
             onPress={() => onPick(item)}
           />

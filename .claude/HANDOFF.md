@@ -377,6 +377,26 @@ documented at the code that handles them; this is the index.
     first. `WashGradient` (0068) takes its id from `useId()` — use the atom, do
     not copy the Svg block. And without `overflow: 'hidden'` the absolute fill
     paints square corners over the card's radius (the `flush` trap, again).
+41. **A "new since you last looked" count must read the stamp captured when the
+    screen OPENED, not the live preference.** `news.tsx` writes `newsSeenAt` in
+    a mount effect; a pill computed from `usePreferences().newsSeenAt` shows
+    `6 NEW` for one frame and `0` for the rest. `useState(() => newsSeenAt)`
+    freezes the value for the screen's lifetime (0070).
+42. **`react-native-svg` paints an `rgba()` gradient stop OPAQUE.** The alpha
+    channel of `stopColor` is dropped; a translucent stop needs `stopOpacity`.
+    The News lead's scrim shipped as a black slab over the picture before
+    `WashStop.opacity` existed (0070). Use the atom; never hand-roll a `Stop`.
+43. **Never a bare `catch` on a native promise, and never `captureRef` under a
+    presented sheet without `useRenderInContext`.** The XI export shipped both:
+    iOS's `drawViewHierarchyInRect` refuses the presenting controller's
+    hierarchy while a form sheet is up, view-shot rejects, and a bare `catch`
+    turned the reason into "could not be rendered" with nothing in any log.
+    `export.ts` now passes `useRenderInContext: true`; `xi-export.tsx` logs
+    the rejection under `[xi-export]` (0073). ⚠ And the actual culprit that
+    log revealed: **SDK 57's `expo-media-library` root entry re-exports the
+    old function names as stubs that THROW** ("deprecated") — `tsc` is happy,
+    the call fails at runtime. Use the class API (`Asset.create`) or the
+    `/legacy` entry; never trust a name that still type-checks.
 
 36. **A live push must not replay the first half.** `LiveSessionService` opens
     onto whatever is in its window — including a match already at 60 minutes,
@@ -447,6 +467,22 @@ documented at the code that handles them; this is the index.
 ## Where things stand
 
 ### Done and verified
+- **Starting XI portraits on the pitch and the rail** ([0072](./decisions/0072-xi-portraits-on-the-board.md)):
+  number badge on the corner, number token for a null or failed photo.
+  `/_debug/xi` breaks two portraits on purpose.
+- **XI export: Save to Photos through `Asset.create`** ([0073](./decisions/0073-xi-export-render-in-context.md)).
+  The device log named it: SDK 57 removed `saveToLibraryAsync` from
+  `expo-media-library`'s root entry and left a stub that throws. ⚠ Awaiting a
+  second tap to confirm; a failure prints `[xi-export] …` with the reason
+  (`xcrun simctl spawn booted log show --last 10m --predicate 'process == "AltaGamaFC"'`
+  reads it without Metro's terminal). See trap 43.
+- **Today's news card leads with its picture** ([0071](./decisions/0071-today-news-card-lead-picture.md)):
+  `NewsLead variant="compact"`, no kicker. `/_debug/gallery?only=news` opens
+  with the two card states.
+- **News screen is a front page** ([0070](./decisions/0070-news-front-page.md)):
+  lead + tiles + hairline rows on the first day group. ⚠ The `N NEW` pill reads
+  the seen stamp captured at open, not the live preference — see trap 41.
+  `/_debug/gallery?only=news` is the screenshot path.
 - **FINISHED TODAY rows are a stacked pair** ([0069](./decisions/0069-finished-today-stacked-rows.md)):
   home over away, fixed goal column, no `FT` word. ⚠ Nothing may be added to the
   right of the goals without re-measuring `Borussia Mönchengladbach` at 393pt.

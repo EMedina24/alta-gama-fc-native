@@ -1,11 +1,18 @@
 /**
- * The news card on the Today board (ADR 0064, handoff design 1A).
+ * The news card on the Today board (ADR 0064, handoff design 1A; lead picture
+ * ADR 0071).
  *
- * ⚠ A DOORWAY, not a feed: one story with its picture, two more as two-line
- * rows with their own thumbnails, `All news` at the foot. Three, hard — a fourth row pushes the rest of
- * the round off the first screen, and scores come first on that board. The
- * whole card is one tap target that pushes the News screen; individual rows
- * are not links, so the reader is never dropped into Safari from the board.
+ * ⚠ A DOORWAY, not a feed: one story with its picture across the top of the
+ * card (`NewsLead variant="compact"` — the News screen's lead, shorter), two
+ * more as two-line rows with their own thumbnails, `All news` at the foot.
+ * Three, hard — a fourth row pushes the rest of the round off the first
+ * screen, and scores come first on that board. The whole card is one tap
+ * target that pushes the News screen; the lead has no Pressable of its own
+ * and individual rows are not links, so the reader is never dropped into
+ * Safari from the board.
+ *
+ * ⚠ The card carries NO horizontal padding of its own: the picture must reach
+ * the card's edges and its corners. Rows and the foot inset themselves.
  *
  * ⚠ Header is NEWS, not AROUND YOUR CLUBS: phase 1 reads the GLOBAL feed, and
  * a label claiming otherwise would be false (ADR 0064).
@@ -16,7 +23,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Chevron, Hairline, Text } from '@/components/atoms';
-import { NewsMeta, NewsThumb, SectionHeader } from '@/components/molecules';
+import { NewsLead, NewsMeta, NewsThumb, SectionHeader } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface NewsCardStory {
@@ -47,19 +54,13 @@ export function NewsCard({ lead, rows, newLabel, title, allNews, onPress }: News
         accessibilityRole="button"
         accessibilityLabel={`${title}: ${lead.title}. ${allNews}`}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-        <View style={styles.lead}>
-          <NewsThumb src={lead.imageUrl} size={Size.newsLead} />
-          <View style={styles.leadBody}>
-            <NewsMeta topic={lead.topic} publisher={lead.publisher} age={lead.age} />
-            <Text variant="callout" numberOfLines={3}>
-              {lead.title}
-            </Text>
-          </View>
-        </View>
+        <NewsLead variant="compact" {...lead} />
 
         {rows.map((row, i) => (
-          <View key={i}>
-            <Hairline />
+          <View key={i} style={styles.inset}>
+            {/* ⚠ No rule above the FIRST row: the lead's scrim already lands
+                on the card ground, and a line there read as an underline. */}
+            {i > 0 ? <Hairline /> : null}
             <View style={styles.row}>
               <NewsThumb src={row.imageUrl} size={Size.newsCardRow} />
               <View style={styles.rowBody}>
@@ -72,8 +73,10 @@ export function NewsCard({ lead, rows, newLabel, title, allNews, onPress }: News
           </View>
         ))}
 
-        <Hairline />
-        <View style={styles.foot}>
+        <View style={styles.inset}>
+          <Hairline />
+        </View>
+        <View style={[styles.inset, styles.foot]}>
           <Text variant="callout" color="accent">
             {allNews}
           </Text>
@@ -91,13 +94,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.dark.card,
     borderRadius: Radius.card,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
+    overflow: 'hidden',
     paddingBottom: Spacing.two,
   },
   pressed: { backgroundColor: Colors.dark.rowActive },
-  lead: { flexDirection: 'row', gap: Spacing.three, paddingBottom: Spacing.three },
-  leadBody: { flex: 1, minWidth: 0, gap: Spacing.two },
+  inset: { paddingHorizontal: Spacing.four },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

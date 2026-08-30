@@ -100,9 +100,25 @@ export default function StartingXiScreen() {
       (size) =>
         new Promise<string>((resolve, reject) => {
           let done = false;
+          // Images have 4 s; if the host itself has not mounted by then, one
+          // more 2 s before giving up with a reason that names the race.
           const timer = setTimeout(() => finish(), 4000);
           const finish = () => {
             if (done) return;
+            if (!cardRef.current) {
+              // ⚠ view-shot's ref guard does not fire on a null `current` — it
+              // rejects with an opaque "findNodeHandle failed". Name it here.
+              setTimeout(() => {
+                if (done) return;
+                if (cardRef.current) finish();
+                else {
+                  done = true;
+                  setExporting(null);
+                  reject(new Error('capture-host-not-mounted'));
+                }
+              }, 2000);
+              return;
+            }
             done = true;
             clearTimeout(timer);
             captureView(cardRef)
