@@ -5,9 +5,11 @@
 The app is a working iOS app: five screens on live production data, four sheets,
 onboarding, EN + ES, push wired and verified on a device. `CRONOGOL_LIVE_PUSH_ENABLED`
 is **on** as of 2026-08-30 and the backend dispatched three goals that afternoon — to
-**zero devices**, because this app's registration had been failing silently for two
-days (trap 44, [0079](./decisions/0079-push-sync-survives-a-stale-bearer.md)). The
-first thing to verify on a device is the footnote under the alert switches.
+**zero devices**, because this app's registration had been failing for two days (trap 44,
+[0079](./decisions/0079-push-sync-survives-a-stale-bearer.md)). **Root cause found and
+fixed the same evening — a backend CHECK Postgres could not compile (`senpai-backend`
+decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivered 17:48Z
+(Deportivo v Valencia). Goal alerts are end-to-end in production.**
 
 ---
 
@@ -67,16 +69,28 @@ first thing to verify on a device is the footnote under the alert switches.
 > registration from the phone — which now sends its ActivityKit push-to-start token —
 > fails. Not a 404, not a stale bearer, not the body: candidates 1–3 above are all closed.
 >
-> **Fix WRITTEN in `senpai-backend` (uncommitted, 2026-08-30): migration
-> `supabase/migrations/20261006000000_push_to_start_token_check_fix.sql`, decision 0037,
-> CRONOGOL.md §104. Still needs a human `yarn db:push` + `yarn db:types` + commit.** It drops
-> constraint and re-add it as `push_to_start_token ~ '^[0-9a-f]+$' and
-> length(push_to_start_token) between 64 and 512` (or `{64,255}` if 255 is enough — the
-> DTO's JS regex `{64,512}` is fine, JS has no such cap). No app change is needed;
-> after the migration lands, one launch re-sends and the footnote must flip to
-> *saved · <time>*, and `device_tokens.alert_goals` will finally read `true`. Then a
-> goal banner is possible. ⚠ The 400s at 16:22–16:24Z on 08-30 (0–2 ms, no stack) are
-> last session's hand probes, not the phone.
+> **FIXED AND VERIFIED, 2026-08-30 16:43Z.** `senpai-backend` commit `8459293`: migration
+> `20261006000000_push_to_start_token_check_fix.sql` (CHECK rewritten as hex + `length()
+> between 64 and 512`), decision 0037, CRONOGOL.md §104; applied with `yarn db:push`. Three
+> `PUT /cronogol/push/device 200` from Ed's phone followed, each logging
+> `Push device registered: 3 club(s), production, linked=true, liveActivity=true` — the row
+> finally holds `alert_goals` as set on the phone AND a push-to-start token, so both the goal
+> banner fan-out and Live Activities have their first production device. **The next LaLiga
+> goal is the end-to-end test; nothing has been received yet.** No app change was needed.
+> **THEN, 16:54:59Z — the 4th goal reached the device and APNs refused it: `0/1 device(s)`,
+> `HTTP 403 InvalidProviderToken`.** The scheduler had logged that reason every 30 min since
+> 08-29 06:45Z (`failed=1 … stay pending`). Render has NEVER delivered a push — every pass
+> before 08-29 had `devices=0`, and the 08-25 production `200` was from Ed's Mac with `.env`,
+> whose key still authenticates (`probe-apns.mjs` → `400 BadDeviceToken`). Render's
+> `APNS_PRIVATE_KEY_BASE64` on Render was a DIFFERENT .p8 under the same key id (key id, team
+> id, bundle id all matched). **CLOSED 17:48:05Z: Ed replaced it from `.env`, followed Valencia,
+> and Deportivo v Valencia's first goal went out `Live push goal fixture=fbf156f3…: 1/1
+> device(s)` — the first push Render has ever delivered. Goal alerts are END-TO-END in
+> production.** `senpai-backend` verification-log 2026-08-30 (evening), CRONOGOL.md §104.4; the
+> live path's warn now carries the APNs reason code (trap 45).
+> ⚠ The 400s at 16:22–16:24Z on 08-30 (0–2 ms, no stack) were hand probes, not the phone.
+> ⚠ When a registration footnote goes red, the Render request log for the route is the
+> first read — the app and the DB both looked fine here; only the log had the message.
 >
 > Ruled out earlier the same day (probed `crono-gol.com` directly): the route is up; the
 > body `buildRegistration` sends (`sync.ts:73-86`) matches production's DTO
@@ -533,6 +547,16 @@ documented at the code that handles them; this is the index.
     backend: the fan-out filters on that column, and the Render log's
     `Live push goal …: 0/0 device(s)` is what a wrong row looks like. See
     [0079](./decisions/0079-push-sync-survives-a-stale-bearer.md).
+45. **A credential proven from the Mac proves the Mac.** 2026-08-30: with the
+    row finally right, the first goal to reach the device got `0/1 device(s)` —
+    APNs `403 InvalidProviderToken` for Render's `APNS_*` set, while the same
+    four values in `senpai-backend/.env` authenticate. No push had ever left
+    Render: every earlier pass had `devices=0`, so the 08-25 delivery proof
+    never exercised Render's copy. ⚠ Read the scheduler's `Push pass complete`
+    line: `failed=N … stay pending` on a pass with `devices>0` is APNs auth,
+    and it retries every 30 min — the cheapest verification there is. The
+    live path's per-device warn carried only `HTTP 403` until that day; it
+    now names the reason code like the dispatch path does.
 
 ---
 
