@@ -88,7 +88,6 @@ export interface Copy {
     pickBody: string;
     search: string;
     continueWith: (n: number) => string;
-    skip: string;
     alertsTitle: string;
     alertsBody: string;
     allow: string;
@@ -99,7 +98,12 @@ export interface Copy {
     welcomeTitle: string;
     welcomeBody: string;
     welcomeCta: string;
-    welcomeSkip: string;
+    /**
+     * The language line under the welcome CTA (ADR 0077) — written in the
+     * OTHER language, so only the reader it is for can read it. Three parts so
+     * the language word alone can be styled as the link.
+     */
+    switchLanguage: { lead: string; word: string; tail: string };
     step: (n: number, of: number) => string;
     /** The SAMPLE notification on the primer — a preview, not a fixture. */
     previewEyebrow: string;
@@ -573,7 +577,6 @@ export const esCopy: Copy = {
       'Elige tus clubes. Su temporada entera entra en tu calendario y te avisamos si cambia un horario.',
     search: 'Buscar un club',
     continueWith: (n: number) => (n === 1 ? 'Continuar con 1 club' : `Continuar con ${n} clubes`),
-    skip: 'Ahora no',
     alertsTitle: 'Te avisamos cuando algo cambia',
     alertsBody: 'Tres avisos, y ninguno más. Puedes cambiarlos cuando quieras.',
     allow: 'Permitir avisos',
@@ -584,7 +587,7 @@ export const esCopy: Copy = {
     welcomeBody:
       'Cada partido de los clubes que sigues, en tu calendario — y un aviso cuando uno se mueve.',
     welcomeCta: 'Elegir mis clubes',
-    welcomeSkip: 'Ahora no',
+    switchLanguage: { lead: 'Prefer ', word: 'English', tail: '?' },
     step: (n: number, of: number) => `Paso ${n} de ${of}`,
     previewEyebrow: 'Horario cambiado',
     previewTitle: 'Barcelona - Real Madrid',
@@ -949,7 +952,6 @@ export const enCopy: Copy = {
       'Pick your clubs. Their whole season goes into your calendar, and we tell you when a kickoff moves.',
     search: 'Search for a club',
     continueWith: (n: number) => (n === 1 ? 'Continue with 1 club' : `Continue with ${n} clubs`),
-    skip: 'Not now',
     alertsTitle: 'We tell you when something changes',
     alertsBody: 'Three alerts, and no others. You can change them any time.',
     allow: 'Allow notifications',
@@ -960,7 +962,7 @@ export const enCopy: Copy = {
     welcomeBody:
       'Every kickoff of every club you follow, in your calendar — and a word when one moves.',
     welcomeCta: 'Pick your clubs',
-    welcomeSkip: 'Skip for now',
+    switchLanguage: { lead: '¿Prefieres ', word: 'español', tail: '?' },
     step: (n: number, of: number) => `Step ${n} of ${of}`,
     previewEyebrow: 'Kickoff moved',
     previewTitle: 'Barcelona v Real Madrid',

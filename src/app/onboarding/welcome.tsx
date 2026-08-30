@@ -2,30 +2,33 @@
  * Step 0 — the welcome. One brand moment before the reader is asked anything
  * (ADR 0076): the mark under a floodlight, one headline, one button.
  *
- * ⚠ Skipping here is the same skip as the picker's: `onboarded` flips and the
- * reader lands on Today with nothing followed. Nothing is asked of iOS.
+ * ⚠ No skip here, or on the picker (ADR 0077): a followed club is the
+ * precondition for everything the app does. The only skip in the flow is the
+ * alert primer's `Not now`.
+ *
+ * The line under the button is the language override, written in the OTHER
+ * language — a Spanish reader on an English phone sees `¿Prefieres español?`,
+ * and nobody else can read it. It swaps the copy in place; nothing navigates.
  */
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Eyebrow, Glow, Mark, Text } from '@/components/atoms';
+import { Button, Eyebrow, GlobeGlyph, Glow, Mark, Text } from '@/components/atoms';
 import { StepDots } from '@/components/molecules';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n/use-i18n';
-import { setOnboarded } from '@/store/preferences';
+import { setLanguage } from '@/store/preferences';
 
 export default function OnboardingWelcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { copy } = useI18n();
+  const { copy, locale } = useI18n();
   const reduceMotion = useReducedMotion();
 
-  const skip = () => {
-    setOnboarded(true);
-    router.replace('/');
-  };
+  const swap = copy.onboarding.switchLanguage;
+  const switchLanguage = () => setLanguage(locale === 'en' ? 'es' : 'en');
 
   return (
     <View style={styles.screen}>
@@ -51,7 +54,21 @@ export default function OnboardingWelcome() {
           <StepDots count={3} active={0} />
         </View>
         <Button label={copy.onboarding.welcomeCta} onPress={() => router.replace('/onboarding/clubs')} tall />
-        <Button label={copy.onboarding.welcomeSkip} tone="quiet" onPress={skip} />
+        <Pressable
+          onPress={switchLanguage}
+          accessibilityRole="button"
+          accessibilityLabel={`${swap.lead}${swap.word}${swap.tail}`}
+          hitSlop={Spacing.two}
+          style={({ pressed }) => [styles.language, pressed && styles.pressed]}>
+          <GlobeGlyph />
+          <Text variant="footnote" color="textFaint">
+            {swap.lead}
+            <Text variant="footnote" color="textSecondary" style={styles.languageWord}>
+              {swap.word}
+            </Text>
+            {swap.tail}
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -71,4 +88,18 @@ const styles = StyleSheet.create({
   body: { lineHeight: 21, maxWidth: 300 },
   footer: { paddingHorizontal: Spacing.five, paddingTop: Spacing.three, gap: Spacing.two },
   dots: { alignItems: 'center', paddingBottom: Spacing.three },
+  // 32pt visual, 44 with the hitSlop.
+  language: {
+    minHeight: Spacing.seven,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+  },
+  languageWord: {
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    textDecorationColor: Colors.dark.hairlineStrong,
+  },
+  pressed: { opacity: 0.6 },
 });

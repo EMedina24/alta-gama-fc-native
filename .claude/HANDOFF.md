@@ -60,7 +60,7 @@ src/
 
 **Screens:** Today (board + FINISHED TODAY + follow card) · Matchdays · Table ·
 Clubs · club page (season spine + squad). **Sheets:** alerts · calendar ·
-matchday calendar · account. **Onboarding:** welcome → club picker → alert primer ([0076](./decisions/0076-onboarding-floodlight-redesign.md)).
+matchday calendar · account. **Onboarding:** welcome → club picker → alert primer ([0076](./decisions/0076-onboarding-floodlight-redesign.md)); at least one club is required, and the primer's `Not now` is the only skip ([0077](./decisions/0077-welcome-language-line-and-one-skip.md)).
 
 ---
 

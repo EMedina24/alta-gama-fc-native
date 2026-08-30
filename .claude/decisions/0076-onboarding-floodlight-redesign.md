@@ -21,7 +21,8 @@ first screen did not share. Three directions were mocked on a design canvas;
 - **A welcome screen** (`onboarding/welcome.tsx`) opens the flow: the mark under a
   radial glow, one headline, one primary. The gate in `_layout.tsx` and the
   account sheet's *Replay onboarding* route to `/onboarding/welcome`. Its skip is
-  the picker's skip — `onboarded` flips, nothing is asked of iOS.
+  the picker's skip — `onboarded` flips, nothing is asked of iOS. *(Amended by
+  [0077](./0077-welcome-language-line-and-one-skip.md): both skips removed.)*
 - **Two new atoms carry the icon's idea**: `Mark` (the 42×30 geometry, lifted from
   `lineup-card.tsx`, which now uses it) and `Glow` (a `react-native-svg`
   `RadialGradient`, stop `opacity` not `rgba()`, per `wash-gradient.tsx`'s

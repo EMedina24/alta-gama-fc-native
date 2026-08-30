@@ -1,8 +1,11 @@
 /**
  * Onboarding — a welcome, then two steps, before the tabs (ADR 0076).
  *
- * ⚠ Skipping still lands in the app **with the picks subscribed**. A skip is
- * "don't ask me the rest", not "discard what I just chose".
+ * ⚠ The ONLY skip is the alert primer's `Not now` (ADR 0077). The welcome and
+ * the picker have none: a followed club is the precondition for everything
+ * after, so `Continue` (disabled at zero picks) is the picker's one way out.
+ * The primer's skip still lands in the app with the picks subscribed — it is
+ * "don't ask me about alerts", not "discard what I just chose".
  */
 import { Stack } from 'expo-router';
 

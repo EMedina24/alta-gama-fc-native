@@ -22,7 +22,7 @@ import { foldAccents } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useLeagueArtwork } from '@/queries/use-leagues';
 import { useTeams } from '@/queries/use-teams';
-import { followClubs, setOnboarded } from '@/store/preferences';
+import { followClubs } from '@/store/preferences';
 
 export default function OnboardingClubs() {
   const router = useRouter();
@@ -74,15 +74,8 @@ export default function OnboardingClubs() {
     );
 
   const finish = () => {
-    // ⚠ Picks are committed even on skip — see the layout's comment.
     if (picked.length > 0) followClubs(picked);
     router.replace('/onboarding/alerts');
-  };
-
-  const skip = () => {
-    if (picked.length > 0) followClubs(picked);
-    setOnboarded(true);
-    router.replace('/');
   };
 
   return (
@@ -184,7 +177,6 @@ export default function OnboardingClubs() {
           disabled={picked.length === 0}
           tall
         />
-        <Button label={copy.onboarding.skip} tone="quiet" onPress={skip} />
       </View>
     </View>
   );
