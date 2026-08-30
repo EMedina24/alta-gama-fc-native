@@ -60,6 +60,12 @@ export const CARD = {
   chipSize: 18,
   nameGap: 10,
   captionMax: 180,
+  /**
+   * Kept clear under the lowest slot so its ring and caption fit inside the
+   * pitch (ADR 0075): `ring / 2` + `nameGap` + the tallest caption (~44).
+   * ⚠ Measured, not derived — a taller caption means a bigger reserve.
+   */
+  captionReserve: 120,
 } as const;
 
 export const TITLE_MAX = 26;

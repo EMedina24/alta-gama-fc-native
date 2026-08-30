@@ -177,6 +177,7 @@ export function LineupCard({
             height={s(ph)}
             ring={s(CARD.ring)}
             columnWidth={s(CARD.captionMax + 20)}
+            insetBottom={s(CARD.captionReserve)}
             renderSlot={(slot, i) => {
               const id = placed[i];
               const player = id === undefined ? undefined : players.get(id);

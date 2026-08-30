@@ -19,14 +19,29 @@ export interface PitchSlotsProps {
   ring: number;
   /** Column width; the caption's max width plus padding. */
   columnWidth: number;
+  /**
+   * Height kept clear at the bottom, in points (ADR 0075). The y-projection
+   * runs over `height − insetBottom`, so the lowest slot's ring AND caption
+   * stay inside a pitch that clips. The export card passes
+   * `CARD.captionReserve`; the board passes nothing.
+   */
+  insetBottom?: number;
   renderSlot: (slot: Slot, index: number) => ReactNode;
 }
 
-export function PitchSlots({ slots, width, height, ring, columnWidth, renderSlot }: PitchSlotsProps) {
+export function PitchSlots({
+  slots,
+  width,
+  height,
+  ring,
+  columnWidth,
+  insetBottom = 0,
+  renderSlot,
+}: PitchSlotsProps) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {slots.map((slot, i) => {
-        const c = slotCentre(slot, width, height);
+        const c = slotCentre(slot, width, height - insetBottom);
         return (
           <View
             key={slot.label}

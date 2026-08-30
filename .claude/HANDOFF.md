@@ -475,6 +475,9 @@ documented at the code that handles them; this is the index.
   and left a stub that throws; `Asset.create` is the call. Confirmed by tap
   2026-08-30. Read runtime errors with `xcrun simctl spawn booted log show
   --last 10m --predicate 'process == "AltaGamaFC"'` — no Metro terminal needed.
+- **Export card: GK caption no longer clipped** ([0075](./decisions/0075-card-caption-reserve.md)):
+  `PitchSlots.insetBottom` + `CARD.captionReserve`. ⚠ A taller caption means a
+  bigger reserve — it is measured, not derived.
 - **The export's receipt state** ([0074](./decisions/0074-export-receipt-state.md)):
   Save flips to an outline "✓ Saved to Photos", disabled until the size, title
   or lineup changes; lime `StatusBanner`; success haptic.
