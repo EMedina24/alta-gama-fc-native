@@ -38,6 +38,11 @@ the next successful sign-in.
   on a screen that can show it; a background registration has no business ending one.
 - **Every non-`sent` outcome is logged** as `[push-sync] …` — a status code or `no device
   token`, never a body, never a token.
+- **The echo is the confirmation, not the 200.** `PUT` answers with the row as stored;
+  `echoMismatch` compares it to the body field-for-field (`clubSlugs` as a set — the server
+  dedupes and may reorder). A mismatch is `'failed'`: nothing is persisted, so the next change
+  or launch re-sends, and the footnote says it did not land. Before this a backend that
+  accepted the request and stored something else would have been reported as saved.
 - **`store/push-sync-status.ts`** keeps the last verdict (`at`, `ok`) — persisted, hydrated at
   import — and the account sheet's footnote under the alert switches reads one of three
   lines: never registered · saved at *time* (the reader's clock) · could not be saved,

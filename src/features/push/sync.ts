@@ -135,6 +135,16 @@ export async function syncPushRegistration(
 
   try {
     const view = await register(body, bearer);
+    // ⚠⚠ A 200 is not a confirmation — the ECHO is (ADR 0079). The response
+    // carries the row as stored, and "saved" is only true if it holds what
+    // was asked for. A mismatch is a failure: nothing is persisted, so the
+    // next change or launch re-sends, and the footnote says it did not land.
+    const mismatch = echoMismatch(body, view);
+    if (mismatch !== null) {
+      console.warn(`[push-sync] echo mismatch: ${mismatch}`);
+      setPushSyncStatus(false);
+      return 'failed';
+    }
     // ⚠ Persist what the SERVER echoed, not what we sent: it collapses duplicate
     // slugs, so trusting our own array would re-send forever.
     await writeLastRegistration({ ...body, clubSlugs: view.clubSlugs });
@@ -199,6 +209,32 @@ async function register(
     console.warn('[push-sync] bearer rejected; registering anonymously');
     return registerDevice(body, null);
   }
+}
+
+/**
+ * The first field the server's echo disagrees with, or null when it holds
+ * exactly what was sent.
+ *
+ * ⚠ Field-for-field, not deep-equal: `clubSlugs` is compared as a SET because
+ * the server collapses duplicates and may reorder. `token` and `activityToken`
+ * are not echoed by design (they never travel back), and `linked` is a fact
+ * about the account, not about the request.
+ */
+function echoMismatch(
+  sent: PushRegistration,
+  view: PushRegistrationView,
+): string | null {
+  if (view.alertGoals !== sent.alertGoals) return 'alertGoals';
+  if (view.alertMoved !== sent.alertMoved) return 'alertMoved';
+  if (view.alertPostponed !== sent.alertPostponed) return 'alertPostponed';
+  if (view.lang !== sent.lang) return 'lang';
+  if (view.environment !== sent.environment) return 'environment';
+  const echoed = new Set(view.clubSlugs);
+  const asked = new Set(sent.clubSlugs);
+  if (asked.size !== echoed.size || [...asked].some((slug) => !echoed.has(slug))) {
+    return 'clubSlugs';
+  }
+  return null;
 }
 
 const isUnauthorised = (error: unknown) =>
