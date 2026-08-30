@@ -3,9 +3,11 @@
 **As of 2026-08-29.** State of play for a session picking this up cold.
 
 The app is a working iOS app: five screens on live production data, four sheets,
-onboarding, EN + ES, push wired and verified on a device. What remains is the
-backend's push cron and flipping `CRONOGOL_LIVE_PUSH_ENABLED` — until that flag is on,
-**no goal banner can be sent**, whatever the app does (trap 39).
+onboarding, EN + ES, push wired and verified on a device. `CRONOGOL_LIVE_PUSH_ENABLED`
+is **on** as of 2026-08-30 and the backend dispatched three goals that afternoon — to
+**zero devices**, because this app's registration had been failing silently for two
+days (trap 44, [0079](./decisions/0079-push-sync-survives-a-stale-bearer.md)). The
+first thing to verify on a device is the footnote under the alert switches.
 
 ---
 
@@ -454,6 +456,16 @@ documented at the code that handles them; this is the index.
     ([0066](./decisions/0066-live-card-reads-the-live-route-directly.md)):
     `routeLive` (tier 0) now builds the card from the live route alone, crests
     from the club catalogue, and `Countdown` fires strictly PAST the target.
+    ⚠⚠ **And a third time, the next day** — Real Madrid v Málaga, 2026-08-30
+    15:00 UTC: `/cronogol/live` had NO row at 15:04:15 and a `minute: 0` row
+    at 15:04:26. **LaLiga flips a match to in-play at the ACTUAL whistle, two
+    to five minutes after the scheduled kickoff the countdown counts to** —
+    every match, not a bad day. In that gap tier 0 has nothing, and a fresh
+    `upcoming` (which starts at `now`) has already dropped the match, so a
+    cold launch showed the fixture AFTER it as NEXT UP. The board now holds
+    the match itself — `kickedOff`, a tier between the route and the sweep,
+    built from windows already on screen — and `next` excludes any passed
+    kickoff. See [0078](./decisions/0078-kicked-off-lead-card.md).
     ⚠ The 0052 refetch stays — it still feeds FINISHED TODAY and the LAST
     RESULT card — and its "never `upcoming`" rule still holds.
     ⚠⚠ **Goal pushes were the same report and are NOT this bug.** The backend's
@@ -461,6 +473,20 @@ documented at the code that handles them; this is the index.
     `'true'` on Render (`render.yaml` ships `'false'`; the gate is a matchday of
     `[dry-run] live push` log lines), and `alertGoals` defaults OFF in the app.
     No app change can produce a goal banner while that flag is off.
+44. **A signed-in device can stop registering for days, and nothing said so.**
+    Production, 2026-08-30: the Goals switch on, the flag on, three goals
+    claimed in `live_push_sent` — and the only live `device_tokens` row read
+    `alert_goals: false`, last written 2026-08-28 19:24Z. `syncPushRegistration`
+    ended in a bare `catch { return 'failed' }`, and the route answers **401 to
+    a stale bearer** rather than degrading to anonymous, while the sync read
+    the session token with no refresh. `register()` now retries once with a
+    refreshed bearer and then anonymously (lossless — the link persists
+    server-side), every non-sent outcome logs `[push-sync] …`, and the account
+    sheet's footnote says saved-at / could-not-save. ⚠ When a banner is
+    missing, read that footnote and `device_tokens.alert_goals` BEFORE the
+    backend: the fan-out filters on that column, and the Render log's
+    `Live push goal …: 0/0 device(s)` is what a wrong row looks like. See
+    [0079](./decisions/0079-push-sync-survives-a-stale-bearer.md).
 
 ---
 
@@ -659,8 +685,12 @@ documented at the code that handles them; this is the index.
     the stamp, never a swap back — and one afternoon's observation is not yet
     that. ⚠ The invariant it now rests on: `livePollIntervalMs` (30s) must stay
     comfortably under `liveLeaseSeconds` (120s).
-    ⚠ The minute still lagged the wall clock (`minute: 4` at 17:07 on a 17:00
-    kickoff); that half is unexplained and is a `senpai-backend` question.
+    ~~⚠ The minute still lagged the wall clock (`minute: 4` at 17:07 on a 17:00
+    kickoff); that half is unexplained and is a `senpai-backend` question.~~
+    **Explained 2026-08-30** ([0078](./decisions/0078-kicked-off-lead-card.md)):
+    the match started late. LaLiga's feed flips to in-play at the actual
+    whistle, 2–5 min after the scheduled kickoff, and the minute counts from
+    there. Not a backend question.
 - **The push cron is ON** (2026-08-26, Render dashboard; `render.yaml:91` agrees).
   ⚠ It dispatches only what the ~3h sync newly detects, so silence is the normal
   state. Every notification seen on 2026-08-26 was hand-sent.

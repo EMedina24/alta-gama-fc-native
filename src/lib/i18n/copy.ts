@@ -181,8 +181,16 @@ export interface Copy {
     copyAction: string;
     copied: string;
     close: string;
-    /** ⚠ Alerts are built but not delivering until the app ships. Say so. */
+    /**
+     * The alerts group's footnote, one of three (ADR 0079). No status codes,
+     * no reasons — saved, or not saved; the reason is in the console.
+     */
+    /** Never registered yet (a fresh install, or storage was cleared). */
     alertsPendingNote: string;
+    /** The server ACKed, at this time in the reader's clock. */
+    alertsSynced: (time: string) => string;
+    /** The last attempt did not land. It retries on the next change or launch. */
+    alertsSyncFailed: string;
   };
   today: {
     title: string;
@@ -195,6 +203,12 @@ export interface Copy {
      * real limit on the live feed. **Never the word "live" about this data.**
      */
     inPlayNote: string;
+    /**
+     * The KICKED-OFF path's note (ADR 0078): the scheduled kickoff has passed
+     * and neither source has reported yet. Says the match has started and that
+     * we are waiting — never a score, never a minute, never "live".
+     */
+    kickedOffNote: string;
     /**
      * The minute of play, on the LIVE path only (`GET /cronogol/live`).
      *
@@ -659,7 +673,10 @@ export const esCopy: Copy = {
     copied: 'COPIADO',
     close: 'Cerrar',
     alertsPendingNote:
-      'Los avisos se guardan en este dispositivo y empezarán a llegar cuando publiquemos la app.',
+      'Los ajustes de avisos se guardan en este dispositivo y se envían en cuanto haya conexión.',
+    alertsSynced: (time: string) => `Ajustes de avisos guardados · ${time}`,
+    alertsSyncFailed:
+      'No se pudieron guardar los ajustes de avisos. Se reintentará al cambiar algo o al volver a abrir la app.',
   },
 
   today: {
@@ -669,6 +686,8 @@ export const esCopy: Copy = {
     // ⚠ La rama del BARRIDO (~3 h). Dice "en la última comprobación", nunca
     // "en directo" — el minuto en directo solo cubre LaLiga.
     inPlayNote: 'En juego en la última comprobación. El minuto en directo solo cubre LaLiga.',
+    // ⚠ Ha pasado la hora de inicio y ninguna fuente ha informado aún.
+    kickedOffNote: 'Ha empezado · esperando la primera actualización del marcador.',
     // ⚠ El número YA INCLUYE el descuento: 94 es "90+4". Nunca componer `90+4`.
     minute: (n: number) => `${n}′`,
     liveNote: 'En directo · se actualiza cada 30 s aprox.',
@@ -1034,7 +1053,10 @@ export const enCopy: Copy = {
     copied: 'COPIED',
     close: 'Close',
     alertsPendingNote:
-      'Alerts are saved on this device and start arriving once the app is released.',
+      'Alert settings are saved on this device and sent to us as soon as you are online.',
+    alertsSynced: (time: string) => `Alert settings saved · ${time}`,
+    alertsSyncFailed:
+      'Alert settings could not be saved. They will be retried the next time something changes or the app opens.',
   },
 
   today: {
@@ -1044,6 +1066,8 @@ export const enCopy: Copy = {
     // ⚠ The SWEEP branch (~3h). Names the real limit rather than claiming no
     // live feed exists — one does, and it covers LaLiga only.
     inPlayNote: 'In play as of the last check. Live minutes cover LaLiga only.',
+    // ⚠ The scheduled kickoff has passed and neither source has reported yet.
+    kickedOffNote: 'Kicked off · waiting for the first score update.',
     // ⚠ The number ALREADY INCLUDES stoppage: 94 is "90+4". Never compose one.
     minute: (n: number) => `${n}′`,
     liveNote: 'Live · refreshed about every 30s.',

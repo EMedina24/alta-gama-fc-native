@@ -44,6 +44,8 @@ export default function DebugSheets() {
         locale={locale}
         clock={prefs.clock}
         zoneLabel={zoneLabel(zone, locale)}
+        // ⚠ The gallery has no registration behind it; the "never" line is honest.
+        alertsNote={copy.sheets.alertsPendingNote}
         alerts={{
           reminder: prefs.alertReminder,
           moved: prefs.alertMoved,

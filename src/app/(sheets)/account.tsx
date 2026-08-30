@@ -10,10 +10,12 @@ import { deleteAccount, NotSignedInError } from '@/lib/cronogol/account';
 import { displayName } from '@/lib/cronogol/derive';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
 import { contactUrl } from '@/lib/cronogol/site';
+import { formatKickoffTime } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { zoneLabel } from '@/lib/timezones';
 import { useAccount } from '@/queries/use-account';
 import { useTeams } from '@/queries/use-teams';
+import { usePushSyncStatus } from '@/store/push-sync-status';
 import { signOut, useSession } from '@/store/session';
 import {
   clearFollows,
@@ -36,6 +38,19 @@ export default function AccountSheetRoute() {
   const account = useAccount();
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  /**
+   * The line under the alert switches (ADR 0079): never registered, saved at a
+   * time, or could not be saved. ⚠ Resolved here because the sheet has no clock
+   * — the time is the reader's own, in their chosen format, like every kickoff.
+   */
+  const syncStatus = usePushSyncStatus();
+  const alertsNote =
+    syncStatus.at === null
+      ? copy.sheets.alertsPendingNote
+      : syncStatus.ok
+        ? copy.sheets.alertsSynced(formatKickoffTime(syncStatus.at, zone, prefs.clock))
+        : copy.sheets.alertsSyncFailed;
 
   /**
    * ⚠ Derived from the local follow list, not `GET /cronogol/me/feeds` — even
@@ -63,6 +78,7 @@ export default function AccountSheetRoute() {
       locale={locale}
       clock={prefs.clock}
       zoneLabel={zoneLabel(zone, locale)}
+      alertsNote={alertsNote}
       alerts={{
         reminder: prefs.alertReminder,
         moved: prefs.alertMoved,

@@ -9,15 +9,18 @@
  * `buildRegistration` is a pure function and is exercised by `_debug` today, so
  * the body is known-correct before an APNs token has ever existed.
  */
+import { CronogolApiError } from '@/lib/cronogol/client';
 import {
   MAX_CLUB_SLUGS,
   normaliseToken,
   registerDevice,
   unregisterDevice,
   type PushRegistration,
+  type PushRegistrationView,
 } from '@/lib/cronogol/push';
 import type { Locale } from '@/lib/i18n/phrases';
 import type { Preferences } from '@/store/preferences';
+import { setPushSyncStatus } from '@/store/push-sync-status';
 import {
   clearLastRegistration,
   readLastLinkedUser,
@@ -26,7 +29,7 @@ import {
   writeLastLinkedUser,
   writeLastRegistration,
 } from '@/store/registration';
-import { getAccessToken, getSessionUserId } from '@/store/session';
+import { getAccessToken, getSessionUserId, refreshAccessToken } from '@/store/session';
 import { apnsEnvironment, getDeviceToken, getPushToStartToken } from './capability';
 
 /**
@@ -35,6 +38,11 @@ import { apnsEnvironment, getDeviceToken, getPushToStartToken } from './capabili
  */
 const DEBOUNCE_MS = 1_500;
 
+/**
+ * ⚠ `'failed'` and `'no-token'` are both logged under `[push-sync]` now, and
+ * `'failed'` also lands in `store/push-sync-status` for the account sheet. They
+ * were silent, and silence here cost two days of goal alerts (ADR 0079).
+ */
 export type SyncResult = 'sent' | 'unchanged' | 'no-token' | 'failed';
 
 /**
@@ -93,7 +101,10 @@ export async function syncPushRegistration(
   locale: Locale,
 ): Promise<SyncResult> {
   const token = await getDeviceToken();
-  if (!token) return 'no-token';
+  if (!token) {
+    console.warn('[push-sync] no device token');
+    return 'no-token';
+  }
 
   // ⚠ Read alongside the device token, never gated on it being present: a
   // device below iOS 18 has one and not the other, and that is the ordinary
@@ -117,25 +128,87 @@ export async function syncPushRegistration(
   if (!registrationChanged(previous, body) && !linkChanged) return 'unchanged';
 
   /**
-   * ⚠ Resolved HERE, per call, never cached. `getAccessToken` refreshes an
-   * expired token; a stale one would be a 401 even though this route accepts
-   * anonymous callers, and push would fail silently for that device.
+   * ⚠ Resolved HERE, per call, never cached. A stale bearer is a 401 even though
+   * this route accepts anonymous callers — see `register` for what happens then.
    */
   const bearer = userId ? await getAccessToken() : null;
 
   try {
-    const view = await registerDevice(body, bearer);
+    const view = await register(body, bearer);
     // ⚠ Persist what the SERVER echoed, not what we sent: it collapses duplicate
     // slugs, so trusting our own array would re-send forever.
     await writeLastRegistration({ ...body, clubSlugs: view.clubSlugs });
     // ⚠ Recorded from the RESPONSE's `linked`, so a bearer the server rejected
     // does not leave us believing the row is linked and never retrying.
     if (userId && view.linked) await writeLastLinkedUser(userId);
+    setPushSyncStatus(true);
     return 'sent';
-  } catch {
-    // Never throw into a render. A failed write retries on the next change or launch.
+  } catch (error) {
+    // ⚠ Never throw into a render — but never swallow either (ADR 0079). One
+    // live device sat on `alert_goals: false` for two days behind a bare catch
+    // while the switch on screen said on. The status reaches the account sheet;
+    // the reason reaches the console, and nowhere a reader can see it.
+    console.warn(`[push-sync] failed: ${describe(error)}`);
+    setPushSyncStatus(false);
     return 'failed';
   }
+}
+
+/**
+ * `registerDevice`, surviving a stale bearer (ADR 0079).
+ *
+ * ⚠⚠ **A signed-in device can fail to register for DAYS, silently, and this is
+ * the path that stopped it.** The route answers 401 to an expired bearer rather
+ * than degrading to anonymous — deliberately, so a write cannot succeed while
+ * quietly belonging to nobody — and `getAccessToken` is a plain session read.
+ * `account.ts` has the refresh-once discipline for its own calls; this module
+ * never did, so one dead token turned every registration into `'failed'`
+ * until the next successful sign-in.
+ *
+ * Three attempts at most, in order, and the order is the point:
+ *   1. the bearer we hold;
+ *   2. on 401, a refreshed one — once, never a loop (`withAuth`'s rule);
+ *   3. on a second 401, or no refresh, **anonymously**. Lossless: the route
+ *      accepts it, and the server keeps the account link it already has (there
+ *      is no unlink — `push.ts`). The alert switches and the follow list land;
+ *      `view.linked` comes back false, so the link is re-asserted on the next
+ *      change or launch rather than assumed.
+ *
+ * ⚠ Never signs out. A dead session is the ACCOUNT SHEET's finding to make
+ * (`withAuth` does it there, on a screen that can show it); a background sync
+ * has no business ending a session over a push registration.
+ */
+async function register(
+  body: PushRegistration,
+  bearer: string | null,
+): Promise<PushRegistrationView> {
+  try {
+    return await registerDevice(body, bearer);
+  } catch (error) {
+    if (bearer === null || !isUnauthorised(error)) throw error;
+
+    const fresh = await refreshAccessToken();
+    if (fresh) {
+      try {
+        return await registerDevice(body, fresh);
+      } catch (again) {
+        if (!isUnauthorised(again)) throw again;
+      }
+    }
+
+    console.warn('[push-sync] bearer rejected; registering anonymously');
+    return registerDevice(body, null);
+  }
+}
+
+const isUnauthorised = (error: unknown) =>
+  error instanceof CronogolApiError && error.status === 401;
+
+/** For the console only — a status code, never a body and never a token. */
+function describe(error: unknown): string {
+  if (error instanceof CronogolApiError) return `HTTP ${error.status}`;
+  if (error instanceof Error) return error.name === 'TimeoutError' ? 'timeout' : error.name;
+  return 'unknown';
 }
 
 /** Trailing-debounced `syncPushRegistration`, for rapid follow toggling. */

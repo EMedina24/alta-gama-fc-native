@@ -134,6 +134,8 @@ the app already uses.
 
 ## 4. Rules for rendering
 
+⭐ **As of 2026-08-30 the score and the timeline cannot disagree on the wire** (backend §103, decision 0036): the session raises `score` to the goals in `events` before writing the row, because LaLiga's events route runs a minute or two ahead of its match record and a card showed a scorer under a 0-0. If they ever disagree again it is a backend bug, not a case to render.
+
 - ⚠⚠ **An empty `matches` array is the NORMAL answer.** Most of the time nothing
   is being played. Ordinary empty state, never an error.
 - ⚠⚠ **LaLiga only.** A Premier League, Serie A, Bundesliga or Segunda match

@@ -1,8 +1,8 @@
 /**
  * The Today board's lead card: a match in progress, or last result + next kickoff.
  *
- * ⚠⚠ **The in-progress card has TWO paths and the difference is the whole
- * feature** (ADR 0048). `isLive` says which one is on screen:
+ * ⚠⚠ **The in-progress card has THREE paths and the difference is the whole
+ * feature** (ADR 0048, 0078). `isLive` and `awaitingUpdate` say which:
  *
  * - **LIVE** — `GET /cronogol/live`, re-read every ~30s, joined to this fixture
  *   by our own id. It carries a real `minute`, so the card prints one. LaLiga
@@ -11,6 +11,10 @@
  *   sweep up to three hours ago. Every other league lands here, and it renders
  *   exactly as it always has: no minute, `FeedAge`, and a note saying the score
  *   is as of the last check.
+ * - **KICKED OFF** — the scheduled kickoff has passed and NEITHER source has
+ *   reported yet (ADR 0078): dashes for a score, no minute, no age line, no
+ *   events, and a note saying so. The live route catches up within minutes
+ *   of the actual whistle and the card upgrades in place.
  *
  * ⚠ **The note is required on BOTH and must never be removed to tidy the
  * screen.** The handoff is explicit that those lines "are the difference
@@ -116,6 +120,14 @@ export interface MatchBoardProps {
     note: string;
     /** ⚠ SWEEP path only, and always null there too — see `FeedAge`. */
     lastUpdateAt: string | null;
+    /**
+     * The KICKED-OFF path (ADR 0078): the scheduled kickoff has passed and no
+     * source has reported yet. Drops `FeedAge` — "as of the last check ·
+     * roughly every 3h" under a match that started seconds ago overstates the
+     * age in the one direction an honesty line must not — and the events
+     * disclosure, which could only open on "not published yet".
+     */
+    awaitingUpdate?: boolean;
   } | null;
   /** The most recent finished match of a followed club. */
   last?: {
@@ -248,7 +260,7 @@ export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchB
           {/* ⚠ `FeedAge` is the SWEEP path's alone — it renders whole hours, so on
               a feed that moves every ~30s it would print the same `0` all match.
               The live path's freshness is the minute, plus `note` when it stops. */}
-          {live.isLive ? null : (
+          {live.isLive || live.awaitingUpdate ? null : (
             <FeedAge lastUpdateAt={live.lastUpdateAt} render={copy.scoreAge} />
           )}
           {/* ⚠⚠ The honesty note stays INSIDE the padded block and ABOVE the
@@ -260,7 +272,7 @@ export function MatchBoard({ live, last, next, onKickoff, copy, events }: MatchB
           </Text>
         </View>
 
-        {live.id !== null ? (
+        {live.id !== null && !live.awaitingUpdate ? (
           <>
             <EventsDisclosure
               open={showEvents}

@@ -94,9 +94,17 @@ export interface BoardLive {
   fixture: BoardFixture;
   /**
    * The live row, or `null` when this is the fixture sweep's own `live` flag —
-   * a snapshot up to ~3h old, which the card must caption accordingly.
+   * a snapshot up to ~3h old, which the card must caption accordingly — or a
+   * match that has kicked off and has no row YET (`source: 'kickoff'`).
    */
   live: LiveMatchView | null;
+  /**
+   * Which truth the card is telling (ADR 0078). `live` alone cannot say: it is
+   * `null` for both the sweep's stale flag and a match the route has not seen
+   * yet, and those two need different captions — one is "as of the last check",
+   * the other is "kicked off, nothing to report yet".
+   */
+  source: "route" | "sweep" | "kickoff";
 }
 
 /**
@@ -167,7 +175,80 @@ export function boardFromRoute(
       goalsAway: match.score.away,
     },
     live: match,
+    source: "route",
   };
+}
+
+/**
+ * How long past its scheduled kickoff a `scheduled` fixture may lead the board
+ * as "kicked off" before the board stops waiting for a row that never came.
+ *
+ * Two and a half hours: a full match with stoppage and a late whistle, and
+ * still under the ~3h fixture sweep that flips `status` to `finished` for the
+ * leagues the live route does not cover — so for those, the sweep usually ends
+ * the hold before this does.
+ */
+export const KICKOFF_HOLD_MS = 150 * 60 * 1000;
+
+/**
+ * A followed club's match whose scheduled kickoff has passed and which nothing
+ * has reported on yet — the tier BETWEEN `routeLive` and the sweep (ADR 0078).
+ *
+ * ⚠⚠ **This exists because the whistle is late, every time.** Real Madrid v
+ * Málaga, 2026-08-30, scheduled 15:00 UTC: `/cronogol/live` served no row at
+ * 15:04:15 and a `minute: 0` row at 15:04:26. LaLiga's own feed flips a match
+ * to in-play at the ACTUAL kickoff, routinely two to five minutes after the
+ * scheduled one, and the countdown counts to the scheduled one. For that gap
+ * tier 0 has nothing, and a fresh `upcoming` window — which starts at `now` —
+ * has already dropped the match, so the board showed the fixture AFTER it as
+ * "next up". The match vanished.
+ *
+ * Reads the fixtures the screen already holds — every window concatenated,
+ * deduped by id here — so on the countdown path it answers from the stale
+ * `upcoming` row at the instant the timer crosses zero, and on a cold mount
+ * inside the gap it answers from the `today` window, which ends at `now`.
+ *
+ * ⚠ `status === 'scheduled'` only. A `live` row is the sweep's own claim and
+ * belongs to tier 2; a `finished` one is a result.
+ *
+ * ⚠ Never a `kickoffTbd` fixture — that timestamp is midnight UTC standing in
+ * for "unknown", so it is "past" for most of its day (ADR 0029).
+ *
+ * ⚠⚠ **`seenLive` is the post-match guard.** After full time the live row
+ * vanishes, but the `today` window can be fifteen minutes stale and still say
+ * `scheduled` — without this exclusion the card would come BACK as "kicked
+ * off" on a match that just ended. A fixture the route has ever served is
+ * never held here again.
+ *
+ * Earliest kickoff wins, the same rule as every other tier.
+ */
+export function kickedOff(
+  fixtures: readonly WindowFixtureView[],
+  followed: readonly string[],
+  now: number,
+  seenLive: ReadonlySet<string>,
+): WindowFixtureView | null {
+  const seen = new Set<string>();
+  const held = fixtures
+    .filter((fixture) => {
+      if (seen.has(fixture.id)) return false;
+      seen.add(fixture.id);
+      if (fixture.status !== "scheduled" || fixture.kickoffTbd) return false;
+      if (seenLive.has(fixture.id)) return false;
+      if (!involvesFollowed(fixture, followed)) return false;
+      const kickoff = Date.parse(fixture.kickoffUtc);
+      if (Number.isNaN(kickoff)) return false;
+      const since = now - kickoff;
+      return since >= 0 && since < KICKOFF_HOLD_MS;
+    })
+    .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
+
+  return held[0] ?? null;
+}
+
+/** The kicked-off tier's `BoardLive`: the fixture as the board holds it, no row. */
+export function boardFromKickoff(fixture: WindowFixtureView): BoardLive {
+  return { fixture, live: null, source: "kickoff" };
 }
 
 /**
@@ -213,11 +294,11 @@ export function boardLive(
   if (first !== undefined) {
     // Non-null by the filter above; narrowed here rather than asserted.
     const live = byId.get(first.id);
-    if (live !== undefined) return { fixture: first, live };
+    if (live !== undefined) return { fixture: first, live, source: "route" };
   }
 
   const swept = liveFixture(fixtures, followed);
-  return swept === null ? null : { fixture: swept, live: null };
+  return swept === null ? null : { fixture: swept, live: null, source: "sweep" };
 }
 
 /**

@@ -71,6 +71,12 @@ export interface AccountSheetProps {
   locale: Locale;
   clock: ClockFormat;
   zoneLabel: string;
+  /**
+   * The line under the alert switches (ADR 0079): never registered, saved at
+   * a time, or could not be saved. Resolved by the route, which holds the
+   * reader's clock; this organism only prints it.
+   */
+  alertsNote: string;
   alerts: {
     reminder: boolean;
     moved: boolean;
@@ -208,6 +214,7 @@ export function AccountSheet({
   locale,
   clock,
   zoneLabel,
+  alertsNote,
   alerts,
   feeds,
   onSetAlert,
@@ -329,7 +336,7 @@ export function AccountSheet({
       </View>
 
       <Text variant="footnote" color="textFaint">
-        {copy.sheets.alertsPendingNote}
+        {alertsNote}
       </Text>
 
       <SectionHeader title={a.preferences} />

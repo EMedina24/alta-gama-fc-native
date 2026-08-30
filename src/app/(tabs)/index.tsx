@@ -7,7 +7,7 @@
  * before push exists: it is exactly what a new user sees.
  */
 import { useIsFocused, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
@@ -21,9 +21,11 @@ import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
 import { pairWash } from '@/lib/cronogol/club-wash';
 import {
+  boardFromKickoff,
   boardFromRoute,
   boardLive,
   isStalled,
+  kickedOff,
   liveById,
   liveMinute,
   minutesSinceSeen,
@@ -55,6 +57,24 @@ import { usePreferences, useZone } from '@/store/preferences';
 
 /** The six clubs offered in the follow card's grid. */
 const FOLLOW_PICKS = 6;
+
+/**
+ * Every fixture id `/cronogol/live` has served this process (ADR 0078).
+ *
+ * ⚠⚠ **The post-match guard for the kicked-off tier.** When a match ends its
+ * live row vanishes, but the `today` window can be fifteen minutes stale and
+ * still call the fixture `scheduled` — and "scheduled, kickoff in the past, no
+ * live row" is exactly the shape the kicked-off tier holds. A fixture the route
+ * has ever served is never held as "kicked off" again.
+ *
+ * ⚠ Module scope, not a ref or state, deliberately. It is read during render
+ * (`react-hooks/refs` forbids `ref.current` there) and written from an effect
+ * (a `setState` there is the lint error this repo carries six of and refuses a
+ * seventh). It is bookkeeping about what the network has said, not render
+ * state: nothing re-renders because it changed, and the render that needs it
+ * always follows the effect that wrote it.
+ */
+const seenLive = new Set<string>();
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -96,6 +116,36 @@ export default function TodayScreen() {
   const now = new Date();
 
   /**
+   * Re-renders the screen at the instant the countdown crosses zero (ADR 0078).
+   *
+   * ⚠ The refetches `onKickoff` fires re-render too — but a request later. The
+   * kicked-off tier below answers from fixtures ALREADY on screen, so all it
+   * needs is a render that reads a `now` past the kickoff, and this is that.
+   */
+  const [, bumpKickoff] = useReducer((n: number) => n + 1, 0);
+
+  /**
+   * Records what the route has served into `seenLive` (ADR 0078).
+   *
+   * A row vanishing is also the one signal that a match has ENDED before the
+   * sweep says so, so it refetches the two windows behind FINISHED TODAY and
+   * the last-result card — once per fixture, guarded by `settled`.
+   */
+  const settled = useRef(new Set<string>());
+  const refetchFinished = finished.refetch;
+  const refetchRecent = recent.refetch;
+  useEffect(() => {
+    const byId = liveById(live.data?.matches ?? [], Date.now());
+    for (const id of byId.keys()) seenLive.add(id);
+    for (const id of seenLive) {
+      if (byId.has(id) || settled.current.has(id)) continue;
+      settled.current.add(id);
+      void refetchFinished();
+      void refetchRecent();
+    }
+  }, [live.data, refetchFinished, refetchRecent]);
+
+  /**
    * The in-play match of a followed club, and whether it is genuinely live.
    *
    * ⚠⚠ **Tier 0 reads `/cronogol/live` ALONE** (ADR 0066). The route carries
@@ -117,6 +167,25 @@ export default function TodayScreen() {
     const byId = liveById(live.data?.matches ?? [], now.getTime());
     const fromRoute = routeLive(byId, followed);
     if (fromRoute) return boardFromRoute(fromRoute, teams.data ?? []);
+    /**
+     * ⚠⚠ **Kicked off, and nothing has reported yet** (ADR 0078). The route
+     * flips a match to `live` at the ACTUAL whistle, two to five minutes after
+     * the scheduled kickoff the countdown counted to; for that gap the match
+     * has no row and a fresh `upcoming` window has already dropped it. Every
+     * window is offered: `upcoming` still holds the fixture on the countdown
+     * path, `today` holds it on a cold mount inside the gap.
+     */
+    const held = kickedOff(
+      [
+        ...(finished.data?.fixtures ?? []),
+        ...(upcoming.data?.fixtures ?? []),
+        ...(recent.data?.fixtures ?? []),
+      ],
+      followed,
+      now.getTime(),
+      seenLive,
+    );
+    if (held) return boardFromKickoff(held);
     return (
       boardLive(finished.data?.fixtures ?? [], followed, byId) ??
       boardLive(recent.data?.fixtures ?? [], followed, byId)
@@ -131,16 +200,30 @@ export default function TodayScreen() {
   const lastOutcome = last ? boardOutcome(last, followed) : null;
   const lastMatchday = last ? matchday(last.round) : null;
 
-  /** The soonest upcoming match involving a followed club. */
-  const next = useMemo(() => {
-    if (!hasClubs || !upcoming.data) return null;
-    return upcoming.data.fixtures.find((f) => involvesFollowed(f, followed)) ?? null;
-  }, [hasClubs, upcoming.data, followed]);
-
-  const mine = useMemo(() => {
+  /**
+   * A followed club's fixture that has not kicked off yet.
+   *
+   * ⚠⚠ **The kickoff test is what keeps a started match out of NEXT UP** (ADR
+   * 0078). `upcoming` is deliberately never refetched at kickoff, so its rows
+   * outlive their kickoffs by up to fifteen minutes — and without this a
+   * match the kicked-off tier is holding, or one that just ended, came back
+   * here as "next up" over a countdown reading `00m 00s`. A TBD kickoff is
+   * midnight UTC and is never compared (ADR 0029).
+   *
+   * ⚠ Not memoised, for the same reason `board` is not: it reads the clock.
+   */
+  const upcomingMine = (() => {
     if (!hasClubs || !upcoming.data) return [];
-    return upcoming.data.fixtures.filter((f) => involvesFollowed(f, followed)).slice(0, 6);
-  }, [hasClubs, upcoming.data, followed]);
+    const at = now.getTime();
+    return upcoming.data.fixtures.filter(
+      (f) => involvesFollowed(f, followed) && (f.kickoffTbd || Date.parse(f.kickoffUtc) > at),
+    );
+  })();
+
+  /** The soonest upcoming match involving a followed club. */
+  const next = upcomingMine[0] ?? null;
+
+  const mine = upcomingMine.slice(0, 6);
 
   const picks = useMemo(() => (teams.data ?? []).slice(0, FOLLOW_PICKS), [teams.data]);
 
@@ -192,7 +275,7 @@ export default function TodayScreen() {
    * nobody. A null is never reasoned about as a zero.
    */
   const liveCard = (state: BoardLive) => {
-    const { fixture, live: match } = state;
+    const { fixture, live: match, source } = state;
     const goalsHome = match ? match.score.home : fixture.goalsHome;
     const goalsAway = match ? match.score.away : fixture.goalsAway;
 
@@ -226,16 +309,21 @@ export default function TodayScreen() {
       home: side(fixture.homeTeam, goalsHome, loses(goalsHome, goalsAway)),
       away: side(fixture.awayTeam, goalsAway, loses(goalsAway, goalsHome)),
       isLive: match !== null,
+      // ⚠ The kicked-off tier (ADR 0078): dashes, no minute, no age line, no
+      // events — nothing has been reported, and the card must not pretend.
+      awaitingUpdate: source === 'kickoff',
       // ⚠ Null on the sweep path, and null for a `status: 'unknown'` row — the
       // score is still true there, the minute is not.
       minute: minute === null ? null : copy.today.minute(minute),
       stalled,
       note:
-        match === null
-          ? copy.today.inPlayNote
-          : stalled
-            ? copy.today.liveStalled(minutesSinceSeen(match, checkedAt))
-            : copy.today.liveNote,
+        source === 'kickoff'
+          ? copy.today.kickedOffNote
+          : match === null
+            ? copy.today.inPlayNote
+            : stalled
+              ? copy.today.liveStalled(minutesSinceSeen(match, checkedAt))
+              : copy.today.liveNote,
       // ⚠ SWEEP path only, and null even there: the fixture route carries no
       // per-row stamp, and our own fetch time would UNDERSTATE the age — the
       // wrong direction for an honesty line.
@@ -344,6 +432,9 @@ export default function TodayScreen() {
            * join to, and that arrives with these two.
            */
           onKickoff={() => {
+            // ⚠ First, and synchronously: the kicked-off card is built from
+            // rows already on screen, so it needs a render, not a response.
+            bumpKickoff();
             void finished.refetch();
             void recent.refetch();
             void live.refetch();
