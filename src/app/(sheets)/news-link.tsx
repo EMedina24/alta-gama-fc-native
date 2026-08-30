@@ -54,9 +54,12 @@ export default function NewsLinkSheetRoute() {
       openLabel={copy.news.openAt(article.publisher.name)}
       shareLabel={copy.news.share}
       cancelLabel={copy.news.cancel}
+      // ⚠ Browser FIRST, sheet after: `close()` before `openArticle` attaches
+      // the browser to a sheet that is mid-dismissal, and iOS tears it down
+      // with the sheet. `openArticle` resolves when the reader dismisses the
+      // browser — only then does this sheet go.
       onOpen={() => {
-        close();
-        void openArticle(article.url);
+        void openArticle(article.url).finally(close);
       }}
       // ⚠ The URL, never the id — a share must outlive the 30-day purge.
       onShare={() => void Share.share({ message: title, url: article.url })}
