@@ -1,5 +1,6 @@
 export { BandRail } from './band-rail';
 export { Button, type ButtonTone } from './button';
+export { Check, type CheckProps } from './check';
 export { Chevron, type ChevronProps } from './chevron';
 export { ChipButton } from './chip-button';
 export { Crest } from './crest';

@@ -1,7 +1,7 @@
 # 0073 — Save to Photos uses `expo-media-library`'s class API; the capture uses `useRenderInContext`; no export failure is swallowed
 
 - **Date:** 2026-08-30
-- **Status:** Accepted — root cause confirmed from the device log after the first tap; `Asset.create` fix awaiting the second tap
+- **Status:** Accepted — root cause confirmed from the device log after the first tap; `Asset.create` confirmed by the second tap ("Saved to Photos", 2026-08-30)
 - **Decided by:** Ed Medina
 
 ## What the log said

@@ -470,12 +470,15 @@ documented at the code that handles them; this is the index.
 - **Starting XI portraits on the pitch and the rail** ([0072](./decisions/0072-xi-portraits-on-the-board.md)):
   number badge on the corner, number token for a null or failed photo.
   `/_debug/xi` breaks two portraits on purpose.
-- **XI export: Save to Photos through `Asset.create`** ([0073](./decisions/0073-xi-export-render-in-context.md)).
-  The device log named it: SDK 57 removed `saveToLibraryAsync` from
-  `expo-media-library`'s root entry and left a stub that throws. ⚠ Awaiting a
-  second tap to confirm; a failure prints `[xi-export] …` with the reason
-  (`xcrun simctl spawn booted log show --last 10m --predicate 'process == "AltaGamaFC"'`
-  reads it without Metro's terminal). See trap 43.
+- **XI export saves again** ([0073](./decisions/0073-xi-export-render-in-context.md)):
+  SDK 57 removed `saveToLibraryAsync` from `expo-media-library`'s root entry
+  and left a stub that throws; `Asset.create` is the call. Confirmed by tap
+  2026-08-30. Read runtime errors with `xcrun simctl spawn booted log show
+  --last 10m --predicate 'process == "AltaGamaFC"'` — no Metro terminal needed.
+- **The export's receipt state** ([0074](./decisions/0074-export-receipt-state.md)):
+  Save flips to an outline "✓ Saved to Photos", disabled until the size, title
+  or lineup changes; lime `StatusBanner`; success haptic.
+  `/_debug/xi?status=saved|denied|failed` shows the three states.
 - **Today's news card leads with its picture** ([0071](./decisions/0071-today-news-card-lead-picture.md)):
   `NewsLead variant="compact"`, no kicker. `/_debug/gallery?only=news` opens
   with the two card states.

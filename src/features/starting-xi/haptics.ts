@@ -31,3 +31,16 @@ export async function hapticFor(effect: Effect): Promise<void> {
     // No haptic engine (simulator), or the module is missing from this build.
   }
 }
+
+/**
+ * The export's receipt (ADR 0074): a Success notification the moment the PNG
+ * is in Photos. Not an `Effect` — those are the builder's own moves — so it
+ * has its own door here rather than widening that union.
+ */
+export async function hapticSaved(): Promise<void> {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch {
+    // As above.
+  }
+}

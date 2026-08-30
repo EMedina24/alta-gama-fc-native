@@ -17,6 +17,7 @@ export { NewsThumb } from './news-thumb';
 export { NewsTile, type NewsTileProps } from './news-tile';
 export { ScoreLine, type ScoreSide } from './score-line';
 export { SectionHeader } from './section-header';
+export { StatusBanner, type StatusBannerProps, type StatusKind } from './status-banner';
 export { StatRow } from './stat-row';
 export { StatTile } from './stat-tile';
 export { UpcomingCard, type UpcomingSide } from './upcoming-card';

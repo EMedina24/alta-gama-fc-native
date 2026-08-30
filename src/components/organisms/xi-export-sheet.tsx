@@ -7,11 +7,18 @@
  *
  * ⚠ Accent budget inside the sheet: Save is the one primary; Share is
  * secondary. The two do the same render and differ only in the hand-off.
+ *
+ * ⚠ **After a save, the Save button IS the receipt** (ADR 0074): outline
+ * tone, a check, the label `Saved to Photos`, and DISABLED — the control the
+ * reader would tap again says it is done. A banner in the same lime repeats
+ * it below. The route clears the status the moment anything that would make
+ * a different PNG changes (size, title, lineup), which re-arms the button.
  */
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Text } from '@/components/atoms';
+import { Button, Check, Text } from '@/components/atoms';
+import { StatusBanner, type StatusKind } from '@/components/molecules';
 import { Colors, Radius, Spacing, Type } from '@/constants/theme';
 import {
   EXPORT_SIZES,
@@ -20,6 +27,18 @@ import {
   type ExportSize,
 } from '@/features/starting-xi/card-geometry';
 import { LineupCard, type LineupCardProps } from './lineup-card';
+
+/** `saved` flips the Save button into its receipt state; the rest only banner. */
+export interface ExportStatus {
+  kind: 'saved' | 'denied' | 'failed';
+  text: string;
+}
+
+const BANNER: Record<ExportStatus['kind'], StatusKind> = {
+  saved: 'success',
+  denied: 'warning',
+  failed: 'error',
+};
 
 export interface XiExportSheetProps {
   card: Omit<LineupCardProps, 'size' | 'scale' | 'onImagesSettled'>;
@@ -30,7 +49,7 @@ export interface XiExportSheetProps {
   onSave: () => void;
   onShare: () => void;
   busy: boolean;
-  status: string | null;
+  status: ExportStatus | null;
   labels: {
     heading: string;
     cardTitle: string;
@@ -109,13 +128,13 @@ export function XiExportSheet({
         <LineupCard {...card} size={size} scale={scale} />
       </View>
 
-      <Button label={labels.save} onPress={onSave} loading={busy} />
+      {status?.kind === 'saved' ? (
+        <Button label={status.text} tone="outline" icon={<Check />} onPress={onSave} disabled />
+      ) : (
+        <Button label={labels.save} onPress={onSave} loading={busy} />
+      )}
       <Button label={labels.share} tone="secondary" onPress={onShare} disabled={busy} />
-      {status ? (
-        <Text variant="caption" color="textSecondary" center>
-          {status}
-        </Text>
-      ) : null}
+      {status ? <StatusBanner kind={BANNER[status.kind]} text={status.text} /> : null}
       <Text variant="caption" color="textMuted" style={styles.note}>
         {labels.note}
       </Text>
