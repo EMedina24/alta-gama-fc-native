@@ -12,7 +12,17 @@ import { StyleSheet, View } from 'react-native';
 import { Colors, Radius } from '@/constants/theme';
 import type { ZoneKind } from '@/lib/cronogol/leagues';
 
-const BAND: Record<ZoneKind, string> = {
+/**
+ * The four band colours, keyed by zone.
+ *
+ * ⚠ Exported because the Clubs rail's rank badge inks its number with the same
+ * map (ADR 0082). A second copy would let a band recolour repaint the table and
+ * not the rail — the two would then disagree about what `#5` means.
+ *
+ * ⚠ Reading this does NOT license painting a band: the caller still has to have
+ * asked `bandsApply` first. See the header.
+ */
+export const BAND_COLOR: Record<ZoneKind, string> = {
   ucl: Colors.dark.bandUcl,
   uel: Colors.dark.bandUel,
   conf: Colors.dark.bandConf,
@@ -21,7 +31,7 @@ const BAND: Record<ZoneKind, string> = {
 
 export function BandRail({ zone }: { zone: ZoneKind | null }) {
   return (
-    <View style={[styles.rail, { backgroundColor: zone ? BAND[zone] : 'transparent' }]} />
+    <View style={[styles.rail, { backgroundColor: zone ? BAND_COLOR[zone] : 'transparent' }]} />
   );
 }
 

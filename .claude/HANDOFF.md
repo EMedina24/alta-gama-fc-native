@@ -1136,8 +1136,10 @@ Done 2026-08-30 in the onboarding redesign ([0076](./decisions/0076-onboarding-f
 
 - ~~`expo-haptics` is **not installed**~~ — it has been a dependency since the XI
   builder (ADR 0065), and since ADR 0081 every haptic lives in `lib/haptics.ts`,
-  still the one file that imports it. The design's haptic on **follow/unfollow**
-  is the piece that remains unbuilt; `hapticToggle()` is there to call.
+  still the one file that imports it. ~~The design's haptic on
+  **follow/unfollow**~~ — built 2026-08-31 on the Clubs screen's follow pill
+  ([0082](./decisions/0082-clubs-screen-rail-redesign.md)). There is no
+  unfollow on that screen any more, so `hapticToggle()` fires on follow alone.
   `NativeTabs` already gives tab haptics free.
 - The Today eyebrow reads only a weekday. The design pairs it with a matchday —
   deliberately not built, because the board spans four leagues and no single
@@ -1189,11 +1191,27 @@ Done 2026-08-30 in the onboarding redesign ([0076](./decisions/0076-onboarding-f
   it will never say *how many they have scored this season*. Per the backend's
   own decision log this is "the claim most likely to be lost in retelling"
   (`senpai-backend/.claude/decisions/0030`).
-- **Serie A has no mark** — text label, don't invent artwork.
+- ~~**Serie A has no mark**~~ — **it does now.** `GET /cronogol/leagues` serves
+  Serie A a `primary` **SVG**, portrait (~0.64:1) with a gradient, verified
+  2026-08-31 ([0082](./decisions/0082-clubs-screen-rail-redesign.md)). LaLiga
+  also serves a **`wordmark`** cut, which nothing reads — `leagueOptions`
+  prefers `onDark → icon → primary` and every league row in the app uses it.
+  ⚠ A vector can decode and still report no intrinsic size — size a mark off
+  its measured ratio with a zero-guard, never off a hard-coded one.
+- **Tables exist for all four leagues, not just LaLiga.** `/cronogol/standings`
+  returns complete, `bandsApply`-passing tables for LaLiga, the Premier League,
+  Bundesliga and Serie A, plus `segunda` — which has no `League` config and
+  must be skipped wherever a rank is quoted, because five LaLiga-roster clubs
+  actually sit in it ([0082](./decisions/0082-clubs-screen-rail-redesign.md)).
 - **Qualification bands are unconfirmed for 2026/27** — coefficient-driven, worth
   checking against the real allocation before launch.
-- **`venue.city` is null except Serie A** — the club page derives it from the
-  first home fixture via `homeGround()`.
+- **`venue.city` is null on LaLiga, and Bundesliga has no `venue` object at
+  all** — re-probed 2026-08-31: the Premier League and Serie A both state a
+  city, LaLiga states none on all 20 (but does state `venue.name`), and
+  Bundesliga states neither. The club page derives the city from the first
+  home fixture via `homeGround()`; a LIST cannot, so the Clubs browse row
+  falls back `city → venue.name → nothing`
+  ([0082](./decisions/0082-clubs-screen-rail-redesign.md)).
 - **`threadIdentifier` is not settable from JS in SDK 57**, so a local reminder
   cannot join the server's `fixture-{uuid}` thread. Two notifications, not one.
 - **The Today eyebrow shows only a weekday.** The design pairs it with a matchday,

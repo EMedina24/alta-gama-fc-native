@@ -18,6 +18,29 @@ const dark = {
   sunken: '#101317',
   glyph: '#39404a',             // the player silhouette, on `raisedAlt`
 
+  /**
+   * The DOUBLE BEZEL, and it lives on exactly one component: the Clubs rail's
+   * bubble (ADR 0082).
+   *
+   * `bezelFill` is the shell — the band between the bubble's club-colour
+   * hairline and its core. `bezelHighlight` is the core's lit top edge, which is
+   * what makes the two rings read as concentric rather than as a flat band
+   * around a disc.
+   *
+   * ⚠ **Not a general surface, and not a fifth step on the ladder.** The ladder
+   * is still `background → card → raised → raisedAlt`, and
+   * [0081](.claude/decisions/0081-account-sheet-redesign.md)'s refusal of nested
+   * card shells still governs every CARD in the app — the search field and the
+   * browse tray are one `card` surface each. These two exist because a bubble is
+   * a physical object with a rim, not a card.
+   *
+   * ⚠ `bezelHighlight` is drawn as a `borderTopColor` on a transparent-bordered
+   * overlay, never as an inset shadow: React Native has no `inset` shadow, and a
+   * top border on a rounded view is what traces the lit arc.
+   */
+  bezelFill: 'rgba(255,255,255,0.06)',
+  bezelHighlight: 'rgba(255,255,255,0.14)',
+
   // Hairlines
   hairline: 'rgba(255,255,255,0.05)',      // row separators in a list
   hairlineMid: 'rgba(255,255,255,0.07)',   // section rules, tab-bar top border
@@ -284,6 +307,21 @@ export const Type = {
   /** The shirt number on a portrait token's corner badge (ADR 0072), and the rail tile's. */
   xiBadge: { fontSize: 9.5, fontWeight: '800' },
   xiRailBadge: { fontSize: 8, fontWeight: '800' },
+  /**
+   * The Clubs rail (ADR 0082). A bubble's name caption, and the rank badge on it.
+   *
+   * ⚠ `railName` is NOT `Type.caption` (12.5/500), which it nearly is: the
+   * caption is prose weight and these 12pt names sit under 88pt discs where 500
+   * read as a hint rather than a label. Its negative tracking is what keeps
+   * `R. Sociedad` on one line in an 88pt box.
+   *
+   * ⚠ `rankBadge` is a NUMBER and is always drawn `tabular` — `#4` and `#11`
+   * sit at the same corner of neighbouring bubbles. Not `eyebrowSm`, which it
+   * shares 9.5/800 with today: that token uppercases and tracks at 1.3 for a
+   * word, and `#11` at 1.3 puts a visible gap inside the number.
+   */
+  railName: { fontSize: 12, fontWeight: '600', letterSpacing: -0.18 },
+  rankBadge: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.4 },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -501,6 +539,25 @@ export const Size = {
   xiBadge: 18,
   /** The same badge on a 30pt rail tile. */
   xiRailBadge: 14,
+
+  /**
+   * The Clubs screen (ADR 0082).
+   *
+   * The rail's bubble, its ring padding, the crest floating in it, the lime
+   * check and the rank badge. ⚠ The bubble's radius is `clubBubble / 2` at the
+   * call site rather than a token: it is a circle, and a radius that can drift
+   * from the diameter is a bug waiting to be typed.
+   */
+  clubBubble: 88,
+  clubBubbleRing: 4,
+  crestBubble: 54,
+  bubbleCheck: 26,
+  bubbleRank: 20,
+  /** The browse row's crest. */
+  crestBrowse: 32,
+  /** The follow pill, and the disc holding its `+`. */
+  followPillH: 32,
+  followPillDisc: 22,
 } as const;
 
 /**

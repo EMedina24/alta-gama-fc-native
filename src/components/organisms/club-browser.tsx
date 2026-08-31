@@ -1,78 +1,70 @@
 /**
- * The full club list with follow chips.
+ * The browse list — every club in the chosen league that the reader does not
+ * already follow, in one tray (ADR 0082).
  *
- * ⚠ Tapping the ROW opens the club; tapping the CHIP follows in place. Two
- * targets, two outcomes — the design is explicit that opening a club does not
- * follow it.
+ * ⚠ **Followed clubs are filtered OUT by the screen, not here.** The rail is
+ * the only place a subscribed club appears; a club in both would make the rail
+ * look like a shortcut rather than the state it is.
  *
- * ⚠ A club with `lastSyncedAt === null` is opponent-only: only the matches where
- * it happened to face a tracked club were ever fetched. Its subtitle says the
- * schedule is pending rather than claiming a fixture count.
+ * ⚠ **This organism no longer has a `subscribed` variant.** It used to render
+ * the follow list as a second vertical list with an unfollow `Switch` in each
+ * row. Both are gone: the rail replaced the list, and unfollow moved to the club
+ * page's `Match alerts`, which confirms first. Unfollowing drops a season of
+ * calendar entries, and the old row did it on a single tap with no undo.
+ *
+ * ⚠ ONE tray, not one card per row — a `card` surface with hairlines between
+ * rows and none after the last. The handoff drew a second shell inside it;
+ * ADR 0081's "no nested card shells" rule stands and it is not built.
  */
 import { StyleSheet, View } from 'react-native';
 
-import { ChipButton, Switch } from '@/components/atoms';
-import { ListRow } from '@/components/molecules';
-import { Size, Spacing } from '@/constants/theme';
-import { abbreviate, crestSrc, displayName, hasCompleteSchedule } from '@/lib/cronogol/derive';
-import type { TeamView } from '@/lib/cronogol/types';
+import { ClubRow } from '@/components/molecules';
+import { Colors, Radius } from '@/constants/theme';
 
-export interface ClubBrowserProps {
-  teams: readonly TeamView[];
-  followed: readonly string[];
-  onToggle: (slug: string) => void;
-  onOpen: (slug: string) => void;
-  /** Rendered as a switch row rather than a follow chip. */
-  variant?: 'browse' | 'subscribed';
-  copy: {
-    follow: string;
-    schedulePending: string;
-    fullSeason: (n: number) => string;
-  };
+export interface BrowseClub {
+  slug: string;
+  name: string;
+  place: string | null;
+  crest: string | null;
+  abbr: string;
+  followAccessibilityLabel: string;
 }
 
-export function ClubBrowser({
-  teams,
-  followed,
-  onToggle,
-  onOpen,
-  variant = 'browse',
-  copy,
-}: ClubBrowserProps) {
-  return (
-    <View>
-      {teams.map((team) => {
-        const isFollowed = followed.includes(team.slug);
-        const pending = !hasCompleteSchedule(team);
+export interface ClubBrowserProps {
+  clubs: readonly BrowseClub[];
+  followLabel: string;
+  onFollow: (slug: string) => void;
+  onOpen: (slug: string) => void;
+}
 
-        return (
-          <ListRow
-            key={team.slug}
-            title={displayName(team.name)}
-            subtitle={pending ? copy.schedulePending : null}
-            crest={crestSrc(team.logoUrls, team.logoUrl, 'small')}
-            abbr={abbreviate(team.name, team.slug, team.shortName)}
-            crestSize={variant === 'subscribed' ? Size.crestCard : Size.crestList}
-            active={variant === 'subscribed'}
-            onPress={() => onOpen(team.slug)}
-            trailing={
-              variant === 'subscribed' ? (
-                <Switch
-                  value={isFollowed}
-                  onValueChange={() => onToggle(team.slug)}
-                  accessibilityLabel={team.name}
-                />
-              ) : isFollowed ? (
-                <ChipButton label="✓" active onPress={() => onToggle(team.slug)} />
-              ) : (
-                <ChipButton label={copy.follow} onPress={() => onToggle(team.slug)} />
-              )
-            }
-          />
-        );
-      })}
+export function ClubBrowser({ clubs, followLabel, onFollow, onOpen }: ClubBrowserProps) {
+  return (
+    <View style={styles.tray}>
+      {clubs.map((club, i) => (
+        <ClubRow
+          key={club.slug}
+          name={club.name}
+          place={club.place}
+          crest={club.crest}
+          abbr={club.abbr}
+          followLabel={followLabel}
+          followAccessibilityLabel={club.followAccessibilityLabel}
+          onOpen={() => onOpen(club.slug)}
+          onFollow={() => onFollow(club.slug)}
+          rule={i < clubs.length - 1}
+        />
+      ))}
     </View>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  tray: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: Radius.group,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.dark.hairlineMid,
+    // ⚠ Clips the first and last rows' pressed ground to the tray's corners.
+    overflow: 'hidden',
+  },
+});

@@ -10,11 +10,11 @@
  */
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Check, Crest, Eyebrow, Glow, SearchGlyph, SkeletonRows, Text, WashGradient } from '@/components/atoms';
-import { LeaguePills, PickStack, StepDots } from '@/components/molecules';
+import { Button, Check, Crest, Eyebrow, Glow, SkeletonRows, Text, WashGradient } from '@/components/atoms';
+import { LeaguePills, PickStack, SearchField, StepDots } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, pickerName } from '@/lib/cronogol/derive';
 import { DEFAULT_LEAGUE, findLeague, leagueOptions } from '@/lib/cronogol/leagues';
@@ -97,16 +97,10 @@ export default function OnboardingClubs() {
             on the first keystroke, and anything below them would be yanked
             upward under the reader's finger mid-type. */}
         <View style={styles.search}>
-          <SearchGlyph />
-          <TextInput
+          <SearchField
             value={query}
             onChangeText={setQuery}
             placeholder={copy.onboarding.search}
-            placeholderTextColor={Colors.dark.textFaint}
-            style={styles.searchInput}
-            autoCorrect={false}
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
           />
         </View>
 
@@ -187,17 +181,8 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: Spacing.five, gap: Spacing.three, paddingBottom: Spacing.seven },
   stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   body: { lineHeight: 21 },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two + 2,
-    minHeight: Size.minTouch + 2,
-    marginTop: Spacing.two,
-    paddingHorizontal: Spacing.four - 2,
-    backgroundColor: Colors.dark.card,
-    borderRadius: Radius.control,
-  },
-  searchInput: { flex: 1, minWidth: 0, minHeight: Size.minTouch + 2, color: Colors.dark.text, fontSize: 15 },
+  // The field itself is `SearchField` (ADR 0082); this is only its offset.
+  search: { marginTop: Spacing.two },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.one },
   tile: {
     // Three across inside the gutter, with two 8pt gaps: (100% − 16) / 3.

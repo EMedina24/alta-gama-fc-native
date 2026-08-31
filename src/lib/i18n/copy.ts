@@ -459,10 +459,22 @@ export interface Copy {
   };
   clubs: {
     title: string;
+    /** Under the title: how many clubs this reader follows (ADR 0082). */
+    followedCount: (n: number) => string;
     search: (n: number) => string;
     subscribed: string;
     browse: (league: string) => string;
+    /**
+     * ⚠ The bare VERB. The `+` beside it is `PlusGlyph`, drawn in the pill's own
+     * disc — a translator must never be handed punctuation that is artwork.
+     */
     follow: string;
+    /** `Follow {club}` — VoiceOver cannot read the pill's glyph or its row. */
+    followClub: (club: string) => string;
+    /** The bubble's label: the club, and its league position when there is one. */
+    railClub: (club: string, rank: number | null) => string;
+    /** The footnote closing the screen: four leagues today, more as data lands. */
+    moreLeagues: string;
     schedulePending: string;
     fullSeason: (n: number) => string;
     noResults: string;
@@ -864,10 +876,18 @@ export const esCopy: Copy = {
 
   clubs: {
     title: 'Clubes',
+    followedCount: (n: number) => (n === 1 ? '1 club seguido' : `${n} clubes seguidos`),
     search: (n: number) => `Buscar entre ${n} clubes`,
     subscribed: 'Siguiendo',
     browse: (league: string) => `Explorar ${league}`,
-    follow: '+ SEGUIR',
+    // ⚠ El `+` es un glifo, no texto — ver la interfaz.
+    follow: 'SEGUIR',
+    followClub: (club: string) => `Seguir a ${club}`,
+    railClub: (club: string, rank: number | null) =>
+      rank === null ? club : `${club}, puesto ${rank}`,
+    moreLeagues:
+      'Cuatro ligas por ahora. Se añaden más según se publican sus datos de temporada; ' +
+      'las suscripciones y los calendarios funcionan igual en todas.',
     // ⚠ `lastSyncedAt === null`: no presentar como calendario.
     schedulePending: 'Calendario pendiente',
     fullSeason: (n: number) => `${n} partidos`,
@@ -1248,10 +1268,18 @@ export const enCopy: Copy = {
 
   clubs: {
     title: 'Clubs',
+    followedCount: (n: number) => (n === 1 ? '1 club followed' : `${n} clubs followed`),
     search: (n: number) => `Search ${n} clubs`,
     subscribed: 'Subscribed',
     browse: (league: string) => `Browse ${league}`,
-    follow: '+ FOLLOW',
+    // ⚠ The `+` is a glyph, not text — see the interface.
+    follow: 'FOLLOW',
+    followClub: (club: string) => `Follow ${club}`,
+    railClub: (club: string, rank: number | null) =>
+      rank === null ? club : `${club}, position ${rank}`,
+    moreLeagues:
+      'Four leagues today. More are added as their season data comes online — ' +
+      'subscriptions and calendar feeds work the same in every one.',
     schedulePending: 'Schedule pending',
     fullSeason: (n: number) => `${n} matches`,
     noResults: 'No club matches your search.',

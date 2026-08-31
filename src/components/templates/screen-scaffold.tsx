@@ -17,6 +17,16 @@ import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/th
 export interface ScreenScaffoldProps {
   title: string;
   eyebrow?: string;
+  /**
+   * A quiet line UNDER the title — the Clubs screen's `{n} clubs followed`
+   * (ADR 0082).
+   *
+   * ⚠ Not `eyebrow`, and the two are not interchangeable: an eyebrow sits ABOVE
+   * the title and names the screen's scope (`LALIGA 2026/27 · 20 clubs`), while
+   * this states something about the reader's own state and reads after the
+   * title, not before it. Both may be set.
+   */
+  subtitle?: string;
   /** Right of the title — the account avatar, or a pager. */
   accessory?: ReactNode;
   /** Rendered under the header, outside the scroll gutter (league switchers). */
@@ -29,6 +39,7 @@ export interface ScreenScaffoldProps {
 export function ScreenScaffold({
   title,
   eyebrow,
+  subtitle,
   accessory,
   sticky,
   children,
@@ -58,6 +69,11 @@ export function ScreenScaffold({
           <View style={styles.headings}>
             {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
             <Text variant="largeTitle">{title}</Text>
+            {subtitle ? (
+              <Text variant="caption" color="textMuted" style={styles.subtitle}>
+                {subtitle}
+              </Text>
+            ) : null}
           </View>
           {accessory}
         </View>
@@ -110,4 +126,6 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   headings: { flex: 1, gap: Spacing.one },
+  // The title's own line-height already leaves a gap above; this is the rest.
+  subtitle: { marginTop: Spacing.one },
 });

@@ -9,8 +9,10 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, ChipButton, Hairline, Score, Switch, Text } from '@/components/atoms';
+import { BAND_COLOR, Button, ChipButton, Hairline, PlusGlyph, Score, Switch, Text } from '@/components/atoms';
 import {
+  ClubBubble,
+  ClubRow,
   Countdown,
   EventRow,
   EventTabs,
@@ -27,7 +29,7 @@ import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
 import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
 import { MatchBoard } from '@/components/organisms/match-board';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import {
   detailLine,
   eventKind,
@@ -39,7 +41,7 @@ import {
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
-import { pairWash } from '@/lib/cronogol/club-wash';
+import { clubTint, pairWash } from '@/lib/cronogol/club-wash';
 import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
 import { frontPagePick } from '@/lib/cronogol/news';
 import type {
@@ -327,10 +329,77 @@ const LIVE_CASES = (
   minutesAgo: minutesSinceSeen(match, NOW),
 }));
 
+
+/**
+ * The Clubs rail and its list (ADR 0082) — every state production rarely puts
+ * on one screen at once.
+ *
+ * ⚠ The tints run through the REAL `clubTint`, not literals: a bubble here has
+ * to prove the selection rule, including the fallback map that carries the
+ * Premier League and Serie A.
+ */
+const RAIL_CASES = [
+  {
+    // ⚠ The API's own hexes, not the handoff's garnet. Barcelona and Real
+    // Madrid both serve `#0f39b8` — the rail draws what the wire says.
+    label: 'LaLiga · API colour · UCL band',
+    club: { slug: 'barcelona', colorPrimary: '#0f39b8', colorSecondary: '#bc161c' },
+    name: 'Barcelona', abbr: 'BAR', rank: 1, zone: 'ucl' as const,
+  },
+  {
+    label: 'Bundesliga · API colour · UEL band',
+    club: { slug: 'bayer-04-leverkusen', colorPrimary: '#FF0000', colorSecondary: '#FF0000' },
+    name: 'Leverkusen', abbr: 'B04', rank: 5, zone: 'uel' as const,
+  },
+  {
+    label: 'Premier League · fallback map · Conference band',
+    club: { slug: 'arsenal', colorPrimary: null, colorSecondary: null },
+    name: 'Arsenal', abbr: 'ARS', rank: 7, zone: 'conf' as const,
+  },
+  {
+    label: 'Serie A · fallback map · relegation band',
+    club: { slug: 'venezia', colorPrimary: null, colorSecondary: null },
+    name: 'Venezia', abbr: 'VEN', rank: 19, zone: 'rel' as const,
+  },
+  {
+    // ⚠ The real payload: BOTH hexes are unusable, so the secondary does not
+    // save it either and the curated colour is what draws. Five clubs — this
+    // one, Leipzig, Stuttgart, Frankfurt, Gladbach — reach the map this way.
+    label: 'black-and-white kit · both hexes unusable → the curated colour',
+    club: { slug: 'valencia', colorPrimary: '#000000', colorSecondary: '#ffffff' },
+    name: 'Valencia', abbr: 'VAL', rank: 11, zone: null,
+  },
+  {
+    label: '⚠ no rank — absent, never 0 and never a dash',
+    club: { slug: 'celta-vigo', colorPrimary: '#52c3f1', colorSecondary: '#ffffff' },
+    name: 'Celta', abbr: 'CEL', rank: null, zone: null,
+  },
+  {
+    // ⚠ `ceuta` is the ONE club in the catalogue that reaches this, and it is
+    // kept out of the fallback map so this path stays drawn somewhere.
+    label: '⚠ no colour anywhere (ceuta) → the NEUTRAL bubble, and no glow',
+    club: { slug: 'ceuta', colorPrimary: null, colorSecondary: null },
+    name: 'Ceuta', abbr: 'CEU', rank: null, zone: null,
+  },
+];
+
+/** ⚠ The place line's three outcomes, which no single league shows all of. */
+const BROWSE_CASES = [
+  { label: 'a city — the Premier League and Serie A state one',
+    slug: 'arsenal', name: 'Arsenal', abbr: 'ARS', place: 'London' },
+  { label: '⚠ no city → the GROUND. All 20 LaLiga clubs land here',
+    slug: 'athletic-club', name: 'Athletic Club', abbr: 'ATH', place: 'Estadio San Mamés' },
+  { label: '⚠ neither — Bundesliga carries no venue at all. One line, not a bug',
+    slug: '1-fc-koeln', name: '1. FC Köln', abbr: 'KOE', place: null },
+  { label: '⚠ lastSyncedAt null → pending outranks the place (trap 1)',
+    slug: 'ceuta', name: 'Grasshopper Club', abbr: 'GRA', place: 'Schedule pending' },
+];
+
 export default function GalleryScreen() {
   const { copy, phrases } = useI18n();
   /**
-   * `?only=next` / `?only=finished` / `?only=news` render one section alone. The gallery is a long
+   * `?only=next` / `?only=finished` / `?only=news` / `?only=clubs` /
+   * `?only=club-rows` render one section alone. The gallery is a long
    * scroll and the shell cannot drive one (no `idb`, no Accessibility), so a
    * section deep in it is otherwise unreachable from a deep link + screenshot.
    */
@@ -422,6 +491,93 @@ export default function GalleryScreen() {
       </Case>
     </>
   );
+
+  const clubsRail = (
+    <>
+      <SectionHeader title="Clubs rail" meta="bubbles · bands · the neutral case (ADR 0082)" />
+      {RAIL_CASES.map(({ label, club, name, abbr, rank, zone }) => (
+        <Case key={label} label={label}>
+          <View style={styles.rail}>
+            <ClubBubble
+              name={name}
+              crest={null}
+              abbr={abbr}
+              tint={clubTint({ slug: club.slug, colorPrimary: club.colorPrimary, colorSecondary: club.colorSecondary })}
+              rank={rank}
+              rankColor={zone ? BAND_COLOR[zone] : null}
+              accessibilityLabel={copy.clubs.railClub(name, rank)}
+              onPress={() => {}}
+            />
+          </View>
+        </Case>
+      ))}
+
+    </>
+  );
+
+  const clubRows = (
+    <>
+      <SectionHeader title="Browse row" meta="the place line's three outcomes" />
+      <Case label="one tray, hairlines between and none after the last">
+        <View style={styles.tray}>
+          {BROWSE_CASES.map((c, i) => (
+            <ClubRow
+              key={c.slug}
+              name={c.name}
+              place={c.place}
+              crest={null}
+              abbr={c.abbr}
+              followLabel={copy.clubs.follow}
+              followAccessibilityLabel={copy.clubs.followClub(c.name)}
+              onOpen={() => {}}
+              onFollow={() => {}}
+              rule={i < BROWSE_CASES.length - 1}
+            />
+          ))}
+        </View>
+      </Case>
+      {BROWSE_CASES.map((c) => (
+        <Case key={c.label} label={c.label}>
+          <View style={styles.tray}>
+            <ClubRow
+              name={c.name}
+              place={c.place}
+              crest={null}
+              abbr={c.abbr}
+              followLabel={copy.clubs.follow}
+              followAccessibilityLabel={copy.clubs.followClub(c.name)}
+              onOpen={() => {}}
+              onFollow={() => {}}
+              rule={false}
+            />
+          </View>
+        </Case>
+      ))}
+
+      {/* ⚠ No league row here. The Clubs screen shares `LeagueSwitch` with
+          Matchdays and Table, so it is exercised by those screens, and a
+          fixture copy of it would be a second thing to keep in step. */}
+      <Case label="the follow pill, alone — label plus the glyph in its disc">
+        <ChipButton label={copy.clubs.follow} shape="pill" trailing={<PlusGlyph />} onPress={() => {}} />
+      </Case>
+    </>
+  );
+
+  if (only === 'clubs') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {clubsRail}
+      </ScrollView>
+    );
+  }
+
+  if (only === 'club-rows') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {clubRows}
+      </ScrollView>
+    );
+  }
 
   if (only === 'news') {
     return (
@@ -688,6 +844,9 @@ export default function GalleryScreen() {
       {finishedToday}
       {news}
 
+      {clubsRail}
+      {clubRows}
+
       <SectionHeader title="Live card" meta="the two paths (ADR 0048)" />
       {LIVE_CASES.map(({ label, match, stalled, minute, minutesAgo }) => (
         <Case key={label} label={label}>
@@ -794,6 +953,15 @@ export default function GalleryScreen() {
 }
 
 const styles = StyleSheet.create({
+  // The bubble hangs its rank badge 2pt below itself; give it the clearance.
+  rail: { paddingBottom: Spacing.two, alignItems: 'flex-start' },
+  tray: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: Radius.group,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.dark.hairlineMid,
+    overflow: 'hidden',
+  },
   screen: { flex: 1, backgroundColor: Colors.dark.background },
   content: { padding: Spacing.five, paddingTop: Spacing.eight * 2, gap: Spacing.four },
   case: { gap: Spacing.two },

@@ -31,3 +31,6 @@ export { AlertPreview, type AlertPreviewProps } from './alert-preview';
 export { AlertTile, type AlertTileProps, type AlertTileTone } from './alert-tile';
 export { PickStack, type PickStackItem, type PickStackProps } from './pick-stack';
 export { StepDots, type StepDotsProps } from './step-dots';
+export { SearchField, type SearchFieldProps } from './search-field';
+export { ClubBubble, type ClubBubbleProps } from './club-bubble';
+export { ClubRow, type ClubRowProps } from './club-row';

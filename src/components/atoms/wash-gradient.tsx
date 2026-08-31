@@ -14,7 +14,7 @@
  */
 import { useId } from 'react';
 import { StyleSheet } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 export interface WashStop {
   /** 0–1 */
@@ -57,6 +57,49 @@ export function WashGradient({ stops, angle }: WashGradientProps) {
             />
           ))}
         </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill={`url(#${id})`} />
+    </Svg>
+  );
+}
+
+/**
+ * The same fill, radial (ADR 0082) — the Clubs rail bubble's core, lit from
+ * near the top so the crest reads as floating on the club's own colour.
+ *
+ * ⚠ **Not `Glow`.** That atom is the app icon's floodlight: it takes a
+ * `ThemeColor` key and owns its own three stops. This one takes an arbitrary
+ * colour — a club's, which is never a theme token — and the caller's stops.
+ *
+ * ⚠ The `stopOpacity` rule in `WashGradient`'s header applies here unchanged:
+ * `react-native-svg` paints an `rgba()` `stopColor` opaque, so translucency is
+ * `WashStop.opacity` and never the colour's alpha channel.
+ *
+ * `cx` / `cy` / `r` are fractions of the parent's box, as `Glow`'s are.
+ */
+export interface WashRadialProps {
+  stops: readonly WashStop[];
+  cx?: number;
+  cy?: number;
+  r?: number;
+}
+
+export function WashRadial({ stops, cx = 0.5, cy = 0.5, r = 0.5 }: WashRadialProps) {
+  // As above: `useId` yields `:r1:`, and a colon is not legal in a `url()` ref.
+  const id = `radial-${useId().replace(/:/g, '')}`;
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
+      <Defs>
+        <RadialGradient id={id} cx={`${cx * 100}%`} cy={`${cy * 100}%`} r={`${r * 100}%`}>
+          {stops.map((s) => (
+            <Stop
+              key={`${s.offset}-${s.color}`}
+              offset={s.offset}
+              stopColor={s.color}
+              stopOpacity={s.opacity ?? 1}
+            />
+          ))}
+        </RadialGradient>
       </Defs>
       <Rect width="100%" height="100%" fill={`url(#${id})`} />
     </Svg>
