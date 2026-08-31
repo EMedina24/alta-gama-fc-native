@@ -2,6 +2,7 @@
 import { AccountSheet } from '@/components/organisms/account-sheet';
 import { CalendarSheet } from '@/components/organisms/calendar-sheet';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
+import { initials } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { zoneLabel } from '@/lib/timezones';
 import {
@@ -53,9 +54,12 @@ export default function DebugSheets() {
         goals: prefs.alertGoals,
           leads: prefs.reminderLeads,
         }}
+        // ⚠ `crest: null` on purpose. There is no club catalogue behind this
+        // preview, and the monogram fallback is the harder state to reach by
+        // hand anyway — a hot-linked crest that 404s looks exactly like this.
         feeds={[
-          { slug: 'barcelona', name: 'Barcelona', url: clubFeedUrl('barcelona') },
-          { slug: 'valencia', name: 'Valencia', url: clubFeedUrl('valencia') },
+          { slug: 'barcelona', name: 'Barcelona', url: clubFeedUrl('barcelona'), crest: null, abbr: 'BAR' },
+          { slug: 'valencia', name: 'Valencia', url: clubFeedUrl('valencia'), crest: null, abbr: 'VAL' },
         ]}
         onSetAlert={setAlert}
         onSetReminderLead={setReminderLead}
@@ -70,6 +74,9 @@ export default function DebugSheets() {
         account={
           which === 'account-in' ? { name: 'Alicia Álvarez', email: 'fan@example.com' } : null
         }
+        // ⚠ Derived from the stub with the real helper, not typed as 'AÁ' — the
+        // hook the app uses reads the live session, which is signed out here.
+        initials={which === 'account-in' ? initials('Alicia Álvarez') : null}
         canSignIn
         onSignIn={() => {}}
         onSignOut={() => {}}

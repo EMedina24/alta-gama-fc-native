@@ -1134,8 +1134,11 @@ Done 2026-08-30 in the onboarding redesign ([0076](./decisions/0076-onboarding-f
 
 ### 8 · Polish
 
-- `expo-haptics` is **not installed**. The design calls for a haptic on
-  follow/unfollow. `NativeTabs` already gives tab haptics free.
+- ~~`expo-haptics` is **not installed**~~ — it has been a dependency since the XI
+  builder (ADR 0065), and since ADR 0081 every haptic lives in `lib/haptics.ts`,
+  still the one file that imports it. The design's haptic on **follow/unfollow**
+  is the piece that remains unbuilt; `hapticToggle()` is there to call.
+  `NativeTabs` already gives tab haptics free.
 - The Today eyebrow reads only a weekday. The design pairs it with a matchday —
   deliberately not built, because the board spans four leagues and no single
   matchday is true of all of them. **Needs a product call**, not a fix.

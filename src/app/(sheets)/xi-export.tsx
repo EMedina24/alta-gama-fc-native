@@ -16,7 +16,7 @@ import { XiExportSheet, type ExportStatus } from '@/components/organisms/xi-expo
 import { Colors } from '@/constants/theme';
 import { DEFAULT_EXPORT_SIZE, type ExportSize } from '@/features/starting-xi/card-geometry';
 import { exportLineup, type ExportKind } from '@/features/starting-xi/export';
-import { hapticSaved } from '@/features/starting-xi/haptics';
+import { hapticSaved } from '@/lib/haptics';
 import { visiblePlaced } from '@/features/starting-xi/lineup';
 import { abbreviate, displayName } from '@/lib/cronogol/derive';
 import { useI18n } from '@/lib/i18n/use-i18n';

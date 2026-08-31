@@ -28,5 +28,6 @@ export { RailCard, type RailCardProps } from './rail-card';
 export { StartingXiRow, type StartingXiRowProps } from './starting-xi-row';
 export { XiToolbar, type XiToolbarProps } from './xi-toolbar';
 export { AlertPreview, type AlertPreviewProps } from './alert-preview';
+export { AlertTile, type AlertTileProps, type AlertTileTone } from './alert-tile';
 export { PickStack, type PickStackItem, type PickStackProps } from './pick-stack';
 export { StepDots, type StepDotsProps } from './step-dots';

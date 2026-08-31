@@ -15,9 +15,9 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AlertGlyph, type AlertKind, Button, Check, Eyebrow, Glow, Hairline, Text } from '@/components/atoms';
-import { AlertPreview, StepDots } from '@/components/molecules';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { type AlertKind, Button, Check, Eyebrow, Glow, Hairline, Text } from '@/components/atoms';
+import { AlertPreview, AlertTile, StepDots } from '@/components/molecules';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { requestPushPermission } from '@/features/push/capability';
 import { setAlert, setOnboarded, usePreferences } from '@/store/preferences';
@@ -94,9 +94,10 @@ export default function OnboardingAlerts() {
             <View key={row.title}>
               {index > 0 ? <Hairline /> : null}
               <View style={styles.row}>
-                <View style={styles.glyph}>
-                  <AlertGlyph kind={row.kind} />
-                </View>
+                {/* ⚠ `accent`, not the account sheet's per-type tones: these
+                    three are not controls, and this screen's lime budget is
+                    already spent on rows rather than a switch (ADR 0081). */}
+                <AlertTile kind={row.kind} />
                 <View style={styles.rowText}>
                   <Text variant="bodyStrong">{row.title}</Text>
                   <Text variant="footnote" color="textMuted">
@@ -136,14 +137,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three + 2,
     paddingVertical: Spacing.three + 2,
     paddingHorizontal: Spacing.four,
-  },
-  glyph: {
-    width: Size.alertGlyphTile,
-    height: Size.alertGlyphTile,
-    borderRadius: Radius.seg + 1,
-    backgroundColor: Colors.dark.accentWash,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   rowText: { flex: 1, minWidth: 0, gap: Spacing.half },
   footer: {

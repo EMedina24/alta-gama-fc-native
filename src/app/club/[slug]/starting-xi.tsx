@@ -36,7 +36,7 @@ import { StartingXiBoard } from '@/components/organisms/starting-xi-board';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { EXPORT_SIZES, type ExportSize } from '@/features/starting-xi/card-geometry';
 import { FORMATIONS, lineOfPosition } from '@/features/starting-xi/formations';
-import { hapticFor } from '@/features/starting-xi/haptics';
+import { hapticFor } from '@/lib/haptics';
 import { captureView, registerCapture } from '@/features/starting-xi/export';
 import {
   NO_SELECTION,

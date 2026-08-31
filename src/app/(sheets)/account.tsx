@@ -5,9 +5,10 @@ import { Linking } from 'react-native';
 
 import { AccountSheet, type AccountFeed } from '@/components/organisms/account-sheet';
 import { AUTH_AVAILABLE } from '@/features/auth/capability';
+import { useIdentityInitials } from '@/features/auth/use-identity';
 import { disablePushForDevice } from '@/features/push/sync';
 import { deleteAccount, NotSignedInError } from '@/lib/cronogol/account';
-import { displayName } from '@/lib/cronogol/derive';
+import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
 import { contactUrl } from '@/lib/cronogol/site';
 import { formatKickoffTime } from '@/lib/format';
@@ -36,6 +37,7 @@ export default function AccountSheetRoute() {
   const teams = useTeams();
   const session = useSession();
   const account = useAccount();
+  const initials = useIdentityInitials();
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -67,6 +69,12 @@ export default function AccountSheetRoute() {
           slug,
           name: team ? displayName(team.name) : slug,
           url: clubFeedUrl(slug),
+          // ⚠ The crest the design always specified for these rows (SPEC §3.6)
+          // and that was never drawn until ADR 0081. A club the catalogue has
+          // not answered for yet keeps its row and shows the monogram — the
+          // feed URL is valid either way, because it is built from the slug.
+          crest: team ? crestSrc(team.logoUrls, team.logoUrl, 'small') : null,
+          abbr: team ? abbreviate(team.name, team.slug, team.shortName) : slug.slice(0, 3),
         };
       }),
     [prefs.followed, teams.data],
@@ -105,6 +113,12 @@ export default function AccountSheetRoute() {
             }
           : null
       }
+      /**
+       * ⚠ The same hook the tab headers' avatar reads, so the disc the reader
+       * tapped and the disc that opens are the same letters. It resolves from
+       * the name, then the email's local part, and is `null` signed out.
+       */
+      initials={initials}
       canSignIn={AUTH_AVAILABLE}
       onSignIn={() => router.push('/(sheets)/sign-in')}
       onSignOut={() => {

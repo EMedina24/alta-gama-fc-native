@@ -11,8 +11,8 @@ import { type ReactNode } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Eyebrow, Text } from '@/components/atoms';
-import { BottomTabInset, Colors, MaxContentWidth, Size, Spacing } from '@/constants/theme';
+import { Avatar, Eyebrow, Text } from '@/components/atoms';
+import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export interface ScreenScaffoldProps {
   title: string;
@@ -68,13 +68,16 @@ export function ScreenScaffold({
   );
 }
 
-/** The circular initials button that opens the account sheet. */
 /**
- * The account entry point.
+ * The account entry point — the circular initials button that opens the sheet.
  *
  * ⚠ `initials` is nullable and `null` is the SIGNED-OUT state, not a missing
- * prop — it draws a neutral mark. An empty string would render an empty circle,
- * which is what this shipped as while there was no account to name (HANDOFF §5).
+ * prop. The disc itself is the `Avatar` atom (ADR 0081), which the account
+ * sheet's identity block draws too; this is only the press target around it.
+ *
+ * ⚠ No `ring` here. The accent ring marks a signed-in reader on the SHEET,
+ * where it is the one lime thing; on a tab screen that budget already belongs
+ * to the live marker (SPEC §2).
  */
 export function AvatarButton({
   initials,
@@ -89,13 +92,8 @@ export function AvatarButton({
       accessibilityRole="button"
       accessibilityLabel="Account"
       hitSlop={8}
-      style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.7 }]}>
-      <Text variant={initials ? 'caption' : 'body'} color="textSecondary">
-        {/* ⚠ A bullet, not an SF Symbol: `expo-symbols` is a dependency this app
-            does not otherwise use, and the circle is 36pt — a glyph at that size
-            reads as a smudge next to the initials it alternates with. */}
-        {initials ?? '·'}
-      </Text>
+      style={({ pressed }) => pressed && { opacity: 0.7 }}>
+      <Avatar initials={initials} />
     </Pressable>
   );
 }
@@ -112,14 +110,4 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   headings: { flex: 1, gap: Spacing.one },
-  avatar: {
-    width: Size.avatar,
-    height: Size.avatar,
-    borderRadius: Size.avatar / 2,
-    backgroundColor: Colors.dark.raised,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.dark.hairlineStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

@@ -1,3 +1,4 @@
+export { Avatar, type AvatarProps } from './avatar';
 export { BandRail } from './band-rail';
 export { Button, type ButtonTone } from './button';
 export { Check, type CheckProps } from './check';

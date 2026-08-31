@@ -304,6 +304,33 @@ export const Size = {
   crestNext: 64, versusBadge: 34,
   tabIcon: 22, avatar: 36, sheetGrabber: 38,
   /**
+   * The account sheet's identity avatar (ADR 0081) — the same disc as `avatar`,
+   * at the size a heading sits beside rather than a large title.
+   *
+   * ⚠ Not a multiple of `avatar`: the header's 36 is a hit target that must
+   * clear the title's cap height, this one is measured against `Type.title3`.
+   */
+  avatarLg: 64,
+  /**
+   * A reminder lead-time chip (ADR 0081). Below `minTouch` like `eventTab`, and
+   * for the same reason — three of them sit inside one row of a group — so they
+   * carry `hitSlop` to make the difference up.
+   */
+  leadChip: 32,
+  /**
+   * One option of the account sheet's segmented control (ADR 0081).
+   *
+   * ⚠ **Fixed, not `flex: 1`.** The control sits in a row beside a label, and a
+   * flexible track eats the whole row and pushes the label off it — which is
+   * exactly what the first build did to `Idioma` and `Reloj`. A fixed option
+   * width also means the sliding thumb is arithmetic, with nothing to measure
+   * and no wrong position on first paint.
+   *
+   * ⚠ Measured against the widest label this draws, `24 h` at `Type.callout`
+   * (~33pt). A control with a long option and a short one cannot use this.
+   */
+  segOption: 52,
+  /**
    * News row thumbnails (ADR 0064): the two rows on the Today card and every
    * row on the News screen. Squares, cover-cropped — the publisher's originals
    * are 16:9 and any size, and a fixed frame is what stops a missing or
@@ -474,6 +501,31 @@ export const Size = {
   xiBadge: 18,
   /** The same badge on a 30pt rail tile. */
   xiRailBadge: 14,
+} as const;
+
+/**
+ * Durations, in milliseconds (ADR 0081). The app's motion budget is small and
+ * deliberately so — platform defaults, the skeleton's pulse, and entrances —
+ * but until now every duration was a literal at its call site, so there was no
+ * way to see the vocabulary or change it. These are those literals, named.
+ *
+ * ⚠ **Every animation reading these must still branch on `useReducedMotion()`.**
+ * A token cannot enforce that, and an unguarded animation has already been a
+ * bug here once (the skeleton, before 2026-08-25).
+ *
+ * ⚠ `enter` is the existing `StatusBanner` fade-down (220) rounded up for a
+ * taller travel; `welcome`'s 360 stays at its own call site, because a hero is
+ * not a section.
+ */
+export const Motion = {
+  /** A control settling — the segmented thumb, a chip. */
+  quick: 160,
+  /** The default: a panel opening, a group reflowing. */
+  base: 220,
+  /** A section arriving on mount. */
+  enter: 260,
+  /** Between staggered siblings. Small — eight blocks must not read as a queue. */
+  stagger: 45,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

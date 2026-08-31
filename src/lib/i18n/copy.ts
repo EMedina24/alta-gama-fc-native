@@ -129,10 +129,19 @@ export interface Copy {
     alertTypes: string;
     reminder: string;
     reminderNote: string;
-    /** The three lead rows, nested under the reminder master (ADR 0040).
-     *  ⚠ Drawn DIM and non-interactive while the master is off — three live
-     *  switches under a dead one is a lie about what will be delivered. */
+    /** The three lead times, nested under the reminder master (ADR 0040).
+     *  ⚠ The full sentence. Since ADR 0081 the sheet draws `leadsShort` on the
+     *  chips and keeps THIS as each chip's `accessibilityLabel`, so a screen
+     *  reader still hears "30 minutes before" rather than "30 min". The
+     *  onboarding primer reads it too, as prose.
+     *  ⚠ Still non-interactive while the master is off — the chips unmount
+     *  entirely rather than sitting live under a dead switch. */
     leads: Readonly<Record<60 | 30 | 15, string>>;
+    /** The same three on the chips (ADR 0081) — the number and its unit, no
+     *  "before". Three of them share one row inside a group, and the sentence
+     *  does not fit. ⚠ Never shown without the master row above it naming what
+     *  they are early for. */
+    leadsShort: Readonly<Record<60 | 30 | 15, string>>;
     moved: string;
     movedNote: string;
     postponed: string;
@@ -632,6 +641,7 @@ export const esCopy: Copy = {
     reminder: 'Antes del partido',
     reminderNote: 'Para cada club que sigues',
     leads: { 60: '1 hora antes', 30: '30 minutos antes', 15: '15 minutos antes' },
+    leadsShort: { 60: '1 h', 30: '30 min', 15: '15 min' },
     moved: 'Si cambia la hora',
     movedNote: 'Tu calendario se actualiza solo también',
     postponed: 'Aplazado o suspendido',
@@ -1015,6 +1025,7 @@ export const enCopy: Copy = {
     reminder: 'Before kickoff',
     reminderNote: 'For every club you follow',
     leads: { 60: '1 hour before', 30: '30 minutes before', 15: '15 minutes before' },
+    leadsShort: { 60: '1 h', 30: '30 min', 15: '15 min' },
     moved: 'When a kickoff moves',
     movedNote: 'Your calendar updates itself too',
     postponed: 'Postponed or abandoned',
