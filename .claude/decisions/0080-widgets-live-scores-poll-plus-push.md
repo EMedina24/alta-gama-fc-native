@@ -1,7 +1,8 @@
 # 0080 — The widgets show live scores: a rationed poll, plus the pushes
 
 - **Date:** 2026-08-30
-- **Status:** Accepted — verified on the simulator (LIVE and FT ledgers on both widgets via `_debug/widgets?sample=`, restore to real data clean); the poll's FT merge fired against the real route; a real match end-to-end and the push writer still pending
+- **Status:** Accepted — but it **shipped dead** and was fixed by [0084](./0084-widget-live-gate-takes-the-api-league-slug.md): the `leagueSlug` gate below compared against our internal `la-liga` while the wire carries the API's `laliga`, so `liveEligible` was false for every real fixture and none of this ran on the 2026-08-31 preview build (Barcelona v Rayo, `19:30Z`). ⚠ The simulator verification recorded here was real but could not catch it — the `_debug` sample hardcoded the matching slug. Everything below is unchanged in intent and still pending its first real match.
+- **Superseded in part by:** [0084](./0084-widget-live-gate-takes-the-api-league-slug.md) — the comparand only
 - **Decided by:** Ed Medina
 - **Builds on:** [0047](./0047-widgets.md) (widgets), [0048](./0048-live-scores-on-the-today-board.md) (`/cronogol/live`), [0078](./0078-kicked-off-lead-card.md) (kickoff hold)
 - **Partially supersedes:** [0025](./0025-widgets-deferred.md) step 4's "no network in a timeline provider" — for exactly one route, inside exactly one window (below). Everything else 0025 said about network stands.

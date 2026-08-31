@@ -85,15 +85,26 @@ struct WidgetSnapshot: Codable {
     /// `J4`. Null for a competition without rounds.
     let roundLabel: String?
     let venue: String?
-    /// OUR league slug (`la-liga`), v3 (ADR 0080) — the poll gate: only LaLiga
-    /// goes live on `/cronogol/live`. ⚠ Optional: absent from a v2 snapshot,
-    /// and absence means "assume eligible", never "skip".
+    /// The **API** league slug (`laliga`), v3 (ADR 0080) — the poll gate: only
+    /// LaLiga goes live on `/cronogol/live`. ⚠ Optional: absent from a v2
+    /// snapshot, and absence means "assume eligible", never "skip".
+    ///
+    /// ⚠⚠ **`laliga`, NOT our own `la-liga`** (ADR 0084). This field is written
+    /// straight off `WindowFixtureView.leagueSlug` in
+    /// `src/features/widgets/snapshot.ts`, which is the value
+    /// `GET /cronogol/fixtures` serves — the same slug `LiveFetch` puts in
+    /// `?league=`. The first cut of 0080 compared against `la-liga`, the app's
+    /// INTERNAL slug from `src/lib/cronogol/leagues.ts`, so `liveEligible` was
+    /// false for every real fixture and the whole live path was dead. See 0084
+    /// before "correcting" this back.
     let leagueSlug: String?
 
     var id: String { fixtureId }
 
     /// Whether `/cronogol/live` could ever serve this fixture.
-    var liveEligible: Bool { leagueSlug == nil || leagueSlug == "la-liga" }
+    ///
+    /// ⚠ The comparand is the API slug — see `leagueSlug` above and ADR 0084.
+    var liveEligible: Bool { leagueSlug == nil || leagueSlug == "laliga" }
   }
 
   let v: Int
@@ -248,7 +259,7 @@ extension WidgetSnapshot {
           opponentName: "Real Madrid", opponentAbbr: "RMA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(100_800),
           kickoffLabel: "Sat 21:00", kickoffDay: "SAT", kickoffTime: "21:00",
-          roundLabel: "J4", venue: "Mestalla", leagueSlug: "la-liga"
+          roundLabel: "J4", venue: "Mestalla", leagueSlug: "laliga"
         ),
         .init(
           fixtureId: "preview-2", clubSlug: "sevilla", isHome: true,
@@ -257,7 +268,7 @@ extension WidgetSnapshot {
           opponentName: "Osasuna", opponentAbbr: "OSA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(169_200),
           kickoffLabel: "Sun 16:15", kickoffDay: "SUN", kickoffTime: "16:15",
-          roundLabel: "J4", venue: "Sánchez-Pizjuán", leagueSlug: "la-liga"
+          roundLabel: "J4", venue: "Sánchez-Pizjuán", leagueSlug: "laliga"
         ),
         .init(
           fixtureId: "preview-3", clubSlug: "athletic", isHome: false,
@@ -266,7 +277,7 @@ extension WidgetSnapshot {
           opponentName: "Girona", opponentAbbr: "GIR", opponentSlot: "home",
           kickoffUtc: now.addingTimeInterval(177_300),
           kickoffLabel: "Sun 18:30", kickoffDay: "SUN", kickoffTime: "18:30",
-          roundLabel: "J4", venue: "Montilivi", leagueSlug: "la-liga"
+          roundLabel: "J4", venue: "Montilivi", leagueSlug: "laliga"
         ),
       ]
     )

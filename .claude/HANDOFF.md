@@ -106,6 +106,12 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > no-network rule), the notification service extension on every goal/red/FT push, and
 > the foregrounded app off `useLive`. Snapshot bumped to **v3** (`leagueSlug`,
 > `LIVE`/`HT`/`FT` copy; every Swift field optional, the 0059 pattern).
+> ⚠⚠ **It shipped DEAD and is now fixed** ([0084](./decisions/0084-widget-live-gate-takes-the-api-league-slug.md),
+> 2026-08-31): the `leagueSlug` gate compared against our `la-liga` while the wire
+> carries `laliga`, so none of the below ever ran — Barcelona v Rayo (`19:30Z`,
+> 2026-08-31) drew the upcoming layout throughout. The gate now takes the API slug.
+> ⚠ **Still never seen against a real match** — next chance is Real Madrid,
+> 2026-09-04 19:00Z, and it needs a new build (native).
 > **Verified on the simulator** — `altagamafc://_debug/widgets?sample=live` (or `ft`)
 > writes a fabricated snapshot + `live.json` and reloads, tap-free; both ledgers drew
 > exactly the canvas, the FT merge fired against the real route (a fabricated fixture
@@ -575,6 +581,46 @@ documented at the code that handles them; this is the index.
     and it retries every 30 min — the cheapest verification there is. The
     live path's per-device warn carried only `HTTP 403` until that day; it
     now names the reason code like the dispatch path does.
+46. **⚠⚠ `eas build` silently DISABLES the Broadcast capability, every time**
+    ([0083](./decisions/0083-eas-capability-sync-strips-broadcast.md),
+    [expo/eas-cli#3815](https://github.com/expo/eas-cli/issues/3815)). Broadcast
+    is a sub-option under `PUSH_NOTIFICATIONS`, and EAS's syncer re-creates that
+    capability at its defaults, dropping the flag. It ate the capability enabled
+    on 2026-08-28 — the sandbox `--channel` proof passed, later builds stripped
+    it, and the first production channel create returned
+    `400 BroadcastFeatureNotEnabled`. ⚠ **Build with `yarn build:preview` (or
+    `:development` / `:production`)**, which set `EXPO_NO_CAPABILITY_SYNC=1` in
+    the SHELL — ⚠⚠ it does NOT work from `eas.json`'s `env`, because capability
+    sync runs during credential resolution before profile env is loaded. ⚠ There
+    is no warning in the build log; the portal checkbox is just unticked next
+    time somebody looks.
+47. **⚠⚠ Symmetric-looking host constants hid an unshippable bug for three days**
+    (backend [0039](../../senpai-backend/.claude/decisions/0039-apns-management-ports-are-not-symmetric.md)).
+    APNs channel management is port **2195 on sandbox and 2196 on production** —
+    the one host pair in the codebase that is not a straight `.sandbox.`
+    substitution. Both constants said 2195, so the branch that had never run was
+    the wrong one. ⚠ The failure is not a refusal: production answers on 2195
+    and completes a TLS handshake with the SANDBOX certificate, so it surfaces as
+    `ERR_TLS_CERT_ALTNAME_INVALID` or a bare timeout, neither of which mentions a
+    port. ⚠ When two constants differ only by environment, verify BOTH — a
+    passing test on one proves nothing about the other.
+
+48. **⚠⚠ A `_debug` sample that INVENTS a field instead of copying the wire
+    turns a red test green** ([0084](./decisions/0084-widget-live-gate-takes-the-api-league-slug.md)).
+    0080's live ledger shipped in the 2026-08-31 preview build and never drew for
+    a real match: `Snapshot.swift` gated `liveEligible` on `leagueSlug == "la-liga"`
+    — OUR internal slug — while `snapshot.ts` writes what the server sends,
+    `laliga`. False for every real fixture, so `rows(inPlayAt:)` was always empty,
+    `anyInWindow` was always false, and `/cronogol/live` was never polled at all.
+    Barcelona v Rayo played through it with the upcoming layout on screen.
+    ⚠ The reason it passed review AND simulator verification: `_debug/widgets`'s
+    fabricated rows hardcoded `leagueSlug: 'la-liga'` — the sample fed the gate the
+    one value the bug accepted — and the doc comments on BOTH sides of the wire
+    said "OUR league slug", so the comments agreed with the bug. ⚠ Two slugs exist
+    for every league (`leagues.ts`: `slug: 'la-liga'`, `apiSlug: 'laliga'`) and
+    `CRONOGOL-API.md` says the hyphenated one "no longer matches anything" since
+    2026-08-05. **When a sample stands in for the wire, copy real values into it;
+    a field you type by hand is a field the test cannot check.**
 
 ---
 
@@ -856,10 +902,29 @@ documented at the code that handles them; this is the index.
    [0057](./decisions/0057-local-expo-module.md); backend `0034`). Broadcast
    channels, one per fixture, iOS 18+. The card REPLACES the goal banner for a
    device that has one.
-   ⚠ **Never on a device, and gated behind three flags.** Nothing appears until
-   `CRONOGOL_LIVE_CRON_ENABLED`, `CRONOGOL_LIVE_PUSH_ENABLED` and
-   `CRONOGOL_LIVE_ACTIVITY_ENABLED` are all on, and the last one additionally
-   needs `CRONOGOL_LIVE_ACTIVITY_DRY_RUN=false`.
+   ⚠ **ALL FOUR FLAGS ARE NOW ON — 2026-08-31** (backend decision `0038`).
+   `CRONOGOL_LIVE_CRON_ENABLED`, `CRONOGOL_LIVE_PUSH_ENABLED`,
+   `CRONOGOL_LIVE_ACTIVITY_ENABLED` and `CRONOGOL_LIVE_ACTIVITY_DRY_RUN=false`.
+   The dry-run matchday the backend's `render.yaml` named as the gate was
+   deliberately skipped — one device holds a push-to-start token and it is ours,
+   so the wrong-card-on-a-stranger's-lock-screen failure is unreachable. ⚠ That
+   reasoning expires when a second device registers one.
+   ✅ **RENDERED ON A REAL DEVICE 2026-08-31** — production channel create,
+   push-to-start, broadcast update and end, via `probe-apns.mjs --start
+   <pts-token> --production`. Two bugs stood between "flags on" and that card,
+   and NEITHER was a flag: backend
+   [0039](../../senpai-backend/.claude/decisions/0039-apns-management-ports-are-not-symmetric.md)
+   (management port 2196 on production, not 2195) and
+   [0083](./decisions/0083-eas-capability-sync-strips-broadcast.md) (every
+   `eas build` disables the Broadcast capability). See traps 46 and 47.
+   ⚠ **Still unproven: the REAL path.** The probe drives APNs by hand; nothing
+   has yet started a card off a live match. First opportunity is **Valencia v
+   Barcelona, 2026-09-06 14:15Z**, and ⚠ it needs the 0039 fix DEPLOYED to
+   Render — it is a source constant, not an env var.
+   ⚠ **Cosmetic:** `Side` in `MatchActivity.swift` draws `Text(abbr)` beside
+   `CrestView`, whose fallback tile ALSO draws the abbr — so a fixture with no
+   cached crest renders `ATH ATH 1`. Guaranteed for Bundesliga and Serie A
+   clubs, whose crests are SVG/WebP and never decode (`crests.ts`).
    ⚠⚠ **The broadcast capability is a MANUAL Apple Developer portal step** —
    under Push Notifications on `com.altagamafc.app`. EAS capability sync does
    NOT cover it, and without it every channel create fails.

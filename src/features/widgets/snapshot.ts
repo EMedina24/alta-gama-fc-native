@@ -83,10 +83,20 @@ export interface WidgetEntry {
   roundLabel: string | null;
   venue: string | null;
   /**
-   * OUR league slug (`la-liga`), v3 (ADR 0080). The widget's poll gate: only a
-   * LaLiga fixture can go live on `/cronogol/live`, so the extension polls only
-   * when an in-play row carries this slug. ⚠ Optional in `Snapshot.swift` —
-   * absent from a v2 file, and absence means "assume eligible", never "skip".
+   * The **API** league slug (`laliga`), v3 (ADR 0080). The widget's poll gate:
+   * only a LaLiga fixture can go live on `/cronogol/live`, so the extension
+   * polls only when an in-play row carries this slug. ⚠ Optional in
+   * `Snapshot.swift` — absent from a v2 file, and absence means "assume
+   * eligible", never "skip".
+   *
+   * ⚠⚠ **`laliga`, NOT our own `la-liga`** (ADR 0084). This is
+   * `WindowFixtureView.leagueSlug` passed through untranslated — what
+   * `GET /cronogol/fixtures` serves, and the same slug `LiveFetch` sends as
+   * `?league=`. `src/lib/cronogol/leagues.ts` holds BOTH (`slug: 'la-liga'`,
+   * `apiSlug: 'laliga'`) and this wire carries the API one. 0080 shipped with
+   * `Snapshot.swift` comparing against the internal slug, which made
+   * `liveEligible` false for every real fixture; the sample below hid it by
+   * hardcoding the value that matched.
    */
   leagueSlug: string;
 }

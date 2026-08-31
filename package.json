@@ -55,7 +55,10 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:development": "EXPO_NO_CAPABILITY_SYNC=1 eas build --profile development --platform ios",
+    "build:preview": "EXPO_NO_CAPABILITY_SYNC=1 eas build --profile preview --platform ios",
+    "build:production": "EXPO_NO_CAPABILITY_SYNC=1 eas build --profile production --platform ios"
   },
   "private": true
 }

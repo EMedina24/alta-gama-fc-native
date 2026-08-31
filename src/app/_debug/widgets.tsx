@@ -374,7 +374,7 @@ async function writeSample(kind: 'live' | 'ft'): Promise<void> {
         kickoffTime: '3:30',
         roundLabel: 'MD 3',
         venue: 'Balaídos',
-        leagueSlug: 'la-liga',
+        leagueSlug: 'laliga',
       },
       {
         fixtureId: 'debug-next-1',
@@ -393,7 +393,7 @@ async function writeSample(kind: 'live' | 'ft'): Promise<void> {
         kickoffTime: '9:00',
         roundLabel: 'MD 4',
         venue: 'Montilivi',
-        leagueSlug: 'la-liga',
+        leagueSlug: 'laliga',
       },
     ],
   };
