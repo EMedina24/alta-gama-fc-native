@@ -71,3 +71,30 @@ production call that could not work.
   it is active removal. That entry is left unedited, per the repo's rule.
 - ⚠ This trap is not specific to Live Activities. Any nested capability
   sub-option is exposed to the same reset.
+
+---
+
+## ⚠ Correction, 2026-09-01 — the scripts said `eas`, and `eas` is not installed
+
+The three `build:*` scripts shipped as `EXPO_NO_CAPABILITY_SYNC=1 eas build …` and
+**every one of them failed with `/bin/sh: eas: command not found`.** `eas-cli` is
+not installed globally on this machine, is not a devDependency, and is not in
+`node_modules/.bin` — which HANDOFF trap 37 had already recorded in one line:
+*"`eas` is not installed globally here — it is `npx eas-cli`, always."* This entry
+did not follow its own repo's convention.
+
+The scripts are now `EXPO_NO_CAPABILITY_SYNC=1 npx eas-cli build …`.
+
+⚠ **The mitigation is unaffected, and that was the thing to check.** `VAR=1 cmd`
+puts the variable in the environment `cmd` and everything it spawns inherits, so
+the flag still reaches capability sync during credential resolution — the whole
+reason it cannot live in `eas.json`'s `env`. Verified 2026-09-01:
+`EXPO_NO_CAPABILITY_SYNC=1 npx … node -e 'process.env.EXPO_NO_CAPABILITY_SYNC'`
+prints `1`. `npx eas-cli --version` resolves `eas-cli/23.2.0`, satisfying
+`eas.json`'s `cli.version: ">= 12.0.0"`.
+
+⚠ `npx eas-cli` is UNPINNED and fetches the latest on a cold cache, so the CLI
+version can move between builds. Acceptable here because the workaround is
+version-independent — it disables the syncer rather than depending on how it
+behaves — but if [expo/eas-cli#3815](https://github.com/expo/eas-cli/issues/3815)
+is ever fixed and the flag becomes unnecessary, pin before relying on that.

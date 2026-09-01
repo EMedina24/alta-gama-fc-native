@@ -590,7 +590,11 @@ documented at the code that handles them; this is the index.
     it, and the first production channel create returned
     `400 BroadcastFeatureNotEnabled`. ⚠ **Build with `yarn build:preview` (or
     `:development` / `:production`)**, which set `EXPO_NO_CAPABILITY_SYNC=1` in
-    the SHELL — ⚠⚠ it does NOT work from `eas.json`'s `env`, because capability
+    the SHELL — ⚠ and which invoke **`npx eas-cli`**, not a bare `eas`: they
+    shipped with the bare form on 2026-08-31 and every one failed with
+    `eas: command not found`, because `eas-cli` is installed neither globally nor
+    as a dependency here (trap 37 already said so). Corrected 2026-09-01; the env
+    var still reaches the syncer through `npx`, which was the thing to verify — ⚠⚠ it does NOT work from `eas.json`'s `env`, because capability
     sync runs during credential resolution before profile env is loaded. ⚠ There
     is no warning in the build log; the portal checkbox is just unticked next
     time somebody looks.
