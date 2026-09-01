@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+  body{margin:0;background:#0a0b0c}
+  a{color:#c8f25a;text-decoration:none}
+  a:hover{color:#dcff7a}
+</style>
+</helmet>
+
+<section style="padding:56px 64px 72px;background:#0a0b0c;color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:40px">
+    <div style="font:600 12px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#7c858b">Your Week · systemMedium</div>
+    <div style="font:640 30px/1.1 -apple-system,system-ui;letter-spacing:-.025em">Machined shell, one fixture that matters</div>
+    <div style="font:400 15px/1.55 -apple-system,system-ui;color:#a3abb0;max-width:820px;text-wrap:pretty">A week has one next match, not three. The tile spends 55% of its width on that kickoff and demotes the rest to a rail, inside a nested double-bezel shell — glass plate in an aluminium tray, concentric radii, one lime floodlight bleeding in from the corner. Drawn at 2× a 338×158pt medium tile.</div>
+  </div>
+
+  <div id="3a" style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:676px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.12em;color:#101806;background:#c8f25a;border-radius:6px;padding:6px 9px">3A</span>
+        <span style="font:600 14px/1 -apple-system,system-ui;color:#f4f6f6">Hero kickoff · rail for the rest</span>
+      </div>
+
+      <div style="width:676px;height:318px;border-radius:48px;padding:5px;box-sizing:border-box;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);box-shadow:0 30px 70px rgba(0,0,0,.55)">
+        <div style="width:100%;height:100%;border-radius:43px;background:#0b0d0f;box-shadow:inset 0 1px 0 rgba(255,255,255,.10);position:relative;overflow:hidden;box-sizing:border-box;padding:22px 26px;display:flex;flex-direction:column">
+          <div style="position:absolute;inset:0;background:radial-gradient(70% 90% at 100% -8%,rgba(200,242,90,.20),rgba(11,13,15,0) 62%);pointer-events:none"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(80% 70% at -6% 108%,rgba(11,40,32,.9),rgba(11,13,15,0) 66%);pointer-events:none"></div>
+
+          <div style="position:relative;display:flex;align-items:center;gap:12px;padding-bottom:18px">
+            <img src="brand/mark-accent.svg" alt="" style="width:24px;height:auto;display:block;opacity:.92">
+            <span style="height:30px;padding:0 13px;border-radius:15px;background:rgba(200,242,90,.10);border:1px solid rgba(200,242,90,.30);display:inline-flex;align-items:center;font:600 17px/1 -apple-system,system-ui;letter-spacing:.2em;color:#c8f25a">{{ t.yourWeek }}</span>
+            <span style="flex:1"></span>
+            <span style="font:500 17px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a">{{ t.clubCount }}</span>
+          </div>
+
+          <div style="position:relative;flex:1;display:grid;grid-template-columns:1.32fr 1px 1fr;gap:26px;align-items:stretch">
+            <div style="display:flex;flex-direction:column;justify-content:center;gap:14px;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:14px">
+                <span style="font:200 54px/1 -apple-system,system-ui;letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:#f4f6f6">{{ hero.time }}</span>
+                <span style="font:600 19px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">{{ hero.day }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                {{ hero.homeImg }}
+                <span style="font:600 23px/1.1 -apple-system,system-ui;letter-spacing:-.02em;color:{{ hero.homeInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hero.homeName }}</span>
+                <span style="font:400 17px/1 -apple-system,system-ui;color:#4f575d;flex:none">{{ t.versus }}</span>
+                {{ hero.awayImg }}
+                <span style="font:600 23px/1.1 -apple-system,system-ui;letter-spacing:-.02em;color:{{ hero.awayInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hero.awayName }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="height:26px;padding:0 10px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);display:inline-flex;align-items:center;font:600 17px/1 -apple-system,system-ui;letter-spacing:.14em;color:#9aa4aa">{{ hero.sideTag }}</span>
+              </div>
+            </div>
+
+            <span style="background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.12) 22%,rgba(255,255,255,.12) 78%,rgba(255,255,255,0));display:block"></span>
+
+            <div style="display:flex;flex-direction:column;justify-content:center;min-width:0">
+              <sc-for list="{{ mini }}" as="m" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid {{ m.rule }};min-width:0">
+                  <div style="display:flex;align-items:center;flex:none">
+                    {{ m.homeImg }}
+                    <span style="display:block;width:2px"></span>
+                    {{ m.awayImg }}
+                  </div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+                    <span style="font:600 18px/1.1 -apple-system,system-ui;letter-spacing:-.015em;color:{{ m.homeInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.homeName }}</span>
+                    <span style="font:500 18px/1.1 -apple-system,system-ui;letter-spacing:-.015em;color:{{ m.awayInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.awayName }}</span>
+                  </div>
+                  <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+                    <span style="font:600 16px/1 -apple-system,system-ui;letter-spacing:.14em;color:#6b747b">{{ m.day }}</span>
+                    <span style="font:500 20px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:#dfe4e6">{{ m.time }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;padding-top:34px">
+      <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Kickoff leads at 54px ultralight against a 19px lime day — the two values a reader actually checks — then the fixture, then the side tag on its own line so it never crowds a club name. The rail keeps the remaining two as stacked crest pairs: recognisable at a glance, never competing for the eye.</div>
+      <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">The shell is two nested containers — radius 48 outer, 43 inner, 5pt tray — so the curves stay concentric at any size, with a 1pt inner highlight along the top edge. The lime radial and the green pool at the bottom-left are decoration only, never a data channel.</div>
+      <div style="font:400 12px/1.5 -apple-system,system-ui;color:#59626a;text-wrap:pretty">Payload unchanged: <code style="color:#8fa0a6">homeCrestSlot</code>/<code style="color:#8fa0a6">awayCrestSlot</code> per fixture, <code style="color:#8fa0a6">dayLabel</code> + <code style="color:#8fa0a6">timeLabel</code>, and the followed side. Crests are published for LaLiga only — anything else draws its abbreviation tile, never a generic crest. Smallest type on device is 8.5pt (the day label), the established widget eyebrow step.</div>
+      <div style="font:400 12px/1.5 -apple-system,system-ui;color:#59626a;text-wrap:pretty">Furniture (<code style="color:#8fa0a6">YOUR WEEK</code>, <code style="color:#8fa0a6">3 CLUBS</code>, <code style="color:#8fa0a6">HOME</code>) is pre-formatted in the snapshot's <code style="color:#8fa0a6">Copy</code> struct, so the widget localises without <code style="color:#8fa0a6">.lproj</code>.</div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;es&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'es'&quot;,&quot;section&quot;:&quot;Snapshot&quot;},&quot;rowCount&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;min&quot;:1,&quot;max&quot;:3,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Snapshot&quot;}}">
+class Component extends DCLogic {
+  CR = {'real-madrid':'4290c089c722beb802ae124d63c4287f1274f14fe093a0c39ecc3bc81e3bf858',
+    athletic:'7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d',
+    sevilla:'187c6c09c22f7c3f09c57e8bcda2ae528237770ed30a63de38de7a5fd4d7e89a',
+    valencia:'f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5',
+    osasuna:'7f2d02469662b42632daa7f49123ec511cbbea7c23d1aab18382447d6af98553'};
+
+  FIX = [
+    {home:{id:'valencia',abbr:'VAL',short:'Valencia'}, away:{id:'real-madrid',abbr:'RMA',short:'R. Madrid'}, followed:'home', day:'SAT', time:'21:00', dayEs:'SÁB'},
+    {home:{id:'sevilla',abbr:'SEV',short:'Sevilla'}, away:{id:'osasuna',abbr:'OSA',short:'Osasuna'}, followed:'home', day:'SUN', time:'16:15', dayEs:'DOM'},
+    {home:{id:'girona',abbr:'GIR',short:'Girona'}, away:{id:'athletic',abbr:'ATH',short:'Athletic'}, followed:'away', day:'SUN', time:'18:30', dayEs:'DOM'}
+  ];
+
+  /* Crests are published for LaLiga only — anything else draws its abbreviation
+     tile, never a generic placeholder crest. */
+  img(id, abbr, size){
+    const r = Math.round(size * 0.3);
+    if (!this.CR[id]) return React.createElement('span', {style:{width:size, height:size, borderRadius:r, background:'#1e2126', border:'1px solid rgba(255,255,255,.14)', boxSizing:'border-box', display:'flex', alignItems:'center', justifyContent:'center', font:'900 ' + Math.round(size*0.4) + 'px -apple-system,system-ui', color:'#a3abb0', flexShrink:0}}, abbr);
+    return React.createElement('img', {src:'https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/' + this.CR[id] + '.png', alt:'', style:{width:size, height:size, objectFit:'contain', display:'block', flexShrink:0}});
+  }
+
+  renderVals(){
+    const es = (this.props.lang ?? 'en') === 'es';
+    const count = Math.max(1, Math.min(3, Number(this.props.rowCount ?? 3)));
+    const lime = '#c8f25a', ink = '#e7ebec';
+    const t = es
+      ? {yourWeek:'TU SEMANA', clubCount:'3 CLUBES', versus:'vs', home:'LOCAL', awayTag:'VISITA'}
+      : {yourWeek:'YOUR WEEK', clubCount:'3 CLUBS', versus:'v', home:'HOME', awayTag:'AWAY'};
+
+    const f0 = this.FIX[0], h0 = f0.followed === 'home';
+    const hero = {
+      homeImg: this.img(f0.home.id, f0.home.abbr, 40),
+      awayImg: this.img(f0.away.id, f0.away.abbr, 40),
+      homeName: f0.home.short, awayName: f0.away.short,
+      homeInk: h0 ? lime : ink, awayInk: h0 ? ink : lime,
+      day: es ? f0.dayEs : f0.day, time: f0.time,
+      sideTag: h0 ? t.home : t.awayTag
+    };
+
+    const mini = this.FIX.slice(1, count).map((f, i) => {
+      const h = f.followed === 'home';
+      return {
+        rule: i === 0 ? 'transparent' : 'rgba(255,255,255,.07)',
+        homeImg: this.img(f.home.id, f.home.abbr, 30),
+        awayImg: this.img(f.away.id, f.away.abbr, 30),
+        homeName: f.home.short, awayName: f.away.short,
+        homeInk: h ? lime : ink, awayInk: h ? ink : lime,
+        day: es ? f.dayEs : f.day, time: f.time
+      };
+    });
+
+    return {t, hero, mini};
+  }
+}
+
+</script>
+</body>
+</html>

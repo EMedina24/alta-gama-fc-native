@@ -120,6 +120,40 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > end-to-end (HT heuristic, FT hold) and the push writer on a device.** ⚠ The per-minute timeline ENTRIES are free; the 5-minute RELOAD is the
 > rationed thing — do not "fix" the minute by shortening `Cadence.liveReload`.
 
+> ⭐ **NEW 2026-08-31 — YOUR WEEK is redrawn** ([0086](./decisions/0086-week-widget-hero-and-rail.md),
+> the whole of `handoff_week-widget/`). The medium tile stops being three equal rows:
+> one **hero kickoff** on the left — time, day, side tag, then the two clubs stacked —
+> a fading hairline, and the remaining two fixtures as a **rail**, all on a flush
+> floodlit plate (`EllipticalGradient` lime + pitch pool, the 0085 language at widget
+> scale). ⚠ **No wire change at all** — snapshot v3 already carried every field, so
+> `snapshot.ts`, `Snapshot.swift`, `copy.ts` and `Tokens.swift` are untouched and there
+> is nothing to bump.
+> ⚠⚠ **The hero STACKS where the mock draws one row, and the number is why.** An
+> `ImageRenderer` harness put the mock's `crest·name·v·crest·name` at **183pt** for the
+> realistic worst pair (`R. Sociedad` v `Villarreal`) against a **157.3pt** hero column
+> on an SE. Dropping the `v` saves 11pt; crests 20→18 save **4** — the crest never
+> binds, the two NAMES do, which is exactly what 0085 §3 already paid to learn. Stacked
+> it is 95pt, and the tile had 33pt of unused HEIGHT to spend. **Measure before you
+> trim.**
+> ⚠⚠ **The medium tile no longer draws the live ledger, and no longer polls for it.**
+> `FixtureProvider` is shared, so the poll and the 5-minute cadence are gated on
+> `context.family != .systemMedium` (`.systemMedium` is YOUR WEEK alone; NEXT is small
+> + the three accessories). The small widget's ledger is untouched. **The cost: a match
+> in play is simply ABSENT from the medium tile** — `rows(after:)` filters on
+> `kickoffUtc > now`, so at kickoff the row leaves and the hero becomes the next
+> fixture behind it.
+> ⚠ **First `.contentMarginsDisabled()` in this repo.** It is what puts the plate
+> against the system's own corner instead of floating it inside ~16pt margins; the
+> mock's nested r24/r21.5 tray was deliberately NOT built, because a second radius
+> inside the system mask double-rounds every edge (0085 §1).
+> ⚠⚠ **NOT YET SEEN — not on a simulator, not on a device.** Everything above is
+> `swiftc -typecheck` plus macOS SF Pro metrics. It needs a new build (native).
+> New samples: `altagamafc://_debug/widgets?sample=week1|week2|week3|week3es` — 1, 2
+> and 3 fixtures plus the Spanish furniture, tap-free. ⚠ They fabricate the **wire**
+> (`WindowFixtureView`s through the real `buildSnapshot`), not the snapshot, so every
+> derived field is production code — trap 48's rule, applied before it could bite twice.
+> The clubs are the layout's worst case on purpose, not a flattering one.
+
 > **2026-08-28 — the app icon is now set 1a "Floodlight"**
 > ([0060](./decisions/0060-app-icon-1a-floodlight.md)): graphite field, lime glow,
 > lime mark on every appearance. Same geometry as 1b, so nothing else re-cut.
@@ -732,8 +766,9 @@ documented at the code that handles them; this is the index.
     `SAT` over `21:00` on the right. Snapshot bumped to **v2**; every new field
     is optional in Swift. **Verified on an iPhone 17 Pro simulator** with four
     real clubs. ⚠ Names are CONTRACTED (`widgetName`: `R. Madrid`) — the full
-    forms truncated one side or the other. Not yet checked on an SE-width
-    simulator, nor with a hand-edited v1 `snapshot.json`.
+    forms truncated one side or the other.
+    ⚠⚠ **Superseded 2026-08-31 by [0086](./decisions/0086-week-widget-hero-and-rail.md)
+    — see the entry below; that row no longer exists.**
 - **The Starting XI builder is IN THE APP** (2026-08-29, [0065](./decisions/0065-starting-xi-builder.md)) —
   the whole of `handoff_squad-builder/`: a row on the club page (between the
   subscribe block and Fixtures / Players) pushing `/club/[slug]/starting-xi` —
@@ -946,6 +981,21 @@ documented at the code that handles them; this is the index.
    ~~⚠ **Cosmetic:** `Side` draws `Text(abbr)` beside `CrestView`, whose fallback
    tile ALSO draws the abbr — `ATH ATH 1`.~~ **Fixed in 0085** — `CrestView` grew
    `showsAbbr`, and the card passes `false`.
+   ✅ **THE REDESIGN RENDERED ON A REAL DEVICE 2026-08-31** — build `5499ecc4`
+   (commit `470d75c`), all four states via `probe-apns.mjs --start --production`,
+   no clipping. ⚠ That proves the DRAWING and the WIRE and nothing else: the
+   probe supplies its own `RenderableActivity`, so the standings query, the
+   `matchweek` column and the feed's real scorer names are still unexercised —
+   and the T−10 start and kickoff-aware `stale-date` **cannot** be proven by a
+   probe at all, because both are about WHEN the server acts.
+   ⭐ **`probe-apns.mjs` now builds its card from the COMPILED MAPPER**
+   (`dist/cronogol/live-activity.mapper.js`) instead of two hand-written
+   literals, and looks the push-to-start token up from `device_tokens` instead of
+   telling you to read it off `_debug/push` — which prints only the LENGTH, so
+   that instruction was impossible. ⚠ Run `npm run build` in the backend first;
+   a stale `dist/` probes the wrong contract. ⚠ This is trap 48 in reverse: the
+   old literals described the pre-0040 contract, so the probe would have drawn
+   the new card with every new field nil and made a working feature look dead.
    ⚠⚠ **The broadcast capability is a MANUAL Apple Developer portal step** —
    under Push Notifications on `com.altagamafc.app`. EAS capability sync does
    NOT cover it, and without it every channel create fails.

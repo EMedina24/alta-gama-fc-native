@@ -39,7 +39,10 @@ import { newsSnapshotFile, type NewsSnapshot } from '@/features/news/snapshot';
 import { applyNewsSnapshot, forgetNewsSnapshot } from '@/features/news/sync';
 import { useNews } from '@/queries/use-news';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import type { WindowFixtureView } from '@/lib/cronogol/types';
 import { formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
+import { COPY } from '@/lib/i18n/copy';
+import { PHRASES, type Locale } from '@/lib/i18n/phrases';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useWidgetWindow } from '@/queries/use-today';
 import { usePreferences, useZone } from '@/store/preferences';
@@ -59,6 +62,17 @@ export default function DebugWidgets() {
    * scripted on the simulator; deep links can). ⚠ Fabricated data — the next
    * real foreground overwrites the snapshot, and the fake fixture ids draw
    * lettered crest tiles. That is fine: this is a preview, not a state.
+   *
+   * ⭐ ADR 0086 adds `?sample=week1|week2|week3|week3es` — the medium tile's
+   * hero-alone, hero-plus-one and full layouts, in the reader's worst case.
+   *
+   * ⚠⚠ **These fabricate the WIRE, not the snapshot.** They build
+   * `WindowFixtureView`s and run the real `buildSnapshot` over them, so every
+   * derived field — `widgetName`, `abbreviate`, the day and time labels, the
+   * pluralised club count — comes from the code that runs in production. Trap
+   * 48 is exactly what happens when a sample types those by hand instead: the
+   * `la-liga`/`laliga` gate passed review AND simulator verification because
+   * the fabricated row agreed with the bug.
    */
   const { sample } = useLocalSearchParams<{ sample?: string }>();
 
@@ -105,10 +119,12 @@ export default function DebugWidgets() {
 
   // The `?sample=` auto-writer — see the param's docblock above.
   useEffect(() => {
-    if (sample !== 'live' && sample !== 'ft') return;
+    if (!sample) return;
+    const week = WEEK_SAMPLES[sample];
+    if (sample !== 'live' && sample !== 'ft' && !week) return;
     void (async () => {
-      await writeSample(sample);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (week) await writeWeekSample(week.count, week.lang);
+      else await writeSample(sample as 'live' | 'ft');
       setStatus(`sample ${sample} written`);
       await inspect();
     })();
@@ -223,6 +239,25 @@ export default function DebugWidgets() {
           await inspect();
         }}
       />
+
+      {/*
+        ⭐ ADR 0086 — the medium tile at each row count, worst-case names. The
+        deep links (`?sample=week1` …) are the scriptable path; these are here so
+        the same states are reachable by hand while iterating on the layout.
+      */}
+      {(Object.keys(WEEK_SAMPLES) as (keyof typeof WEEK_SAMPLES)[]).map((key) => (
+        <Button
+          key={key}
+          label={`Write ${key} sample + reload`}
+          tone="quiet"
+          onPress={async () => {
+            const { count, lang } = WEEK_SAMPLES[key];
+            await writeWeekSample(count, lang);
+            setStatus(`sample ${key} written`);
+            await inspect();
+          }}
+        />
+      ))}
 
       <Text variant="title">News</Text>
       <Row
@@ -427,6 +462,104 @@ async function writeSample(kind: 'live' | 'ft'): Promise<void> {
 
   writeSnapshot(snapshot);
   writeGroupJson(SNAPSHOT_DIR, LIVE_NAME, live);
+  await reloadWidgets();
+}
+
+/**
+ * ⭐ ADR 0086 — the medium tile at one, two and three fixtures.
+ *
+ * The clubs are the layout's WORST CASE, not a pretty one: `R. Sociedad` (11
+ * characters) against `Villarreal` (10) is the longest pair `widgetName` can
+ * actually produce, and it is what decided the hero stacks rather than sitting
+ * on one row. Screenshot `week3` on an SE and the rail name is the thing that
+ * truncates — by design; the kickoff beside it is a number and must not.
+ *
+ * ⚠ Kickoffs are pinned to a real LaLiga weekend rather than `now + n days`, so
+ * the day labels are stable across runs — but they are shifted forward to keep
+ * every row in the future, because `rows(after:)` drops anything already past.
+ */
+const WEEK_SAMPLES: Record<string, { count: 1 | 2 | 3; lang: Locale }> = {
+  week1: { count: 1, lang: 'en' },
+  week2: { count: 2, lang: 'en' },
+  week3: { count: 3, lang: 'en' },
+  week3es: { count: 3, lang: 'es' },
+};
+
+/** One fabricated wire fixture. Only the club names and the instant are typed. */
+function wireFixture(
+  id: string,
+  home: { slug: string; name: string },
+  away: { slug: string; name: string },
+  kickoffUtc: string,
+): WindowFixtureView {
+  const team = (t: { slug: string; name: string }) => ({
+    slug: t.slug,
+    name: t.name,
+    shortName: null,
+    logoUrl: null,
+    logoUrls: null,
+  });
+  return {
+    id,
+    homeTeam: team(home),
+    awayTeam: team(away),
+    competition: 'league',
+    competitionName: 'LaLiga',
+    round: 'Jornada 4',
+    kickoffUtc,
+    kickoffTbd: false,
+    venue: null,
+    venueCity: null,
+    status: 'scheduled',
+    goalsHome: null,
+    goalsAway: null,
+    // ⚠ The API slug, never our internal `la-liga` (ADR 0084 / trap 48).
+    leagueSlug: 'laliga',
+    season: 2026,
+    matchweek: 4,
+  };
+}
+
+async function writeWeekSample(count: 1 | 2 | 3, lang: Locale): Promise<void> {
+  const now = new Date();
+  // Saturday 21:00, Sunday 16:15 and Sunday 18:30 Madrid time, next weekend.
+  const day = 24 * 3600 * 1000;
+  const at = (offsetDays: number, hhmm: string) => {
+    const d = new Date(now.getTime() + offsetDays * day);
+    const [h, m] = hhmm.split(':').map(Number);
+    d.setUTCHours(h, m, 0, 0);
+    return d.toISOString();
+  };
+
+  const clubs = {
+    sociedad: { slug: 'real-sociedad', name: 'Real Sociedad' },
+    villarreal: { slug: 'villarreal', name: 'Villarreal CF' },
+    valladolid: { slug: 'valladolid', name: 'Real Valladolid' },
+    rayo: { slug: 'rayo-vallecano', name: 'Rayo Vallecano' },
+    palmas: { slug: 'las-palmas', name: 'UD Las Palmas' },
+    athletic: { slug: 'athletic-club', name: 'Athletic Club' },
+  };
+
+  const wire = [
+    wireFixture('debug-week-1', clubs.sociedad, clubs.villarreal, at(5, '19:00')),
+    wireFixture('debug-week-2', clubs.valladolid, clubs.rayo, at(6, '14:15')),
+    wireFixture('debug-week-3', clubs.palmas, clubs.athletic, at(6, '16:30')),
+  ].slice(0, count);
+
+  // ⚠ The REAL builder, the real copy table and the real formatters — see the
+  // `?sample=` docblock. Nothing below is a value typed by hand.
+  const phrases = PHRASES[lang];
+  const zone = 'Europe/Madrid';
+  const snapshot = buildSnapshot(
+    wire,
+    [clubs.sociedad.slug, clubs.rayo.slug, clubs.palmas.slug].slice(0, count),
+    now,
+    COPY[lang],
+    (iso) => formatWidgetKickoff(iso, zone, '24', phrases),
+    (iso) => formatWidgetKickoffParts(iso, zone, '24', phrases),
+  );
+
+  writeSnapshot(snapshot);
   await reloadWidgets();
 }
 

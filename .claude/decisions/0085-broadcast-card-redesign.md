@@ -1,7 +1,7 @@
 # 0085 — The Live Activity becomes the "broadcast card": two states, a pre-kickoff start, and one scorer line a side because 160pt says so
 
 - **Date:** 2026-08-31
-- **Status:** Accepted — every target typechecks at its floor and the geometry is measured; not yet run against a real kickoff
+- **Status:** Accepted — ✅ **rendered on a real device 2026-08-31** (build `5499ecc4`, all four states via `probe-apns.mjs --start --production`); not yet driven by a real kickoff
 - **Decided by:** Ed Medina
 - **Builds on:** [0055](./0055-live-activities-broadcast-channels.md),
   [0057](./0057-local-expo-module.md), [0047](./0047-widgets.md)
@@ -169,12 +169,21 @@ lime radials reading as light rather than as a lighter grey.
   resolved server-side. The kickoff TIME is the exception and is drawn from
   `kickoffEpoch` in the device's own locale, because a clock time needs no
   language to be right.
-- ⚠ **The ~160pt cap is documented, not measured on a device.** Every number in
-  §3 is `ImageRenderer` at 369pt on the same SF Pro metrics; the cap itself is
-  Apple's published figure. Confirm on the device before trusting the 7pt.
-- ⚠ **Still unproven against a real kickoff.** First opportunity is Valencia v
-  Barcelona, 2026-09-06 14:15Z. Watch for the card appearing at ~T−10 rather than
-  at the whistle, and for it surviving to kickoff without greying.
+- ✅ **Confirmed on a device 2026-08-31.** Build `5499ecc4` (commit `470d75c`)
+  installed on the reader's phone; `probe-apns.mjs --start --production` walked
+  all four states and the card rendered correctly — **no clipping**, so the
+  152.5pt measurement and the ~160pt cap both hold in practice. §3's numbers are
+  `ImageRenderer` on macOS SF Pro metrics and they transferred.
+  ⚠ What that run proves is the DRAWING and the WIRE. It says nothing about the
+  data path: the probe supplies its own `RenderableActivity`, so the standings
+  query, the matchweek column and the real feed's scorer names are still
+  unexercised.
+- ⚠⚠ **Still unproven against a real kickoff, and the probe cannot prove it.**
+  The two riskiest changes in this entry — the T−10 start (§2) and the
+  kickoff-aware `stale-date` — are both about WHEN the server acts, and the probe
+  drives APNs by hand. First opportunity is Valencia v Barcelona, 2026-09-06
+  14:15Z. Watch for the card appearing at ~T−10 rather than at the whistle, and
+  for it surviving to kickoff without greying. Both fail silently.
 - ⚠⚠ **Build with `yarn build:preview`** — a bare `eas build` turns the Broadcast
   capability off every time ([0083], trap 46).
 

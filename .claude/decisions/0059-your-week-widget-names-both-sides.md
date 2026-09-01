@@ -1,7 +1,7 @@
 # 0059 — The YOUR WEEK widget names both sides, and marks the followed one
 
 - **Date:** 2026-08-28
-- **Status:** Accepted — verified on the simulator
+- **Status:** **Superseded by [0086](./0086-week-widget-hero-and-rail.md)** — the medium row's whole layout is replaced by a hero kickoff and a rail. ⚠ Two of its rules SURVIVE and 0086 restates them: both sides named home-first, and the followed side lit in the accent. What 0086 drops is the row itself, the accent `HOME`/`AWAY` capsule (neutral on the hero, gone from the rail) and the one-row-per-club shape. The snapshot v2 fields this entry added are all still on the wire and still drawn.
 - **Decided by:** Ed Medina
 
 ## Context

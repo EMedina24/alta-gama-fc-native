@@ -34,6 +34,14 @@ struct FixtureEntry: TimelineEntry {
 /// single carve-out from ADR 0025 step 4's no-network rule; crests and
 /// everything else still arrive only through the container, written by
 /// `src/features/widgets/snapshot.ts` on the app's last foreground.
+///
+/// ⚠⚠ **The poll is gated on the FAMILY, because only one of the two widgets
+/// draws a ledger now** (ADR 0086). YOUR WEEK is `.systemMedium` and nothing
+/// else; NEXT is `.systemSmall` plus the three accessories — so the family
+/// identifies the widget without a second provider. A medium tile left alone on
+/// a home screen must not spend the 5-minute reload cadence on a score it does
+/// not print: that budget is ~40-70 reloads a day and overspending it freezes
+/// every widget for the rest of the day with nothing in any log (trap 34).
 struct FixtureProvider: AppIntentTimelineProvider {
   func placeholder(in context: Context) -> FixtureEntry {
     entry(at: Date(), snapshot: WidgetSnapshot.placeholder(relativeTo: Date()), club: nil)
@@ -60,6 +68,9 @@ struct FixtureProvider: AppIntentTimelineProvider {
     // ⚠ `.unavailable`, NOT `.placeholder`. A widget on a real home screen must
     // never draw the gallery sample — see `WidgetSnapshot.unavailable`.
     let snapshot = WidgetSnapshot.load() ?? .unavailable(relativeTo: now)
+    // See the type header: `.systemMedium` is YOUR WEEK, which stopped drawing
+    // the ledger in ADR 0086 and must stop paying for it too.
+    let drawsLive = context.family != .systemMedium
     let club = configuration.club?.id
     let kickoffs = snapshot.rows(after: now, clubSlug: club).map(\.kickoffUtc)
     let inPlay = snapshot.rows(inPlayAt: now, clubSlug: club)
@@ -72,7 +83,7 @@ struct FixtureProvider: AppIntentTimelineProvider {
       .contains { now.timeIntervalSince($0.kickoffUtc) <= 150 * 60 }
 
     var state = WidgetLiveState.load()
-    if anyInWindow, let route = await LiveFetch.fetch() {
+    if drawsLive, anyInWindow, let route = await LiveFetch.fetch() {
       let merged = LiveMerge.merge(
         previous: state,
         route: route,
@@ -87,7 +98,7 @@ struct FixtureProvider: AppIntentTimelineProvider {
       state?.match(for: row.fixtureId).map(\.isLive) ?? true // nil = kicked off
     }
 
-    if !inPlay.isEmpty, anyLive {
+    if drawsLive, !inPlay.isEmpty, anyLive {
       // A match is being played: per-minute ENTRIES until the next 5-minute
       // reload re-polls (ADR 0080). Entries are free; the reload is the
       // rationed thing, and 5 minutes of them fit the budget with room.
