@@ -22,13 +22,17 @@ import UIKit
 enum Tok {
   // Ink — theme.ts `text` and its opacity ramp.
   static let ink = Color.white
+  static let ink90 = Color.white.opacity(0.90)
   static let ink78 = Color.white.opacity(0.78)
   static let ink62 = Color.white.opacity(0.62)
   static let ink60 = Color.white.opacity(0.60)
+  static let ink58 = Color.white.opacity(0.58)
   static let ink55 = Color.white.opacity(0.55)
   static let ink50 = Color.white.opacity(0.50)
   static let ink45 = Color.white.opacity(0.45)
   static let ink42 = Color.white.opacity(0.42)
+  static let ink34 = Color.white.opacity(0.34)
+  static let ink32 = Color.white.opacity(0.32)
 
   // Alert types — theme.ts `accent`, `moved`, `postponed`.
   static let accent = Color(red: 0.784, green: 0.949, blue: 0.353) // #c8f25a
@@ -87,6 +91,29 @@ enum Tok {
   /// must never paint a ground of its own; a widget owns its whole rectangle and
   /// has to, or it inherits whatever the home screen is showing.
   static let ground = Color(red: 0.039, green: 0.043, blue: 0.047) // #0a0b0c
+
+  // ------------------------------------------ the broadcast card (ADR 0085) --
+
+  /// theme.ts `activityGround` — the Live Activity's own base.
+  ///
+  /// ⚠ **A shade darker than `ground`** (`#07080a` against `#0a0b0c`), and not
+  /// a rounding slip. The card is drawn over the reader's wallpaper rather than
+  /// over the app, and the extra step is what keeps the floodlights above it
+  /// reading as light rather than as a lighter grey.
+  static let activityGround = Color(red: 0.027, green: 0.031, blue: 0.039) // #07080a
+
+  /// theme.ts `activityPool` — the deep green pooling at the card's bottom edge.
+  ///
+  /// ⚠ **Its whole job is to keep the lime OFF the crests.** The two floodlight
+  /// radials fall from the top corners onto exactly where the two badges sit; the
+  /// pool is what stops a green cast landing on club artwork we do not own.
+  static let activityPool = Color(red: 0.043, green: 0.157, blue: 0.125) // #0b2820
+
+  /// The card's hairlines — the band rule and the column divider.
+  ///
+  /// ⚠ Fainter than `hairline` (0.09 against 0.10) because they are drawn at
+  /// 0.5pt on a lit ground rather than 1pt on a flat one.
+  static let activityHairline = Color.white.opacity(0.09)
 
   /// ⚠ **Tabular, always.** Every time on this card is a numeral in a fixed slot
   /// — a proportional `1` makes `19:00 → 21:00` jump as the digits change.

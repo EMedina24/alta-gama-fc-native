@@ -116,7 +116,7 @@ export function liveActivitiesAvailable(): boolean {
   try {
     return LiveActivity.isSupported();
   } catch {
-    // No native module: Expo Go, a web build, or a bundle predating ADR 0056.
+    // No native module: Expo Go, a web build, or a bundle predating ADR 0057.
     return false;
   }
 }

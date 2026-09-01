@@ -921,10 +921,27 @@ documented at the code that handles them; this is the index.
    has yet started a card off a live match. First opportunity is **Valencia v
    Barcelona, 2026-09-06 14:15Z**, and ⚠ it needs the 0039 fix DEPLOYED to
    Render — it is a source constant, not an env var.
-   ⚠ **Cosmetic:** `Side` in `MatchActivity.swift` draws `Text(abbr)` beside
-   `CrestView`, whose fallback tile ALSO draws the abbr — so a fixture with no
-   cached crest renders `ATH ATH 1`. Guaranteed for Bundesliga and Serie A
-   clubs, whose crests are SVG/WebP and never decode (`crests.ts`).
+   ⚠ On that match, watch for 0085's two unverified claims: the card appearing at
+   **~T−10 rather than at the whistle**, and the pre-match state surviving to
+   kickoff **without greying** (the `staleAt` fix). Both fail silently.
+   ⭐ **REDESIGNED 2026-08-31** ([0085](./decisions/0085-broadcast-card-redesign.md);
+   backend `0040`) from `handoff_alerts-redo/` — the floodlight "broadcast card",
+   two states, scorer columns. ⚠⚠ **The card now starts at ~T−10 rather than at
+   the whistle**, which is what gives the pre-match state (form, points, kickoff
+   time) a lifetime at all — and which needed a kickoff-aware `stale-date`,
+   because the old 8-minute one greys the card BEFORE the match it advertises.
+   ⚠⚠ **The band carries ONE scorer line a side.** The design as drawn measures
+   **203.5pt** against Apple's ~160pt Lock Screen cap; two rows land at 159.5pt
+   with zero margin, one line lands at 152.5pt. ⚠ The obvious trim — crests
+   46→40 — saves EXACTLY NOTHING: the crest never binds the fixture row, the
+   abbr-and-tag column beside it is 53.5pt. Measure before trimming.
+   ⚠ The handoff's own `BroadcastActivity.swift` is a design artifact, not a
+   port: a second incompatible `MatchAttributes`, `AsyncImage` crests (no network
+   in that process) and `Image("goal-glyph")` from an asset catalog no target
+   has. Read `BROADCAST-WIDGET.md` for the tokens, not that file for the code.
+   ~~⚠ **Cosmetic:** `Side` draws `Text(abbr)` beside `CrestView`, whose fallback
+   tile ALSO draws the abbr — `ATH ATH 1`.~~ **Fixed in 0085** — `CrestView` grew
+   `showsAbbr`, and the card passes `false`.
    ⚠⚠ **The broadcast capability is a MANUAL Apple Developer portal step** —
    under Push Notifications on `com.altagamafc.app`. EAS capability sync does
    NOT cover it, and without it every channel create fails.

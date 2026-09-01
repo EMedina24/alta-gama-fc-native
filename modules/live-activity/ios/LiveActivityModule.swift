@@ -1,7 +1,7 @@
 import ActivityKit
 import ExpoModulesCore
 
-/// Reports this device's ActivityKit **push-to-start** token (ADR 0055/0056).
+/// Reports this device's ActivityKit **push-to-start** token (ADR 0055/0057).
 ///
 /// ⚠⚠ **This module does NOT start, update or end an activity, and it never
 /// will.** The server does all three: it push-to-starts the activity at kickoff

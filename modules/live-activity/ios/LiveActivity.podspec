@@ -1,5 +1,5 @@
 #
-# The app target's ONLY native code (ADR 0056).
+# The app target's ONLY native code (ADR 0057).
 #
 # ⚠ `@bacons/apple-targets` builds EXTENSIONS. It has no way to put Swift in the
 # app itself, and `Activity.pushToStartTokenUpdates` has to run in the app

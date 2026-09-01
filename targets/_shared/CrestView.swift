@@ -26,6 +26,18 @@ struct CrestView: View {
   let abbr: String
   let size: CGFloat
 
+  /// Whether the fallback tile prints the abbreviation.
+  ///
+  /// ⚠⚠ **False wherever the SURFACE already draws the abbreviation beside the
+  /// crest.** The Live Activity does — at 30pt, as the card's primary identifier
+  /// — so a fixture with no cached crest rendered `ATH ATH`, logged as cosmetic
+  /// in HANDOFF item 5 and guaranteed for every Bundesliga and Serie A club,
+  /// whose crests are SVG and WebP and decode nowhere on this device.
+  ///
+  /// ⚠ Defaults to `true`, so every existing caller keeps the lettered tile that
+  /// ADR 0047 made part of the design rather than a failure state.
+  var showsAbbr: Bool = true
+
   var body: some View {
     if let image = loaded {
       Image(uiImage: image)
@@ -46,14 +58,19 @@ struct CrestView: View {
         RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
           .strokeBorder(Tok.tileRing, lineWidth: 0.5)
       )
-      .overlay(
-        Text(abbr)
-          .font(.system(size: size * 0.32, weight: .heavy))
-          .foregroundStyle(Tok.tileInk)
-          .minimumScaleFactor(0.7)
-          .lineLimit(1)
-          .padding(.horizontal, 2)
-      )
+      .overlay {
+        // ⚠ The ring and the fill stay when the letters go. An empty plate still
+        // reads as "a badge we do not have"; nothing at all reads as a layout
+        // bug, and the row's spacing would collapse.
+        if showsAbbr {
+          Text(abbr)
+            .font(.system(size: size * 0.32, weight: .heavy))
+            .foregroundStyle(Tok.tileInk)
+            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+            .padding(.horizontal, 2)
+        }
+      }
       .frame(width: size, height: size)
   }
 

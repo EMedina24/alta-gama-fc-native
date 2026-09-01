@@ -71,6 +71,27 @@ const dark = {
   liveWash: 'rgba(255,92,71,0.14)',
   danger: '#ff5c47',
 
+  /**
+   * The Live Activity card's own ground and its floodlight pool (ADR 0085).
+   *
+   * ⚠⚠ **Nothing in the app draws these — the WIDGET EXTENSION does.** They live
+   * here anyway because `targets/_shared/Tokens.swift` is a hand-maintained copy
+   * of this file (HANDOFF trap 15), and its own header says every number in it
+   * is a copy of one here. A colour that exists only in the Swift is the drift
+   * that rule exists to stop, in the direction nobody checks.
+   *
+   * ⚠ `activityGround` is a shade darker than `background` (`#07080a` against
+   * `#0a0b0c`) and that is deliberate: the card sits on the reader's wallpaper,
+   * not on the app, and the extra step is what keeps the lime radials above it
+   * reading as light rather than as a lighter grey.
+   *
+   * ⚠ `activityPool` exists to keep the lime OFF the crests — the two radials
+   * fall from the top corners onto exactly where the badges sit.
+   */
+  activityGround: '#07080a',
+  activityPool: '#0b2820',
+  activityHairline: 'rgba(255,255,255,0.09)',
+
   // The club-colour wash behind the next-up card and the club header (ADR 0068).
   // `washGraphite` is the neutral a club lands on when its own hexes are
   // unusable (near-black, near-white, or absent on one side of a pairing that

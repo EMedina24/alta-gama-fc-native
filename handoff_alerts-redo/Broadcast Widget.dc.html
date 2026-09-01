@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+  body{margin:0;background:#0a0b0c;color:#f4f6f6;-webkit-font-smoothing:antialiased}
+  a{color:#c8f25a;text-decoration:none}
+  a:hover{color:#dcff7a}
+  @keyframes agPulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<section style="padding:44px 48px 64px;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;flex-direction:column;gap:9px">
+    <div style="font:600 12px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#7c858b">Broadcast widget · scorer columns</div>
+    <div style="font:640 30px/1.1 -apple-system,system-ui;letter-spacing:-.025em">Kickoff card, floodlight lime</div>
+    <div style="font:400 15px/1.55 -apple-system,system-ui;color:#a3abb0;max-width:720px;text-wrap:pretty">One card, two states. Before kickoff the card carries form and the kickoff time; once the whistle goes the bottom band becomes scorer columns, mirrored under each crest, so the side of every goal reads without a label. Broadcaster red is replaced throughout by two floodlight-lime radials from the top corners.</div>
+  </div>
+
+  <div id="3a" style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:9px"><span style="font:800 10px/1 -apple-system,system-ui;letter-spacing:.18em;color:#c8f25a">3A</span><span style="font:400 11.5px/1 -apple-system,system-ui;color:#8fa0a6">On the lockscreen · 393pt</span></div>
+
+      <div style="width:393px;height:500px;border-radius:38px;overflow:hidden;position:relative;background:linear-gradient(168deg,#1d242a 0%,#0d1115 58%,#070809 100%);box-shadow:0 0 0 1px rgba(255,255,255,.07),0 30px 70px rgba(0,0,0,.55)">
+        <div style="position:absolute;inset:0;background:radial-gradient(120% 55% at 82% 4%,rgba(200,242,90,.10),rgba(7,8,9,0) 62%);pointer-events:none"></div>
+
+        <div style="position:relative;padding:26px 26px 0;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="font:500 15px/1 -apple-system,system-ui;color:rgba(244,246,246,.72)">Saturday, 5 September</div>
+          <div style="font:200 78px/1.05 -apple-system,system-ui;letter-spacing:-.03em">16:38</div>
+        </div>
+
+        <div style="position:relative;padding:30px 12px 0">
+          <div style="border-radius:26px;overflow:hidden;position:relative;background:#07080a;border:.5px solid rgba(255,255,255,.09);box-shadow:0 12px 34px rgba(0,0,0,.45)">
+            <div style="position:absolute;inset:0;background:radial-gradient(78% 120% at 0% 0%,rgba(200,242,90,.34),rgba(7,8,10,0) 58%);pointer-events:none"></div>
+            <div style="position:absolute;inset:0;background:radial-gradient(78% 120% at 100% 0%,rgba(200,242,90,.30),rgba(7,8,10,0) 58%);pointer-events:none"></div>
+            <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 118%,rgba(11,40,32,.85),rgba(7,8,10,0) 70%);pointer-events:none"></div>
+
+            <div style="position:relative;padding:13px 16px 15px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <span style="display:{{ liveShow }};width:5px;height:5px;border-radius:3px;background:#c8f25a;animation:agPulse 1.6s ease-in-out infinite"></span>
+                <span style="display:{{ liveShow }};font:700 11px/1 -apple-system,system-ui;letter-spacing:.12em;font-variant-numeric:tabular-nums;color:#c8f25a">{{ minuteLabel }}</span>
+                <span style="display:{{ liveShow }};width:3px;height:3px;border-radius:2px;background:rgba(244,246,246,.34)"></span>
+                <span style="font:500 11.5px/1 -apple-system,system-ui;letter-spacing:.02em;color:rgba(244,246,246,.62)">SAN MAMÉS · MD4</span>
+                <span style="display:{{ preShow }};width:3px;height:3px;border-radius:2px;background:rgba(244,246,246,.34)"></span>
+                <span style="display:{{ preShow }};font:500 11.5px/1 -apple-system,system-ui;letter-spacing:.02em;color:rgba(244,246,246,.62)">2026-27 LALIGA</span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:10px">
+                <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d.png" alt="" style="width:46px;height:46px;object-fit:contain;display:block;flex:none">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+                  <div style="font:800 30px/1 -apple-system,system-ui;letter-spacing:-.02em;color:#f4f6f6">ATH</div>
+                  <div style="display:{{ preShow }};font:500 11.5px/1.35 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6);text-align:center">2-1-0<br>7 PTS</div>
+                  <div style="display:{{ liveShow }};font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.6)">HOME</div>
+                </div>
+
+                <div style="flex:none;display:flex;flex-direction:column;align-items:center;gap:7px;padding:0 2px">
+                  <img src="brand/mark-accent.svg" alt="" style="display:{{ preShow }};width:19px;height:auto;opacity:.95">
+                  <div style="display:{{ preShow }};font:600 21px/1 -apple-system,system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#f4f6f6">15:30</div>
+                  <div style="display:{{ liveShow }};align-items:center;gap:11px">
+                    <span style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#f4f6f6">2</span>
+                    <span style="width:9px;height:1.5px;background:rgba(244,246,246,.32);display:block"></span>
+                    <span style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.58)">1</span>
+                  </div>
+                </div>
+
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+                  <div style="font:800 30px/1 -apple-system,system-ui;letter-spacing:-.02em;color:{{ awayInk }}">VAL</div>
+                  <div style="display:{{ preShow }};font:500 11.5px/1.35 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6);text-align:center">1-1-1<br>4 PTS</div>
+                  <div style="display:{{ liveShow }};font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.6)">AWAY</div>
+                </div>
+                <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5.png" alt="" style="width:46px;height:46px;object-fit:contain;display:block;flex:none">
+              </div>
+
+              <div style="display:{{ liveShow }};gap:10px;padding-top:11px;border-top:.5px solid rgba(255,255,255,.09)">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <svg width="14" height="12" viewBox="0 0 24 20" fill="none" style="display:block;flex:none"><circle cx="15.2" cy="10" r="8" fill="#c8f25a"></circle><path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path></svg>
+                    <span style="font:600 12px/1.2 -apple-system,system-ui;letter-spacing:-.01em;color:rgba(244,246,246,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Guruzeta <span style="font-weight:400;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6)">23'</span></span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <svg width="14" height="12" viewBox="0 0 24 20" fill="none" style="display:block;flex:none"><circle cx="15.2" cy="10" r="8" fill="#c8f25a"></circle><path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path></svg>
+                    <span style="font:600 12px/1.2 -apple-system,system-ui;letter-spacing:-.01em;color:rgba(244,246,246,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Sancet <span style="font-weight:400;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6)">61'</span></span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <svg width="9" height="12" viewBox="0 0 11 15" fill="none" style="display:block;flex:none"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#f2c14e"></rect></svg>
+                    <span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.55)">1</span>
+                  </div>
+                </div>
+                <span style="width:.5px;background:rgba(255,255,255,.09);flex:none"></span>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;align-items:flex-end">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="font:600 12px/1.2 -apple-system,system-ui;letter-spacing:-.01em;color:rgba(244,246,246,.9);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Duro <span style="font-weight:400;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6)">39'</span></span>
+                    <svg width="14" height="12" viewBox="0 0 24 20" fill="none" style="display:block;flex:none;transform:scaleX(-1)"><circle cx="15.2" cy="10" r="8" fill="rgba(200,242,90,.5)"></circle><path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path></svg>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.55)">2</span><svg width="9" height="12" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#f2c14e"></rect></svg></span>
+                    <span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#ff8f7c">1</span><svg width="9" height="12" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#ff5c47"></rect></svg></span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:{{ liveShow }};height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden">
+                <span style="display:block;height:100%;width:{{ barPct }};background:#c8f25a;border-radius:2px"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:0 34px 26px">
+          <span style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,.10);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.7" stroke-linecap="round"><path d="M4 8.5a6 6 0 0112 0v3l1.5 3H2.5L4 11.5z"></path><path d="M8 15.5a2 2 0 004 0"></path></svg></span>
+          <span style="width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,.10);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="9" r="5.5"></circle><path d="M13.2 13.2L17 17"></path></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:26px;width:369px">
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font:400 11.5px/1 -apple-system,system-ui;color:#8fa0a6">Live · scorer columns, at 1:1</div>
+        <div style="border-radius:26px;overflow:hidden;position:relative;background:#07080a;border:.5px solid rgba(255,255,255,.09)">
+          <div style="position:absolute;inset:0;background:radial-gradient(78% 120% at 0% 0%,rgba(200,242,90,.34),rgba(7,8,10,0) 58%);pointer-events:none"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(78% 120% at 100% 0%,rgba(200,242,90,.30),rgba(7,8,10,0) 58%);pointer-events:none"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 118%,rgba(11,40,32,.85),rgba(7,8,10,0) 70%);pointer-events:none"></div>
+          <div style="position:relative;padding:13px 16px 15px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+              <span style="width:5px;height:5px;border-radius:3px;background:#c8f25a;animation:agPulse 1.6s ease-in-out infinite"></span>
+              <span style="font:700 11px/1 -apple-system,system-ui;letter-spacing:.12em;font-variant-numeric:tabular-nums;color:#c8f25a">{{ minuteLabel }}</span>
+              <span style="width:3px;height:3px;border-radius:2px;background:rgba(244,246,246,.34)"></span>
+              <span style="font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.62)">SAN MAMÉS · MD4</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d.png" alt="" style="width:46px;height:46px;object-fit:contain;display:block;flex:none">
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+                <div style="font:800 30px/1 -apple-system,system-ui;letter-spacing:-.02em">ATH</div>
+                <div style="font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.6)">HOME</div>
+              </div>
+              <div style="flex:none;display:flex;align-items:center;gap:11px;padding:0 2px">
+                <span style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em;font-variant-numeric:tabular-nums">2</span>
+                <span style="width:9px;height:1.5px;background:rgba(244,246,246,.32);display:block"></span>
+                <span style="font:700 34px/1 -apple-system,system-ui;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.58)">1</span>
+              </div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+                <div style="font:800 30px/1 -apple-system,system-ui;letter-spacing:-.02em;color:rgba(244,246,246,.78)">VAL</div>
+                <div style="font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.6)">AWAY</div>
+              </div>
+              <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5.png" alt="" style="width:46px;height:46px;object-fit:contain;display:block;flex:none">
+            </div>
+            <div style="display:flex;gap:10px;padding-top:11px;border-top:.5px solid rgba(255,255,255,.09)">
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <svg width="14" height="12" viewBox="0 0 24 20" fill="none" style="display:block;flex:none"><circle cx="15.2" cy="10" r="8" fill="#c8f25a"></circle><path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path></svg>
+                  <span style="font:600 12px/1.2 -apple-system,system-ui;letter-spacing:-.01em;color:rgba(244,246,246,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Guruzeta <span style="font-weight:400;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6)">23'</span></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px">
+                  <svg width="14" height="12" viewBox="0 0 24 20" fill="none" style="display:block;flex:none"><circle cx="15.2" cy="10" r="8" fill="#c8f25a"></circle><path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path></svg>
+                  <span style="font:600 12px/1.2 -apple-system,system-ui;letter-spacing:-.01em;color:rgba(244,246,246,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Sancet <span style="font-weight:400;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6)">61'</span></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <svg width="9" height="12" viewBox="0 0 11 15" fill="none" style="display:block;flex:none"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#f2c14e"></rect></svg>
+                  <span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.55)">1</span>
+                </div>
+              </div>
+              <span style="width:.5px;background:rgba(255,255,255,.09);flex:none"></span>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;align-items:flex-end">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span style="font:600 12px/1.2 -apple-system,system-ui;letter-spacing:-.01em;color:rgba(244,246,246,.9);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Duro <span style="font-weight:400;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6)">39'</span></span>
+                  <svg width="14" height="12" viewBox="0 0 24 20" fill="none" style="display:block;flex:none;transform:scaleX(-1)"><circle cx="15.2" cy="10" r="8" fill="rgba(200,242,90,.5)"></circle><path d="M15.2 6.1l3.71 2.7-1.42 4.36h-4.58L11.49 8.8z" fill="#101806"></path></svg>
+                </div>
+                <div style="display:flex;align-items:center;gap:9px">
+                  <span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.55)">2</span><svg width="9" height="12" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#f2c14e"></rect></svg></span>
+                  <span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#ff8f7c">1</span><svg width="9" height="12" viewBox="0 0 11 15" fill="none" style="display:block"><rect x="1.5" y="1.6" width="8" height="11.4" rx="2" fill="#ff5c47"></rect></svg></span>
+                </div>
+              </div>
+            </div>
+            <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden"><span style="display:block;height:100%;width:{{ barPct }};background:#c8f25a;border-radius:2px"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font:400 11.5px/1 -apple-system,system-ui;color:#8fa0a6">Before kickoff · form and kickoff time</div>
+        <div style="border-radius:26px;overflow:hidden;position:relative;background:#07080a;border:.5px solid rgba(255,255,255,.09)">
+          <div style="position:absolute;inset:0;background:radial-gradient(78% 120% at 0% 0%,rgba(200,242,90,.34),rgba(7,8,10,0) 58%);pointer-events:none"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(78% 120% at 100% 0%,rgba(200,242,90,.30),rgba(7,8,10,0) 58%);pointer-events:none"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 118%,rgba(11,40,32,.85),rgba(7,8,10,0) 70%);pointer-events:none"></div>
+          <div style="position:relative;padding:13px 16px 16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+              <span style="font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.62)">2026-27 LALIGA</span>
+              <span style="width:3px;height:3px;border-radius:2px;background:rgba(244,246,246,.34)"></span>
+              <span style="font:500 11.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.62)">MATCHDAY 4</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d.png" alt="" style="width:46px;height:46px;object-fit:contain;display:block;flex:none">
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+                <div style="font:800 30px/1 -apple-system,system-ui;letter-spacing:-.02em">ATH</div>
+                <div style="font:500 11.5px/1.35 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6);text-align:center">2-1-0<br>7 PTS</div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:center;gap:7px;padding:0 2px">
+                <img src="brand/mark-accent.svg" alt="" style="width:19px;height:auto;display:block;opacity:.95">
+                <div style="font:600 21px/1 -apple-system,system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums">15:30</div>
+              </div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+                <div style="font:800 30px/1 -apple-system,system-ui;letter-spacing:-.02em">VAL</div>
+                <div style="font:500 11.5px/1.35 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:rgba(244,246,246,.6);text-align:center">1-1-1<br>4 PTS</div>
+              </div>
+              <img src="https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5.png" alt="" style="width:46px;height:46px;object-fit:contain;display:block;flex:none">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Scorers sit under their own crest, mirrored inward, so the side of the goal never needs a label — and the away goal glyph drops to 50% lime, which reads as <span style="color:#c8f25a">who is winning</span> before a single name is read. Cards ride the same rails: yellows in amber, a red in coral, count-first on the away side.</div>
+        <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Two lime radials at 34% and 30% read as stadium light rather than brand paint; the deep green pooling at the bottom edge keeps the lime off the crests. The 3px clock bar is the only element that moves between pushes.</div>
+        <div style="font:400 12px/1.5 -apple-system,system-ui;color:#59626a;text-wrap:pretty">Payload: <code style="color:#8fa0a6">home/awayCrest</code>, <code style="color:#8fa0a6">abbr</code>, <code style="color:#8fa0a6">record</code>, <code style="color:#8fa0a6">pts</code>, <code style="color:#8fa0a6">kickoff</code> pre-match; <code style="color:#8fa0a6">score</code>, <code style="color:#8fa0a6">minute</code>, <code style="color:#8fa0a6">scorers[]</code> (max 3 a side, then <code style="color:#8fa0a6">+n</code>) and <code style="color:#8fa0a6">cards</code> live. Names arrive pre-truncated — the widget never abbreviates a surname itself.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;upcoming&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;'live'|'upcoming'&quot;,&quot;section&quot;:&quot;Widget&quot;},&quot;minute&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:68,&quot;min&quot;:1,&quot;max&quot;:90,&quot;unit&quot;:&quot;'&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Widget&quot;}}">
+class Component extends DCLogic {
+  renderVals(){
+    const live = (this.props.state ?? 'live') === 'live';
+    const minute = Math.max(1, Math.min(90, Number(this.props.minute ?? 68)));
+    return {
+      liveShow: live ? 'flex' : 'none',
+      preShow: live ? 'none' : 'flex',
+      awayInk: live ? 'rgba(244,246,246,.78)' : '#f4f6f6',
+      minuteLabel: minute + "'",
+      barPct: Math.round(minute / 90 * 100) + '%'
+    };
+  }
+}
+
+</script>
+</body>
+</html>

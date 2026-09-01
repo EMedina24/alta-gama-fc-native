@@ -96,6 +96,36 @@ struct MatchAttributes: ActivityAttributes {
     /// question against a 30-second feed (ADR 0055).
     var lastMoment: Moment?
 
+    /// The scorer columns under each crest (ADR 0085).
+    ///
+    /// ⚠⚠ **Already bucketed by the side the goal COUNTED FOR.** The feed's
+    /// `teamSlug` is the SCORER's club even on an own goal, so the server splits
+    /// these through `scoringSide()` — the same function it reads the scoreline
+    /// against. The card must not re-derive a side from anything in here.
+    ///
+    /// ⚠ Optional and absent-not-empty, like every other field on this struct: a
+    /// side that has not scored sends nothing.
+    var homeScorers: [Scorer]?
+    var awayScorers: [Scorer]?
+
+    /// The `+n` after the server's cap. ⚠ Absent when nothing was dropped.
+    ///
+    /// ⚠ The card's height is FIXED. A fourth scorer collapses to this rather
+    /// than growing the card, which is the whole reason the cap is on the wire
+    /// and not a `prefix(3)` here.
+    var homeMoreGoals: Int?
+    var awayMoreGoals: Int?
+
+    /// Bookings per side, for the pills under each column.
+    ///
+    /// ⚠⚠ **These move only when a push is SENT** — goal, red card, full time.
+    /// A yellow is not an alertable moment, so the count it changes waits for
+    /// the next goal to carry it. Correct against Apple's update budget, and
+    /// harmless because this struct is replaced wholesale: the counts are always
+    /// right as of the last push.
+    var homeCards: Discipline?
+    var awayCards: Discipline?
+
     // ⚠⚠ **THERE IS NO STALL FIELD, and the reason is worth reading before
     // adding one.** A first draft carried `stalledLabel`, on the model of ADR
     // 0049's `lastSeenAt` signal on the Today board. It cannot work here: this
@@ -133,6 +163,25 @@ struct MatchAttributes: ActivityAttributes {
     var consequenceLabel: String?
   }
 
+  /// One goal in a scorer column.
+  ///
+  /// ⚠⚠ **`name` is what the card PRINTS, and the card never touches it.** No
+  /// truncation, no re-casing, no own-goal suffix — the server resolved all
+  /// three, because it is the side that knows the reader's language and which
+  /// part of a name is the family name. See `MatchAttributes`'s localisation
+  /// note; this is the same rule applied to a person rather than a sentence.
+  struct Scorer: Codable, Hashable {
+    var name: String
+    /// ⚠ Football notation, pre-formatted: `45+2'`, never `47'`.
+    var minuteLabel: String
+  }
+
+  /// Bookings for one side.
+  struct Discipline: Codable, Hashable {
+    var yellow: Int
+    var red: Int
+  }
+
   /// ⚠ **A uuid STRING.** `handoff_AG-ios/SPEC.md` §196 sketches an `Int`; that
   /// is wrong for this backend and is corrected here (ADR 0055).
   var fixtureId: String
@@ -161,4 +210,46 @@ struct MatchAttributes: ActivityAttributes {
   var kickoffEpoch: Double
 
   var kickoffUtc: Date { Date(timeIntervalSince1970: kickoffEpoch) }
+
+  // ------------------------------------------------- the pre-match state --
+  //
+  // ⚠⚠ **EVERY FIELD BELOW IS IMMUTABLE AND SENT ONCE, AT START.** The server
+  // starts the card ~10 minutes before kick-off (ADR 0085), so a record read
+  // then is the record the pre-match state should show — and by the time it
+  // would be wrong, that state is off the card. Nothing here is re-sent, and an
+  // `update` carrying `attributes` would only waste the 5 KB budget.
+  //
+  // ⚠ All optional. An activity started by a build that predates the backend
+  // half decodes to nil and drops the segment, which is the whole reason
+  // `ContentState.phase` is a `String` rather than an enum.
+
+  /// `2026-27 LALIGA`, pre-localised. ⚠ The eyebrow drops a nil segment rather
+  /// than printing a bare separator, exactly as `venue` already does.
+  var competition: String?
+
+  /// `JORNADA 4` — the long form, for the pre-match eyebrow.
+  var matchday: String?
+
+  /// `J4` — the short form, for the live eyebrow, where the venue takes the room.
+  ///
+  /// ⚠ Two fields rather than one abbreviated here, for the reason every string
+  /// on this type is server-resolved: `MATCHDAY 4` → `MD4` is an English rule and
+  /// `JORNADA 4` → `J4` is a Spanish one, and the widget cannot see the language.
+  var matchdayShort: String?
+
+  /// `2-1-0` — won-drawn-lost. ⚠ Nil where the standings view cannot answer;
+  /// the card drops the line rather than printing a wrong record.
+  var homeRecord: String?
+  var awayRecord: String?
+
+  var homePts: Int?
+  var awayPts: Int?
+
+  /// `LOCAL` / `VISITA` — pre-localised, and the reason the card does NOT derive
+  /// the tag by comparing abbreviations: two clubs can share a three-letter code.
+  var homeTag: String?
+  var awayTag: String?
+
+  /// The `PTS` in `7 PTS`. ⚠ A word, so the server owns it.
+  var ptsLabel: String?
 }

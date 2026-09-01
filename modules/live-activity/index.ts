@@ -1,5 +1,5 @@
 /**
- * The native seam for ActivityKit (ADR 0055/0056).
+ * The native seam for ActivityKit (ADR 0055/0057).
  *
  * ⚠ Import this ONLY from `src/features/push/capability.ts`. That file is the
  * app's one seam for everything the Apple Developer account and the OS gate, and
