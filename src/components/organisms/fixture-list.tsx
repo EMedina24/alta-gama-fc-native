@@ -245,8 +245,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // The darker group ground the design uses for a day header.
-    backgroundColor: Colors.dark.card,
+    // The quiet full-bleed slab the 0087 shell uses for a day header — a
+    // charcoal band here would be the last `card` slab on the mesh.
+    backgroundColor: Colors.dark.glassFillDim,
     paddingHorizontal: Spacing.five,
     paddingVertical: Spacing.three,
     marginHorizontal: -Spacing.five,

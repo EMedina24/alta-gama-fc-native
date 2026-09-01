@@ -26,7 +26,6 @@ import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaf
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Size, Spacing } from '@/constants/theme';
 import { hapticToggle } from '@/lib/haptics';
-import { clubTint } from '@/lib/cronogol/club-wash';
 import { abbreviate, crestSrc, displayName, hasCompleteSchedule, pickerName } from '@/lib/cronogol/derive';
 import {
   DEFAULT_LEAGUE,
@@ -121,7 +120,6 @@ export default function ClubsScreen() {
             name,
             crest: crestSrc(team.logoUrls, team.logoUrl, 'small'),
             abbr: abbreviate(team.name, slug, team.shortName),
-            tint: clubTint(team),
             rank: placed?.rank ?? null,
             rankColor: placed?.color ?? null,
             accessibilityLabel: copy.clubs.railClub(displayName(team.name), placed?.rank ?? null),
@@ -174,27 +172,24 @@ export default function ClubsScreen() {
   return (
     <ScreenScaffold
       title={copy.clubs.title}
+      // The one 48pt crown: its subhead carries the follow count (ADR 0087).
+      titleVariant="crownTitleLg"
       subtitle={copy.clubs.followedCount(followed.length)}
       accessory={
         <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
       }
-      onRefresh={() => {
-        void teams.refetch();
-        void browse.refetch();
-      }}
-      refreshing={teams.isRefetching || browse.isRefetching}>
-      <SearchField value={query} onChangeText={setQuery} placeholder={copy.clubs.search(all.length)} />
-
-      {teams.isError ? (
-        <View style={styles.state}>
-          <Text color="textSecondary">{copy.clubs.error}</Text>
-          <Button label={copy.clubs.retry} tone="secondary" onPress={() => void teams.refetch()} />
-        </View>
-      ) : teams.isPending ? (
-        <SkeletonRows count={8} height={Size.rowSkeleton} />
-      ) : (
-        <>
-          {rail.length > 0 && !query ? (
+      // Search and the subscribed rail ride the crown. The SUBSCRIBED header
+      // and the rail sit past the gradient's midpoint, where the ground is
+      // dark green — so they keep their normal dark-theme inks, the ink rule's
+      // live example (APP-SHELL).
+      payload={
+        <View style={styles.crownControls}>
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            placeholder={copy.clubs.search(all.length)}
+          />
+          {!teams.isError && !teams.isPending && rail.length > 0 && !query ? (
             <>
               <SectionHeader
                 title={copy.clubs.subscribed}
@@ -204,7 +199,22 @@ export default function ClubsScreen() {
               <ClubRail clubs={rail} onOpen={openClub} />
             </>
           ) : null}
-
+        </View>
+      }
+      onRefresh={() => {
+        void teams.refetch();
+        void browse.refetch();
+      }}
+      refreshing={teams.isRefetching || browse.isRefetching}>
+      {teams.isError ? (
+        <View style={styles.state}>
+          <Text color="textSecondary">{copy.clubs.error}</Text>
+          <Button label={copy.clubs.retry} tone="secondary" onPress={() => void teams.refetch()} />
+        </View>
+      ) : teams.isPending ? (
+        <SkeletonRows count={8} height={Size.rowSkeleton} />
+      ) : (
+        <>
           {/* ⚠ Hidden while searching: search spans EVERY tracked club, so a
               league filter sitting over those results would claim a scope the
               list does not have (ADR 0032). */}
@@ -246,6 +256,7 @@ export default function ClubsScreen() {
 }
 
 const styles = StyleSheet.create({
+  crownControls: { gap: Spacing.four },
   state: { gap: Spacing.four, paddingVertical: Spacing.six },
   footnote: { lineHeight: 18 },
 });

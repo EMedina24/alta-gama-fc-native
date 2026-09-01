@@ -12,7 +12,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Hairline, Text } from '@/components/atoms';
 import { FormStrip, StatRow } from '@/components/molecules';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing, Surfaces } from '@/constants/theme';
 import type { FormResult, StandingsRowView } from '@/lib/cronogol/types';
 
 export interface ExpandedRowProps {
@@ -66,8 +66,8 @@ export function ExpandedRow({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: Radius.group,
+    ...Surfaces.glass,
+    borderRadius: Radius.tile,
     padding: Spacing.four,
     marginHorizontal: Spacing.five,
     marginVertical: Spacing.two,

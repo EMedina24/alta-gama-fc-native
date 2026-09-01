@@ -57,6 +57,8 @@ export function SkeletonRows({ count = 6, height = 44 }: { count?: number; heigh
 }
 
 const styles = StyleSheet.create({
-  block: { backgroundColor: Colors.dark.raised },
+  // Glass, not `raised` (ADR 0087): the rows now pulse on the mesh and on
+  // glass cards, where an opaque charcoal block reads as a hole.
+  block: { backgroundColor: Colors.dark.glassFill },
   rows: { gap: Spacing.two },
 });

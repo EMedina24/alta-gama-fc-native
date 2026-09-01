@@ -24,22 +24,22 @@
  * for one render and `0` for the rest. `seenAtOpen` is a lazy `useState`
  * initialiser and does not change while the screen is up.
  *
- * ⚠ The first day group is a FRONT PAGE (`frontPagePick`): lead, tiles, rows.
- * Later groups are rows. One front page per screen.
+ * ⚠ Every group is a flat list of story CARDS (ADR 0092). The front page —
+ * one lead and two tiles on the first group — is gone, and with it the last
+ * consumer of `frontPagePick`.
  */
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Eyebrow, Text } from '@/components/atoms';
+import { Eyebrow, MeshGround, Text } from '@/components/atoms';
 import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { openArticle } from '@/features/news/open';
 import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import {
   articleTopic,
-  frontPagePick,
   groupNewsByDay,
   isOurs,
   newsAge,
@@ -129,47 +129,48 @@ export default function NewsScreen() {
     onPress: () => open(article),
   });
 
+  /**
+   * ⚠ EVERY story in the group is a row now (ADR 0092): the front-page split
+   * — `frontPagePick`'s lead and tiles — is gone, and the whole group maps
+   * straight to cards. Nothing may be dropped here; a story that is neither
+   * lead nor row simply vanishes from the screen, which is what a partial
+   * migration would have done.
+   */
   const groups: NewsGroup[] = groupNewsByDay(items, now, (iso) => zonedDayKey(iso, zone)).map(
-    (group, index) => {
-      const label =
+    (group) => ({
+      label:
         group.kind === 'today'
           ? copy.news.today
           : group.kind === 'yesterday'
             ? copy.news.yesterday
-            : formatFixtureDate(group.items[0].publishedAt, zone, phrases);
-      const count = phrases.stories(group.items.length);
-      if (index > 0) return { label, count, rows: group.items.map(row) };
-
-      const page = frontPagePick(group.items);
-      return {
-        label,
-        count,
-        lead: page.lead
-          ? { ...row(page.lead), excerpt: page.lead.excerpt, kicker: copy.news.lead }
-          : null,
-        tiles: page.tiles.map(row),
-        rows: page.rows.map(row),
-      };
-    },
+            : formatFixtureDate(group.items[0].publishedAt, zone, phrases),
+      count: phrases.stories(group.items.length),
+      rows: group.items.map(row),
+    }),
   );
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,
-          headerTintColor: Colors.dark.accent,
-          // ⚠ Chevron only — the inherited label would print "(tabs)".
-          headerBackButtonDisplayMode: 'minimal',
-        }}
-      />
+      <MeshGround />
+      {/* ⚠ No native header (ADR 0092, as the club page did in 0091): the
+          screen draws its own lime back link, which can NAME where it goes —
+          the native button's inherited label printed the route group. */}
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + 44, paddingBottom: BottomTabInset },
+          { paddingTop: insets.top + Spacing.two, paddingBottom: BottomTabInset },
         ]}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={copy.today.title}
+          hitSlop={8}
+          style={({ pressed }) => [styles.back, pressed && { opacity: 0.7 }]}>
+          <Text variant="bodyStrong" color="accent">
+            {`‹  ${copy.today.title}`}
+          </Text>
+        </Pressable>
         <View style={styles.masthead}>
           <Text variant="largeTitle">{copy.news.title}</Text>
           {/* The reader's own day, in their zone — the same formatter every
@@ -195,6 +196,7 @@ export default function NewsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.dark.background },
   content: { paddingHorizontal: Spacing.five, gap: Spacing.four },
+  back: { alignSelf: 'flex-start' },
   masthead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   date: { paddingBottom: Spacing.one },
 });

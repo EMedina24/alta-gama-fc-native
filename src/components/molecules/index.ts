@@ -1,5 +1,6 @@
 export { Countdown } from './countdown';
 export { EventRow, type EventRowProps } from './event-row';
+export { EventsDisclosure } from './events-disclosure';
 export { EventTabs, type EventTabsProps } from './event-tabs';
 export { FeedAge } from './feed-age';
 export { FixtureTiming } from './fixture-timing';
@@ -10,11 +11,9 @@ export { LeagueSwitch, type LeagueOption } from './league-switch';
 export { ListRow } from './list-row';
 export { MatchdayPager } from './matchday-pager';
 export { MatchdayStrip } from './matchday-strip';
-export { NewsLead, type NewsLeadProps } from './news-lead';
 export { NewsMeta } from './news-meta';
 export { NewsRow, type NewsRowProps } from './news-row';
 export { NewsThumb } from './news-thumb';
-export { NewsTile, type NewsTileProps } from './news-tile';
 export { ScoreLine, type ScoreSide } from './score-line';
 export { SectionHeader } from './section-header';
 export { StatusBanner, type StatusBannerProps, type StatusKind } from './status-banner';
@@ -32,5 +31,8 @@ export { AlertTile, type AlertTileProps, type AlertTileTone } from './alert-tile
 export { PickStack, type PickStackItem, type PickStackProps } from './pick-stack';
 export { StepDots, type StepDotsProps } from './step-dots';
 export { SearchField, type SearchFieldProps } from './search-field';
+export { Tray, type TrayProps } from './tray';
+export { ClubNextCard, type ClubNextCardProps } from './club-next-card';
+export { ClubStatsStrip, type ClubStatsStripProps } from './club-stats-strip';
 export { ClubBubble, type ClubBubbleProps } from './club-bubble';
 export { ClubRow, type ClubRowProps } from './club-row';

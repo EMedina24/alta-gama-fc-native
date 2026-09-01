@@ -495,7 +495,9 @@ export function AccountSheet({
 const styles = StyleSheet.create({
   // Full-bleed out of the 20pt gutter, so no content shows past the bar while
   // it is pinned.
-  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.card },
+  // ⚠ Matches the sheet's own ground (ADR 0093) — the bar must be invisible
+  // until content scrolls under it.
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.sheetGround },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -518,7 +520,8 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: Spacing.five, paddingBottom: Spacing.eight, gap: Spacing.three },
   identityBlock: { gap: Spacing.three, marginBottom: Spacing.one },
   section: { gap: Spacing.three },
-  group: { backgroundColor: Colors.dark.raised, borderRadius: Radius.group, overflow: 'hidden' },
+  // Glass groups on the opaque sheet (ADR 0087/0093) — a flat blend, no blur.
+  group: { backgroundColor: Colors.dark.glassFill, borderRadius: Radius.group, overflow: 'hidden' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

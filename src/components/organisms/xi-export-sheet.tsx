@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   input: {
     ...Type.headline,
     color: Colors.dark.text,
-    backgroundColor: Colors.dark.raised,
+    backgroundColor: Colors.dark.glassFill,
     borderRadius: Radius.control,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Spacing.two,
     borderRadius: Radius.control,
-    backgroundColor: Colors.dark.raised,
+    backgroundColor: Colors.dark.glassFill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.dark.hairlineMid,
     alignItems: 'center',

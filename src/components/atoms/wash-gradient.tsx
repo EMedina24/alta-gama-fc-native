@@ -30,13 +30,18 @@ export interface WashStop {
 
 export interface WashGradientProps {
   stops: readonly WashStop[];
-  /** `diagonal`: top-left → bottom-right. `vertical`: top → bottom. */
-  angle: 'diagonal' | 'vertical';
+  /**
+   * `diagonal`: top-left → bottom-right. `vertical`: top → bottom.
+   * `pair`: the 0087 two-club wash line — near-horizontal with a slight fall,
+   * the mock's 100° drawn across a card-shaped box (`ClubWash2`).
+   */
+  angle: 'diagonal' | 'vertical' | 'pair';
 }
 
 const VECTOR = {
   diagonal: { x1: '0', y1: '0', x2: '1', y2: '1' },
   vertical: { x1: '0', y1: '0', x2: '0', y2: '1' },
+  pair: { x1: '0', y1: '0.42', x2: '1', y2: '0.58' },
 } as const;
 
 export function WashGradient({ stops, angle }: WashGradientProps) {
@@ -76,21 +81,31 @@ export function WashGradient({ stops, angle }: WashGradientProps) {
  * `WashStop.opacity` and never the colour's alpha channel.
  *
  * `cx` / `cy` / `r` are fractions of the parent's box, as `Glow`'s are.
+ * `rx` / `ry` make the pool ELLIPTICAL (ADR 0087's mesh and crown sheen are
+ * both wider than tall); each defaults to `r`, so circular callers are
+ * untouched.
  */
 export interface WashRadialProps {
   stops: readonly WashStop[];
   cx?: number;
   cy?: number;
   r?: number;
+  rx?: number;
+  ry?: number;
 }
 
-export function WashRadial({ stops, cx = 0.5, cy = 0.5, r = 0.5 }: WashRadialProps) {
+export function WashRadial({ stops, cx = 0.5, cy = 0.5, r = 0.5, rx, ry }: WashRadialProps) {
   // As above: `useId` yields `:r1:`, and a colon is not legal in a `url()` ref.
   const id = `radial-${useId().replace(/:/g, '')}`;
   return (
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
       <Defs>
-        <RadialGradient id={id} cx={`${cx * 100}%`} cy={`${cy * 100}%`} r={`${r * 100}%`}>
+        <RadialGradient
+          id={id}
+          cx={`${cx * 100}%`}
+          cy={`${cy * 100}%`}
+          rx={`${(rx ?? r) * 100}%`}
+          ry={`${(ry ?? r) * 100}%`}>
           {stops.map((s) => (
             <Stop
               key={`${s.offset}-${s.color}`}

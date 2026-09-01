@@ -14,20 +14,34 @@
  * the root stack, and the route string `/club/[slug]` is unchanged.
  */
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SkeletonRows, Text } from '@/components/atoms';
-import { StartingXiRow } from '@/components/molecules';
-import { ClubHeader } from '@/components/organisms/club-header';
+import { BAND_COLOR, MeshGround, SkeletonRows, Text } from '@/components/atoms';
+import { ClubNextCard, ClubStatsStrip, StartingXiRow } from '@/components/molecules';
+import { ClubActions } from '@/components/organisms/club-actions';
+import { ClubHero } from '@/components/organisms/club-hero';
 import { SeasonSpine } from '@/components/organisms/season-spine';
 import { SquadList } from '@/components/organisms/squad-list';
-import { BottomTabInset, Colors, Radius, Size, Spacing } from '@/constants/theme';
-import { tameClubColor } from '@/lib/cronogol/club-wash';
-import { hasCompleteSchedule } from '@/lib/cronogol/derive';
+import { BottomTabInset, Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
+import { clubTint, tameClubColor } from '@/lib/cronogol/club-wash';
+import {
+  abbreviate,
+  crestSrc,
+  displayName,
+  hasCompleteSchedule,
+  matchday,
+  nextUpIndex,
+  primaryCompetition,
+} from '@/lib/cronogol/derive';
+import { formatFixtureDate, formatKickoffTime } from '@/lib/format';
+import { bandsApply, zoneFor } from '@/lib/cronogol/standings';
+import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubFixtures, useClubSquad } from '@/queries/use-club';
+import { useStandings } from '@/queries/use-standings';
+import { useTeams } from '@/queries/use-teams';
 import { usePreferences, useZone } from '@/store/preferences';
 
 export default function ClubScreen() {
@@ -42,35 +56,81 @@ export default function ClubScreen() {
 
   const fixtures = useClubFixtures(slug);
   const squad = useClubSquad(slug);
+  const standings = useStandings();
+  const teams = useTeams();
 
   const data = fixtures.data;
   const subscribed = followed.includes(slug);
 
+  /**
+   * This club's row in whichever published table holds it (ADR 0091's stats
+   * strip).
+   *
+   * ⚠ Gated on `bandsApply`, and absent is a REAL answer: an unplayed or
+   * incomplete table may not be quoted at all (trap 20), and the strip is not
+   * drawn rather than showing dashes. The band ink comes from `zoneFor`
+   * against `League.zones` — never position arithmetic.
+   */
+  const standing = useMemo(() => {
+    const hit = (standings.data?.tables ?? [])
+      .map((table) => {
+        const league = findLeagueByApiSlug(table.league.slug);
+        if (!league || !bandsApply(table, league)) return null;
+        const row = table.rows.find((r) => r.team.slug === slug);
+        return row ? { row, league } : null;
+      })
+      .find(Boolean);
+    if (!hit) return null;
+    const zone = zoneFor(hit.row.rank, hit.league);
+    return { row: hit.row, rankColor: zone ? BAND_COLOR[zone] : null };
+  }, [standings.data, slug]);
+
+  /**
+   * The next fixture, as the spine already resolves it — `nextUpIndex`, the
+   * first `scheduled`/`live` row, NEVER a clock comparison (the API has served
+   * a finished season before).
+   */
+  const next = useMemo(() => {
+    if (!data) return null;
+    const index = nextUpIndex(data.fixtures);
+    const fixture = data.fixtures[index];
+    if (!fixture) return null;
+    /**
+     * The OPPONENT's colour, not this club's — see `ClubNextCard`.
+     *
+     * ⚠ Joined by NAME, because `FixtureView` carries `opponent` (a name) and
+     * no slug. Both sides come from the same provider strings, so an exact
+     * match is right when it hits; a miss is simply no wash, which is already
+     * the state for every Premier League and Serie A club.
+     */
+    const opponentTeam =
+      (teams.data ?? []).find((t) => t.name === fixture.opponent) ?? null;
+    return { fixture, tint: opponentTeam ? clubTint(opponentTeam) : null };
+  }, [data, teams.data]);
+
   return (
     <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,
-          headerTintColor: Colors.dark.accent,
-          /**
-           * ⚠ Chevron only, no label.
-           *
-           * Left to itself the back button inherits the previous route's name
-           * and renders the ROUTE GROUP — "(tabs)" — which is a file-system
-           * concept that must never reach a reader. The obvious fix, the club's
-           * competition, prints the PROVIDER's copy ("LALIGA EA SPORTS") and is
-           * wrong anyway: this screen is reached from Clubs, from the Table and
-           * from a push notification, so no single label is true.
-           */
-          headerBackButtonDisplayMode: 'minimal',
-        }}
-      />
+      <MeshGround />
+      {/**
+       * ⚠ NO native header at all since ADR 0091 — the hero draws its own back
+       * pill, because the mock's hero starts at the top of the screen and a
+       * transparent nav bar still reserves its 44pt band. The swipe-back
+       * gesture is unaffected (it belongs to the stack, not the header).
+       *
+       * ⚠ The pill is LABELLED with the club's competition. The native back
+       * button could not be: left to itself it inherits the previous route's
+       * name and renders the ROUTE GROUP — "(tabs)" — and this screen is
+       * reached from Clubs, the Table and a push, so no single label was true.
+       * A pill that names where you ARE rather than where you came from has no
+       * such problem.
+       */}
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + 44, paddingBottom: BottomTabInset },
+          // ⚠ `insets.top` alone now — the hero owns the top of the screen and
+          // there is no native header band to clear (ADR 0091).
+          { paddingTop: insets.top, paddingBottom: BottomTabInset },
         ]}>
         {fixtures.isPending ? (
           <SkeletonRows count={8} height={Size.rowSkeleton} />
@@ -78,20 +138,80 @@ export default function ClubScreen() {
           <Text color="textSecondary">{copy.club.notFound}</Text>
         ) : (
           <>
-            <ClubHeader
+            <ClubHero
               team={data.team}
               fixtures={data.fixtures}
-              subscribed={subscribed}
-              // The club's own colour behind the identity block (ADR 0068).
-              // `tameClubColor` is null for a club with no usable hex — every
-              // Premier League and Serie A club today — and that is the
-              // unchanged header, not a missing one. The bleeds mirror this
-              // ScrollView's own padding exactly.
+              // The club's own colour behind the hero (ADR 0068's taming, 0091's
+              // geometry). Null for a club with no usable hex — every Premier
+              // League and Serie A club today — which draws the neutral fade,
+              // not a missing hero. The bleeds mirror this ScrollView's padding.
               wash={tameClubColor(data.team.colorPrimary, data.team.colorSecondary)}
               bleedX={Spacing.five}
-              bleedTop={insets.top + 44}
+              bleedTop={insets.top}
+              onBack={() => router.back()}
+              backLabel={primaryCompetition(data.fixtures) ?? copy.club.fixtures}
+            />
+
+            {standing ? (
+              <ClubStatsStrip
+                rank={standing.row.rank}
+                rankColor={standing.rankColor}
+                points={standing.row.points}
+                goalDifference={standing.row.goalDifference}
+                form={standing.row.form}
+                phrases={phrases}
+                labels={{
+                  pos: copy.table.pos,
+                  points: copy.table.points,
+                  goalDifference: copy.table.statLabels[5],
+                  form: copy.table.formLabel(5),
+                }}
+              />
+            ) : null}
+
+            {next ? (
+              <ClubNextCard
+                label={copy.today.nextUp}
+                opponent={
+                  next.fixture.opponent
+                    ? displayName(next.fixture.opponent)
+                    : phrases.unknownOpponent
+                }
+                crest={crestSrc(
+                  next.fixture.opponentLogoUrls,
+                  next.fixture.opponentLogoUrl,
+                  'small',
+                )}
+                abbr={
+                  next.fixture.opponent
+                    ? abbreviate(next.fixture.opponent)
+                    : phrases.unknownOpponent
+                }
+                tint={next.tint}
+                homeAwayTag={next.fixture.homeAway === 'H' ? phrases.home : phrases.away}
+                atPrefix={next.fixture.homeAway === 'A' ? phrases.at : null}
+                meta={[
+                  matchday(next.fixture.round) !== null
+                    ? `${copy.club.roundPrefix}${matchday(next.fixture.round)}`
+                    : null,
+                  formatFixtureDate(next.fixture.kickoffUtc, zone, phrases),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                // ⚠ `--:--` means published-but-unscheduled, never missing.
+                kickoffLabel={
+                  next.fixture.kickoffTbd
+                    ? '--:--'
+                    : formatKickoffTime(next.fixture.kickoffUtc, zone, clock)
+                }
+                venue={next.fixture.venue}
+              />
+            ) : null}
+
+            <ClubActions
+              subscribed={subscribed}
               // ⚠ Always via the sheet, in BOTH directions — the design confirms
-              // a subscribe and a unsubscribe in the same place.
+              // a subscribe and an unsubscribe in the same place.
               onToggleAlerts={() =>
                 router.push({ pathname: '/(sheets)/alerts', params: { slug } })
               }
@@ -109,7 +229,7 @@ export default function ClubScreen() {
               }}
             />
 
-            {/* ⚠ Between the subscribe block and the segmented control — a club
+            {/* ⚠ Between the club actions and the segmented control — a club
                 action, not a squad detail (ADR 0065). Enabled off the SQUAD, not
                 the league: the row stays and explains itself when there is none. */}
             <StartingXiRow
@@ -146,6 +266,7 @@ export default function ClubScreen() {
                   clock={clock}
                   phrases={phrases}
                   roundPrefix={copy.club.roundPrefix}
+                  tint={tameClubColor(data.team.colorPrimary, data.team.colorSecondary)}
                 />
               ) : (
                 <View style={styles.pending}>
@@ -181,7 +302,8 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: Spacing.five, gap: Spacing.four },
   segmented: {
     flexDirection: 'row',
-    backgroundColor: Colors.dark.card,
+    // The 0087 track: a quiet glass slab; the thumb is the opaque lift.
+    backgroundColor: Colors.dark.glassFillDim,
     borderRadius: Radius.control,
     padding: Spacing.one,
   },
@@ -192,9 +314,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     borderRadius: Radius.seg,
   },
-  segmentActive: { backgroundColor: Colors.dark.raised },
+  segmentActive: { backgroundColor: Colors.dark.segThumb },
   pending: {
-    backgroundColor: Colors.dark.card,
+    ...Surfaces.glass,
     borderRadius: Radius.card,
     padding: Spacing.four,
     gap: Spacing.two,

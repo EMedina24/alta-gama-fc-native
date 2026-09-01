@@ -195,10 +195,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     paddingBottom: Spacing.three + 2,
     paddingHorizontal: Spacing.two,
-    backgroundColor: Colors.dark.card,
+    // Glass (ADR 0087) — the picker tiles sit straight on the new ground.
+    backgroundColor: Colors.dark.glassFill,
     borderRadius: Radius.tile,
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: Colors.dark.glassLine,
   },
   tileOn: { borderColor: Colors.dark.accentRing, backgroundColor: Colors.dark.raised },
   pressed: { opacity: 0.7 },

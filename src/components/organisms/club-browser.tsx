@@ -1,6 +1,8 @@
 /**
  * The browse list — every club in the chosen league that the reader does not
- * already follow, in one tray (ADR 0082).
+ * already follow, in one double-bezel `Tray` (ADR 0090, revising 0082's flat
+ * card: the tray pattern is sanctioned now, and this list is its second home
+ * after the search field).
  *
  * ⚠ **Followed clubs are filtered OUT by the screen, not here.** The rail is
  * the only place a subscribed club appears; a club in both would make the rail
@@ -12,14 +14,11 @@
  * page's `Match alerts`, which confirms first. Unfollowing drops a season of
  * calendar entries, and the old row did it on a single tap with no undo.
  *
- * ⚠ ONE tray, not one card per row — a `card` surface with hairlines between
- * rows and none after the last. The handoff drew a second shell inside it;
- * ADR 0081's "no nested card shells" rule stands and it is not built.
+ * ⚠ ONE tray, not one card per row — rows separated by hairlines with none
+ * after the last. The Tray's inner clips the first and last rows' pressed
+ * ground to its corners.
  */
-import { StyleSheet, View } from 'react-native';
-
-import { ClubRow } from '@/components/molecules';
-import { Colors, Radius } from '@/constants/theme';
+import { ClubRow, Tray } from '@/components/molecules';
 
 export interface BrowseClub {
   slug: string;
@@ -39,7 +38,7 @@ export interface ClubBrowserProps {
 
 export function ClubBrowser({ clubs, followLabel, onFollow, onOpen }: ClubBrowserProps) {
   return (
-    <View style={styles.tray}>
+    <Tray>
       {clubs.map((club, i) => (
         <ClubRow
           key={club.slug}
@@ -54,17 +53,6 @@ export function ClubBrowser({ clubs, followLabel, onFollow, onOpen }: ClubBrowse
           rule={i < clubs.length - 1}
         />
       ))}
-    </View>
+    </Tray>
   );
 }
-
-const styles = StyleSheet.create({
-  tray: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: Radius.group,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.dark.hairlineMid,
-    // ⚠ Clips the first and last rows' pressed ground to the tray's corners.
-    overflow: 'hidden',
-  },
-});

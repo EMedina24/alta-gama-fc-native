@@ -98,7 +98,10 @@ const styles = StyleSheet.create({
   // ADR 0029 names. The jornada column is tighter still (ADR 0035) and this is
   // what keeps the chip inside it on a 24-hour clock.
   chip: {
-    backgroundColor: Colors.dark.raised,
+    // ⚠ `scoreChip` re-grounds the value for the mesh (ADR 0087) but the RULE
+    // is 0044's unchanged: a NEUTRAL ground, never `live`/`liveWash` — a live
+    // tint here makes every finished score in a list look current (trap 8).
+    backgroundColor: Colors.dark.scoreChip,
     borderRadius: Radius.chip,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,

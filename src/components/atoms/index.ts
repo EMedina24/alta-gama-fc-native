@@ -23,6 +23,7 @@ export { SlotToken, type SlotTokenMode, type SlotTokenProps } from './slot-token
 export { AlertGlyph, type AlertGlyphProps, type AlertKind } from './alert-glyph';
 export { Glow, type GlowProps } from './glow';
 export { Mark, MARK_RATIO, type MarkProps } from './mark';
+export { MeshGround } from './mesh-ground';
 export { SearchGlyph } from './search-glyph';
 export { GlobeGlyph } from './globe-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';

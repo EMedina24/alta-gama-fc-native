@@ -113,5 +113,5 @@ export default function XiExportRoute() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { backgroundColor: Colors.dark.card },
+  scroll: { backgroundColor: Colors.dark.sheetGround },
 });

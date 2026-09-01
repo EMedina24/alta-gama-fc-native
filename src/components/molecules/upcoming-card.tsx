@@ -20,7 +20,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Crest, Eyebrow, Text } from '@/components/atoms';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 
 export interface UpcomingSide {
   crest?: string | null;
@@ -116,7 +116,7 @@ export function UpcomingCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.dark.card,
+    ...Surfaces.glass,
     borderRadius: Radius.card,
     padding: Spacing.four,
     gap: Spacing.four,

@@ -133,7 +133,9 @@ const sheet: NativeStackNavigationOptions = {
   presentation: 'formSheet',
   sheetGrabberVisible: true,
   sheetAllowedDetents: [0.6],
-  contentStyle: { backgroundColor: Colors.dark.card },
+  // ⚠ `sheetGround`, opaque, NOT the mesh or glass (ADR 0093): a sheet sits
+  // over a scrim, and glass over a scrim reads muddy.
+  contentStyle: { backgroundColor: Colors.dark.sheetGround },
 };
 
 /**

@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.dark.raised,
+    backgroundColor: Colors.dark.glassFill,
   },
   closePressed: { backgroundColor: Colors.dark.raisedAlt },
   head: { flexDirection: 'row', gap: Spacing.four },
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.hairlineStrong,
   },
   chipAccent: { borderColor: Colors.dark.accentRing, backgroundColor: Colors.dark.accentWash },
-  grid: { backgroundColor: Colors.dark.raised, borderRadius: Radius.group, overflow: 'hidden' },
+  grid: { backgroundColor: Colors.dark.glassFill, borderRadius: Radius.group, overflow: 'hidden' },
   gridRow: { flexDirection: 'row' },
   cell: {
     flex: 1,

@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, SkeletonRows, Text } from '@/components/atoms';
+import { Button, Eyebrow, SkeletonRows, Text } from '@/components/atoms';
 import { LeagueSwitch, type LeagueOption } from '@/components/molecules';
 import { StandingsTable } from '@/components/organisms/standings-table';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
@@ -83,12 +83,31 @@ export default function TableScreen() {
       accessory={
         <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
       }
-      eyebrow={eyebrow}
+      // The caption rides the crown's right shoulder, split at its own ` · `
+      // into the mock's two stacked lines (ADR 0087). It can legitimately be
+      // the club count alone — `completedMatchweek` returning null is trap 2's
+      // honest state, not a bug.
+      meta={
+        eyebrow ? (
+          <View style={styles.meta}>
+            {eyebrow.split(' · ').map((line) => (
+              <Eyebrow key={line} small color="onCrownDim">
+                {line}
+              </Eyebrow>
+            ))}
+          </View>
+        ) : undefined
+      }
       onRefresh={() => void standings.refetch()}
       refreshing={standings.isRefetching}
-      sticky={
+      payload={
         options.length > 0 ? (
-          <LeagueSwitch leagues={options} active={league.slug} onSelect={setActiveSlug} />
+          <LeagueSwitch
+            leagues={options}
+            active={league.slug}
+            onSelect={setActiveSlug}
+            tone="crown"
+          />
         ) : null
       }>
       {standings.isPending ? (
@@ -131,5 +150,8 @@ export default function TableScreen() {
 }
 
 const styles = StyleSheet.create({
+  // The crown's right-shoulder caption block: two stacked lines, right-ragged,
+  // nudged to sit against the title's cap height.
+  meta: { alignItems: 'flex-end', gap: Spacing.half, paddingTop: Spacing.one },
   state: { gap: Spacing.four, paddingVertical: Spacing.six },
 });

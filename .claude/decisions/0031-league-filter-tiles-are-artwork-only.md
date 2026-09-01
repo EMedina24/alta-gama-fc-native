@@ -1,7 +1,7 @@
 # 0031 — The league filter tiles are artwork only
 
 - **Date:** 2026-08-25
-- **Status:** Accepted
+- **Status:** Accepted — the fixed-tile geometry and idle-opacity rule are Superseded by [0089](./0089-league-chips-grayscale-inactive.md); artwork-only and the labelled fallback stand
 - **Decided by:** Ed Medina
 
 ## Context

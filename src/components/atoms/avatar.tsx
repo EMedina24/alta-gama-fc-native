@@ -39,6 +39,12 @@ export interface AvatarProps {
    * (SPEC §2), and on a tab screen that budget belongs to the live marker.
    */
   ring?: boolean;
+  /**
+   * ON the crown's bright band the disc flips to the `onCrown*` ink set
+   * (ADR 0087): a dark-ink fill and hairline, dark initials, dark mark. The
+   * default is the ground treatment the account sheet still uses.
+   */
+  tone?: 'ground' | 'crown';
 }
 
 /**
@@ -50,7 +56,7 @@ function initialsVariant(size: number): TypeVariant {
   return size >= Size.avatarLg ? 'title3' : 'caption';
 }
 
-export function Avatar({ initials, size = Size.avatar, ring = false }: AvatarProps) {
+export function Avatar({ initials, size = Size.avatar, ring = false, tone = 'ground' }: AvatarProps) {
   const reduceMotion = useReducedMotion();
   /** 0 → 1. Drives the ring alone; the disc under it never moves. */
   const settle = useSharedValue(ring && !reduceMotion ? 0 : 1);
@@ -85,15 +91,19 @@ export function Avatar({ initials, size = Size.avatar, ring = false }: AvatarPro
           ]}
         />
       ) : null}
-      <View style={[styles.disc, disc]}>
+      <View style={[styles.disc, tone === 'crown' && styles.discCrown, disc]}>
         {initials ? (
-          <Text variant={initialsVariant(size)} color="text">
+          <Text variant={initialsVariant(size)} color={tone === 'crown' ? 'onCrown' : 'text'}>
             {initials}
           </Text>
         ) : (
           /* Sized off the disc rather than tokenised: the mark is 42×30, and a
              width of ~0.55 leaves it optically centred at both sizes. */
-          <Mark width={size * 0.55} color="textSecondary" strokeWidth={2.6} />
+          <Mark
+            width={size * 0.55}
+            color={tone === 'crown' ? 'onCrown' : 'textSecondary'}
+            strokeWidth={2.6}
+          />
         )}
       </View>
     </View>
@@ -112,6 +122,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  // The crown flip (ADR 0087): dark-ink fill and line on the lime band.
+  discCrown: {
+    backgroundColor: Colors.dark.onCrownFill,
+    borderWidth: 1,
+    borderColor: Colors.dark.onCrownLine,
   },
   ring: {
     position: 'absolute',

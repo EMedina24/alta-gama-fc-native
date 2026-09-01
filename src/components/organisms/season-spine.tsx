@@ -14,7 +14,7 @@
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Crest, Score, Text } from '@/components/atoms';
+import { Crest, Score, Text, WashGradient } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName, matchday, nextUpIndex, outcome } from '@/lib/cronogol/derive';
 import type { FixtureView, TeamFixturesView } from '@/lib/cronogol/types';
@@ -29,6 +29,12 @@ export interface SeasonSpineProps {
   phrases: Phrases;
   /** `J{n}` / `Jornada {n}` prefix for the meta line. */
   roundPrefix: string;
+  /**
+   * The club's colour, for the rail's own top stop (ADR 0091). Null — every
+   * Premier League and Serie A club today — falls to a white hairline, which
+   * is a real state and not a degradation.
+   */
+  tint?: string | null;
 }
 
 function outcomeStyle(result: 'W' | 'D' | 'L' | null) {
@@ -38,7 +44,14 @@ function outcomeStyle(result: 'W' | 'D' | 'L' | null) {
   return null;
 }
 
-export function SeasonSpine({ data, zone, clock, phrases, roundPrefix }: SeasonSpineProps) {
+export function SeasonSpine({
+  data,
+  zone,
+  clock,
+  phrases,
+  roundPrefix,
+  tint = null,
+}: SeasonSpineProps) {
   const next = nextUpIndex(data.fixtures);
 
   return (
@@ -65,7 +78,27 @@ export function SeasonSpine({ data, zone, clock, phrases, roundPrefix }: SeasonS
             </View>
 
             <View style={styles.nodeColumn}>
-              <View style={styles.line} />
+              {/* The rail. ⚠ A gradient in a 1pt-wide box, not a tinted fill:
+                  the mock's rail starts in the club's colour and falls to the
+                  ordinary hairline, and only the FIRST row shows the top of
+                  that fall (ADR 0091). */}
+              <View style={styles.line}>
+                <WashGradient
+                  angle="vertical"
+                  stops={
+                    index === 0 && tint
+                      ? [
+                          { offset: 0, color: tint, opacity: 0.5 },
+                          { offset: 0.34, color: '#ffffff', opacity: 0.07 },
+                          { offset: 1, color: '#ffffff', opacity: 0.05 },
+                        ]
+                      : [
+                          { offset: 0, color: '#ffffff', opacity: 0.07 },
+                          { offset: 1, color: '#ffffff', opacity: 0.05 },
+                        ]
+                  }
+                />
+              </View>
               <View
                 style={[
                   styles.node,
@@ -137,12 +170,14 @@ const styles = StyleSheet.create({
   railColumn: { width: 46, justifyContent: 'center' },
   date: { lineHeight: 13 },
   nodeColumn: { width: 16, alignItems: 'center', justifyContent: 'center' },
-  line: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: Colors.dark.hairlineStrong },
+  line: { position: 'absolute', top: 0, bottom: 0, width: 1, overflow: 'hidden' },
   node: {
     width: 9,
     height: 9,
     borderRadius: 5,
-    backgroundColor: Colors.dark.background,
+    // ⚠ Translucent, not the ground's hex: the mesh varies down the screen and
+    // a fixed `background` fill stopped matching it (ADR 0091).
+    backgroundColor: Colors.dark.recess,
     borderWidth: 1,
     borderColor: Colors.dark.hairlineStrong,
   },
@@ -159,12 +194,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    backgroundColor: Colors.dark.card,
+    // Glass (ADR 0087). ⚠ 1pt border kept: `cardNext`'s accent ring overrides
+    // only the colour, as `match-board` does.
+    backgroundColor: Colors.dark.glassFill,
     borderRadius: Radius.tile,
     padding: Spacing.three,
     marginVertical: Spacing.one,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: Colors.dark.glassLine,
   },
   cardNext: { borderColor: Colors.dark.accentRing },
   cardPast: { opacity: 0.62 },

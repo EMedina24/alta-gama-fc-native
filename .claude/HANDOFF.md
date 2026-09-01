@@ -1,6 +1,6 @@
 # Handoff — read this first
 
-**As of 2026-08-30.** State of play for a session picking this up cold.
+**As of 2026-09-01.** State of play for a session picking this up cold.
 
 The app is a working iOS app: five screens on live production data, four sheets,
 onboarding, EN + ES, push wired and verified on a device. `CRONOGOL_LIVE_PUSH_ENABLED`
@@ -48,6 +48,90 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > Seen on the simulator; the picked-tile state, the crest stack in the CTA and the
 > language tap are **unverified** (taps can't be scripted — see the memory note). The
 > design canvas with the alternates: `claude.ai/code/artifact/07484219-562c-4405-a8a2-51ea3dad3b75`.
+
+> ⭐ **NEW 2026-09-01 — the "new paint" repaint is UNDERWAY: crown + aurora shell
+> ([0087](./decisions/0087-crown-aurora-shell-adopted.md), design in
+> `handoff_new-paint/` — `APP-SHELL.md` is the spec, the `.dc.html` is an
+> interactive prototype of every screen, `screenshots/01–05` the four tabs).**
+>
+> **P1 shipped:** ground `#0a0b0c → #0f1316` with a static three-pool mesh
+> (`atoms/mesh-ground.tsx`) behind every screen; body cards re-grounded from
+> charcoal `card` to GLASS (`Surfaces.glass`); match-events recession moved to
+> translucent `recess`; sheets opaque on `sheetGround #101316`; score chip on
+> `scoreChip` (still neutral — trap 8). tsc + lint clean.
+>
+> **P2 shipped:** the CROWN on all four tabs (`templates/crown.tsx` +
+> `ScreenScaffold` restructure — ⚠ the 20pt gutter moved off the scroll
+> container onto a `body` wrapper; every `-Spacing.five` bleed depends on that
+> contract). Today's live match is the crown's dark glass plate
+> (`organisms/live-plate.tsx`, [0088](./decisions/0088-live-match-is-the-crown-payload.md));
+> league chips are 36pt grayscale-inactive / near-black-selected
+> ([0089](./decisions/0089-league-chips-grayscale-inactive.md) — ⚠ an SVG mark
+> cannot pass through `FilterImage`, Serie A takes an opacity fallback).
+> `/_debug/gallery?only=live` previews the plate's fabricated paths. All four
+> crowns + plate verified on the simulator; ⚠ a REAL live match in the crown is
+> unwatched (first chance: Valencia v Barcelona 2026-09-06).
+>
+> **P3 shipped:** the Clubs rail bubbles are LIQUID GLASS
+> ([0090](./decisions/0090-clubs-bubbles-liquid-glass-and-trays.md) —
+> `expo-glass-effect`'s first use, gated on `isLiquidGlassAvailable()` with a
+> flat fallback; club-colour ring/radial/glow retired, frosted rank pill with a
+> band-colour dot). `molecules/tray.tsx` is the double bezel as a component;
+> the search field and browse list wear it.
+>
+> **P4 shipped:** the club page is rebuilt
+> ([0091](./decisions/0091-club-page-hero-and-trays.md)) — bled hero with its
+> own back pill (⚠ no native header on this screen any more), a standing strip,
+> a NEXT UP card in the opponent's colour, an alerts+calendar tray, and a
+> gradient spine rail. `club-header.tsx` is deleted. ⚠ The spine, the squad and
+> the NOT-subscribed (solid lime) alert row sit below the fold and have not been
+> seen — the simulator here cannot scroll or tap.
+>
+> **P5 shipped:** News is uniform glass story cards
+> ([0092](./decisions/0092-news-uniform-story-cards.md) — reverses 0070's front
+> page and 0071's Today lead picture; ⚠ the screen's `frontPagePick` split had
+> to go in the same change or lead/tile stories would have vanished), filter
+> chips go neutral when unselected, and News drops its native header for a
+> labelled back link. Sheets sit on `sheetGround #101316`
+> ([0093](./decisions/0093-sheets-on-their-own-ground.md), colour-only — trap
+> 19 stands); the tab bar is opaque `tabBar`.
+>
+> **P6 shipped (the repaint is COMPLETE):** the dead-code sweep — `news-lead.tsx`
+> and `news-tile.tsx` deleted, `frontPagePick`/`NewsFrontPagePick` removed from
+> `lib/cronogol/news.ts`, and `bezelFill`/`bezelHighlight`/`sunken`/`NewsScrim`/
+> `leagueTile*`/the three news ratios dropped from `theme.ts`; `_debug/gallery`
+> re-grounded to the real `recess` and tray surfaces.
+>
+> ⚠ **Onboarding deliberately does NOT take the mesh.** Its three screens keep
+> 0076's floodlight `Glow`, which is its own verified look; the two layers
+> fought each other. It sits on the new ground and was re-checked there.
+>
+> ⚠ **Still unverified after the repaint:** a REAL live match in the Today
+> crown (first chance Valencia v Barcelona 2026-09-06); the club page below the
+> fold (spine, squad, the not-subscribed solid-lime alert row); Spanish; large
+> Dynamic Type on the 40/48pt crown titles; and iPad width, where the crown is
+> full-bleed but the body caps at `MaxContentWidth`. Taps and scrolls cannot be
+> scripted on this simulator — those need a device pass.
+>
+> **Post-repaint, same session:** the crown now runs to y = 0 with an
+> ADAPTIVE STATUS BAR and a FIXED 432pt gradient layer shared by all four tabs
+> ([0094](./decisions/0094-crown-runs-to-the-top.md) — reverses 0087's
+> crown-below-status-bar call), and Today's NEXT UP card moved INTO the crown
+> as its idle payload ([0095](./decisions/0095-next-up-joins-the-crown.md) —
+> `match-board.tsx` deleted, split into `next-up-card.tsx` +
+> `last-result-card.tsx`; the 0052 kickoff contract moved verbatim). ⚠ The
+> idle→kicked-off→live crown handover now swaps the payload COMPONENT at the
+> whistle — watch for a layout jump on the first real match. The NEXT UP card
+> itself is LIQUID GLASS now
+> ([0096](./decisions/0096-next-up-goes-liquid-glass.md)) — club pair at
+> whisper alpha, lime ring back on both variants, faint inks stepped up.
+>
+> Plan file: `~/.claude/plans/we-re-updating-our-apps-compiled-bonbon.md`.
+>
+> ⚠ While mid-repaint, `handoff_AG-ios/SPEC.md` is the BEHAVIOUR contract but no
+> longer the look; where the two disagree on paint, `handoff_new-paint/` wins
+> (carve-outs in 0087: League.zones ranks, UISwitch, honesty lines, 0063's
+> NEXT-UP-first ordering).
 >
 > **OPEN — "Alert settings could not be saved" on Ed's iPhone (preview build).** That
 > line is ADR 0079's verdict: the last `PUT /cronogol/push/device` from the phone got no

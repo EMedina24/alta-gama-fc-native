@@ -28,8 +28,9 @@ import {
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
 import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
-import { MatchBoard } from '@/components/organisms/match-board';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { LivePlate } from '@/components/organisms/live-plate';
+import { NextUpCard } from '@/components/organisms/next-up-card';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import {
   detailLine,
   eventKind,
@@ -41,9 +42,8 @@ import {
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
-import { clubTint, pairWash } from '@/lib/cronogol/club-wash';
+import { pairWash } from '@/lib/cronogol/club-wash';
 import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
-import { frontPagePick } from '@/lib/cronogol/news';
 import type {
   FixtureWindowView,
   LiveMatchEventView,
@@ -248,20 +248,15 @@ const NEWS_STORIES: NewsArticleView[] = [
   STORY('n5', 'Deportivo - Valencia | Riazor quiere tener la fiesta en paz: previa, análisis, pronóstico y predicción', null, IMG('6a932fb775b3a'), 3),
   STORY('n6', 'Baena hace que se cumplan los sueños', null, null, 4, 'Atlético'),
 ];
-/** The screen's own mapping, in miniature. */
-const newsGroup = (label: string, items: NewsArticleView[], count: string): NewsGroup => {
-  const row = (a: NewsArticleView) => ({
+/** The screen's own mapping, in miniature — every story a card (ADR 0092). */
+const newsGroup = (label: string, items: NewsArticleView[], count: string): NewsGroup => ({
+  label,
+  count,
+  rows: items.map((a) => ({
     key: a.id, title: a.title, imageUrl: a.imageUrl, topic: a.categories[0] ?? null,
     publisher: a.publisher.name, age: '2h', onPress: () => {},
-  });
-  const page = frontPagePick(items);
-  return {
-    label, count,
-    lead: page.lead ? { ...row(page.lead), excerpt: page.lead.excerpt, kicker: 'Lead' } : null,
-    tiles: page.tiles.map(row),
-    rows: page.rows.map(row),
-  };
-};
+  })),
+});
 const NEWS_CHIPS = [{ id: 'all', label: 'All' }, { id: 'laliga', label: 'LaLiga' }];
 /** The Today screen's `story()` mapper, in miniature. */
 const cardStory = (a: NewsArticleView) => ({
@@ -331,12 +326,11 @@ const LIVE_CASES = (
 
 
 /**
- * The Clubs rail and its list (ADR 0082) — every state production rarely puts
- * on one screen at once.
- *
- * ⚠ The tints run through the REAL `clubTint`, not literals: a bubble here has
- * to prove the selection rule, including the fallback map that carries the
- * Premier League and Serie A.
+ * The Clubs rail and its list — every state production rarely puts on one
+ * screen at once. The bubble is 0090's liquid glass now: the club-colour tint
+ * left with the redesign, so the `club` hexes below are inert history; the
+ * states that still matter are rank + band-dot, rank without a band, and
+ * no-rank.
  */
 const RAIL_CASES = [
   {
@@ -415,21 +409,18 @@ export default function GalleryScreen() {
       <SectionHeader title="Next up" meta="the club-colour wash (ADR 0068)" />
       {NEXT_CASES.map(({ label, home, away, wash }) => (
         <Case key={label} label={label}>
-          <MatchBoard
-            next={{
-              home,
-              away,
-              kickoffUtc: SOON,
-              kickoffTbd: false,
-              meta: copy.today.nextUp,
-              kickoffLabel: '21:00',
-              dateLabel: 'SAT 5 SEP',
-              zoneLabel: `CEST · ${copy.today.yourTime}`,
-              venue: 'Santiago Bernabéu',
-              wash,
-            }}
+          <NextUpCard
+            home={home}
+            away={away}
+            kickoffUtc={SOON}
+            kickoffTbd={false}
+            meta={copy.today.nextUp}
+            kickoffLabel="21:00"
+            dateLabel="SAT 5 SEP"
+            zoneLabel={`CEST · ${copy.today.yourTime}`}
+            venue="Santiago Bernabéu"
+            wash={wash}
             copy={copy.today}
-            events={copy.events}
           />
         </Case>
       ))}
@@ -494,15 +485,14 @@ export default function GalleryScreen() {
 
   const clubsRail = (
     <>
-      <SectionHeader title="Clubs rail" meta="bubbles · bands · the neutral case (ADR 0082)" />
-      {RAIL_CASES.map(({ label, club, name, abbr, rank, zone }) => (
+      <SectionHeader title="Clubs rail" meta="liquid-glass bubbles · rank dot · no-rank (ADR 0090)" />
+      {RAIL_CASES.map(({ label, name, abbr, rank, zone }) => (
         <Case key={label} label={label}>
           <View style={styles.rail}>
             <ClubBubble
               name={name}
               crest={null}
               abbr={abbr}
-              tint={clubTint({ slug: club.slug, colorPrimary: club.colorPrimary, colorSecondary: club.colorSecondary })}
               rank={rank}
               rankColor={zone ? BAND_COLOR[zone] : null}
               accessibilityLabel={copy.clubs.railClub(name, rank)}
@@ -562,6 +552,112 @@ export default function GalleryScreen() {
       </Case>
     </>
   );
+
+  const livePlates = (
+    <>
+      <SectionHeader title="Live plate" meta="the crown payload's two paths (ADR 0048/0088)" />
+      {LIVE_CASES.map(({ label, match, stalled, minute, minutesAgo }) => (
+        <Case key={label} label={label}>
+          <LivePlate
+            // ⚠ No fixture behind a fabricated row, so no chevron. A real id
+            // is what the two dedicated cases below supply instead.
+            id={null}
+            homeTeam={null}
+            awayTeam={null}
+            home={LIVE_SIDE('Barcelona', 'BAR', match.score.home, false)}
+            away={LIVE_SIDE(
+              'Athletic Club',
+              'ATH',
+              match.score.away,
+              match.score.home !== null &&
+                match.score.away !== null &&
+                match.score.away < match.score.home,
+            )}
+            isLive
+            minute={minute === null ? null : copy.today.minute(minute)}
+            stalled={stalled}
+            note={stalled ? copy.today.liveStalled(minutesAgo) : copy.today.liveNote}
+            lastUpdateAt={null}
+            copy={copy.today}
+            events={copy.events}
+          />
+        </Case>
+      ))}
+      {/* ⚠ The FALLBACK, side by side with the above on purpose: every league
+          except LaLiga still lands here, and it must keep its FeedAge line and
+          its "as of the last check" note. */}
+      <Case label="sweep fallback · /cronogol/fixtures — no minute, FeedAge, cadence note">
+        <LivePlate
+          id={null}
+          homeTeam={null}
+          awayTeam={null}
+          home={LIVE_SIDE('Bayern München', 'FCB', 2, false)}
+          away={LIVE_SIDE('RB Leipzig', 'RBL', 1, true)}
+          isLive={false}
+          minute={null}
+          stalled={false}
+          note={copy.today.inPlayNote}
+          lastUpdateAt={null}
+          copy={copy.today}
+          events={copy.events}
+        />
+      </Case>
+
+      {/* ⚠⚠ The two cases below are the ONLY way to see an expanded in-progress
+          card (ADR 0050). `/cronogol/fixtures/{id}/events` serves nothing during
+          play today, so on real data the panel can only ever show the second of
+          them — the first is what the card becomes when the backend lands live
+          events, and it is here so that shape is looked at before it ships.
+
+          ⚠ Both go through `supplied`, so neither fires a request off a fake
+          fixture id — which would settle on the ERROR copy and show nothing. */}
+      <Case label="in-progress · EXPANDED — the LIVE timeline off /cronogol/live; ⚠ id-less, no network">
+        <LivePlate
+          id="gallery-live"
+          homeTeam={EV_HOME}
+          awayTeam={EV_AWAY}
+          suppliedEvents={LIVE_EVENTS}
+          home={LIVE_SIDE('Arsenal', 'ARS', 2, false)}
+          away={LIVE_SIDE('Chelsea', 'CHE', 1, true)}
+          isLive
+          minute={copy.today.minute(67)}
+          stalled={false}
+          note={copy.today.liveNote}
+          lastUpdateAt={null}
+          copy={copy.today}
+          events={copy.events}
+        />
+      </Case>
+
+      <Case label="in-progress · EXPANDED, empty — ⚠ what a REAL live match shows today">
+        <LivePlate
+          id="gallery-live-empty"
+          homeTeam={EV_HOME}
+          awayTeam={EV_AWAY}
+          // ⚠ `[]`, not undefined: "we hold the answer and it is empty".
+          // Never "no goals" — the copy is the only place that holds the line.
+          suppliedEvents={[]}
+          home={LIVE_SIDE('Arsenal', 'ARS', 0, false)}
+          away={LIVE_SIDE('Chelsea', 'CHE', 0, false)}
+          isLive
+          minute={copy.today.minute(8)}
+          stalled={false}
+          note={copy.today.liveNote}
+          lastUpdateAt={null}
+          copy={copy.today}
+          events={copy.events}
+        />
+      </Case>
+    </>
+  );
+
+  if (only === 'live') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {livePlates}
+      </ScrollView>
+    );
+  }
 
   if (only === 'clubs') {
     return (
@@ -847,107 +943,7 @@ export default function GalleryScreen() {
       {clubsRail}
       {clubRows}
 
-      <SectionHeader title="Live card" meta="the two paths (ADR 0048)" />
-      {LIVE_CASES.map(({ label, match, stalled, minute, minutesAgo }) => (
-        <Case key={label} label={label}>
-          <MatchBoard
-            live={{
-              // ⚠ No fixture behind a fabricated row, so no chevron. A real id
-              // is what the two dedicated cases below supply instead.
-              id: null,
-              homeTeam: null,
-              awayTeam: null,
-              home: LIVE_SIDE('Barcelona', 'BAR', match.score.home, false),
-              away: LIVE_SIDE(
-                'Athletic Club',
-                'ATH',
-                match.score.away,
-                match.score.home !== null &&
-                  match.score.away !== null &&
-                  match.score.away < match.score.home,
-              ),
-              isLive: true,
-              minute: minute === null ? null : copy.today.minute(minute),
-              stalled,
-              note: stalled ? copy.today.liveStalled(minutesAgo) : copy.today.liveNote,
-              lastUpdateAt: null,
-            }}
-            copy={copy.today}
-            events={copy.events}
-          />
-        </Case>
-      ))}
-      {/* ⚠ The FALLBACK, side by side with the above on purpose: every league
-          except LaLiga still lands here, and it must keep its FeedAge line and
-          its "as of the last check" note. */}
-      <Case label="sweep fallback · /cronogol/fixtures — no minute, FeedAge, cadence note">
-        <MatchBoard
-          live={{
-            id: null,
-            homeTeam: null,
-            awayTeam: null,
-            home: LIVE_SIDE('Bayern München', 'FCB', 2, false),
-            away: LIVE_SIDE('RB Leipzig', 'RBL', 1, true),
-            isLive: false,
-            minute: null,
-            stalled: false,
-            note: copy.today.inPlayNote,
-            lastUpdateAt: null,
-          }}
-          copy={copy.today}
-          events={copy.events}
-        />
-      </Case>
-
-      {/* ⚠⚠ The two cases below are the ONLY way to see an expanded in-progress
-          card (ADR 0050). `/cronogol/fixtures/{id}/events` serves nothing during
-          play today, so on real data the panel can only ever show the second of
-          them — the first is what the card becomes when the backend lands live
-          events, and it is here so that shape is looked at before it ships.
-
-          ⚠ Both go through `supplied`, so neither fires a request off a fake
-          fixture id — which would settle on the ERROR copy and show nothing. */}
-      <Case label="in-progress · EXPANDED — the LIVE timeline off /cronogol/live; ⚠ id-less, no network">
-        <MatchBoard
-          live={{
-            id: 'gallery-live',
-            homeTeam: EV_HOME,
-            awayTeam: EV_AWAY,
-            suppliedEvents: LIVE_EVENTS,
-            home: LIVE_SIDE('Arsenal', 'ARS', 2, false),
-            away: LIVE_SIDE('Chelsea', 'CHE', 1, true),
-            isLive: true,
-            minute: copy.today.minute(67),
-            stalled: false,
-            note: copy.today.liveNote,
-            lastUpdateAt: null,
-          }}
-          copy={copy.today}
-          events={copy.events}
-        />
-      </Case>
-
-      <Case label="in-progress · EXPANDED, empty — ⚠ what a REAL live match shows today">
-        <MatchBoard
-          live={{
-            id: 'gallery-live-empty',
-            homeTeam: EV_HOME,
-            awayTeam: EV_AWAY,
-            // ⚠ `[]`, not undefined: "we hold the answer and it is empty".
-            // Never "no goals" — the copy is the only place that holds the line.
-            suppliedEvents: [],
-            home: LIVE_SIDE('Arsenal', 'ARS', 0, false),
-            away: LIVE_SIDE('Chelsea', 'CHE', 0, false),
-            isLive: true,
-            minute: copy.today.minute(8),
-            stalled: false,
-            note: copy.today.liveNote,
-            lastUpdateAt: null,
-          }}
-          copy={copy.today}
-          events={copy.events}
-        />
-      </Case>
+      {livePlates}
     </ScrollView>
   );
 }
@@ -955,11 +951,11 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   // The bubble hangs its rank badge 2pt below itself; give it the clearance.
   rail: { paddingBottom: Spacing.two, alignItems: 'flex-start' },
+  // Matches `ClubBrowser`'s real tray inner (ADR 0090) so the browse-row
+  // previews sit on the ground they ship on.
   tray: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: Radius.group,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.dark.hairlineMid,
+    backgroundColor: Colors.dark.trayInner,
+    borderRadius: Radius.tray - Size.trayPad,
     overflow: 'hidden',
   },
   screen: { flex: 1, backgroundColor: Colors.dark.background },
@@ -971,8 +967,10 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   buttons: { gap: Spacing.two },
   eventRows: { gap: Spacing.three },
+  // ⚠ The real panel's ground, so the preview and the shipping surface cannot
+  // disagree (ADR 0087's `recess`, not the retired `sunken`).
   eventPanel: {
-    backgroundColor: Colors.dark.sunken,
+    backgroundColor: Colors.dark.recess,
     padding: Spacing.four,
     gap: Spacing.three,
   },

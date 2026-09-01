@@ -80,11 +80,11 @@ const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
     gap: Spacing.one,
-    // ⚠ One step ABOVE the panel it sits on. `MatchEvents` paints `sunken` on
-    // every surface it appears in, so unlike the design — which puts the panel
-    // on two different grounds and gives the track two colours — there is one
-    // ground here and one rule.
-    backgroundColor: Colors.dark.card,
+    // ⚠ One step ABOVE the panel it sits on. `MatchEvents` paints `recess` on
+    // every surface it appears in (ADR 0087), so unlike the design — which puts
+    // the panel on two different grounds and gives the track two colours —
+    // there is one ground here and one rule: a glass lift on the recess.
+    backgroundColor: Colors.dark.glassFill,
     borderRadius: Radius.chip,
     padding: Spacing.one,
   },

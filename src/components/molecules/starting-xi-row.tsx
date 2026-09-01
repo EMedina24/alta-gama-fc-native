@@ -13,11 +13,13 @@
  * squads for LaLiga and the Premier League, and the handoff's "LaLiga only"
  * was stale when it was written.
  *
- * ⚠ The handoff's `theme.raised // #15171a` is this repo's `card`, not `raised`.
+ * ⚠ Wrapped in the double-bezel `Tray` since ADR 0091 — the club page's rows
+ * are all trays now, and this one sits directly under the alerts tray.
  */
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Chevron, PitchGlyph, Text } from '@/components/atoms';
+import { Tray } from './tray';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface StartingXiRowProps {
@@ -30,34 +32,35 @@ export interface StartingXiRowProps {
 
 export function StartingXiRow({ enabled, title, body, onPress }: StartingXiRowProps) {
   return (
-    <Pressable
-      disabled={!enabled}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={title}
-      accessibilityHint={body}
-      accessibilityState={{ disabled: !enabled }}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-      <View style={[styles.tile, enabled ? styles.tileOn : styles.tileOff]}>
-        <PitchGlyph size={Size.xiRowGlyph} color={enabled ? 'accent' : 'textFaint'} />
-      </View>
-      <View style={styles.text}>
-        <Text variant="bodyStrong" color={enabled ? 'text' : 'textMuted'}>
-          {title}
-        </Text>
-        <Text variant="caption" color="textMuted" style={styles.body}>
-          {body}
-        </Text>
-      </View>
-      <Chevron direction="right" color={enabled ? 'accent' : 'textFaint'} />
-    </Pressable>
+    <Tray>
+      <Pressable
+        disabled={!enabled}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityHint={body}
+        accessibilityState={{ disabled: !enabled }}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+        <View style={[styles.tile, enabled ? styles.tileOn : styles.tileOff]}>
+          <PitchGlyph size={Size.xiRowGlyph} color={enabled ? 'accent' : 'textFaint'} />
+        </View>
+        <View style={styles.text}>
+          <Text variant="bodyStrong" color={enabled ? 'text' : 'textMuted'}>
+            {title}
+          </Text>
+          <Text variant="caption" color="textMuted" style={styles.body}>
+            {body}
+          </Text>
+        </View>
+        <Chevron direction="right" color={enabled ? 'accent' : 'textFaint'} />
+      </Pressable>
+    </Tray>
   );
 }
 
 const styles = StyleSheet.create({
+  // The ground and radius are the Tray inner's now (ADR 0091).
   card: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: Radius.card,
     paddingVertical: Spacing.four - 2,
     paddingHorizontal: Spacing.four,
     flexDirection: 'row',
@@ -68,7 +71,7 @@ const styles = StyleSheet.create({
   tile: {
     width: Size.xiRowTile,
     height: Size.xiRowTile,
-    borderRadius: Radius.chip,
+    borderRadius: Radius.thumb,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,25 +1,26 @@
 /**
- * The horizontal league selector.
+ * The horizontal league selector — 0089's mark-hugging chips, on either of two
+ * grounds (`tone`): the CROWN's bright band (Matchdays, Table) or the screen
+ * body (Clubs).
  *
- * ⚠ **Artwork alone — no text label** (ADR 0031). The tiles are a filter row,
- * not a legend: the reader is picking between four marks they already know, and
- * `BUNDESLIGA` spelled out ran a single tile off the edge of the screen. The
- * name still reaches VoiceOver through `accessibilityLabel`.
+ * ⚠ **Artwork alone — no text label** (ADR 0031, which 0089 keeps). The chips
+ * are a filter row, not a legend; the name still reaches VoiceOver through
+ * `accessibilityLabel`. The text branch survives for a league that arrives
+ * with NO artwork at all — an empty chip is unpickable.
  *
- * ⚠ The text branch survives for a league that arrives with NO artwork at all —
- * an empty tile is unpickable. That tile sizes to its label instead of taking
- * the fixed width, so it can say the whole name.
+ * ⚠ **An inactive mark is drawn in true grayscale** via
+ * `react-native-svg/filter-image`'s `feColorMatrix saturate 0` — the native
+ * `RNSVGFeColorMatrix` ships in the installed build, so no new dependency.
+ * A SELECTED chip inverts to a near-black plate and the mark returns to full
+ * colour — the system's one double inversion (ADR 0089).
  *
  * ⚠ Artwork comes from the API (`league.logoUrls`), not a bundled asset, so a
- * new league appears without an asset drop. `LeagueRef.logoUrls` is keyed
- * SEMANTICALLY (`primary`/`icon`/`wordmark`), the opposite of `TeamView`'s size
- * keys — picking wrong is a layout mistake, not a resolution one. Prefer `icon`
- * and fall back to `primary`: only LaLiga ships an icon-only cut today, and the
- * others' lockups carry their own wordmark, which is as close to "icon" as the
- * wire gets.
+ * new league appears without an asset drop. Prefer `icon`, fall back to
+ * `primary` — only LaLiga ships an icon-only cut today.
  */
 import { Image } from 'expo-image';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { FilterImage } from 'react-native-svg/filter-image';
 
 import { Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
@@ -35,9 +36,24 @@ export interface LeagueSwitchProps {
   leagues: readonly LeagueOption[];
   active: string;
   onSelect: (slug: string) => void;
+  /** Which ground the row sits on. The default is the screen body. */
+  tone?: 'crown' | 'ground';
 }
 
-export function LeagueSwitch({ leagues, active, onSelect }: LeagueSwitchProps) {
+/** The mock's dimmed-mark treatment: grayscale, at .78 (ADR 0089). */
+const IDLE_MARK_OPACITY = 0.78;
+
+/**
+ * ⚠ `FilterImage` draws through react-native-svg's `Image`, which renders
+ * BITMAPS only — an SVG source (Serie A's `primary` is one) comes out as an
+ * empty chip. Found on the simulator, the P2 spike doing its job. SVG marks
+ * take the opacity-only approximation instead (recorded divergence, ADR 0089).
+ */
+const isSvgUrl = (url: string) => /\.svg(\?|#|$)/i.test(url);
+const SVG_IDLE_OPACITY = 0.45;
+
+export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: LeagueSwitchProps) {
+  const crown = tone === 'crown';
   return (
     <ScrollView
       horizontal
@@ -53,20 +69,45 @@ export function LeagueSwitch({ leagues, active, onSelect }: LeagueSwitchProps) {
             accessibilityState={{ selected }}
             accessibilityLabel={league.name}
             style={({ pressed }) => [
-              styles.tile,
-              league.logoUrl ? styles.sized : styles.labelled,
-              selected ? styles.selected : styles.idle,
+              styles.chip,
+              crown ? styles.chipCrown : styles.chipGround,
+              selected && (crown ? styles.onCrown : styles.onGround),
+              !selected && crown && styles.idleCrown,
               pressed && { opacity: 0.7 },
             ]}>
             {league.logoUrl ? (
-              <Image
-                source={{ uri: league.logoUrl }}
-                style={styles.mark}
-                contentFit="contain"
-                accessible={false}
-              />
+              selected || isSvgUrl(league.logoUrl) ? (
+                <Image
+                  source={{ uri: league.logoUrl }}
+                  style={[
+                    styles.mark,
+                    !selected && { opacity: SVG_IDLE_OPACITY },
+                  ]}
+                  contentFit="contain"
+                  accessible={false}
+                />
+              ) : (
+                // ⚠ `FilterImage` draws through an Svg — its size must be the
+                // style's, and the filter id is its own (no trap-40 collision).
+                <FilterImage
+                  source={{ uri: league.logoUrl }}
+                  style={[styles.mark, { opacity: IDLE_MARK_OPACITY }]}
+                  resizeMode="contain"
+                  filters={[{ name: 'feColorMatrix', type: 'saturate', values: '0' }]}
+                />
+              )
             ) : (
-              <Text variant="eyebrow" color={selected ? 'text' : 'textFaint'}>
+              <Text
+                variant="eyebrow"
+                color={
+                  crown
+                    ? selected
+                      ? 'crownChipInk'
+                      : 'onCrownDim'
+                    : selected
+                      ? 'text'
+                      : 'textFaint'
+                }>
                 {league.name}
               </Text>
             )}
@@ -79,19 +120,23 @@ export function LeagueSwitch({ leagues, active, onSelect }: LeagueSwitchProps) {
 
 const styles = StyleSheet.create({
   track: { gap: Spacing.two, paddingRight: Spacing.five },
-  tile: {
+  chip: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: Size.leagueTileH,
-    borderRadius: Radius.tile,
-    backgroundColor: Colors.dark.card,
+    height: Size.leagueChipH,
+    paddingHorizontal: Spacing.three,
     borderWidth: 1,
+    borderColor: 'transparent',
   },
-  // Four marks at this width sit inside the screen gutter without scrolling.
-  sized: { width: Size.leagueTileW },
-  labelled: { paddingHorizontal: Spacing.four },
-  selected: { backgroundColor: Colors.dark.raised, borderColor: Colors.dark.accentRing },
-  // Inactive leagues drop to ~50%, per the handoff.
-  idle: { borderColor: 'transparent', opacity: 0.5 },
-  mark: { width: Size.leagueMarkW, height: Size.leagueMarkH },
+  // On the crown the chip takes the tighter control radius; on the ground it
+  // matches the segmented thumb's.
+  chipCrown: { borderRadius: Radius.crownControl, backgroundColor: Colors.dark.onCrownFill },
+  chipGround: { borderRadius: Radius.thumb, backgroundColor: 'transparent', borderColor: Colors.dark.glassLine },
+  // The double inversion (ADR 0089): a near-black plate, mark back in colour.
+  onCrown: { backgroundColor: Colors.dark.crownChipOn, borderColor: Colors.dark.crownChipOnLine },
+  onGround: { backgroundColor: Colors.dark.segThumb, borderColor: Colors.dark.accentRing },
+  // The whole idle chip dims a step on the crown; its mark is grayscale on
+  // both grounds.
+  idleCrown: { opacity: 0.72, borderColor: Colors.dark.onCrownLine },
+  mark: { width: Size.leagueChipMarkW, height: Size.leagueChipMarkH },
 });

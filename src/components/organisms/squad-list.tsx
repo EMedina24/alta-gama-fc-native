@@ -17,9 +17,9 @@
 import { Fragment, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Hairline, PlayerPhoto, Text } from '@/components/atoms';
+import { PlayerPhoto, Text } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
-import { Colors, Size, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 import type { SquadPlayerView, SquadPosition } from '@/lib/cronogol/types';
 
 const BANDS: readonly SquadPosition[] = ['GK', 'DEF', 'MID', 'FWD'];
@@ -65,14 +65,18 @@ export function SquadList({ players, bandLabels, emptyLabel, onSelectPlayer }: S
       {grouped.map((group) => (
         <Fragment key={group.band}>
           <SectionHeader title={bandLabels[group.band]} meta={String(group.players.length)} />
-          {group.players.map((player) => (
-            <Row
-              key={player.id}
-              player={player}
-              onPress={onSelectPlayer ? () => onSelectPlayer(player.id) : undefined}
-            />
-          ))}
-          <Hairline />
+          {/* ⚠ One card PER BAND, not one for the whole squad (ADR 0091): the
+              band headers are ours and would have to sit inside a single card,
+              which reads as a header for the card rather than for the group. */}
+          <View style={styles.card}>
+            {group.players.map((player) => (
+              <Row
+                key={player.id}
+                player={player}
+                onPress={onSelectPlayer ? () => onSelectPlayer(player.id) : undefined}
+              />
+            ))}
+          </View>
         </Fragment>
       ))}
     </View>
@@ -121,6 +125,13 @@ function Row({ player, onPress }: { player: SquadPlayerView; onPress?: () => voi
 
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.two },
+  card: {
+    ...Surfaces.glass,
+    borderRadius: Radius.group,
+    paddingHorizontal: Spacing.four,
+    // ⚠ Clips the first and last rows' pressed ground to the card's corners.
+    overflow: 'hidden',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

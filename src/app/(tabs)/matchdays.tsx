@@ -140,7 +140,10 @@ export default function MatchdaysScreen() {
       eyebrow={copy.matchdays.eyebrow(league.name, seasonLabel(SEASON), half)}
       onRefresh={() => void jornada.refetch()}
       refreshing={jornada.isRefetching}
-      sticky={
+      // The pager and the league chips ride the crown (ADR 0087/0089); the
+      // MATCHDAY strip sits just UNDER the fade, first in the body — the
+      // mock's own split.
+      payload={
         <View style={styles.controls}>
           {total !== null && matchweek !== null && summary ? (
             <MatchdayPager
@@ -155,21 +158,26 @@ export default function MatchdaysScreen() {
               secondary={rangeMeta}
             />
           ) : null}
-          <LeagueSwitch leagues={options} active={league.slug} onSelect={setLeagueSlug} />
-          {total !== null && matchweek !== null ? (
-            <View style={styles.strip}>
-              <Eyebrow small>{copy.matchdays.stripLabel}</Eyebrow>
-              <MatchdayStrip
-                total={total}
-                current={matchweek}
-                played={played}
-                onSelect={goTo}
-                label={copy.matchdays.title}
-              />
-            </View>
-          ) : null}
+          <LeagueSwitch
+            leagues={options}
+            active={league.slug}
+            onSelect={setLeagueSlug}
+            tone="crown"
+          />
         </View>
       }>
+      {total !== null && matchweek !== null ? (
+        <View style={styles.strip}>
+          <Eyebrow small>{copy.matchdays.stripLabel}</Eyebrow>
+          <MatchdayStrip
+            total={total}
+            current={matchweek}
+            played={played}
+            onSelect={goTo}
+            label={copy.matchdays.title}
+          />
+        </View>
+      ) : null}
       {midweek ? (
         <Text variant="eyebrowSm" color="accent">
           {copy.matchdays.midweek}

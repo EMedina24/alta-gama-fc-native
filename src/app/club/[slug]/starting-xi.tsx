@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionSheetIOS, Alert, PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Crest, SkeletonRows, Text } from '@/components/atoms';
+import { Crest, MeshGround, SkeletonRows, Text } from '@/components/atoms';
 import { HintLine, XiToolbar } from '@/components/molecules';
 import { LineupCard } from '@/components/organisms/lineup-card';
 import { SquadRail } from '@/components/organisms/squad-rail';
@@ -134,6 +134,7 @@ export default function StartingXiScreen() {
   if (squad.isPending) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top + Spacing.eight, paddingHorizontal: Spacing.five }]}>
+        <MeshGround />
         <Stack.Screen options={header(xi.title)} />
         <SkeletonRows count={6} height={Size.rowSkeleton} />
       </View>
@@ -143,6 +144,7 @@ export default function StartingXiScreen() {
   if (!squad.data || players.length === 0) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top + Spacing.eight, paddingHorizontal: Spacing.five }]}>
+        <MeshGround />
         <Stack.Screen options={header(xi.title)} />
         <View style={styles.empty}>
           <Text variant="headline">{xi.squadEmptyTitle}</Text>
@@ -211,6 +213,7 @@ export default function StartingXiScreen() {
     <View
       style={[styles.screen, { paddingBottom: Math.max(insets.bottom, Spacing.three) }]}
       onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      <MeshGround />
       <Stack.Screen
         options={{
           ...header(xi.title),

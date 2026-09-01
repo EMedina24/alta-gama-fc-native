@@ -8,38 +8,103 @@
 
 const dark = {
   // Surfaces
-  background: '#0a0b0c',        // page / scroll ground
-  card: '#15171a',              // grouped card, sheet body, tab-bar chrome
+  // ⚠ `#0f1316`, not 0015's `#0a0b0c` — the crown + aurora shell (ADR 0087)
+  // lifts the ground a step so the mesh's colour pools read as light, not grey.
+  background: '#0f1316',        // page / scroll ground, under the aurora mesh
+  // ⚠ No longer the sheet body (that is `sheetGround`, ADR 0093) and no longer
+  // the default card (that is `glassFill`, ADR 0087). Kept at its value as the
+  // OPAQUE BASE: under a club-colour wash (glass would double-blend with the
+  // mesh), the matchday strip's future pill, news chips, and tab-bar chrome.
+  card: '#15171a',
   raised: '#1e2126',            // segmented selection, avatar, secondary button
   raisedAlt: '#242830',         // control track inside a card (sheet segmenteds)
   rowActive: '#12161a',         // row of a subscribed club / live fixture
-  // The match-events panel, one step BELOW `card` — an expansion reads as
-  // recessed into the row it came from, not stacked on top of it (ADR 0045).
-  sunken: '#101317',
   glyph: '#39404a',             // the player silhouette, on `raisedAlt`
 
+
   /**
-   * The DOUBLE BEZEL, and it lives on exactly one component: the Clubs rail's
-   * bubble (ADR 0082).
+   * The GLASS system (ADR 0087). `glassFill` + a `Size.glassBorder` hairline of
+   * `glassLine` replace the charcoal `card` slab on every BODY card — spread
+   * `Surfaces.glass` rather than retyping the pair. `glassFillDim` is the
+   * quieter slab: full-bleed day headers, segmented tracks.
    *
-   * `bezelFill` is the shell — the band between the bubble's club-colour
-   * hairline and its core. `bezelHighlight` is the core's lit top edge, which is
-   * what makes the two rings read as concentric rather than as a flat band
-   * around a disc.
-   *
-   * ⚠ **Not a general surface, and not a fifth step on the ladder.** The ladder
-   * is still `background → card → raised → raisedAlt`, and
-   * [0081](.claude/decisions/0081-account-sheet-redesign.md)'s refusal of nested
-   * card shells still governs every CARD in the app — the search field and the
-   * browse tray are one `card` surface each. These two exist because a bubble is
-   * a physical object with a rim, not a card.
-   *
-   * ⚠ `bezelHighlight` is drawn as a `borderTopColor` on a transparent-bordered
-   * overlay, never as an inset shadow: React Native has no `inset` shadow, and a
-   * top border on a rounded view is what traces the lit arc.
+   * ⚠ Glass is a VIEW background, never an SVG stop: `react-native-svg` paints
+   * an rgba stop opaque (HANDOFF trap 42), and a wash needs the opaque `card`
+   * base under it anyway — glass under a wash double-blends with the mesh.
    */
-  bezelFill: 'rgba(255,255,255,0.06)',
-  bezelHighlight: 'rgba(255,255,255,0.14)',
+  glassFill: 'rgba(255,255,255,0.06)',
+  glassLine: 'rgba(255,255,255,0.11)',
+  glassFillDim: 'rgba(255,255,255,0.05)',
+  /**
+   * What an expansion recesses INTO now (ADR 0087, carrying 0045's intent).
+   * `sunken`'s fixed hex was a step below the OLD ground; a translucent black
+   * reads as recessed on any ground, the mesh's colour pools included.
+   */
+  recess: 'rgba(0,0,0,0.28)',
+  // The Today crown's dark glass plate for the live match (ADR 0088).
+  plateDark: 'rgba(4,9,8,0.8)',
+  plateLine: 'rgba(255,255,255,0.18)',
+  plateTop: 'rgba(255,255,255,0.12)',
+
+  /**
+   * Ink ON THE CROWN — the app's one inverted surface (ADR 0087).
+   *
+   * ⚠ NOT `onAccent`. That token is the ink of an on-lime CONTROL (a button, a
+   * check, the strip's active pill) and is hand-copied into
+   * `targets/_shared/Tokens.swift` (trap 15); the crown is a SURFACE with its
+   * own set. APP-SHELL.md's "onAccent / onAccentDim / onAccentLine /
+   * onAccentFill" table maps onto these names one for one.
+   *
+   * ⚠ Dark ink lives in the crown's BRIGHT BAND only — lime through mid-teal,
+   * roughly the top half. Past the midpoint the gradient is dark green and
+   * content there keeps the normal dark-theme tokens: black ink dies there
+   * exactly as grey ink dies on the lime.
+   */
+  onCrown: '#0d1a08',
+  onCrownDim: 'rgba(11,22,8,0.62)',
+  onCrownLine: 'rgba(11,22,8,0.24)',
+  onCrownFill: 'rgba(11,22,8,0.16)',
+  // The SELECTED league chip on the crown: a near-black plate, the mark back in
+  // full colour, the label in bright lime — the system's one double inversion
+  // (ADR 0089).
+  crownChipOn: 'rgba(11,22,8,0.82)',
+  crownChipOnLine: 'rgba(11,22,8,0.9)',
+  crownChipInk: '#dcff7a',
+
+  /**
+   * The double-bezel TRAY (ADR 0090/0091): an outer glass band wrapped around
+   * an opaque inner surface, `Size.trayPad` apart. Supersedes the bubble-only
+   * scope of the bezel pair above — the tray is a sanctioned card shape now
+   * (Clubs search + browse, the club page's four trays).
+   */
+  trayFill: 'rgba(255,255,255,0.045)',
+  trayLine: 'rgba(255,255,255,0.07)',
+  trayInner: '#13161a',
+  trayInnerTop: 'rgba(255,255,255,0.06)',
+
+  // Opaque grounds that survive the glass migration (ADR 0087/0093).
+  sheetGround: '#101316',       // modal sheets — glass over a scrim reads muddy
+  tabBar: '#0a0b0c',            // the bar sits UNDER the mesh, a step darker
+  segThumb: '#22262c',          // segmented thumb (club page)
+  calRow: '#1b1f24',            // the club page's calendar row
+  /**
+   * The score chip's ground on a glass row (ADR 0044's chip, re-grounded).
+   * ⚠ Still NEUTRAL and must stay so: painting it `live`/`liveWash` makes every
+   * finished score in a list look current (trap 8).
+   */
+  scoreChip: 'rgba(255,255,255,0.07)',
+
+  /**
+   * The Clubs rail bubble's liquid-glass shell (ADR 0090) — white glass, no
+   * club-colour radial. These are the OVERLAYS; the shell body is a `GlassView`
+   * where liquid glass is available and a flat `bubbleShell` fill where not.
+   */
+  bubbleShell: 'rgba(255,255,255,0.16)',
+  bubbleRim: 'rgba(255,255,255,0.42)',
+  bubbleTop: 'rgba(255,255,255,0.6)',
+  bubbleRankFill: 'rgba(255,255,255,0.62)',
+  bubbleRankLine: 'rgba(255,255,255,0.7)',
+  bubbleCheckRim: 'rgba(255,255,255,0.55)',
 
   // Hairlines
   hairline: 'rgba(255,255,255,0.05)',      // row separators in a list
@@ -67,6 +132,14 @@ const dark = {
   onAccent: '#101806',
   accentWash: 'rgba(200,242,90,0.14)',
   accentRing: 'rgba(200,242,90,0.45)',
+  /**
+   * A disc nested INSIDE an accent control (ADR 0091's alerts row): the dark
+   * one for a solid-lime row, the lighter lime for a wash row. ⚠ `onAccentFill`
+   * is `onAccent` at 13 % — the ink's own colour, so the disc reads as a hole
+   * in the lime rather than a second colour.
+   */
+  onAccentFill: 'rgba(16,24,6,0.13)',
+  accentWashStrong: 'rgba(200,242,90,0.18)',
   live: '#ff5c47',              // in-progress marker, destructive
   liveWash: 'rgba(255,92,71,0.14)',
   danger: '#ff5c47',
@@ -191,20 +264,6 @@ export type LeagueBandSpec = { solid: string } | { gradient: readonly [string, s
  * lightness they read a step lighter, and Villarreal's gold and Betis's green
  * both out-shouted the crest on them at the blue cards' cap.
  */
-/**
- * The scrim over the News lead's picture (ADR 0070): the page ground, clear
- * until `clearTo`, `midOpacity` by `mid`, and solid at the foot so the text
- * sits on the same ground as every other card. Never a flat overlay — a
- * picture under 55 % black is a dead picture. Opacities are passed as
- * `WashStop.opacity`, never baked into an `rgba()` — see the atom's warning.
- */
-export const NewsScrim = {
-  color: '#0a0b0c',
-  clearTo: 0.25,
-  mid: 0.62,
-  midOpacity: 0.72,
-} as const;
-
 export const ClubWash = {
   // ⚠ Measured on the simulator, not derived: the preview was set at 26–38 and
   // the device rendered every corner a step louder than the browser had — a
@@ -224,6 +283,78 @@ export const ClubWash = {
   heroEnd: 1,
 } as const;
 
+/**
+ * The aurora mesh (ADR 0087): three static elliptical radials on the ground,
+ * drawn ONCE per screen by `MeshGround` behind the scroll view — never per
+ * card, never inside the scroll. Positions and extents are fractions of the
+ * screen box; each pool holds `alpha` at its centre and is gone by `fade` of
+ * its own extent.
+ *
+ * ⚠ `alpha` rides `WashStop.opacity` at the consumer, never an rgba stop
+ * colour (trap 42).
+ */
+export const Mesh = [
+  { cx: 0.92, cy: 0.22, rx: 0.64, ry: 0.4, color: '#c8f25a', alpha: 0.16, fade: 0.62 },
+  { cx: -0.12, cy: 0.48, rx: 0.78, ry: 0.46, color: '#105c4a', alpha: 0.6, fade: 0.66 },
+  { cx: 1.08, cy: 0.86, rx: 0.72, ry: 0.42, color: '#1c546c', alpha: 0.5, fade: 0.66 },
+] as const;
+
+/**
+ * The crown's vertical gradient (ADR 0087), lime to nothing. It ends in
+ * TRANSPARENCY, never a hard edge — the fade is the hand-off to the mesh.
+ * Shaped as `WashStop`s so translucency can only travel as `opacity` (trap 42).
+ */
+export const CrownGrad = [
+  { offset: 0, color: '#c8f25a', opacity: 1 },
+  { offset: 0.26, color: '#8ac768', opacity: 1 },
+  { offset: 0.5, color: '#2f8f78', opacity: 1 },
+  { offset: 0.68, color: '#176e60', opacity: 0.72 },
+  { offset: 0.82, color: '#104842', opacity: 0.38 },
+  { offset: 0.92, color: '#0a2828', opacity: 0.14 },
+  { offset: 1, color: '#0f1316', opacity: 0 },
+] as const;
+
+/**
+ * The crown gradient's FIXED height, in points (ADR 0094/0095) — the mock's
+ * own number: its Clubs screen draws the gradient as a 432px layer behind
+ * overflowing content, and every other screen now shares that geometry. The
+ * layer is anchored to the top of the screen (plus the safe-area inset) and
+ * does NOT size to the crown's content: a short crown lets the fade run on
+ * behind the body, exactly as the mock's chips row sits on the Clubs fade.
+ * This is what keeps the title on the same lime on every tab.
+ */
+export const CrownRamp = 432;
+
+/** The white sheen over the crown's top-right shoulder (ADR 0087). */
+export const CrownHighlight = {
+  cx: 0.88, cy: 0.04, rx: 0.76, ry: 0.7, color: '#ffffff', alpha: 0.26, fade: 0.62,
+} as const;
+
+/** The bubble's inner vertical glass (ADR 0090) — white, opacity-only stops. */
+export const BubbleGlass = [
+  { offset: 0, color: '#ffffff', opacity: 0.34 },
+  { offset: 0.46, color: '#ffffff', opacity: 0.1 },
+  { offset: 1, color: '#ffffff', opacity: 0.2 },
+] as const;
+
+/**
+ * The 0087 pair-wash geometry for the next/last cards (consumed from P2 by
+ * `match-board`, replacing `ClubWash.seam`'s diagonal): near-horizontal at
+ * 100°, each club's colour strongest at its own edge (`edge`), down to `mid`
+ * by `midAt`, and dead-transparent through `gapStart`–`gapEnd` so the opaque
+ * `card` base shows between the two colours.
+ */
+export const ClubWash2 = {
+  angle: 100, edge: 0.24, mid: 0.05, midAt: 0.3, gapStart: 0.46, gapEnd: 0.54,
+  /**
+   * The WHISPER pair (ADR 0096): the same geometry on the liquid-glass NEXT UP
+   * card, where the full alphas were the dark slab the glass replaced. On a
+   * translucent shell the wash double-blends with whatever is behind it, so it
+   * must stay at "tint", never "wash".
+   */
+  edgeOnGlass: 0.1, midOnGlass: 0.02,
+} as const;
+
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */
 export const Spacing = {
   half: 2, one: 4, two: 8, three: 12, four: 16, five: 20, six: 24, seven: 32, eight: 44,
@@ -231,6 +362,12 @@ export const Spacing = {
 
 export const Radius = {
   sheet: 28, card: 22, group: 20, tile: 18, control: 14, chip: 12, seg: 9, chipSm: 6, rail: 2, pill: 999,
+  // The 0087 shell's additions. `tray`/`trayLg` are OUTER radii — a tray's
+  // inner surface is always `outer − Size.trayPad`, so the two curves stay
+  // concentric (ADR 0090/0091). `thumb` is the segmented thumb and the
+  // ground league chip; `crownControl` is a control ON the crown (pager
+  // square, crown chip); `cardLg` is the next/last card step-up.
+  trayLg: 28, tray: 26, cardLg: 24, thumb: 13, crownControl: 11,
 } as const;
 
 /**
@@ -240,6 +377,16 @@ export const Radius = {
  */
 export const Type = {
   largeTitle: { fontSize: 34, fontWeight: '700', letterSpacing: -1 },
+  /**
+   * The crown's title (ADR 0087): larger and LIGHTER than every other title —
+   * weight 300 where the scale is 700 — because it sits on the lime band, not
+   * beside content. Tracking is the mock's −0.04em of the size. `crownTitleLg`
+   * is the Clubs screen's 48, whose subhead carries the follow count.
+   */
+  crownTitle: { fontSize: 40, fontWeight: '300', letterSpacing: -1.6 },
+  crownTitleLg: { fontSize: 48, fontWeight: '300', letterSpacing: -1.9 },
+  /** The club page hero's name (ADR 0091) — the crownless screens' large title. */
+  heroTitle: { fontSize: 36, fontWeight: '700', letterSpacing: -1.5 },
   title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.8 },
   title3: { fontSize: 22, fontWeight: '700', letterSpacing: -0.55 },
   headline: { fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },
@@ -397,21 +544,14 @@ export const Size = {
    */
   newsCardRow: 56,
   /**
-   * The Today card's lead picture (ADR 0071): full card width at 2:1.15, ~200pt
-   * tall at 393. Deliberately SHORTER than the page's `newsLeadRatio` — this is
-   * one card on a board of score cards and must stay below the next-up card in
-   * weight.
+   * The News screen's story-card thumbnail (ADR 0092) — a step above
+   * `newsCardRow`, which stays the TODAY card's two follow-on rows. The two
+   * are different surfaces: a doorway row inside another card, and a card of
+   * its own on the mesh.
    */
-  newsCardLeadRatio: 2 / 1.15,
-  /**
-   * The News screen's front page (ADR 0070). The lead's frame is a hair
-   * taller than square — 4:4.6 — so a three-line headline and a two-line
-   * excerpt fit UNDER the picture's subject rather than over it; the tiles'
-   * picture is 16:10, close to the publishers' native 16:9 with the top and
-   * bottom trimmed rather than the sides.
-   */
-  newsLeadRatio: 4 / 4.6,
-  newsTileRatio: 16 / 10,
+  newsStoryThumb: 64,
+  /** The Today card's LEAD thumbnail (ADR 0092) — the doorway's one big one. */
+  newsCardLead: 96,
   /**
    * Player portraits. ⚠ The SOURCE aspect ratio varies by league — 256×278
    * (LaLiga), 110×140 (Premier League), and an operator stopgap has no
@@ -419,8 +559,6 @@ export const Size = {
    * it, never stretched to it.
    */
   playerThumb: 34, playerPhotoW: 104, playerPhotoH: 116,
-  /** League filter tiles: artwork only, four across inside the screen gutter. */
-  leagueTileW: 80, leagueTileH: 56, leagueMarkW: 52, leagueMarkH: 28,
   /**
    * Onboarding's league PILLS — artwork PLUS the league's name, in a horizontal
    * row (ADR 0076, replacing 0056's 2-up chip grid).
@@ -579,6 +717,31 @@ export const Size = {
   /** The follow pill, and the disc holding its `+`. */
   followPillH: 32,
   followPillDisc: 22,
+
+  /**
+   * The 0087 shell (ADR 0087/0089/0090/0091).
+   *
+   * `glassBorder` is the glass card's hairline — 0.5, deliberately NOT
+   * `StyleSheet.hairlineWidth` (0.33 disappears against the mesh the way the
+   * score rule did in 0044). `trayPad` is the band between a tray's outer and
+   * inner surfaces AND their radius difference — one number, two duties, so
+   * the curves stay concentric. `leagueChipH` is the 0089 chip (below
+   * `minTouch`; carries hitSlop like `eventTab`). The two bleeds are the club
+   * page's decorative crests, drawn outside the box on purpose (ADR 0091).
+   */
+  glassBorder: 0.5,
+  trayPad: 5,
+  leagueChipH: 36,
+  /**
+   * The 0089 chip's mark box. Wider than tall because three of the four are
+   * landscape lockups; LaLiga's 1:1 icon letterboxes inside it. The old fixed
+   * TILE (`leagueTileW/H`, `leagueMarkW/H`) is superseded by 0089 and those
+   * tokens await P6 cleanup.
+   */
+  leagueChipMarkW: 44,
+  leagueChipMarkH: 22,
+  bigCrestBleed: 238,
+  oppCrestBleed: 146,
 } as const;
 
 /**
@@ -608,3 +771,18 @@ export const Motion = {
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)
 export const MaxContentWidth = 520;
+
+/**
+ * The glass style tuples (ADR 0087), so the fill + hairline pair is written
+ * once and cannot drift apart. Spread into a `StyleSheet.create` entry:
+ * `card: { ...Surfaces.glass, borderRadius: Radius.card }`.
+ */
+export const Surfaces = {
+  glass: {
+    backgroundColor: dark.glassFill,
+    borderWidth: Size.glassBorder,
+    borderColor: dark.glassLine,
+  },
+  glassDim: { backgroundColor: dark.glassFillDim },
+  trayOuter: { backgroundColor: dark.trayFill, borderWidth: 1, borderColor: dark.trayLine },
+} as const;

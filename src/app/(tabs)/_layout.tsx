@@ -11,7 +11,10 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      backgroundColor={c.card}
+      // ⚠ The mock's bar is `rgba(10,11,12,.92)`; `NativeTabs` takes a colour
+      // and draws the system's own material behind it, so alpha here is not
+      // ours to control — this is the opaque equivalent (ADR 0093).
+      backgroundColor={c.tabBar}
       iconColor={{ default: c.textFaint, selected: c.accent }}
       labelStyle={{
         default: { color: c.textFaint },

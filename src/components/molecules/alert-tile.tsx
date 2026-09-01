@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  neutral: { backgroundColor: Colors.dark.raisedAlt },
+  neutral: { backgroundColor: Colors.dark.glassFill },
   accent: { backgroundColor: Colors.dark.accentWash },
   moved: { backgroundColor: Colors.dark.movedWash },
   postponed: { backgroundColor: Colors.dark.postponedWash },

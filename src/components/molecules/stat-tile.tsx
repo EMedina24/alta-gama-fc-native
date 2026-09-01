@@ -11,7 +11,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/atoms';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 
 export interface StatTileProps {
   value: number;
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     minHeight: Size.minTouch,
-    backgroundColor: Colors.dark.raised,
+    ...Surfaces.glass,
     borderRadius: Radius.tile,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,

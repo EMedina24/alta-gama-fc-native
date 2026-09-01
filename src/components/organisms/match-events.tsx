@@ -196,8 +196,10 @@ export function MatchEvents({
 const styles = StyleSheet.create({
   panel: {
     // One step BELOW the card it opens inside — an expansion reads as recessed
-    // into its row, not stacked on top of it.
-    backgroundColor: Colors.dark.sunken,
+    // into its row, not stacked on top of it. ⚠ `recess`, not `sunken`: the
+    // fixed hex was a step below the OLD ground and vanishes on 0087's mesh;
+    // a translucent black recesses on any ground (ADR 0087).
+    backgroundColor: Colors.dark.recess,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
     gap: Spacing.three,

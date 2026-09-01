@@ -97,6 +97,6 @@ const styles = StyleSheet.create({
   // Ring and wash, never a fill — the idiom the league pills, the club picker
   // and the shape sheet all use for a chosen thing.
   on: { backgroundColor: Colors.dark.accentWash, borderColor: Colors.dark.accentRing },
-  off: { backgroundColor: Colors.dark.raisedAlt, borderColor: 'transparent' },
+  off: { backgroundColor: Colors.dark.glassFill, borderColor: 'transparent' },
   pressed: { opacity: 0.7 },
 });

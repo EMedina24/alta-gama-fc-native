@@ -1,7 +1,10 @@
 /**
- * The News screen's body: filter chips, day groups, the attribution line at
- * the end (ADR 0064) — and, since ADR 0070, the first group is a FRONT PAGE:
- * a lead, up to two tiles, then rows. Every later group is rows.
+ * The News screen's body: filter chips, day groups of uniform glass story
+ * cards, and the attribution line at the end (ADR 0064/0092).
+ *
+ * ⚠ The FRONT PAGE is gone (0070 reversed by 0092): no lead, no tiles. Every
+ * story in a group is one card of one weight, and the screen maps the WHOLE
+ * group — nothing may be filtered out on the way in.
  *
  * ⚠ The chips stay visible over an EMPTY list. A reader who picked a league
  * that is quiet must be able to pick another; hiding the rail with the rows
@@ -16,17 +19,9 @@
  */
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { ChipButton, Pill, Skeleton, SkeletonRows, Text } from '@/components/atoms';
-import {
-  NewsLead,
-  NewsRow,
-  NewsTile,
-  SectionHeader,
-  type NewsLeadProps,
-  type NewsRowProps,
-  type NewsTileProps,
-} from '@/components/molecules';
-import { Radius, Size, Spacing } from '@/constants/theme';
+import { ChipButton, Pill, SkeletonRows, Text } from '@/components/atoms';
+import { NewsRow, SectionHeader, type NewsRowProps } from '@/components/molecules';
+import { Size, Spacing } from '@/constants/theme';
 
 export interface NewsChip {
   id: string;
@@ -38,9 +33,7 @@ export interface NewsGroup {
   label: string;
   /** `3 STORIES`. */
   count: string;
-  /** The front page — set on the first group only. */
-  lead?: (NewsLeadProps & { key: string }) | null;
-  tiles?: readonly (NewsTileProps & { key: string })[];
+  /** Every story in the group, one card each (ADR 0092). */
   rows: readonly (NewsRowProps & { key: string })[];
 }
 
@@ -55,11 +48,6 @@ export interface NewsListProps {
   copy: { quiet: string; attribution: string };
 }
 
-const omitKey = ({ key: _key, ...rest }: NewsLeadProps & { key: string }): NewsLeadProps => rest;
-
-/** The lead's loading height at the screen's content width — 393 − 2 × 20. */
-const LEAD_SKELETON = Math.round((393 - Spacing.five * 2) / Size.newsLeadRatio);
-
 export function NewsList({ chips, activeChip, onChip, groups, loading, newLabel, copy }: NewsListProps) {
   return (
     <>
@@ -73,6 +61,9 @@ export function NewsList({ chips, activeChip, onChip, groups, loading, newLabel,
             key={chip.id}
             label={chip.label}
             active={chip.id === activeChip}
+            // ⚠ Neutral when unselected: a rail of lime rings read as every
+            // league being on at once (ADR 0092).
+            tone="neutral"
             onPress={() => onChip(chip.id)}
           />
         ))}
@@ -80,8 +71,7 @@ export function NewsList({ chips, activeChip, onChip, groups, loading, newLabel,
 
       {loading ? (
         <View style={styles.group}>
-          <Skeleton height={LEAD_SKELETON} radius={Radius.card} />
-          <SkeletonRows count={4} height={Size.newsCardRow + Spacing.three * 2} />
+          <SkeletonRows count={5} height={Size.newsStoryThumb + Spacing.three * 2} />
         </View>
       ) : groups.length === 0 ? (
         <Text variant="body" color="textDim">
@@ -95,16 +85,6 @@ export function NewsList({ chips, activeChip, onChip, groups, loading, newLabel,
               meta={group.count}
               accessory={index === 0 && newLabel ? <Pill label={newLabel} tone="accent" /> : null}
             />
-            {/* ⚠ `key` is stripped before the spread — React warns on a
-                spread that carries one, and the lead needs no key: one per group. */}
-            {group.lead ? <NewsLead {...omitKey(group.lead)} /> : null}
-            {group.tiles && group.tiles.length > 0 ? (
-              <View style={styles.tiles}>
-                {group.tiles.map(({ key, ...tile }) => (
-                  <NewsTile key={key} {...tile} wide={group.tiles!.length === 1} />
-                ))}
-              </View>
-            ) : null}
             {group.rows.length > 0 ? (
               <View style={styles.rows}>
                 {group.rows.map(({ key, ...row }) => (

@@ -13,12 +13,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
 import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
-import { MatchBoard } from '@/components/organisms/match-board';
+import { LivePlate } from '@/components/organisms/live-plate';
+import { LastResultCard } from '@/components/organisms/last-result-card';
+import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NewsCard } from '@/components/organisms/news-card';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { applyWidgetLive } from '@/features/widgets/live';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
 import { pairWash } from '@/lib/cronogol/club-wash';
 import {
@@ -361,6 +363,73 @@ export default function TodayScreen() {
       title={copy.today.title}
       eyebrow={copy.today.eyebrow(formatWeekdayLong(new Date().toISOString(), zone, phrases))}
       accessory={<AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />}
+      // The match in progress IS the crown's payload (ADR 0088): a dark glass
+      // plate on the bright band. With nothing live the crown collapses to
+      // eyebrow + title, exactly as APP-SHELL asks.
+      /**
+       * The crown's payload is the screen's LEAD CARD, whichever it is (ADR
+       * 0095): the live plate while a match is in play, otherwise NEXT UP. The
+       * gradient runs over it either way, so the head of the screen is one
+       * object rather than a header with a card under it.
+       *
+       * ⚠ The two are never both drawn — a live match outranks the fixture it
+       * became, and the body's LAST RESULT is what follows either.
+       */
+      payload={
+        !hasClubs ? undefined : board ? (
+          <LivePlate {...liveCard(board)} copy={copy.today} events={copy.events} />
+        ) : next ? (
+          <NextUpCard
+            home={nextSide(next.homeTeam)}
+            away={nextSide(next.awayTeam)}
+            kickoffUtc={next.kickoffUtc}
+            kickoffTbd={next.kickoffTbd}
+            // ⚠ Its OWN label, not the section header's — the card sat
+            // directly above a section with the identical title.
+            meta={copy.today.nextUp}
+            kickoffLabel={
+              next.kickoffTbd ? '--:--' : formatKickoffTime(next.kickoffUtc, zone, clock)
+            }
+            dateLabel={formatFixtureDate(next.kickoffUtc, zone, phrases)}
+            zoneLabel={`${zoneAbbreviation(zone)} · ${copy.today.yourTime}`}
+            venue={next.venue}
+            wash={pairWash(catalogueTeam(next.homeTeam), catalogueTeam(next.awayTeam))}
+            /**
+             * Kick-off, announced by the card's own countdown (ADR 0052).
+             *
+             * ⚠⚠ **Nothing else on this screen knows a match has started.**
+             * `todayBounds` and `recentBounds` both END at the instant they
+             * were fetched, so a fixture that kicks off after that fetch is in
+             * NEITHER window — and `boardLive` tier 1 joins the live row onto a
+             * fixture it holds, so with no fixture there is nothing for
+             * `/cronogol/live` to upgrade no matter how often it polls. The
+             * countdown was already counting to the one moment that fixes it.
+             *
+             * ⚠⚠ **`upcoming` is deliberately NOT refetched, on two grounds.**
+             * Its window starts at `now`, so refetching it drops the match that
+             * just kicked off — and until the live row lands (the backend
+             * re-reads every ~30s) the screen would replace this card with the
+             * match AFTER it, which reads as the fixture having vanished. It is
+             * also what keeps this safe: `next` is fed by `upcoming` alone, so
+             * nothing here can change `next.kickoffUtc`, re-arm the countdown's
+             * guard and loop.
+             *
+             * ⚠ One shot, not a burst. `useLive` is already polling every 15s
+             * while this screen is focused; what it was missing is the fixture
+             * to join to, and that arrives with these two.
+             */
+            onKickoff={() => {
+              // ⚠ First, and synchronously: the kicked-off card is built from
+              // rows already on screen, so it needs a render, not a response.
+              bumpKickoff();
+              void finished.refetch();
+              void recent.refetch();
+              void live.refetch();
+            }}
+            copy={copy.today}
+          />
+        ) : undefined
+      }
       onRefresh={() => {
         void finished.refetch();
         void upcoming.refetch();
@@ -368,82 +437,26 @@ export default function TodayScreen() {
         void live.refetch();
       }}
       refreshing={finished.isRefetching || upcoming.isRefetching || recent.isRefetching}>
-      {/* The lead cards only exist once there is a club to lead with. */}
-      {hasClubs && (board || last || next) ? (
-        <MatchBoard
-          live={board ? liveCard(board) : null}
-          last={
-            last
-              ? {
-                  // ⚠ The fixture's own id and its two `TeamRef`s, for the
-                  // events panel (ADR 0045). `ScoreSide` below carries no slug,
-                  // and the panel derives each event's side by comparing one.
-                  id: last.id,
-                  homeTeam: last.homeTeam,
-                  awayTeam: last.awayTeam,
-                  home: side(last.homeTeam, last.goalsHome, loses(last.goalsHome, last.goalsAway)),
-                  away: side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome)),
-                  meta: [
-                    lastMatchday !== null ? copy.today.md(lastMatchday) : null,
-                    formatFixtureDate(last.kickoffUtc, zone, phrases),
-                  ]
-                    .filter(Boolean)
-                    .join(' · '),
-                  outcome: lastOutcome ? phrases.formLetters[lastOutcome] : null,
-                }
-              : null
-          }
-          next={
-            next
-              ? {
-                  home: nextSide(next.homeTeam),
-                  away: nextSide(next.awayTeam),
-                  kickoffUtc: next.kickoffUtc,
-                  kickoffTbd: next.kickoffTbd,
-                  // ⚠ Its OWN label, not the section header's — the card sat
-                  // directly above a section with the identical title.
-                  meta: copy.today.nextUp,
-                  kickoffLabel: next.kickoffTbd
-                    ? '--:--'
-                    : formatKickoffTime(next.kickoffUtc, zone, clock),
-                  dateLabel: formatFixtureDate(next.kickoffUtc, zone, phrases),
-                  zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
-                  venue: next.venue,
-                  wash: pairWash(catalogueTeam(next.homeTeam), catalogueTeam(next.awayTeam)),
-                }
-              : null
-          }
-          /**
-           * Kick-off, announced by the next-up card's own countdown (ADR 0052).
-           *
-           * ⚠⚠ **Nothing else on this screen knows a match has started.**
-           * `todayBounds` and `recentBounds` both END at the instant they were
-           * fetched, so a fixture that kicks off after that fetch is in NEITHER
-           * window — and `boardLive` tier 1 joins the live row onto a fixture it
-           * holds, so with no fixture there is nothing for `/cronogol/live` to
-           * upgrade no matter how often it polls. The countdown was already
-           * counting to the one moment that fixes it.
-           *
-           * ⚠⚠ **`upcoming` is deliberately NOT refetched, on two grounds.**
-           * Its window starts at `now`, so refetching it drops the match that
-           * just kicked off — and until the live row lands (the backend re-reads
-           * every ~30s) the board would replace this card with the match AFTER
-           * it, which reads as the fixture having vanished. It is also what
-           * keeps this safe: `next` is fed by `upcoming` alone, so nothing here
-           * can change `next.kickoffUtc`, re-arm the countdown's guard and loop.
-           *
-           * ⚠ One shot, not a burst. `useLive` is already polling every 15s
-           * while this screen is focused; what it was missing is the fixture to
-           * join to, and that arrives with these two.
-           */
-          onKickoff={() => {
-            // ⚠ First, and synchronously: the kicked-off card is built from
-            // rows already on screen, so it needs a render, not a response.
-            bumpKickoff();
-            void finished.refetch();
-            void recent.refetch();
-            void live.refetch();
-          }}
+      {/* LAST RESULT follows the crown's lead card (ADR 0095). Suppressed
+          while a match is live: the result the reader wants is the one being
+          played, and the finished one is a distraction under it. */}
+      {hasClubs && !board && last ? (
+        <LastResultCard
+          // ⚠ The fixture's own id and its two `TeamRef`s, for the events
+          // panel (ADR 0045). `ScoreSide` carries no slug, and the panel
+          // derives each event's side by comparing one.
+          id={last.id}
+          homeTeam={last.homeTeam}
+          awayTeam={last.awayTeam}
+          home={side(last.homeTeam, last.goalsHome, loses(last.goalsHome, last.goalsAway))}
+          away={side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome))}
+          meta={[
+            lastMatchday !== null ? copy.today.md(lastMatchday) : null,
+            formatFixtureDate(last.kickoffUtc, zone, phrases),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          outcome={lastOutcome ? phrases.formLetters[lastOutcome] : null}
           copy={copy.today}
           events={copy.events}
         />
@@ -620,7 +633,8 @@ const styles = StyleSheet.create({
   // colour, so a zero gap reads as one wide tile with two numbers in it.
   tiles: { flexDirection: 'row', gap: Spacing.two },
   follow: {
-    backgroundColor: Colors.dark.card,
+    // Glass (ADR 0087); the accent ring stays — it is this card's identity.
+    backgroundColor: Colors.dark.glassFill,
     borderRadius: Radius.card,
     borderWidth: 1,
     borderColor: Colors.dark.accentRing,
@@ -633,7 +647,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     width: '48%',
-    backgroundColor: Colors.dark.raised,
+    ...Surfaces.glass,
     borderRadius: Radius.tile,
     padding: Spacing.three,
   },

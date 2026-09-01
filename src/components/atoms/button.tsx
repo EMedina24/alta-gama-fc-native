@@ -92,7 +92,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.hairlineStrong,
   },
   outline: {
-    backgroundColor: 'transparent',
+    // The 0087 mock fills this ring with the lime wash ("Add all N matches");
+    // the ring and lime label stay, so the tone keeps its name.
+    backgroundColor: Colors.dark.accentWash,
     borderWidth: 1,
     borderColor: Colors.dark.accentRing,
   },

@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     width: '31.5%',
     height: Size.minTouch + Spacing.two,
     borderRadius: Radius.control,
-    backgroundColor: Colors.dark.raised,
+    backgroundColor: Colors.dark.glassFill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.dark.hairlineMid,
     alignItems: 'center',

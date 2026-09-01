@@ -1,17 +1,22 @@
 /**
- * The Matchdays header's second row: prev/next squares on the left, the round's
- * date range over "10 MATCHES · CEST" on the right (SPEC §3.2).
+ * The Matchdays crown's second row: prev/next squares on the left, the round's
+ * date range over "10 MATCHES · CEST" on the right (SPEC §3.2 for behaviour;
+ * ADR 0087 for the ground — the row sits in the crown's BRIGHT band and draws
+ * only `onCrown*` inks).
  *
  * ⚠ The squares drive the SAME matchweek state as `MatchdayStrip` — the screen
  * hands both one clamped setter. A second state here is how a pager and a strip
  * end up disagreeing about which round is open.
  *
  * ⚠ Not accent. On this screen the accent belongs to the active pill and the
- * "Add all" button; a lime arrow would be a third thing claiming it (SPEC §2).
+ * "Add all" button; a lime arrow would be a third thing claiming it (SPEC §2) —
+ * and lime on lime would say nothing anyway.
  *
  * The chevrons are text glyphs — no icon set is used anywhere in the app yet
  * (ADR 0028). Language never reaches this file: labels and both lines arrive
- * already worded.
+ * already worded — `primaryTone` arrives in the caller's OLD vocabulary
+ * (`textSecondary` = confirmed, `textFaint` = provisional) and is mapped onto
+ * crown inks here, so the screens did not have to learn the new set.
  */
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -51,10 +56,15 @@ export function MatchdayPager({
         <Square glyph="›" label={nextLabel} enabled={canNext} onPress={onNext} />
       </View>
       <View style={styles.meta}>
-        <Text variant="eyebrowSm" color={primaryTone} tabular numberOfLines={1} style={styles.right}>
+        <Text
+          variant="eyebrowSm"
+          color={primaryTone === 'textSecondary' ? 'onCrown' : 'onCrownDim'}
+          tabular
+          numberOfLines={1}
+          style={styles.right}>
           {primary}
         </Text>
-        <Text variant="eyebrowSm" color="textFaint" tabular numberOfLines={1} style={styles.right}>
+        <Text variant="eyebrowSm" color="onCrownDim" tabular numberOfLines={1} style={styles.right}>
           {secondary}
         </Text>
       </View>
@@ -87,7 +97,7 @@ function Square({
         !enabled && styles.disabled,
         pressed && enabled && styles.pressed,
       ]}>
-      <Text variant="title3" color="textSecondary" style={styles.glyph}>
+      <Text variant="title3" color="onCrown" style={styles.glyph}>
         {glyph}
       </Text>
     </Pressable>
@@ -100,10 +110,10 @@ const styles = StyleSheet.create({
   square: {
     width: Size.pill,
     height: Size.pill,
-    borderRadius: Radius.chip,
-    backgroundColor: Colors.dark.raised,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.dark.hairlineStrong,
+    borderRadius: Radius.crownControl,
+    backgroundColor: Colors.dark.onCrownFill,
+    borderWidth: 1,
+    borderColor: Colors.dark.onCrownLine,
     alignItems: 'center',
     justifyContent: 'center',
   },

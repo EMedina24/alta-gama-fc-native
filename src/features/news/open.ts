@@ -33,7 +33,7 @@ export async function openArticle(url: string): Promise<void> {
     await WebBrowser.openBrowserAsync(url, {
       presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
       controlsColor: Colors.dark.accent,
-      toolbarColor: Colors.dark.card,
+      toolbarColor: Colors.dark.sheetGround,
       dismissButtonStyle: 'done',
       enableBarCollapsing: true,
     });

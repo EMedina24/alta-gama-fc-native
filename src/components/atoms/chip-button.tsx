@@ -26,6 +26,13 @@ export interface ChipButtonProps {
   /** `pill` is the fixed-height follow control; `control` is the default chip. */
   shape?: 'control' | 'pill';
   /**
+   * How the INACTIVE state reads (ADR 0092). `accent` — the default and the
+   * follow pill's — keeps the lime ring, because that chip is an invitation to
+   * act. `neutral` is the News filter rail, where a row of lime rings made
+   * every league look selected.
+   */
+  tone?: 'accent' | 'neutral';
+  /**
    * Drawn after the label, inside the chip. ⚠ Decorative only — it shares the
    * chip's single press target and must never be a control of its own.
    */
@@ -40,9 +47,11 @@ export function ChipButton({
   active = false,
   disabled = false,
   shape = 'control',
+  tone = 'accent',
   trailing,
   accessibilityLabel,
 }: ChipButtonProps) {
+  const quiet = tone === 'neutral' && !active;
   return (
     <Pressable
       onPress={onPress}
@@ -54,11 +63,12 @@ export function ChipButton({
       style={({ pressed }) => [
         styles.chip,
         shape === 'pill' ? styles.pill : styles.control,
+        quiet && styles.quiet,
         active && styles.active,
         pressed && !disabled && (shape === 'pill' ? styles.pressedPill : styles.pressed),
         disabled && styles.disabled,
       ]}>
-      <Text variant="eyebrowSm" color={active ? 'onAccent' : 'accent'}>
+      <Text variant="eyebrowSm" color={active ? 'onAccent' : quiet ? 'textSecondary' : 'accent'}>
         {label}
       </Text>
       {trailing ? <View style={styles.disc}>{trailing}</View> : null}
@@ -71,7 +81,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
+    // 1pt, not hairline — the 0087 mock draws the ring at a full point and a
+    // 0.33pt lime ring vanished against the mesh.
+    borderWidth: 1,
     borderColor: Colors.dark.accentRing,
   },
   control: {
@@ -97,6 +109,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   active: { backgroundColor: Colors.dark.accent, borderColor: Colors.dark.accent },
+  /** The unselected News filter (ADR 0092): a quiet chip, no lime at all. */
+  quiet: { backgroundColor: Colors.dark.card, borderColor: Colors.dark.glassLine },
   pressed: { opacity: 0.7 },
   /**
    * ⚠ The pill presses by SCALE, not opacity — it is the only control on a

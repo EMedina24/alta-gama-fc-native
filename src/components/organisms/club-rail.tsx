@@ -23,7 +23,6 @@ export interface RailClub {
   name: string;
   crest: string | null;
   abbr: string;
-  tint: string;
   rank: number | null;
   rankColor: string | null;
   accessibilityLabel: string;
@@ -47,7 +46,6 @@ export function ClubRail({ clubs, onOpen }: ClubRailProps) {
           name={club.name}
           crest={club.crest}
           abbr={club.abbr}
-          tint={club.tint}
           rank={club.rank}
           rankColor={club.rankColor}
           accessibilityLabel={club.accessibilityLabel}

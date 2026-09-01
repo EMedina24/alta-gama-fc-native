@@ -34,7 +34,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { Chevron, Crest, Hairline, Text } from '@/components/atoms';
-import { Colors, LeagueBand, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, LeagueBand, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 import type { LeagueBandSpec } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import { scoreEmphasis } from '@/lib/cronogol/scores';
@@ -195,7 +195,7 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.dark.card, borderRadius: Radius.group, overflow: 'hidden' },
+  card: { ...Surfaces.glass, borderRadius: Radius.group, overflow: 'hidden' },
   leagueHeader: {
     flexDirection: 'row',
     alignItems: 'center',

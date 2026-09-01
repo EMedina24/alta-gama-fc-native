@@ -113,7 +113,7 @@ export function SignInSheet({
 }
 
 const styles = StyleSheet.create({
-  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.card },
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.sheetGround },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
