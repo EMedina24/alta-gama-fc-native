@@ -300,6 +300,35 @@ export const Mesh = [
 ] as const;
 
 /**
+ * The same mesh, re-aimed for a WIDGET tile (ADR 0104). Nothing in this app
+ * reads it — it exists here because `targets/_shared/Tokens.swift` may only
+ * copy values that are named on this side, and the widget extension cannot
+ * import anything from it.
+ *
+ * ⚠⚠ **Same three colours and the SAME THREE ALPHAS as `Mesh`. Only the
+ * geometry moved, and that is the finding.** `Mesh`'s pools are centred at
+ * `cx` −0.12 and 1.08 — comfortably off a 930pt screen, whose visible area
+ * still catches their cores. A 158pt tile catches only their tails, so the
+ * first build of 0104 rendered a dead grey-green centre with colour trapped in
+ * the corners, under exactly the values that look right on a screen. Pulling
+ * the centres onto the tile's own edges and widening each fade puts the same
+ * light back where the tile actually is.
+ *
+ * ⚠ Calibrated, not eyeballed: sampled against the real Today screen's body
+ * ground (`#0f3832` … `#101f1e`, green channel typically 31–45), these land at
+ * p90 green 45 against `Mesh`'s 38 — the top of the app's own range rather
+ * than past it. Re-measure the same way before moving any number here.
+ *
+ * ⚠ The value distribution is aspect-INDEPENDENT (every extent is a fraction),
+ * so one table serves small, medium and large; only the composition differs.
+ */
+export const MeshTile = [
+  { cx: 0.98, cy: 0.04, rx: 0.72, ry: 0.62, color: '#c8f25a', alpha: 0.16, fade: 0.72 },
+  { cx: -0.02, cy: 0.46, rx: 0.7, ry: 0.76, color: '#105c4a', alpha: 0.6, fade: 0.8 },
+  { cx: 1.0, cy: 1.02, rx: 0.78, ry: 0.68, color: '#1c546c', alpha: 0.5, fade: 0.8 },
+] as const;
+
+/**
  * The crown's vertical gradient (ADR 0087), lime to nothing. It ends in
  * TRANSPARENCY, never a hard edge — the fade is the hand-off to the mesh.
  * Shaped as `WashStop`s so translucency can only travel as `opacity` (trap 42).

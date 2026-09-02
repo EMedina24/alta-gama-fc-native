@@ -37,11 +37,11 @@ struct CrestPair: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: size)
+      CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: size, tone: .open)
       Text(copy.versus)
         .font(Tok.micro(size * 0.34))
         .foregroundStyle(Tok.ink45)
-      CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: size)
+      CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: size, tone: .open)
     }
   }
 }

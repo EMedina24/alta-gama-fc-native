@@ -10,11 +10,16 @@ struct NewsWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "News", provider: NewsProvider()) { entry in
       NewsView(entry: entry)
-        .containerBackground(Tok.ground, for: .widget)
+        .containerBackground(for: .widget) { MeshPlate() }
     }
     .configurationDisplayName("News")
     .description("Headlines from around the clubs you follow.")
     .supportedFamilies([.systemLarge])
+    // ⚠ So the mesh runs flush rather than floating in a black frame (ADR 0086
+    // §3). Safe to disable configuration-wide here, unlike on NEXT: this widget
+    // is `systemLarge` only and has no accessory family to strip margins from.
+    // Content supplies its own 13, matching the other two tiles.
+    .contentMarginsDisabled()
   }
 }
 
@@ -64,11 +69,19 @@ struct NewsView: View {
         // ⚠ Rows CENTRE in the space the lead leaves, as on the medium widget:
         // a feed that returned two stories must not look like one that failed
         // to finish loading.
-        VStack(alignment: .leading, spacing: 0) {
+        // ⚠ **Uniform glass story cards, and no rules between them (ADR 0104).**
+        // This is ADR 0092's call on the app's own news screen, arriving here:
+        // a divider between two cards is a seam drawn twice, and the row's own
+        // edge already says where it ends.
+        //
+        VStack(alignment: .leading, spacing: 6) {
           Spacer(minLength: 0)
           ForEach(rest) { item in
-            Divider().overlay(Tok.hairline)
-            HeadlineRow(item: item, now: entry.date)
+            GlassSurface(radius: Rad.thumb) {
+              HeadlineRow(item: item, now: entry.date)
+                .padding(7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
           }
           Spacer(minLength: 0)
         }
@@ -76,6 +89,7 @@ struct NewsView: View {
         NewsEmptyState(copy: entry.copy, followsNothing: entry.followsNothing)
       }
     }
+    .padding(13)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
@@ -105,11 +119,15 @@ private struct LeadStory: View {
         ZStack(alignment: .bottomLeading) {
           Image(uiImage: image)
             .resizable()
+            .fullColorInWidget()
             .scaledToFill()
             .frame(height: 116)
             .clipped()
+          // ⚠ `scrim`, not `ground`. ADR 0104 lightened `ground` to `#0f1316`;
+          // this fade has to stay near-black or the headline loses the picture
+          // behind it. See the token's own note.
           LinearGradient(
-            colors: [Tok.ground.opacity(0), Tok.ground.opacity(0.62), Tok.ground.opacity(0.94)],
+            colors: [Tok.scrim.opacity(0), Tok.scrim.opacity(0.62), Tok.scrim.opacity(0.94)],
             startPoint: .init(x: 0.5, y: 0.22), endPoint: .bottom
           )
           meta
@@ -117,7 +135,7 @@ private struct LeadStory: View {
             .padding(.bottom, 10)
         }
         .frame(height: 116)
-        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Rad.thumb, style: .continuous))
       } else {
         HStack(spacing: 0) {
           Rectangle().fill(Tok.accent).frame(width: 2)
@@ -152,6 +170,7 @@ private struct HeadlineRow: View {
         if let image = NewsImage.load(item) {
           Image(uiImage: image)
             .resizable()
+            .fullColorInWidget()
             .scaledToFill()
             .frame(width: 44, height: 44)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -166,7 +185,6 @@ private struct HeadlineRow: View {
           Attribution(item: item, now: now, ink: Tok.ink50)
         }
       }
-      .padding(.vertical, 7)
     }
   }
 }

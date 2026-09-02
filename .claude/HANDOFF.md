@@ -140,6 +140,58 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > (carve-outs in 0087: League.zones ranks, UISwitch, honesty lines, 0063's
 > NEXT-UP-first ordering).
 >
+> ⭐ **NEW 2026-09-01 — the WIDGETS join the shell
+> ([0104](./decisions/0104-widgets-adopt-the-app-shell.md)), amending 0087 §10's
+> `targets/` carve-out.** All three home-screen tiles now draw the aurora mesh as
+> their container background (`targets/widget/Shell.swift` — `MeshPlate`,
+> `GlassSurface`, `GlassGroup`), YOUR WEEK's floodlit `Plate` is deleted, and
+> glass lands on what is genuinely a panel: YOUR WEEK's rail column, NEXT's
+> `recess`-scrimmed live ledger, NEWS's uniform story rows.
+>
+> ⚠⚠ **The headline finding is a negative one: `SwiftUI.glassEffect()` DOES NOT
+> WORK IN A WIDGET — it silently erases its own content (trap 52).** This was
+> built with real glass on iOS 26 over a painted fallback and the glass path
+> rendered blank tiles. `GlassSurface` is now ONE painted path at every version
+> (`glassFill` + a 0.5pt `glassLine` + a masked `plateTop` edge), which is what
+> most of the app draws anyway. ⚠ Do not "restore" it on a newer SDK without
+> re-checking on a PLACED widget. The widget `deploymentTarget` stays 17.0 (0055)
+> and now has no `#available` branch pulling the other way.
+>
+> ⚠⚠ **Second finding: copying `theme.ts`'s `Mesh` verbatim also rendered dead
+> (trap 53)** — its pools are centred off a SCREEN, so a tile sees only their
+> tails. New `theme.ts` `MeshTile` fixes it with geometry, alphas untouched,
+> calibrated against a sampled screenshot of the real Today ground. Crest fallback tiles
+> go unfilled on the widgets only (`CrestView.tone`, `.solid` still the default
+> because `_shared/` compiles into the notification extensions). No wire change,
+> no snapshot bump, no `Cadence` value touched — this is paint, so the reload
+> budget (trap 34) is untouched.
+>
+> **Four new traps out of it: 50** (`EllipticalGradient` cannot do independent
+> `rx`/`ry`), **51** (`.contentMarginsDisabled()` is configuration-wide and
+> silently strips the Lock Screen accessories' margins), **52** (`glassEffect` in
+> a widget) and **53** (`Mesh` at tile scale).
+>
+> **Verified** on the iOS 26.5 simulator with both widgets placed, across five
+> `?sample=` states — `week1` (hero alone, no column), `week3`/`week3es` (rail
+> column; ES worst case fits with no truncation), `live` and `ft` (the recessed
+> ledger panel). Because there is now one painted path, those screenshots are
+> what an iOS 17 reader sees too.
+>
+> ⚠⚠ **Two surfaces are UNSEEN and neither is small.** (1) **The NEWS tile has
+> never been rendered** — it is not placed on this simulator and a widget cannot
+> be placed without a tap, which cannot be scripted here. It is also the tile with
+> the tightest height budget (three 44pt rows plus a 116pt lead), so it is the
+> likeliest place for this change to overflow. (2) **The Live Activity** —
+> nothing in this repo starts one (the server push-to-starts it), so its change is
+> reasoned, typechecked and never rendered. That is exactly why it is
+> ADDITION-only: the mesh's coolest pool at 0.28 and the lit top edge, zero height
+> against the ~160pt cap, and NO glass (the card does not own its rectangle — the
+> system already composites it onto a material).
+>
+> ⚠ Also unproven: every `?sample=` deep link carries FABRICATED fixture ids, so
+> every crest in a sample screenshot is a fallback tile. The real-crest case was
+> seen separately on live data (Betis / Real Madrid) before the samples ran.
+
 > **OPEN — "Alert settings could not be saved" on Ed's iPhone (preview build).** That
 > line is ADR 0079's verdict: the last `PUT /cronogol/push/device` from the phone got no
 > ACK (`src/features/push/sync.ts:136-163` — HTTP error, timeout, or the server's echo
@@ -764,6 +816,52 @@ documented at the code that handles them; this is the index.
     and Swift filters on `involves(club)`. ⚠ The general rule: when a writer
     collapses N owners to one row, every reader that FILTERS BY OWNER must match
     on all N, not on the one the collapse elected.
+50. **⚠⚠ `EllipticalGradient`'s `center:`/`endRadiusFraction:` cannot express an
+    ellipse whose `rx` and `ry` differ.** It takes ONE radius fraction and fits
+    its ellipse to the view's own aspect ratio, so `Mesh`'s `0.64 × 0.40` pools
+    — and every CSS `radial-gradient(70% 90% at …)` in every handoff — are
+    unreachable through that initialiser. 0085 and 0086 both hit it and recorded
+    an approximation; [0104](./decisions/0104-widgets-adopt-the-app-shell.md)
+    resolves it: size the gradient's own FRAME to `2rx × 2ry` of the surface and
+    `.position` that frame's centre at `cx, cy` inside a `GeometryReader`. The
+    default `endRadiusFraction` of 0.5 then means exactly "fill this frame's
+    inscribed ellipse". ⚠ The pool centres are legitimately OUTSIDE the surface
+    (`cx` −0.12 and 1.08), so the result must be clipped.
+51. **⚠⚠ `.contentMarginsDisabled()` is CONFIGURATION-wide and has no per-family
+    form.** It is needed on any widget that paints its own ground, or the
+    container background floats in a black frame (0086 §3) — but a configuration
+    that also serves Lock Screen accessories strips THEIR margins in the same
+    breath, and nothing warns. The fix is to disable it and hand the margins back
+    in the view from `@Environment(\.widgetContentMargins)` (iOS 17.0, this
+    target's floor exactly), applying our own only to the family that wanted
+    them. `NextFixtureWidget` is the worked example.
+52. **⚠⚠ `SwiftUI.glassEffect()` does not work in a WIDGET — it erases its own
+    content, and nothing tells you.** ADR 0104 built `GlassSurface` with real
+    glass under `#available(iOS 26.0, *)`; on the 26.5 simulator the entire
+    modified subtree rendered as NOTHING — the YOUR WEEK rail column and the NEXT
+    live ledger vanished, text included, while the eyebrow and footnote around
+    them drew normally. Isolated to a bare
+    `content.glassEffect(.clear, in: shape)` with no scrim, ring or overlay: the
+    same blank. It compiles, it typechecks at 17.0 and 26.0, the build is clean,
+    and no log line mentions it. A widget is rendered out of process into an
+    ARCHIVE; `glassEffect` is a live backdrop filter needing a real context and a
+    real backdrop, and has neither. ⚠ The general rule: **a widget surface is only
+    verified when it has been seen on a PLACED widget.** A clean build proves
+    nothing about a widget — `Info.plist`'s `NSExtensionPrincipalClass` note is
+    the same class of silent failure.
+53. **⚠⚠ `theme.ts`'s `Mesh` renders DEAD on a widget tile, at the values that
+    are right on a screen.** Two of its three pools are centred OFF the surface
+    (`cx` −0.12 and 1.08). A ~930pt screen still catches their cores; a 158pt
+    tile catches only their tails, so the first build of 0104 was a grey-green
+    murk with all its colour trapped in the corners and a dead centre exactly
+    where the type sits. The fix is geometry, not alpha — `theme.ts` `MeshTile`
+    pulls the centres onto the tile's edges and widens each fade, with the three
+    ALPHAS unchanged. ⚠ The general rule: **a fraction-based background is not
+    scale-free.** Its value distribution is aspect-independent, but WHERE the
+    surface samples it is not, so any wash authored for one surface size has to
+    be re-composed for another. ⚠ Calibrate it by sampling a screenshot of the
+    real screen (the Today body ground measures `#0f3832` … `#101f1e`, green
+    channel typically 31–45), never by eye.
 
 ---
 

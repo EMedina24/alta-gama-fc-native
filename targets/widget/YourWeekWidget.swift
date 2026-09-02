@@ -4,8 +4,13 @@ import WidgetKit
 /// **YOUR WEEK** — the week ahead, medium (ADR 0086, `handoff_week-widget/`).
 ///
 /// A week has one next match, not three. The tile spends the left column on that
-/// kickoff and demotes the rest to a rail, on a floodlit plate — the visual
-/// language ADR 0085 gave the Live Activity, at widget scale.
+/// kickoff and demotes the rest to a rail — the hero open on the ground, the
+/// rail grouped onto one glass column beside it.
+///
+/// ⚠ **The floodlit plate is gone (ADR 0104).** This tile borrowed the Live
+/// Activity's lit language because the app had nothing else to borrow; the app
+/// now has the aurora mesh and the glass card, and a widget that opens a lit
+/// mesh should not itself be a black tile with a lime corner.
 ///
 /// ⚠ **`.contentMarginsDisabled()`, and the plate is the CONTAINER background.**
 /// The mock draws a nested tray (r24) inside a plate (r21.5); a second corner
@@ -22,7 +27,7 @@ struct YourWeekWidget: Widget {
       YourWeekView(entry: entry)
         // ⚠ Required from iOS 17. Without it the widget draws on nothing and
         // the home screen's own wallpaper shows through the card.
-        .containerBackground(for: .widget) { Plate() }
+        .containerBackground(for: .widget) { MeshPlate() }
     }
     .configurationDisplayName("Your week")
     .description("The next match from the clubs you follow, and the week behind it.")
@@ -31,47 +36,6 @@ struct YourWeekWidget: Widget {
     // black frame — a card inside a card, which is the look the flush plate
     // exists to avoid. Content supplies its own 11/13 padding instead.
     .contentMarginsDisabled()
-  }
-}
-
-// MARK: - Plate
-
-/// The lit ground: two gradients over `Tok.ground`, plus the mock's inner
-/// highlight along the top edge.
-///
-/// ⚠⚠ **Decoration only, never a data channel.** Nothing here may encode
-/// liveness, the followed side, or how many fixtures there are — the moment a
-/// reader can learn something from the light, the light has to be correct.
-///
-/// ⚠ **`EllipticalGradient`, not `RadialGradient`.** The mock's
-/// `radial-gradient(70% 90% at 100% -8%, …)` is an ellipse wider than it is
-/// tall; SwiftUI's radial gradient is strictly circular, and the handoff's
-/// hard-coded `endRadius: 190` lands nowhere near it at any tile width. Same
-/// substitution `MatchActivity.floodlights` documents.
-private struct Plate: View {
-  var body: some View {
-    Tok.ground.overlay {
-      ZStack {
-        // The floodlight, off the top-right corner.
-        EllipticalGradient(
-          colors: [Tok.accent.opacity(0.20), Tok.ground.opacity(0)],
-          center: UnitPoint(x: 1, y: -0.08),
-          startRadiusFraction: 0,
-          endRadiusFraction: 0.62
-        )
-        // ⚠ The pitch pool, bottom-left, and its job is the same one it has on
-        // the broadcast card: keep the lime OFF club artwork we do not own.
-        EllipticalGradient(
-          colors: [Tok.activityPool.opacity(0.9), Tok.ground.opacity(0)],
-          center: UnitPoint(x: -0.06, y: 1.08),
-          startRadiusFraction: 0,
-          endRadiusFraction: 0.66
-        )
-      }
-    }
-    .overlay(alignment: .top) {
-      Rectangle().fill(Tok.hairline).frame(height: 0.5)
-    }
   }
 }
 
@@ -91,13 +55,30 @@ struct YourWeekView: View {
   private var hero: WidgetSnapshot.Entry? { rows.first }
   private var rail: [WidgetSnapshot.Entry] { Array(rows.dropFirst()) }
 
-  /// The mock's `1.32fr / 0.5pt / 1fr`.
+  /// The mock's `1.32fr / 1fr`.
   ///
   /// ⚠ A `layoutPriority` cannot express a ratio — it decides who gets its
   /// ideal size first, not how the slack is split — so the column widths are
   /// measured off the geometry instead.
+  ///
+  /// ⚠⚠ **`- 6`, where ADR 0086 had `- 26 - 0.5`, and the rail keeps its
+  /// measured content box to within a sixth of a point.** The fading hairline
+  /// and one of the two 13pt gaps went with the plate — the rail's own glass
+  /// edge is the seam now, so the row no longer pays for a drawn one — and the
+  /// width that frees up is handed straight back as the slab's 4.5pt inset.
+  /// The arithmetic is exact and width-independent: the rail gains `20.5/2.32`
+  /// = 8.84pt and spends 9pt on the inset, so its content lands within 0.2pt of
+  /// 0086's number at EVERY tile width (125.6 → 125.5 on this device, 119.2 →
+  /// 119.1 on an SE). The hero takes the rest and gains 11.7pt everywhere.
+  ///
+  /// ⚠ **The rail is the constraint, not the hero, and 12-hour locales are why.**
+  /// The `?sample=` fixtures print `16:15`; a US reader gets `10:15 am`, which is
+  /// far wider and truncates the club name beside it. 0086 chose truncation over
+  /// shrinking deliberately — see `railName` — but that choice was measured
+  /// against 0086's column, so this one has to match it rather than approximate
+  /// it. Change either constant and re-derive both columns.
   private func heroWidth(_ total: CGFloat) -> CGFloat {
-    max(0, (total - 26 - 0.5)) * 1.32 / 2.32
+    max(0, (total - 6)) * 1.32 / 2.32
   }
 
   var body: some View {
@@ -106,7 +87,7 @@ struct YourWeekView: View {
 
       if let hero {
         GeometryReader { geo in
-          HStack(spacing: 13) {
+          HStack(spacing: 6) {
             // ⚠ ONE fixture draws the hero at FULL WIDTH — no divider, no empty
             // rail. A hairline with nothing beside it reads as a widget that
             // failed to finish loading, which is the same lie the filler rows
@@ -116,8 +97,22 @@ struct YourWeekView: View {
                      alignment: .leading)
 
             if !rail.isEmpty {
-              divider
-              railColumn.frame(maxWidth: .infinity)
+              // ⚠ **The glass column is FULL HEIGHT beside the hero, and that is
+              // deliberate.** A slab that wrapped its two rows would sit as a
+              // short box floating against a tall one; run to both edges of the
+              // content area and it reads as the tile's second column, which is
+              // what it is.
+              GlassSurface(radius: Rad.tile) {
+                railColumn
+                  // ⚠ 4.5, and it is load-bearing arithmetic rather than a
+                  // taste: 9pt of inset is what the rail gains back from the
+                  // dropped gap, so this is what keeps its content box equal to
+                  // ADR 0086's measured one. See `heroWidth`.
+                  .padding(.horizontal, 4.5)
+                  .padding(.vertical, 3)
+                  .frame(maxWidth: .infinity, maxHeight: .infinity)
+              }
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
           }
           // ⚠ `.leading`, not the default centre. With one fixture the HStack
@@ -155,17 +150,6 @@ struct YourWeekView: View {
       W.eyebrow(entry.copy.clubCount, color: Tok.ink34, size: 8.5)
     }
     .padding(.bottom, 9)
-  }
-
-  /// A hairline that fades out at both ends, so it reads as a seam rather than
-  /// a drawn rule butting into the padding.
-  private var divider: some View {
-    LinearGradient(
-      colors: [Tok.hairline.opacity(0), Tok.hairline, Tok.hairline, Tok.hairline.opacity(0)],
-      startPoint: .top,
-      endPoint: .bottom
-    )
-    .frame(maxWidth: 0.5, maxHeight: .infinity)
   }
 
   // MARK: Hero
@@ -215,13 +199,17 @@ struct YourWeekView: View {
               .foregroundStyle(Tok.ink62)
               .padding(.horizontal, 5)
               .frame(height: 13)
+              // ⚠ `glassFill`/`glassLine`, the app's named pair — the same
+              // values this site already used by hand, now tracking `theme.ts`.
+              // ⚠ r4 stays: at 13pt tall a `Rad.chip` corner is a pill, and a
+              // pill here would read as the accent capsule the header owns.
               .background(
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
-                  .fill(Color.white.opacity(0.06))
+                  .fill(Tok.glassFill)
               )
               .overlay(
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
-                  .strokeBorder(Tok.hairline, lineWidth: 0.5)
+                  .strokeBorder(Tok.glassLine, lineWidth: 0.5)
               )
               .fixedSize()
           }
@@ -247,7 +235,7 @@ struct YourWeekView: View {
     let name = (isHome ? row.homeName : row.awayName) ?? abbr
 
     return HStack(spacing: 6) {
-      CrestView(fixtureId: row.fixtureId, slot: slot, abbr: abbr, size: 24)
+      CrestView(fixtureId: row.fixtureId, slot: slot, abbr: abbr, size: 24, tone: .open)
       Text(name)
         .font(.system(size: 11.5, weight: .semibold))
         .tracking(-0.23)
@@ -263,6 +251,10 @@ struct YourWeekView: View {
 
   private var railColumn: some View {
     VStack(spacing: 0) {
+      // ⚠ Rows CENTRE in the column, the same idiom `NewsView` uses for the
+      // space its lead leaves: a week that returned two fixtures must not look
+      // like one that failed to finish loading.
+      Spacer(minLength: 0)
       ForEach(Array(rail.enumerated()), id: \.element.id) { index, row in
         // ⚠ The first row draws no rule — a rule under the header would read as
         // a second divider rather than a separator between two rows.
@@ -271,6 +263,7 @@ struct YourWeekView: View {
         }
         railRow(row)
       }
+      Spacer(minLength: 0)
     }
   }
 
@@ -280,8 +273,8 @@ struct YourWeekView: View {
         // Butted 1pt apart: at 13pt the pair reads as one object — the fixture
         // — rather than as two badges with something missing between them.
         HStack(spacing: 1) {
-          CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: 13)
-          CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: 13)
+          CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: 13, tone: .open)
+          CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: 13, tone: .open)
         }
 
         VStack(alignment: .leading, spacing: 2.5) {

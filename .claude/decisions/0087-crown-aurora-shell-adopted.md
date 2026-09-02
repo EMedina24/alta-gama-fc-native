@@ -1,7 +1,7 @@
 # 0087 — The crown + aurora shell is adopted: mesh ground, glass cards, and the token system that carries them
 
 - **Date:** 2026-09-01
-- **Status:** Accepted — P1 (ground/mesh/glass) shipped; the crown itself lands with 0088/0089
+- **Status:** Accepted — P1 (ground/mesh/glass) shipped; the crown itself lands with 0088/0089. ⚠ §10's `targets/` carve-out amended by [0104](./0104-widgets-adopt-the-app-shell.md)
 - **Decided by:** Ed Medina, from a delivered design pack (`handoff_new-paint/`)
 - **Amends:** [0015](./0015-handoff-design-system-adopted.md) (surface ladder, no-shadow rule) · [0030](./0030-sheets-are-presented-by-the-root-stack.md) (sheet ground only) · [0045](./0045-match-events-expanded-row.md) (recession value only)
 
@@ -79,6 +79,10 @@ they are correctness rather than paint:
 10. **Out of scope, deliberately:** `targets/` (widgets and Live Activities
     keep their floodlight look and their hand-copied tokens), and the XI
     export card (`cardGround` ships to Photos, not to the mesh).
+    ⚠ **The `targets/` half of this point is amended by
+    [0104](./0104-widgets-adopt-the-app-shell.md)** — the widgets and the Live
+    Activity now draw the mesh and the glass. The XI export card's exclusion
+    stands. Nothing else in this entry changes.
 
 ## Consequences
 

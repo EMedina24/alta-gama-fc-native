@@ -97,7 +97,7 @@ struct LedgerRows: View {
     followed: Bool, goals: Int?, other: Int?
   ) -> some View {
     HStack(spacing: 8) {
-      CrestView(fixtureId: pair.row.fixtureId, slot: slot, abbr: abbr, size: crestSize)
+      CrestView(fixtureId: pair.row.fixtureId, slot: slot, abbr: abbr, size: crestSize, tone: .open)
 
       // ⚠ The followed side lit, exactly the medium row's ADR 0059 rule — on
       // a two-row ledger the accent is what says which side is yours.

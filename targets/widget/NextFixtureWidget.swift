@@ -12,7 +12,7 @@ struct NextFixtureWidget: Widget {
       NextFixtureView(entry: entry)
         // ⚠ Required from iOS 17. Without it the widget draws on nothing and
         // the home screen's own wallpaper shows through the card.
-        .containerBackground(Tok.ground, for: .widget)
+        .containerBackground(for: .widget) { MeshPlate() }
     }
     .configurationDisplayName("Next match")
     .description("The next match for the clubs you follow.")
@@ -22,11 +22,25 @@ struct NextFixtureWidget: Widget {
       .accessoryCircular,
       .accessoryInline,
     ])
+    // ⚠⚠ **Needed so the mesh runs flush, and it is why the view re-applies
+    // `widgetContentMargins` by hand.** Left on, the system's ~16pt margins
+    // leave the ground floating in a black frame — the card-inside-a-card ADR
+    // 0086 measured on the medium tile. But this modifier is CONFIGURATION-wide
+    // and there is no per-family form, so disabling it here would also strip the
+    // Lock Screen accessories' margins. `NextFixtureView` hands those exactly
+    // what the system would have given them; only `systemSmall` gets our own.
+    .contentMarginsDisabled()
   }
 }
 
 struct NextFixtureView: View {
   @Environment(\.widgetFamily) private var family
+
+  /// ⚠ The insets `.contentMarginsDisabled()` just took away. Handing them back
+  /// to the accessory families is what makes that modifier safe — see the
+  /// configuration above. iOS 17.0, which is this target's floor exactly.
+  @Environment(\.widgetContentMargins) private var systemMargins
+
   let entry: FixtureEntry
 
   private var row: WidgetSnapshot.Entry? { entry.rows.first }
@@ -45,8 +59,13 @@ struct NextFixtureView: View {
       default: small
       }
     }
+    .padding(family == .systemSmall ? Self.tileMargins : systemMargins)
     .widgetURL((live?.row ?? row).flatMap(W.url))
   }
+
+  /// ⚠ 13, matching the medium tile's leading/trailing (ADR 0086) so two widgets
+  /// side by side on one page have their type on the same gutter.
+  private static let tileMargins = EdgeInsets(top: 13, leading: 13, bottom: 13, trailing: 13)
 
   // MARK: Home screen
 
@@ -81,9 +100,12 @@ struct NextFixtureView: View {
 
           countdown(row)
 
+          // ⚠ `ink62`, up from `ink55` (ADR 0096): the app found its faint inks
+          // read a tier weaker once the ground was lit rather than flat black,
+          // and stepped every one of them up. Same ground here now.
           Text(footer(row))
             .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(Tok.ink55)
+            .foregroundStyle(Tok.ink62)
             .multilineTextAlignment(.center)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
@@ -160,14 +182,25 @@ struct NextFixtureView: View {
         }
       }
 
-      LedgerRows(pair: pair, copy: entry.copy)
-        .padding(.top, 12)
+      // ⚠ **A recessed glass panel, not bare rows (ADR 0104).** This is the
+      // app's own recession idiom — `match-events.tsx` drops its panel onto
+      // `recess` for exactly this reason: a block of live numbers has to read as
+      // a thing being reported INTO the tile, one plane below the eyebrow and
+      // footnote around it. On a lit ground a flat block of text reads as part
+      // of the ground.
+      GlassSurface(radius: Rad.tile, dim: true, scrim: true) {
+        LedgerRows(pair: pair, copy: entry.copy)
+          .padding(.horizontal, 9)
+          .padding(.vertical, 8)
+          .frame(maxWidth: .infinity)
+      }
+      .padding(.top, 10)
 
       Spacer(minLength: 4)
 
       Text(finished ? nextFooter() ?? Ledger.footnote(pair) ?? "" : Ledger.footnote(pair) ?? "")
         .font(.system(size: 11.5, weight: .medium))
-        .foregroundStyle(Tok.ink55)
+        .foregroundStyle(Tok.ink62)
         .lineLimit(1)
         .minimumScaleFactor(0.75)
     }

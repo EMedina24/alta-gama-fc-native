@@ -120,7 +120,8 @@ private struct LockScreenCard: View {
     .background(floodlights)
   }
 
-  /// Two unequal lime radials from the top corners over a deep green pool.
+  /// Two unequal lime radials from the top corners over a deep green pool, with
+  /// the mesh's cool third light in the bottom-right corner.
   ///
   /// ⚠ **34% and 30%, and the asymmetry is the point** — the card reads as *lit*
   /// rather than branded, and neither club owns the warm side.
@@ -130,6 +131,27 @@ private struct LockScreenCard: View {
   /// wide; SwiftUI's `RadialGradient` is strictly circular and cannot express it.
   /// The handoff's Swift uses the circular one with a hard-coded `endRadius`,
   /// which lands nowhere near the mock at any card width.
+  ///
+  /// ⚠⚠ **ADR 0104 changed this by ADDITION only, and deliberately so.** The two
+  /// lime radials and the green pool are ADR 0085 measured values on a card that
+  /// is drawn over the reader's own wallpaper; this is also the one surface in
+  /// the target that cannot be verified from a simulator, because nothing in
+  /// this repo starts an activity — the server push-to-starts it. So the aurora
+  /// arrives as the mesh's third, coolest pool in the corner the app's own mesh
+  /// puts it, and as the lit top edge every glass card in the app carries.
+  /// Nothing recorded was moved or re-valued. If the palette still reads warm
+  /// against the app once a real push has been seen, the next step is the GREEN
+  /// pool's colour, not the lime.
+  ///
+  /// ⚠ **No `glassEffect` on this card, at any iOS version.** The system already
+  /// composites a Live Activity onto its own material and gives it glass chrome
+  /// of its own on iOS 26; a second material inside that reads muddy rather than
+  /// deeper. The widgets refract their own ground because they OWN their whole
+  /// rectangle — this card does not.
+  ///
+  /// ⚠ Costs zero height, which is the binding constraint here: this is a
+  /// `.background(…)` and an `.overlay(…)`, neither of which is a layout child.
+  /// The live card measures 152.5pt against Apple's ~160pt cap (ADR 0085).
   private var floodlights: some View {
     ZStack {
       EllipticalGradient(
@@ -153,6 +175,19 @@ private struct LockScreenCard: View {
         startRadiusFraction: 0,
         endRadiusFraction: 0.70
       )
+      // ⚠ The mesh's blue-teal pool (`#1c546c`), in the corner theme.ts's `Mesh`
+      // puts it — `cx 1.08, cy 0.86`, off the bottom-right edge. Alpha 0.28
+      // rather than the mesh's 0.50: it is landing on a 152pt card over a
+      // photograph, not on a 930pt screen over a known ground.
+      EllipticalGradient(
+        colors: [Tok.mesh[2].color.opacity(0.28), Tok.activityGround.opacity(0)],
+        center: UnitPoint(x: 1.08, y: 0.86),
+        startRadiusFraction: 0,
+        endRadiusFraction: 0.62
+      )
+    }
+    .overlay(alignment: .top) {
+      Rectangle().fill(Tok.plateTop).frame(height: 1)
     }
   }
 
