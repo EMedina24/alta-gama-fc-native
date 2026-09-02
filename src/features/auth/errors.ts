@@ -75,3 +75,55 @@ export function classifyAuthError(cause: unknown): AuthFailure {
 
   return 'unknown';
 }
+
+/**
+ * The GoTrue codes the email/password form (ADR 0103) maps to their own
+ * sentences, ported from the web's `auth-errors.ts` map. Anything not listed
+ * falls through to `classifyAuthError` and the generic auth strings — the
+ * rate-limit codes deliberately stay out, `classifyAuthError` already names
+ * them.
+ *
+ * ⚠ `invalid_credentials` covers a wrong password AND an unknown address —
+ * GoTrue does not distinguish them, and neither may the copy (a message that
+ * differs would enumerate which emails have accounts).
+ */
+export type EmailAuthCode =
+  | 'invalid_credentials'
+  | 'email_not_confirmed'
+  | 'user_already_exists'
+  | 'weak_password'
+  | 'same_password'
+  | 'email_address_invalid'
+  | 'validation_failed'
+  | 'signup_disabled'
+  | 'email_provider_disabled';
+
+const EMAIL_AUTH_CODES: readonly EmailAuthCode[] = [
+  'invalid_credentials',
+  'email_not_confirmed',
+  'user_already_exists',
+  'weak_password',
+  'same_password',
+  'email_address_invalid',
+  'validation_failed',
+  'signup_disabled',
+  'email_provider_disabled',
+];
+
+export function emailAuthCode(cause: unknown): EmailAuthCode | null {
+  const code = errorCode(cause);
+  // Two codes, one situation, one message — the web normalises them the same way.
+  if (code === 'email_exists') return 'user_already_exists';
+  return code !== null && (EMAIL_AUTH_CODES as readonly string[]).includes(code)
+    ? (code as EmailAuthCode)
+    : null;
+}
+
+/**
+ * ⚠ The one code a form BRANCHES on rather than reports: an unconfirmed
+ * account gets a neutral notice and a resend button, never a red
+ * "wrong password" line.
+ */
+export function isUnconfirmed(cause: unknown): boolean {
+  return errorCode(cause) === 'email_not_confirmed';
+}

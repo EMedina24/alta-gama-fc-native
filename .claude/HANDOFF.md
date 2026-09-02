@@ -1124,6 +1124,15 @@ documented at the code that handles them; this is the index.
    ⚠ **`AUTH_REQUIRED`** in `features/auth/capability.ts` is the seam for making
    sign-in mandatory. Flipping it also makes 5.1.1(v) unavoidable and needs the
    sign-in sheet re-presented without its `Close`.
+   **Email/password added 2026-09-01**
+   ([0103](./decisions/0103-email-password-sign-in.md), reversing 0038's "no
+   email/password" clause): a quiet third option on the sign-in sheet pushes
+   `(sheets)/sign-in-email`. Confirmation and reset links land on the WEB's own
+   pages (`altagamafc.com/{locale}/auth/callback` and `/reset-password`) — no
+   native deep links, no Supabase config changes. The Google button also gained
+   Google's official mark (`atoms/google-mark.tsx`). Checks 10–12 below are new
+   and open; `/_debug/sheets?which=email-auth` (+`&state=notice|error|resend`)
+   previews the form's hard-to-reach states.
 7. **App Store prep** — privacy nutrition labels. ⚠ **This changed with 0038** and
    the old answer is now wrong: it is no longer "device-keyed, **no account**".
    Collected: an APNs token and followed club slugs (device-keyed), **plus email
@@ -1188,6 +1197,20 @@ documented at the code that handles them; this is the index.
       `DELETE`; it must 204 again.
    9. **Token expiry** — background past the ~1h access-token lifetime, foreground,
       confirm `/cronogol/me` still resolves rather than bouncing to signed-out.
+   10. **Email create → confirm → sign in** (0103; works on the simulator) —
+       Crear cuenta with a throwaway address must show the neutral "Revisa tu
+       correo…" notice with the resend button locked, NOT an error; the mail's
+       link lands on `altagamafc.com/{locale}/auth/callback`; back in the app,
+       Entrar must dismiss both sheets onto a signed-in account sheet.
+       ⚠ If dismissing the two stacked sheets at once misbehaves, the fallback
+       is `router.dismissTo('/(sheets)/account')` in `(sheets)/sign-in-email.tsx`.
+   11. **Unconfirmed branch** — Entrar before confirming must render the
+       neutral `confirmFirst` notice + resend (60s lock), never a red error.
+       Wrong password and an unknown address must both print the SAME
+       `errorInvalidCredentials` line.
+   12. **Uniform reset notice** — "¿Has olvidado la contraseña?" with a known
+       AND an unknown address must show the identical `resetSent` notice
+       (enumeration resistance; the rejection is swallowed on purpose).
 
    Also verified in passing: `AUTH_AVAILABLE true` / `AUTH_REQUIRED false`, an
    access token present, the Google redirect rendering as

@@ -188,6 +188,46 @@ export interface Copy {
     errorUnavailable: string;
     errorUnknown: string;
   };
+  /** The email/password form (ADR 0103). Ported from the web's auth form. */
+  emailAuth: {
+    /** The third, quietest option on the sign-in sheet. */
+    entry: string;
+    /** A11y name of the Entrar / Crear cuenta segmented control. */
+    modeLabel: string;
+    signIn: string;
+    create: string;
+    headingSignIn: string;
+    subSignIn: string;
+    headingCreate: string;
+    subCreate: string;
+    emailLabel: string;
+    passwordLabel: string;
+    forgotPassword: string;
+    resendEmail: string;
+    /** The resend button during its 60s lock — Supabase's per-address window. */
+    resendLocked: string;
+    /** ⚠ SUCCESS copy: a sign-up with confirmations on returns no session. */
+    confirmSent: string;
+    /** Signing in before confirming — a neutral notice, never a red error. */
+    confirmFirst: string;
+    resent: string;
+    /** Forgot-password tapped with an empty email field. */
+    emailFirst: string;
+    /** ⚠ Shown for a real AND an unknown address alike — a notice that
+     *  differed would enumerate which emails have accounts. */
+    resetSent: string;
+    /** ⚠ Chosen from a GoTrue `code`, never echoed from Supabase. Wrong
+     *  password and unknown email are ONE message on purpose. */
+    errorInvalidCredentials: string;
+    errorNotConfirmed: string;
+    errorUserExists: string;
+    errorWeakPassword: string;
+    errorSamePassword: string;
+    errorEmailInvalid: string;
+    errorValidation: string;
+    errorSignupDisabled: string;
+    errorEmailDisabled: string;
+  };
   sheets: {
     calendarTitle: (club: string) => string;
     calendarBody: string;
@@ -702,6 +742,36 @@ export const esCopy: Copy = {
     errorUnknown: 'Algo salió mal. Inténtalo de nuevo.',
   },
 
+  emailAuth: {
+    entry: 'Continuar con correo',
+    modeLabel: 'Modo de cuenta',
+    signIn: 'Entrar',
+    create: 'Crear cuenta',
+    headingSignIn: 'Bienvenido de nuevo',
+    subSignIn: 'Entra para tener tus clubes y calendarios en cualquier dispositivo.',
+    headingCreate: 'Crea tu cuenta',
+    subCreate: 'Gratis para siempre. Sin tarjeta, sin spam: solo partidos.',
+    emailLabel: 'Correo',
+    passwordLabel: 'Contraseña',
+    forgotPassword: '¿Has olvidado la contraseña?',
+    resendEmail: 'Reenviar el correo',
+    resendLocked: 'Enviado, espera un minuto',
+    confirmSent: 'Revisa tu correo para confirmar la cuenta y vuelve para entrar.',
+    confirmFirst: 'Confirma tu correo primero: el enlace está en tu bandeja de entrada.',
+    resent: 'Enviado. Revisa tu bandeja: puede tardar un minuto en llegar.',
+    emailFirst: 'Escribe primero tu dirección de correo.',
+    resetSent: 'Si esa dirección tiene cuenta, ya va camino de ella un enlace para restablecerla.',
+    errorInvalidCredentials: 'Ese correo o esa contraseña no son correctos.',
+    errorNotConfirmed: 'Confirma tu correo antes de entrar.',
+    errorUserExists: 'Ya hay una cuenta con ese correo. Entra en lugar de crearla.',
+    errorWeakPassword: 'Esa contraseña es demasiado débil. Usa ocho caracteres o más.',
+    errorSamePassword: 'Esa es la contraseña que ya tienes. Elige otra.',
+    errorEmailInvalid: 'Esa dirección no parece válida. Revísala.',
+    errorValidation: 'Faltan datos o no son válidos. Revisa el formulario.',
+    errorSignupDisabled: 'Ahora mismo no se pueden crear cuentas.',
+    errorEmailDisabled: 'Ahora mismo no se puede entrar con correo.',
+  },
+
   sheets: {
     calendarTitle: (club: string) => `La temporada del ${club}, en tu calendario`,
     calendarBody:
@@ -1094,6 +1164,36 @@ export const enCopy: Copy = {
     errorRateLimited: 'Too many attempts. Wait a moment.',
     errorUnavailable: 'Could not reach the account service. Try again shortly.',
     errorUnknown: 'Something went wrong. Try again.',
+  },
+
+  emailAuth: {
+    entry: 'Continue with email',
+    modeLabel: 'Account mode',
+    signIn: 'Sign in',
+    create: 'Create account',
+    headingSignIn: 'Welcome back',
+    subSignIn: 'Sign in to keep your clubs and calendars on every device.',
+    headingCreate: 'Create your account',
+    subCreate: 'Free forever. No card, no spam — just fixtures.',
+    emailLabel: 'Email',
+    passwordLabel: 'Password',
+    forgotPassword: 'Forgot your password?',
+    resendEmail: 'Resend the email',
+    resendLocked: 'Sent — wait a minute',
+    confirmSent: 'Check your email to confirm the account, then come back and sign in.',
+    confirmFirst: 'Confirm your email first — the link is in your inbox.',
+    resent: 'Sent. Check your inbox — it can take a minute to arrive.',
+    emailFirst: 'Enter your email address first.',
+    resetSent: 'If that address has an account, a reset link is on its way to it.',
+    errorInvalidCredentials: 'That email or password is not right.',
+    errorNotConfirmed: 'Confirm your email before signing in.',
+    errorUserExists: 'That email already has an account. Sign in instead.',
+    errorWeakPassword: 'That password is too weak. Use eight characters or more.',
+    errorSamePassword: 'That is the password you already have. Pick another.',
+    errorEmailInvalid: 'That address does not look valid. Check it.',
+    errorValidation: 'Something is missing or not valid. Check the form.',
+    errorSignupDisabled: 'Accounts cannot be created right now.',
+    errorEmailDisabled: 'Email sign-in is not available right now.',
   },
 
   sheets: {

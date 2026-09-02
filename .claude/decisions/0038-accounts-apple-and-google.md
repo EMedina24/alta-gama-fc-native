@@ -1,7 +1,8 @@
 # 0038 — Accounts: Apple and Google, sign-in optional
 
 - **Date:** 2026-08-26
-- **Status:** Accepted
+- **Status:** Accepted — email/password clause superseded by
+  [0103](./0103-email-password-sign-in.md); the rest stands
 - **Supersedes:** [0019](./0019-anonymous-v1.md)
 - **Decided by:** Ed Medina
 

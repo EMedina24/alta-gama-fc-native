@@ -28,3 +28,4 @@ export { SearchGlyph } from './search-glyph';
 export { GlobeGlyph } from './globe-glyph';
 export { PersonGlyph, type PersonGlyphProps } from './person-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';
+export { GoogleMark } from './google-mark';

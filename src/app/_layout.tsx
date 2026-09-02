@@ -82,6 +82,13 @@ export default function RootLayout() {
             name="(sheets)/sign-in"
             options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
           />
+          {/* The email/password form (ADR 0103): full detent like xi-export —
+              it holds two text fields and a keyboard, and `fitToContents`
+              would resize under every notice that appears or clears. */}
+          <Stack.Screen
+            name="(sheets)/sign-in-email"
+            options={{ ...sheet, sheetAllowedDetents: [1] }}
+          />
           <Stack.Screen name="(sheets)/alerts" options={sheet} />
           <Stack.Screen name="(sheets)/calendar" options={sheet} />
           <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />

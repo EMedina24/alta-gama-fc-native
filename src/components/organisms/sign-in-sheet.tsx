@@ -6,7 +6,10 @@
  * PRESENTATION as well as presence: Apple must be at least as prominent — same
  * width, same order of reading, not below a fold, not styled as the lesser
  * option. Apple goes FIRST here and both buttons are the same height. Do not
- * "improve" this by promoting Google.
+ * "improve" this by promoting Google. The Google mark makes the two buttons
+ * EQUIVALENT (Apple's component draws its own logo), not Google more
+ * prominent; and the email option (ADR 0103) is deliberately the quietest of
+ * the three — the reading order is Apple ≥ Google > email.
  *
  * ⚠ Apple's button must be Apple's own component — its chrome, corner radius and
  * label wording are prescribed, and a hand-drawn lookalike is a rejection of its
@@ -19,7 +22,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Text } from '@/components/atoms';
+import { Button, GoogleMark, Text } from '@/components/atoms';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import type { Copy } from '@/lib/i18n/copy';
 
@@ -44,6 +47,8 @@ export interface SignInSheetProps {
   error: string | null;
   onApple: () => void;
   onGoogle: () => void;
+  /** Pushes the email/password form sheet (ADR 0103). */
+  onEmail: () => void;
   onClose: () => void;
 }
 
@@ -54,6 +59,7 @@ export function SignInSheet({
   error,
   onApple,
   onGoogle,
+  onEmail,
   onClose,
 }: SignInSheetProps) {
   const a = copy.auth;
@@ -93,10 +99,18 @@ export function SignInSheet({
           <Button
             label={a.google}
             tone="secondary"
+            icon={<GoogleMark />}
             loading={busy}
             onPress={onGoogle}
           />
         </View>
+
+        <Button
+          label={copy.emailAuth.entry}
+          tone="quiet"
+          onPress={onEmail}
+          disabled={busy}
+        />
       </View>
 
       {error ? (

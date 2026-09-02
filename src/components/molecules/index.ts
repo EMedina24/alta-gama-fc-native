@@ -36,3 +36,5 @@ export { ClubNextCard, type ClubNextCardProps } from './club-next-card';
 export { ClubStatsStrip, type ClubStatsStripProps } from './club-stats-strip';
 export { ClubBubble, type ClubBubbleProps } from './club-bubble';
 export { ClubRow, type ClubRowProps } from './club-row';
+export { FormField, type FormFieldProps } from './form-field';
+export { SegmentedControl, type SegmentedControlProps } from './segmented-control';

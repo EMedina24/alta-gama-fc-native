@@ -84,6 +84,7 @@ export default function SignInSheetRoute() {
         })
       }
       onGoogle={() => void run(signInWithGoogle)}
+      onEmail={() => router.push('/(sheets)/sign-in-email')}
       onClose={() => router.back()}
     />
   );
