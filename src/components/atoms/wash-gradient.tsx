@@ -72,9 +72,10 @@ export function WashGradient({ stops, angle }: WashGradientProps) {
  * The same fill, radial (ADR 0082) — the Clubs rail bubble's core, lit from
  * near the top so the crest reads as floating on the club's own colour.
  *
- * ⚠ **Not `Glow`.** That atom is the app icon's floodlight: it takes a
- * `ThemeColor` key and owns its own three stops. This one takes an arbitrary
- * colour — a club's, which is never a theme token — and the caller's stops.
+ * ⚠ **Not the old `Glow`.** That atom was the app icon's floodlight — a
+ * `ThemeColor` key owning its own three stops — and left with onboarding's
+ * floodlight look (ADR 0099). This one takes an arbitrary colour — a club's,
+ * which is never a theme token — and the caller's stops.
  *
  * ⚠ The `stopOpacity` rule in `WashGradient`'s header applies here unchanged:
  * `react-native-svg` paints an `rgba()` `stopColor` opaque, so translucency is

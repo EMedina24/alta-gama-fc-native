@@ -43,8 +43,11 @@ import { Crown } from './crown';
  * How far down the crown its ink stops being dark-on-bright. `CrownGrad` is
  * mid-teal by 50 % and dark green by 68 %; two fifths is where the band behind
  * the status bar stops carrying the lime.
+ *
+ * Exported for the one crowned screen that cannot use this scaffold — the
+ * onboarding picker (ADR 0099), which needs its own pinned footer.
  */
-const BRIGHT_BAND = 0.42;
+export const BRIGHT_BAND = 0.42;
 
 export interface ScreenScaffoldProps {
   title: string;
@@ -182,7 +185,9 @@ export function AvatarButton({
       accessibilityLabel="Account"
       hitSlop={8}
       style={({ pressed }) => pressed && { opacity: 0.7 }}>
-      <Avatar initials={initials} tone={tone} />
+      {/* ⚠ `attention` ONLY while signed out (ADR 0101): the spinning arc is
+          the sign-in invitation, and it must not outlive it. */}
+      <Avatar initials={initials} tone={tone} attention={initials === null} />
     </Pressable>
   );
 }

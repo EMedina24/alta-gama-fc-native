@@ -150,6 +150,20 @@ export default function ClubScreen() {
               bleedTop={insets.top}
               onBack={() => router.back()}
               backLabel={primaryCompetition(data.fixtures) ?? copy.club.fixtures}
+              // ⚠ A second door to the SAME sheet as the alerts row (ADR 0097),
+              // above the fold — never a direct unfollow. Hidden while not
+              // subscribed: the solid-lime alerts row is the follow invitation,
+              // and the screen keeps one lime hero.
+              follow={
+                subscribed
+                  ? {
+                      label: copy.club.following,
+                      hint: copy.club.followingHint,
+                      onPress: () =>
+                        router.push({ pathname: '/(sheets)/alerts', params: { slug } }),
+                    }
+                  : null
+              }
             />
 
             {standing ? (

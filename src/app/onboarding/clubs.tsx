@@ -1,21 +1,37 @@
 /**
- * Step 1 — the club picker. A 3-up crest-led grid with search, behind a row of
- * league pills (ADR 0076; the 3-up is what SPEC §3.7 asked for).
+ * Step 1 — the club picker. The CROWN carries the step, the title and the
+ * search + league pills; the clubs are the Clubs tab's own liquid-glass
+ * BUBBLES, here as selection toggles (ADR 0099 — reversing 0076's tile grid
+ * and the repaint's floodlight carve-out).
  *
  * ⚠ TWO team queries, and they are not redundant. `TeamView` carries NO league
  * field — membership is only knowable from which league's roster a slug comes
  * back in — so the browse grid must be fetched league-scoped and cannot be
  * filtered out of the unscoped set. The unscoped call is the SEARCH corpus:
  * a reader looking for Arsenal from the LaLiga chip has to find it (ADR 0032).
+ *
+ * ⚠ This screen wears a crown but cannot use `ScreenScaffold` — it needs a
+ * pinned CTA footer and keyboard-persistent taps — so it borrows the
+ * scaffold's status-bar arithmetic (`BRIGHT_BAND`, ADR 0094) instead of
+ * duplicating the number.
  */
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
-import { Button, Check, Crest, Eyebrow, Glow, SkeletonRows, Text, WashGradient } from '@/components/atoms';
-import { LeaguePills, PickStack, SearchField, StepDots } from '@/components/molecules';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Button, MeshGround, SkeletonRows, Text, WashGradient } from '@/components/atoms';
+import { ClubBubble, LeaguePills, PickStack, SearchField, StepDots } from '@/components/molecules';
+import { BRIGHT_BAND } from '@/components/templates/screen-scaffold';
+import { Crown } from '@/components/templates/crown';
+import { Colors, CrownRamp, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, pickerName } from '@/lib/cronogol/derive';
 import { DEFAULT_LEAGUE, findLeague, leagueOptions } from '@/lib/cronogol/leagues';
 import { foldAccents } from '@/lib/format';
@@ -46,6 +62,13 @@ export default function OnboardingClubs() {
 
   const [picked, setPicked] = useState<string[]>([]);
   const [query, setQuery] = useState('');
+
+  /** The scaffold's status-bar flip (ADR 0094), inlined for the same crown. */
+  const [overBright, setOverBright] = useState(true);
+  const threshold = Math.max(0, (insets.top + CrownRamp) * BRIGHT_BAND - insets.top);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setOverBright(e.nativeEvent.contentOffset.y < threshold);
+  };
 
   const shown = useMemo(() => {
     const needle = foldAccents(query.trim());
@@ -80,77 +103,71 @@ export default function OnboardingClubs() {
 
   return (
     <View style={styles.screen}>
-      <Glow opacity={0.1} cx={0.15} cy={0} r={0.5} />
+      <StatusBar style={overBright ? 'dark' : 'light'} />
+      <MeshGround />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.six }]}
+        onScroll={onScroll}
+        scrollEventThrottle={32}
+        contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        <View style={styles.stepRow}>
-          <Eyebrow color="accent">{copy.onboarding.step(1, 2)}</Eyebrow>
-          <StepDots count={2} active={0} />
-        </View>
-        <Text variant="largeTitle">{copy.onboarding.pickTitle}</Text>
-        <Text variant="body" color="textSecondary" style={styles.body}>
-          {copy.onboarding.pickBody}
-        </Text>
-
-        {/* ⚠ The search field sits ABOVE the pills on purpose. The pills unmount
-            on the first keystroke, and anything below them would be yanked
-            upward under the reader's finger mid-type. */}
-        <View style={styles.search}>
-          <SearchField
-            value={query}
-            onChangeText={setQuery}
-            placeholder={copy.onboarding.search}
-          />
-        </View>
-
-        {/* ⚠ Hidden while searching: search spans EVERY tracked club, so a
-            league filter over those results would claim a scope the list does
-            not have (ADR 0032). */}
-        {query ? null : (
-          <LeaguePills
-            leagues={leagueOptions(artwork.data)}
-            active={league.slug}
-            onSelect={setLeagueSlug}
-          />
-        )}
-
-        {/* ⚠ Only the GRID waits on the league's roster. Gating the screen would
-            take the pills off-screen under the finger that just tapped them, and
-            the empty grid paints before the skeleton would (ADR 0032). */}
-        {browse.isPending && !query ? (
-          <SkeletonRows count={8} height={Size.rowSkeleton} />
-        ) : (
-          <View style={styles.grid}>
-            {shown.map((team) => {
-              const on = picked.includes(team.slug);
-              return (
-                <Pressable
-                  key={team.slug}
-                  onPress={() => toggle(team.slug)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: on }}
-                  accessibilityLabel={team.name}
-                  style={({ pressed }) => [styles.tile, on && styles.tileOn, pressed && styles.pressed]}>
-                  <Crest
-                    src={crestSrc(team.logoUrls, team.logoUrl, 'small')}
-                    fallback={abbreviate(team.name, team.slug, team.shortName)}
-                    size={Size.crestPick}
-                  />
-                  {/* ⚠ `pickerName`, not `displayName`: three across, one line each. */}
-                  <Text variant="caption" color={on ? 'text' : 'textSecondary'} numberOfLines={1} center>
-                    {pickerName(team.name)}
-                  </Text>
-                  {on ? (
-                    <View style={styles.badge}>
-                      <Check color="onAccent" size={Size.pickBadge - 8} />
-                    </View>
-                  ) : null}
-                </Pressable>
-              );
-            })}
+        <Crown
+          eyebrow={copy.onboarding.step(1, 2)}
+          title={copy.onboarding.pickTitle}
+          meta={<StepDots count={2} active={0} />}
+          topInset={insets.top}>
+          <View style={styles.controls}>
+            {/* The body copy rides the crown, in its dark-on-bright ink. */}
+            <View style={styles.crownBody}>
+              <Text variant="body" color="onCrownDim" style={styles.crownBodyText}>
+                {copy.onboarding.pickBody}
+              </Text>
+            </View>
+            {/* ⚠ The search field sits ABOVE the pills on purpose. The pills
+                unmount on the first keystroke, and anything below them would be
+                yanked upward under the reader's finger mid-type. */}
+            <SearchField
+              value={query}
+              onChangeText={setQuery}
+              placeholder={copy.onboarding.search}
+            />
+            {/* ⚠ Hidden while searching: search spans EVERY tracked club, so a
+                league filter over those results would claim a scope the list
+                does not have (ADR 0032). */}
+            {query ? null : (
+              <LeaguePills
+                leagues={leagueOptions(artwork.data)}
+                active={league.slug}
+                onSelect={setLeagueSlug}
+              />
+            )}
           </View>
-        )}
+        </Crown>
+
+        <View style={styles.body}>
+          {/* ⚠ Only the GRID waits on the league's roster. Gating the screen
+              would take the pills off-screen under the finger that just tapped
+              them, and the empty grid paints before the skeleton would. */}
+          {browse.isPending && !query ? (
+            <SkeletonRows count={8} height={Size.rowSkeleton} />
+          ) : (
+            <View style={styles.grid}>
+              {shown.map((team) => (
+                <View key={team.slug} style={styles.cell}>
+                  <ClubBubble
+                    name={pickerName(team.name)}
+                    crest={crestSrc(team.logoUrls, team.logoUrl, 'small')}
+                    abbr={abbreviate(team.name, team.slug, team.shortName)}
+                    rank={null}
+                    rankColor={null}
+                    checked={picked.includes(team.slug)}
+                    accessibilityLabel={team.name}
+                    onPress={() => toggle(team.slug)}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
@@ -178,42 +195,17 @@ export default function OnboardingClubs() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { paddingHorizontal: Spacing.five, gap: Spacing.three, paddingBottom: Spacing.seven },
-  stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  body: { lineHeight: 21 },
-  // The field itself is `SearchField` (ADR 0082); this is only its offset.
-  search: { marginTop: Spacing.two },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.one },
-  tile: {
-    // Three across inside the gutter, with two 8pt gaps: (100% − 16) / 3.
-    width: '31.5%',
-    flexGrow: 1,
-    maxWidth: '32.5%',
-    minHeight: 108,
-    alignItems: 'center',
-    gap: Spacing.two + 2,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.three + 2,
-    paddingHorizontal: Spacing.two,
-    // Glass (ADR 0087) — the picker tiles sit straight on the new ground.
-    backgroundColor: Colors.dark.glassFill,
-    borderRadius: Radius.tile,
-    borderWidth: 1.5,
-    borderColor: Colors.dark.glassLine,
-  },
-  tileOn: { borderColor: Colors.dark.accentRing, backgroundColor: Colors.dark.raised },
-  pressed: { opacity: 0.7 },
-  badge: {
-    position: 'absolute',
-    top: Spacing.two,
-    right: Spacing.two,
-    width: Size.pickBadge,
-    height: Size.pickBadge,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.dark.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // ⚠ No horizontal padding — the crown is full-bleed; the gutter is `body`'s
+  // (the scaffold's own contract, ADR 0087).
+  content: { paddingBottom: Spacing.eight + Spacing.seven },
+  controls: { gap: Spacing.three },
+  crownBody: { marginTop: -Spacing.two },
+  crownBodyText: { lineHeight: 21 },
+  body: { paddingHorizontal: Spacing.five, paddingTop: Spacing.two },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.five },
+  // Thirds, with the 88pt bubble centred in each — no gap arithmetic to
+  // drift, and a short last row stays left-aligned.
+  cell: { width: '33.33%', alignItems: 'center' },
   footer: {
     paddingHorizontal: Spacing.five,
     paddingTop: Spacing.three,

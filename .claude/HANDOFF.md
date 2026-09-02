@@ -102,9 +102,16 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > `leagueTile*`/the three news ratios dropped from `theme.ts`; `_debug/gallery`
 > re-grounded to the real `recess` and tray surfaces.
 >
-> ⚠ **Onboarding deliberately does NOT take the mesh.** Its three screens keep
-> 0076's floodlight `Glow`, which is its own verified look; the two layers
-> fought each other. It sits on the new ground and was re-checked there.
+> ⚠ ~~Onboarding deliberately does NOT take the mesh.~~ **REVERSED 2026-09-01
+> on Ed's call ([0099](./decisions/0099-onboarding-joins-the-crown-shell.md)):
+> onboarding now wears the crown + aurora shell** — mesh on all three screens,
+> a title-less crown on the welcome (the gradient head alone), the full crown
+> on the picker and primer, and the picker's tiles replaced by the rail's
+> liquid-glass `ClubBubble`s (`checked` prop — the rail's one-action rule is
+> untouched). `Glow` is deleted with the floodlight look. Verified by
+> screenshot on the simulator (ES); ⚠ picked-state checks, the language tap
+> and the CTA crest stack still need a device pass — taps cannot be scripted
+> here.
 >
 > ⚠ **Still unverified after the repaint:** a REAL live match in the Today
 > crown (first chance Valencia v Barcelona 2026-09-06); the club page below the
@@ -743,6 +750,20 @@ documented at the code that handles them; this is the index.
     `CRONOGOL-API.md` says the hyphenated one "no longer matches anything" since
     2026-08-05. **When a sample stands in for the wire, copy real values into it;
     a field you type by hand is a field the test cannot check.**
+
+49. **⚠⚠ A deduped row is invisible to any filter keyed on the side that lost
+    the dedupe** ([0102](./decisions/0102-widget-club-filter-matches-involvement.md)).
+    The Edit Widget club filter matched `entry.clubSlug == selected`, but a derby
+    between two followed clubs is ONE entry whose `clubSlug` is the home side
+    (0029's tie-break), and the away club's next-match slot is consumed by that
+    same fixture — so selecting the away club rendered "Sin partidos programados"
+    with the club's own fixture sitting in the snapshot. Reported from a device
+    2026-09-01; reproduced same day by running the real `buildSnapshot` over the
+    live `/cronogol/fixtures` window (ATH v ATM, both followed → zero rows for
+    `atletico-madrid`). Fix: entries carry `homeSlug`/`awaySlug` (snapshot v4)
+    and Swift filters on `involves(club)`. ⚠ The general rule: when a writer
+    collapses N owners to one row, every reader that FILTERS BY OWNER must match
+    on all N, not on the one the collapse elected.
 
 ---
 

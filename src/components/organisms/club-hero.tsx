@@ -24,14 +24,33 @@
  * nav via `bleedX`/`bleedTop`, which only the screen knows. The block is
  * `overflow: 'hidden'` so the bleed stops at its own foot — and so the bled
  * crest is clipped to it (trap 40's other half).
+ *
+ * ⚠ The FOLLOWING pill (ADR 0097) sits opposite the back pill, and only while
+ * subscribed. It NEVER unfollows directly — its tap opens the alerts sheet,
+ * the one place both directions confirm (0082) — and it wears the settled
+ * wash-and-ring, not solid lime: the screen's solid-lime invitation belongs
+ * to the alerts row below, and there is one lime hero per screen.
  */
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 
-import { Crest, Text, WashGradient, WashRadial } from '@/components/atoms';
+import { Check, Crest, FadeOutImage, Text, WashGradient, WashRadial } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName, homeGround } from '@/lib/cronogol/derive';
 import type { FixtureView, TeamView } from '@/lib/cronogol/types';
+
+/** A 34pt pill is below `minTouch`, and carries hitSlop to make the difference up. */
+const PILL_SLOP = { top: (Size.minTouch - Size.pill) / 2, bottom: (Size.minTouch - Size.pill) / 2 };
+
+/** How far the wallpaper crest hangs off the bottom-left corner. */
+const BLEED_OFF = 96;
+/**
+ * Where the hero's `overflow: 'hidden'` cuts the crest, as a fraction of its
+ * box — derived from `BLEED_OFF` so the fade and the clip cannot drift apart
+ * (ADR 0098). The dissolve completes a hair above the line; only the LEFT
+ * edge still hard-clips, at the physical screen edge where a cut reads as
+ * intentional.
+ */
+const BLEED_CLIP = (Size.bigCrestBleed - BLEED_OFF) / Size.bigCrestBleed;
 
 export interface ClubHeroProps {
   team: TeamView;
@@ -44,6 +63,14 @@ export interface ClubHeroProps {
   onBack: () => void;
   /** The back pill's label — the league name, or a neutral fallback. */
   backLabel: string;
+  /**
+   * The follow-state pill (ADR 0097). Null hides it — the unsubscribed page's
+   * follow invitation is the solid-lime alerts row, not the hero.
+   *
+   * `hint` is the VoiceOver hint: the visible label states the STATE
+   * ("Following"), so the hint carries the ACTION (opens the unfollow confirm).
+   */
+  follow?: { label: string; hint: string; onPress: () => void } | null;
 }
 
 export function ClubHero({
@@ -54,6 +81,7 @@ export function ClubHero({
   bleedTop = 0,
   onBack,
   backLabel,
+  follow = null,
 }: ClubHeroProps) {
   const ground = homeGround(team, fixtures);
   const place = [ground.city, ground.venue].filter(Boolean).join(' · ');
@@ -102,26 +130,48 @@ export function ClubHero({
       )}
 
       {/* The club's own crest as wallpaper. Decorative — the identity crest
-          below is the one that carries the accessibility weight. */}
+          below is the one that carries the accessibility weight. It DISSOLVES
+          before the hero's clip line rather than being chopped by it: the
+          hero's wash fades to nothing, so a hard cut there had no visible
+          container to explain it (ADR 0098). */}
       {crest ? (
-        <Image
-          source={{ uri: crest }}
+        <FadeOutImage
+          uri={crest}
+          size={Size.bigCrestBleed}
+          fadeFrom={0.25}
+          fadeTo={BLEED_CLIP - 0.02}
           style={styles.bleedCrest}
-          contentFit="contain"
-          accessible={false}
-          pointerEvents="none"
         />
       ) : null}
 
-      <Pressable
-        onPress={onBack}
-        accessibilityRole="button"
-        accessibilityLabel={backLabel}
-        style={({ pressed }) => [styles.back, pressed && styles.backPressed]}>
-        <Text variant="eyebrowSm" color="text">
-          {`‹  ${backLabel}`}
-        </Text>
-      </Pressable>
+      <View style={styles.topRow}>
+        <Pressable
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel={backLabel}
+          hitSlop={PILL_SLOP}
+          style={({ pressed }) => [styles.back, pressed && styles.backPressed]}>
+          <Text variant="eyebrowSm" color="text">
+            {`‹  ${backLabel}`}
+          </Text>
+        </Pressable>
+
+        {follow ? (
+          <Pressable
+            onPress={follow.onPress}
+            accessibilityRole="button"
+            accessibilityState={{ selected: true }}
+            accessibilityLabel={follow.label}
+            accessibilityHint={follow.hint}
+            hitSlop={PILL_SLOP}
+            style={({ pressed }) => [styles.follow, pressed && styles.backPressed]}>
+            <Check color="accent" size={11} />
+            <Text variant="eyebrowSm" color="accent">
+              {follow.label}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <View style={styles.identity}>
         <View style={styles.names}>
@@ -161,14 +211,16 @@ const styles = StyleSheet.create({
    */
   bleedCrest: {
     position: 'absolute',
-    left: -96,
-    bottom: -96,
-    width: Size.bigCrestBleed,
-    height: Size.bigCrestBleed,
+    left: -BLEED_OFF,
+    bottom: -BLEED_OFF,
     opacity: 0.06,
   },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   back: {
-    alignSelf: 'flex-start',
     height: Size.pill,
     justifyContent: 'center',
     paddingHorizontal: Spacing.three,
@@ -178,6 +230,18 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.glassLine,
   },
   backPressed: { transform: [{ scale: 0.955 }] },
+  // The settled state's chrome — the alerts row's `alertsOn`, at pill size.
+  follow: {
+    height: Size.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.dark.accentWash,
+    borderWidth: 1,
+    borderColor: Colors.dark.accentRing,
+  },
   identity: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
   names: { flex: 1, gap: Spacing.one, minWidth: 0 },
   /** The mock's lifted crest — the one shadow 0087 sanctions here. */

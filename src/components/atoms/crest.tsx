@@ -41,13 +41,14 @@ export interface CrestProps {
  * A three-letter code at the `micro` step is ~24pt wide, which does not fit a
  * 26pt row tile once the border is taken off — `OSA` rendered as `O…`. The ramp
  * below plus `adjustsFontSizeToFit` is what guarantees three characters always
- * fit, at every size the design uses (26 / 30 / 40 / 58).
+ * fit, at every size the design uses (26 / 30 / 40 / 80).
  */
 function codeSize(tile: number): number {
   if (tile <= 26) return 9;
   if (tile <= 30) return 10;
   if (tile <= 40) return 12.5;
-  return 16;
+  if (tile <= 58) return 16;
+  return 22;
 }
 
 export function Crest({ src, fallback, size, tone = 'default', filled = false }: CrestProps) {

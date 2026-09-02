@@ -168,7 +168,9 @@ export default function MatchdaysScreen() {
       }>
       {total !== null && matchweek !== null ? (
         <View style={styles.strip}>
-          <Eyebrow small>{copy.matchdays.stripLabel}</Eyebrow>
+          <Eyebrow small color="onCrown">
+            {copy.matchdays.stripLabel}
+          </Eyebrow>
           <MatchdayStrip
             total={total}
             current={matchweek}

@@ -14,10 +14,12 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
-import { type AlertKind, Button, Check, Eyebrow, Glow, Hairline, Text } from '@/components/atoms';
+import { type AlertKind, Button, Check, Hairline, MeshGround, Text } from '@/components/atoms';
 import { AlertPreview, AlertTile, StepDots } from '@/components/molecules';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Crown } from '@/components/templates/crown';
+import { Colors, Radius, Spacing, Surfaces } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { requestPushPermission } from '@/features/push/capability';
 import { setAlert, setOnboarded, usePreferences } from '@/store/preferences';
@@ -68,17 +70,21 @@ export default function OnboardingAlerts() {
 
   return (
     <View style={styles.screen}>
-      <Glow opacity={0.12} cx={0.5} cy={0.2} r={0.6} />
-      <View style={[styles.content, { paddingTop: insets.top + Spacing.six }]}>
-        <View style={styles.stepRow}>
-          <Eyebrow color="accent">{copy.onboarding.step(2, 2)}</Eyebrow>
-          <StepDots count={2} active={1} />
-        </View>
-        <Text variant="largeTitle">{copy.onboarding.alertsTitle}</Text>
-        <Text variant="body" color="textSecondary" style={styles.body}>
+      {/* Statically dark: no scroll, so the crown's bright band never leaves
+          the top (ADR 0094's flip, degenerate case — ADR 0099). */}
+      <StatusBar style="dark" />
+      <MeshGround />
+      <Crown
+        eyebrow={copy.onboarding.step(2, 2)}
+        title={copy.onboarding.alertsTitle}
+        meta={<StepDots count={2} active={1} />}
+        topInset={insets.top}
+        padBottom={Spacing.four}>
+        <Text variant="body" color="onCrownDim" style={styles.body}>
           {copy.onboarding.alertsBody}
         </Text>
-
+      </Crown>
+      <View style={styles.content}>
         {/* What a reader is saying yes to — a SAMPLE, before the prompt (ADR 0076). */}
         <View style={styles.preview}>
           <AlertPreview
@@ -121,13 +127,13 @@ export default function OnboardingAlerts() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.dark.background, justifyContent: 'space-between' },
-  content: { paddingHorizontal: Spacing.five, gap: Spacing.three },
-  stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  screen: { flex: 1, backgroundColor: Colors.dark.background },
+  content: { flex: 1, paddingHorizontal: Spacing.five, gap: Spacing.three },
   body: { lineHeight: 21 },
-  preview: { marginTop: Spacing.four, marginBottom: Spacing.one },
+  preview: { marginTop: Spacing.two, marginBottom: Spacing.one },
+  // Glass on the mesh (ADR 0087's ladder) — `card` was the old flat ground's.
   group: {
-    backgroundColor: Colors.dark.card,
+    ...Surfaces.glass,
     borderRadius: Radius.group,
     overflow: 'hidden',
   },

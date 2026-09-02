@@ -360,6 +360,14 @@ export interface Copy {
   club: {
     alertsOn: string;
     alertsOff: string;
+    /**
+     * The hero's follow-state pill (ADR 0097) — drawn only while subscribed.
+     * Its tap opens the alerts sheet, the app's one unfollow confirm.
+     * The label states the STATE; `followingHint` is the VoiceOver hint that
+     * carries the ACTION.
+     */
+    following: string;
+    followingHint: string;
     calendar: string;
     subscribeNote: string;
     fixtures: string;
@@ -794,6 +802,8 @@ export const esCopy: Copy = {
   club: {
     alertsOn: 'Avisos activados',
     alertsOff: 'Avisos de partido',
+    following: 'Siguiendo',
+    followingHint: 'Abre la confirmación para dejar de seguir a este club.',
     calendar: 'Calendario',
     subscribeNote:
       'Una suscripción cubre toda la temporada: cambios de horario, aplazamientos, cambios de campo. No hay opción por partido, y es a propósito.',
@@ -1186,6 +1196,8 @@ export const enCopy: Copy = {
   club: {
     alertsOn: 'Alerts on',
     alertsOff: 'Match alerts',
+    following: 'Following',
+    followingHint: 'Opens the confirmation to unfollow this club.',
     calendar: 'Calendar',
     subscribeNote:
       'One subscription covers the whole season — kickoff moved, postponed, venue switched. There is no per-match option, by design.',

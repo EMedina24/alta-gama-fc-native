@@ -62,10 +62,22 @@ struct WidgetSnapshot: Codable {
   struct Entry: Codable, Identifiable {
     let fixtureId: String
     /// The FOLLOWED club this row belongs to — not necessarily the home side.
+    ///
+    /// ⚠⚠ **Never the whole answer to "is this club X's row" — use `involves`.**
+    /// A derby between two followed clubs is ONE entry (the writer dedupes by
+    /// fixture id) and this names only the side `upcomingRow` resolved, home
+    /// winning the tie (ADR 0029). Filtering `clubSlug ==` alone made a widget
+    /// configured to the derby's away side say "no matches scheduled" while its
+    /// club sat right there in the snapshot (ADR 0102).
     let clubSlug: String
     let isHome: Bool
     let homeAbbr: String
     let awayAbbr: String
+    /// Both sides' slugs, v4 (ADR 0102) — what `involves` matches. ⚠ Optional:
+    /// absent from a v3 snapshot, and absence degrades the club filter to the
+    /// old owner-only match, never to a crash.
+    let homeSlug: String?
+    let awaySlug: String?
     /// Both sides named, home first (ADR 0059). ⚠ Optional: a v1 snapshot
     /// written by an older app has neither, and the row falls back to the abbrs.
     let homeName: String?
@@ -100,6 +112,13 @@ struct WidgetSnapshot: Codable {
     let leagueSlug: String?
 
     var id: String { fixtureId }
+
+    /// Whether this row is `club`'s match — either side of it, not just the
+    /// side `clubSlug` resolved to. See `clubSlug` for why the difference is a
+    /// shipped bug and not a nicety.
+    func involves(_ club: String) -> Bool {
+      clubSlug == club || homeSlug == club || awaySlug == club
+    }
 
     /// Whether `/cronogol/live` could ever serve this fixture.
     ///
@@ -160,7 +179,7 @@ extension WidgetSnapshot {
   func rows(after date: Date, clubSlug: String?) -> [Entry] {
     entries
       .filter { $0.kickoffUtc > date }
-      .filter { clubSlug == nil || $0.clubSlug == clubSlug }
+      .filter { entry in clubSlug.map(entry.involves) ?? true }
       .sorted { $0.kickoffUtc < $1.kickoffUtc }
   }
 
@@ -182,7 +201,7 @@ extension WidgetSnapshot {
         date.timeIntervalSince($0.kickoffUtc) <= 150 * 60
           || calendar.isDate($0.kickoffUtc, inSameDayAs: date)
       }
-      .filter { clubSlug == nil || $0.clubSlug == clubSlug }
+      .filter { entry in clubSlug.map(entry.involves) ?? true }
       .sorted { $0.kickoffUtc < $1.kickoffUtc }
   }
 
@@ -220,7 +239,7 @@ extension WidgetSnapshot {
   /// may not live in, presented exactly like real data. The sample belongs in
   /// the picker, where everything is obviously a preview, and nowhere else.
   static func unavailable(relativeTo now: Date) -> WidgetSnapshot {
-    WidgetSnapshot(v: 2, writtenAt: now, clubs: [], copy: fallbackCopy, entries: [])
+    WidgetSnapshot(v: 4, writtenAt: now, clubs: [], copy: fallbackCopy, entries: [])
   }
 
   /// The gallery preview.
@@ -230,7 +249,7 @@ extension WidgetSnapshot {
   /// which reads as broken to someone who simply has not opened the app yet.
   static func placeholder(relativeTo now: Date) -> WidgetSnapshot {
     WidgetSnapshot(
-      v: 2,
+      v: 4,
       writtenAt: now,
       clubs: [
         .init(slug: "valencia", name: "Valencia CF", abbr: "VAL"),
@@ -255,6 +274,7 @@ extension WidgetSnapshot {
         .init(
           fixtureId: "preview-1", clubSlug: "valencia", isHome: true,
           homeAbbr: "VAL", awayAbbr: "RMA",
+          homeSlug: "valencia", awaySlug: "real-madrid",
           homeName: "Valencia", awayName: "R. Madrid",
           opponentName: "Real Madrid", opponentAbbr: "RMA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(100_800),
@@ -264,6 +284,7 @@ extension WidgetSnapshot {
         .init(
           fixtureId: "preview-2", clubSlug: "sevilla", isHome: true,
           homeAbbr: "SEV", awayAbbr: "OSA",
+          homeSlug: "sevilla", awaySlug: "osasuna",
           homeName: "Sevilla", awayName: "Osasuna",
           opponentName: "Osasuna", opponentAbbr: "OSA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(169_200),
@@ -273,6 +294,7 @@ extension WidgetSnapshot {
         .init(
           fixtureId: "preview-3", clubSlug: "athletic", isHome: false,
           homeAbbr: "GIR", awayAbbr: "ATH",
+          homeSlug: "girona", awaySlug: "athletic",
           homeName: "Girona", awayName: "Athletic",
           opponentName: "Girona", opponentAbbr: "GIR", opponentSlot: "home",
           kickoffUtc: now.addingTimeInterval(177_300),

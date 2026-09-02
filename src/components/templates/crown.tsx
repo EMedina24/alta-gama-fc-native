@@ -44,7 +44,12 @@ import {
 
 export interface CrownProps {
   eyebrow?: string;
-  title: string;
+  /**
+   * Absent renders the GRADIENT HEAD alone — the onboarding welcome's aurora
+   * (ADR 0099), where the brand moment below carries the words. Every tab
+   * passes one.
+   */
+  title?: string;
   /** `crownTitleLg` is the Clubs screen's 48pt (its subhead carries the count). */
   titleVariant?: 'crownTitle' | 'crownTitleLg';
   /** A quiet line UNDER the title — Clubs' `{n} clubs followed` (ADR 0082). */
@@ -114,21 +119,23 @@ export function Crown({
       </View>
       <View
         style={[styles.inner, { paddingTop: topInset + Spacing.two + 2, paddingBottom: pad }]}>
-        <View style={styles.head}>
-          <View style={styles.headings}>
-            {eyebrow ? <Eyebrow color="onCrownDim">{eyebrow}</Eyebrow> : null}
-            <Text variant={titleVariant} color="onCrown">
-              {title}
-            </Text>
-            {subtitle ? (
-              <Text variant="caption" color="onCrownDim" style={styles.subtitle}>
-                {subtitle}
+        {title ? (
+          <View style={styles.head}>
+            <View style={styles.headings}>
+              {eyebrow ? <Eyebrow color="onCrownDim">{eyebrow}</Eyebrow> : null}
+              <Text variant={titleVariant} color="onCrown">
+                {title}
               </Text>
-            ) : null}
+              {subtitle ? (
+                <Text variant="caption" color="onCrownDim" style={styles.subtitle}>
+                  {subtitle}
+                </Text>
+              ) : null}
+            </View>
+            {meta}
+            {accessory}
           </View>
-          {meta}
-          {accessory}
-        </View>
+        ) : null}
         {children}
       </View>
     </View>

@@ -6,6 +6,7 @@ export { Chevron, type ChevronProps } from './chevron';
 export { ChipButton, type ChipButtonProps } from './chip-button';
 export { Crest } from './crest';
 export { EventGlyph, type EventGlyphProps } from './event-glyph';
+export { FadeOutImage, type FadeOutImageProps } from './fade-out-image';
 export { Eyebrow } from './eyebrow';
 export { FormChip, type FormResult } from './form-chip';
 export { Grabber } from './grabber';
@@ -21,9 +22,9 @@ export { WashGradient, WashRadial, type WashGradientProps, type WashRadialProps,
 export { PitchGlyph, type PitchGlyphProps } from './pitch-glyph';
 export { SlotToken, type SlotTokenMode, type SlotTokenProps } from './slot-token';
 export { AlertGlyph, type AlertGlyphProps, type AlertKind } from './alert-glyph';
-export { Glow, type GlowProps } from './glow';
 export { Mark, MARK_RATIO, type MarkProps } from './mark';
 export { MeshGround } from './mesh-ground';
 export { SearchGlyph } from './search-glyph';
 export { GlobeGlyph } from './globe-glyph';
+export { PersonGlyph, type PersonGlyphProps } from './person-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';

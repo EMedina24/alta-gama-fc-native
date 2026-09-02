@@ -30,7 +30,7 @@ import type { WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 
 /** Bump when `WidgetEntry`/`WidgetSnapshot` changes shape. Swift tolerates all. */
-export const SNAPSHOT_VERSION = 3;
+export const SNAPSHOT_VERSION = 4;
 
 /**
  * How many fixtures travel.
@@ -62,6 +62,18 @@ export interface WidgetEntry {
   /** ⚠ Home-first, the way the match is named — never "your club" first. */
   homeAbbr: string;
   awayAbbr: string;
+  /**
+   * Both sides' slugs, v4 (ADR 0102) — what the Edit Widget club filter matches
+   * against. ⚠ `clubSlug` alone cannot answer "does this row involve club X":
+   * a derby between two followed clubs is ONE entry (see `selectWidgetFixtures`)
+   * and `clubSlug` names only the side `upcomingRow` resolved — home wins the
+   * tie — so a widget configured to the AWAY side matched nothing and said "no
+   * matches scheduled" while its club had a fixture in the snapshot. ⚠ Optional
+   * in `Snapshot.swift` — absent from a v3 file, and absence degrades to the
+   * old owner-only match, never to a crash.
+   */
+  homeSlug: string | null;
+  awaySlug: string | null;
   /**
    * Both sides named via `widgetName` (`R. Madrid`, `Athletic`) for the medium
    * widget's row (ADR 0059) — contracted, because two names and a pill share
@@ -243,6 +255,8 @@ export function buildSnapshot(
       awayAbbr: fixture.awayTeam
         ? abbreviate(fixture.awayTeam.name, fixture.awayTeam.slug, fixture.awayTeam.shortName)
         : '',
+      homeSlug: fixture.homeTeam?.slug ?? null,
+      awaySlug: fixture.awayTeam?.slug ?? null,
       homeName: fixture.homeTeam ? widgetName(fixture.homeTeam.name) : '',
       awayName: fixture.awayTeam ? widgetName(fixture.awayTeam.name) : '',
       opponentName: row.opponent.name,

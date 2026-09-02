@@ -1,31 +1,43 @@
 /**
- * The account avatar: a disc of initials, or the mark when there is nobody to
- * name (ADR 0081). Shared by the tab headers' `AvatarButton` and the account
+ * The account avatar: a disc of initials, or a person silhouette when there
+ * is nobody to name (ADR 0101 — the mark said "app"; an account door should
+ * say "you"). Shared by the tab headers' `AvatarButton` and the account
  * sheet's identity block, which is why it is an atom rather than either one's
  * private part.
  *
  * ⚠ `initials` is nullable and `null` is the SIGNED-OUT state, not a missing
- * prop. It draws the Alta Gama mark, not an empty circle — which is what the
- * header shipped as while there was no account to name (HANDOFF §5). The `·`
- * that replaced it works at 36pt and only at 36pt; at `Size.avatarLg` a bullet
- * reads as a rendering fault, and the mark is what the sheet should open with
- * anyway.
+ * prop.
  *
- * ⚠ No shadow and no glow — depth is surface lightness (SPEC §2). The accent
- * ring is the one mark of a signed-in reader, and it settles in ONCE on mount
- * rather than pulsing: `skeleton.tsx` is the app's only looping animation and
- * stays that way.
+ * ⚠ `attention` is the signed-out header's SPINNING ring (ADR 0101): a
+ * gradient arc orbiting the disc to pull the eye toward sign-in. It is two
+ * sanctioned exceptions in one — a glow where 0015 has none, and a second
+ * looping animation beside `skeleton.tsx` — both scoped to THIS prop, and it
+ * must never be set on a signed-in avatar: attention is the invitation, not
+ * the settled state. Reduced motion stills the arc and keeps the ring.
+ *
+ * ⚠ The arc's ink follows `tone`: the accent on the ground, but DARK ink on
+ * the crown — lime on the crown's lime band is invisible, the same reason the
+ * disc itself flips to `onCrown*` there (ADR 0087).
+ *
+ * ⚠ The signed-in accent ring settles in ONCE on mount rather than pulsing.
+ * The sheet's identity sets it when signed in; the header's button never does
+ * — one lime thing per screen (SPEC §2), and on a tab screen that budget
+ * belongs to the live marker.
  */
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
+  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-import { Mark } from './mark';
+import { PersonGlyph } from './person-glyph';
 import { Text, type TypeVariant } from './text';
 import { Colors, Motion, Size, Spacing } from '@/constants/theme';
 
@@ -39,9 +51,11 @@ export interface AvatarProps {
    * (SPEC §2), and on a tab screen that budget belongs to the live marker.
    */
   ring?: boolean;
+  /** The signed-out header's spinning arc (ADR 0101) — see the warning above. */
+  attention?: boolean;
   /**
    * ON the crown's bright band the disc flips to the `onCrown*` ink set
-   * (ADR 0087): a dark-ink fill and hairline, dark initials, dark mark. The
+   * (ADR 0087): a dark-ink fill and hairline, dark initials, dark glyph. The
    * default is the ground treatment the account sheet still uses.
    */
   tone?: 'ground' | 'crown';
@@ -49,17 +63,32 @@ export interface AvatarProps {
 
 /**
  * The initials' step against the disc, the way `crest.tsx` ramps its monogram.
- * Two stops rather than a formula: the type scale is discrete, and 36 and 64
+ * Two stops rather than a formula: the type scale is discrete, and 42 and 64
  * are the only two sizes this draws at today.
  */
 function initialsVariant(size: number): TypeVariant {
   return size >= Size.avatarLg ? 'title3' : 'caption';
 }
 
-export function Avatar({ initials, size = Size.avatar, ring = false, tone = 'ground' }: AvatarProps) {
+/** The ring's gap from the disc — tight enough that the two read as one object. */
+const RING_GAP = Spacing.half;
+/** The orbit arc's clearance and stroke — a hair wider than the settle ring. */
+const ORBIT_GAP = 3;
+const ORBIT_STROKE = 2;
+
+export function Avatar({
+  initials,
+  size = Size.avatar,
+  ring = false,
+  attention = false,
+  tone = 'ground',
+}: AvatarProps) {
   const reduceMotion = useReducedMotion();
+  const gradientId = `avatar-orbit-${useId().replace(/:/g, '')}`;
   /** 0 → 1. Drives the ring alone; the disc under it never moves. */
   const settle = useSharedValue(ring && !reduceMotion ? 0 : 1);
+  /** 0 → 1 per lap. Transform only — never a layout property. */
+  const orbit = useSharedValue(0);
 
   useEffect(() => {
     if (!ring) return;
@@ -70,6 +99,19 @@ export function Avatar({ initials, size = Size.avatar, ring = false, tone = 'gro
     settle.value = withTiming(1, { duration: Motion.enter });
   }, [reduceMotion, ring, settle]);
 
+  useEffect(() => {
+    if (!attention || reduceMotion) {
+      cancelAnimation(orbit);
+      orbit.value = 0;
+      return;
+    }
+    orbit.value = withRepeat(
+      withTiming(1, { duration: Motion.orbit, easing: Easing.linear }),
+      -1,
+    );
+    return () => cancelAnimation(orbit);
+  }, [attention, orbit, reduceMotion]);
+
   const ringStyle = useAnimatedStyle(() => ({
     opacity: settle.value,
     // Opens a hair outside and closes onto the disc. Transform and opacity
@@ -77,7 +119,16 @@ export function Avatar({ initials, size = Size.avatar, ring = false, tone = 'gro
     transform: [{ scale: 1 + (1 - settle.value) * 0.14 }],
   }));
 
+  const orbitStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${orbit.value * 360}deg` }],
+  }));
+
   const disc = { width: size, height: size, borderRadius: size / 2 };
+  const orbitSize = size + ORBIT_GAP * 2 + ORBIT_STROKE;
+  const orbitHalf = orbitSize / 2;
+  // ~70% of the circumference: a comet with a tail, not a closed border.
+  const orbitArc = 2 * Math.PI * (orbitHalf - ORBIT_STROKE / 2) * 0.7;
+  const orbitInk = tone === 'crown' ? Colors.dark.onCrown : Colors.dark.accent;
 
   return (
     <View style={[styles.wrap, disc]}>
@@ -91,27 +142,51 @@ export function Avatar({ initials, size = Size.avatar, ring = false, tone = 'gro
           ]}
         />
       ) : null}
+      {attention ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.orbit,
+            { width: orbitSize, height: orbitSize, shadowColor: orbitInk },
+            orbitStyle,
+          ]}>
+          <Svg width={orbitSize} height={orbitSize} viewBox={`0 0 ${orbitSize} ${orbitSize}`}>
+            <Defs>
+              <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={orbitInk} stopOpacity={0.95} />
+                {/* ⚠ `stopOpacity`, never an rgba stop colour (trap 42). */}
+                <Stop offset="1" stopColor={orbitInk} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+            <Circle
+              cx={orbitHalf}
+              cy={orbitHalf}
+              r={orbitHalf - ORBIT_STROKE / 2}
+              stroke={`url(#${gradientId})`}
+              strokeWidth={ORBIT_STROKE}
+              strokeLinecap="round"
+              strokeDasharray={`${orbitArc} ${orbitArc}`}
+              fill="none"
+            />
+          </Svg>
+        </Animated.View>
+      ) : null}
       <View style={[styles.disc, tone === 'crown' && styles.discCrown, disc]}>
         {initials ? (
           <Text variant={initialsVariant(size)} color={tone === 'crown' ? 'onCrown' : 'text'}>
             {initials}
           </Text>
         ) : (
-          /* Sized off the disc rather than tokenised: the mark is 42×30, and a
-             width of ~0.55 leaves it optically centred at both sizes. */
-          <Mark
-            width={size * 0.55}
+          <PersonGlyph
             color={tone === 'crown' ? 'onCrown' : 'textSecondary'}
-            strokeWidth={2.6}
+            size={size * 0.52}
+            strokeWidth={1.8}
           />
         )}
       </View>
     </View>
   );
 }
-
-/** The ring's gap from the disc — tight enough that the two read as one object. */
-const RING_GAP = Spacing.half;
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center' },
@@ -137,5 +212,15 @@ const styles = StyleSheet.create({
     bottom: -RING_GAP,
     borderWidth: 1.5,
     borderColor: Colors.dark.accentRing,
+  },
+  /**
+   * The glow half of "spinning glow" (ADR 0101): a soft shadow in the arc's
+   * own ink, cast by the arc's alpha. Colour is set inline with the ink.
+   */
+  orbit: {
+    position: 'absolute',
+    shadowOpacity: 0.45,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
   },
 });

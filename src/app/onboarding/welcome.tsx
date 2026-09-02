@@ -1,10 +1,16 @@
 /**
  * Step 0 — the welcome. One brand moment before the reader is asked anything
- * (ADR 0076): the mark under a floodlight, one headline, one button.
+ * (ADR 0076): the mark, one headline, one button — now on the app's own
+ * crown + aurora shell (ADR 0099, reversing the repaint's floodlight
+ * carve-out): the mesh behind everything, and the crown's gradient head with
+ * NO title in it — the brand moment below carries the words.
  *
  * ⚠ No skip here, or on the picker (ADR 0077): a followed club is the
  * precondition for everything the app does. The only skip in the flow is the
  * alert primer's `Not now`.
+ *
+ * ⚠ The status bar is statically DARK: this screen does not scroll, so the
+ * crown's bright band never leaves the top (ADR 0094's flip, degenerate case).
  *
  * The line under the button is the language override, written in the OTHER
  * language — a Spanish reader on an English phone sees `¿Prefieres español?`,
@@ -14,9 +20,11 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
-import { Button, Eyebrow, GlobeGlyph, Glow, Mark, Text } from '@/components/atoms';
+import { Button, Eyebrow, GlobeGlyph, Mark, MeshGround, Text } from '@/components/atoms';
 import { StepDots } from '@/components/molecules';
+import { Crown } from '@/components/templates/crown';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { setLanguage } from '@/store/preferences';
@@ -32,7 +40,10 @@ export default function OnboardingWelcome() {
 
   return (
     <View style={styles.screen}>
-      <Glow opacity={0.22} cx={0.5} cy={0.42} r={0.55} />
+      <StatusBar style="dark" />
+      <MeshGround />
+      {/* The gradient head alone — its fixed layer runs on behind the hero. */}
+      <Crown topInset={insets.top} padBottom={0} />
 
       <Animated.View
         entering={reduceMotion ? undefined : FadeInDown.duration(360)}

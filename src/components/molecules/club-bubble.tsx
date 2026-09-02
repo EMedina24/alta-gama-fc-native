@@ -4,11 +4,17 @@
  * no club-colour glow: the rail sits on the crown's fade now, and colour there
  * belongs to the crests alone.
  *
- * ⚠⚠ **The bubble has exactly ONE action: open the club.** The lime check is an
- * indicator with `pointerEvents: 'none'` — it is NOT an unfollow button. An
- * unfollow target inside an 88pt disc lands within a thumb's width of the
- * open-club tap, and unfollowing drops a whole season of calendar entries.
- * Unfollow lives on the club page, behind `Match alerts`, which confirms.
+ * ⚠⚠ **On the RAIL the bubble has exactly ONE action: open the club.** The lime
+ * check is an indicator with `pointerEvents: 'none'` — it is NOT an unfollow
+ * button. An unfollow target inside an 88pt disc lands within a thumb's width
+ * of the open-club tap, and unfollowing drops a whole season of calendar
+ * entries. Unfollow lives on the club page, behind the hero pill and the
+ * alerts row, which confirm.
+ *
+ * ⚠ The ONBOARDING PICKER is the sanctioned second use (ADR 0099): `checked`
+ * makes the tap a SELECTION toggle and the check its state. That does not
+ * weaken the rail's rule — the picker precedes any follow, so there is no
+ * season of entries to lose and nothing to confirm.
  *
  * ⚠ **The shell is a real `GlassView` only where liquid glass exists**
  * (`isLiquidGlassAvailable()`, iOS 26+); everywhere else a flat `bubbleShell`
@@ -48,6 +54,12 @@ export interface ClubBubbleProps {
   onPress: () => void;
   /** Names the club AND its position — the badge is not readable on its own. */
   accessibilityLabel: string;
+  /**
+   * Onboarding-picker selection (ADR 0099). A boolean draws the check only
+   * when true and announces a checkbox; OMITTED — the subscribed rail — keeps
+   * the check as a permanent indicator and stays a button.
+   */
+  checked?: boolean;
 }
 
 const RING = Size.clubBubble / 2;
@@ -62,11 +74,13 @@ export function ClubBubble({
   rankColor,
   onPress,
   accessibilityLabel,
+  checked,
 }: ClubBubbleProps) {
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
+      accessibilityRole={checked === undefined ? 'button' : 'checkbox'}
+      accessibilityState={checked === undefined ? undefined : { checked }}
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [styles.press, pressed && styles.pressed]}>
       <View style={styles.disc}>
@@ -113,9 +127,11 @@ export function ClubBubble({
         </View>
 
         {/* Indicator only. See the ⚠⚠ in the header before adding an onPress. */}
-        <View pointerEvents="none" style={styles.check}>
-          <Check color="onAccent" size={Size.bubbleCheck - 14} />
-        </View>
+        {checked !== false ? (
+          <View pointerEvents="none" style={styles.check}>
+            <Check color="onAccent" size={Size.bubbleCheck - 14} />
+          </View>
+        ) : null}
 
         {rank !== null ? (
           <View pointerEvents="none" style={styles.rank}>

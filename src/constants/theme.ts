@@ -495,7 +495,9 @@ export const Type = {
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
 export const Size = {
   minTouch: 44, rowSkeleton: 44, pill: 34, switchW: 51, switchH: 31, switchKnob: 27,
-  crestRow: 26, crestList: 30, crestCard: 40, crestHero: 58,
+  crestRow: 26, crestList: 30, crestCard: 40,
+  /** The club hero's identity crest — 80, not the mock's 58: sized up on Ed's call (2026-09-01). */
+  crestHero: 80,
   /**
    * The league mark on a FINISHED TODAY band. ⚠ Must stay below `crestRow`:
    * the band is a divider and has to read thinner than the match rows it
@@ -508,7 +510,8 @@ export const Size = {
    * is the accent ring that sits between the two.
    */
   crestNext: 64, versusBadge: 34,
-  tabIcon: 22, avatar: 36, sheetGrabber: 38,
+  /** The crown's account disc — 42, up from 36 on Ed's call (ADR 0101). */
+  tabIcon: 22, avatar: 42, sheetGrabber: 38,
   /**
    * The account sheet's identity avatar (ADR 0081) — the same disc as `avatar`,
    * at the size a heading sits beside rather than a large title.
@@ -571,15 +574,8 @@ export const Size = {
    * is artwork-only and needs every tile identical; this one is not.
    */
   leaguePillH: 40, leaguePillMarkH: 20,
-  /**
-   * The onboarding picker's crest — 3-up tiles, crest above the name (ADR 0076).
-   * A step above `crestCard` because the crest IS the tile's identity here.
-   */
-  crestPick: 44,
   /** The onboarding footer's primary button, and the crest discs inside it. */
   ctaH: 50, ctaDisc: 34, ctaDiscCrest: 24,
-  /** The picked badge on a picker tile. */
-  pickBadge: 18,
   /** The Alta Gama mark on the welcome screen, and the icon tile on the alert preview. */
   markWelcome: 126, alertIconTile: 38,
   /** The tinted glyph tile on the alert primer's rows. */
@@ -767,6 +763,8 @@ export const Motion = {
   enter: 260,
   /** Between staggered siblings. Small — eight blocks must not read as a queue. */
   stagger: 45,
+  /** One lap of the signed-out avatar's attention ring (ADR 0101). Tuned from 2800 — Ed wanted it calmer. */
+  orbit: 4600,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)
