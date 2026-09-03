@@ -966,7 +966,7 @@ export const esCopy: Copy = {
     railClub: (club: string, rank: number | null) =>
       rank === null ? club : `${club}, puesto ${rank}`,
     moreLeagues:
-      'Cuatro ligas por ahora. Se añaden más según se publican sus datos de temporada; ' +
+      'Cinco ligas por ahora. Se añaden más según se publican sus datos de temporada; ' +
       'las suscripciones y los calendarios funcionan igual en todas.',
     // ⚠ `lastSyncedAt === null`: no presentar como calendario.
     schedulePending: 'Calendario pendiente',
@@ -1390,7 +1390,7 @@ export const enCopy: Copy = {
     railClub: (club: string, rank: number | null) =>
       rank === null ? club : `${club}, position ${rank}`,
     moreLeagues:
-      'Four leagues today. More are added as their season data comes online — ' +
+      'Five leagues today. More are added as their season data comes online — ' +
       'subscriptions and calendar feeds work the same in every one.',
     schedulePending: 'Schedule pending',
     fullSeason: (n: number) => `${n} matches`,

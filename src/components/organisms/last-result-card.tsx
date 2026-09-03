@@ -40,6 +40,17 @@ export interface LastResultCardProps {
   outcome: string | null;
   copy: { lastResult: string; noScore: string };
   events: Copy['events'];
+  /**
+   * Whether this match's league can ever publish a timeline. False removes the
+   * disclosure entirely rather than opening it on the "not published yet" copy,
+   * which would be a promise: Puerto Rico's federation enters no player events
+   * at all, so `count: 0` there is permanent and not a sweep that has not run.
+   *
+   * ⚠ A capability of the LEAGUE, never a reading of one fixture's payload —
+   * an empty array on a league that does publish is trap 32's honest pending
+   * state and keeps its chevron.
+   */
+  matchEvents?: boolean;
 }
 
 export function LastResultCard({
@@ -52,6 +63,7 @@ export function LastResultCard({
   outcome,
   copy,
   events,
+  matchEvents = true,
 }: LastResultCardProps) {
   const [showEvents, setShowEvents] = useState(false);
 
@@ -67,13 +79,15 @@ export function LastResultCard({
         <ScoreLine home={home} away={away} noScoreLabel={copy.noScore} />
       </View>
 
-      <EventsDisclosure
-        open={showEvents}
-        onToggle={() => setShowEvents((open) => !open)}
-        copy={events}
-      />
+      {matchEvents ? (
+        <EventsDisclosure
+          open={showEvents}
+          onToggle={() => setShowEvents((open) => !open)}
+          copy={events}
+        />
+      ) : null}
 
-      {showEvents ? (
+      {matchEvents && showEvents ? (
         <MatchEvents
           fixtureId={id}
           home={homeTeam}

@@ -20,6 +20,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { PlayerPhoto, Text } from '@/components/atoms';
 import { SectionHeader } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
+import { playerDisplayName } from '@/lib/cronogol/derive';
 import type { SquadPlayerView, SquadPosition } from '@/lib/cronogol/types';
 
 const BANDS: readonly SquadPosition[] = ['GK', 'DEF', 'MID', 'FWD'];
@@ -91,6 +92,9 @@ export function SquadList({ players, bandLabels, emptyLabel, onSelectPlayer }: S
  * "zero", the same rule the visible cell follows.
  */
 function Row({ player, onPress }: { player: SquadPlayerView; onPress?: () => void }) {
+  // ⚠ Display only — the SORT above stays on the wire's own string, which is
+  // surname-first for the leagues that serve it that way and correct there.
+  const name = playerDisplayName(player.name);
   const body = (
     <>
       <Text variant="numeral" tabular color="textFaint" style={styles.shirt}>
@@ -98,7 +102,7 @@ function Row({ player, onPress }: { player: SquadPlayerView; onPress?: () => voi
       </Text>
       <PlayerPhoto src={player.photoUrl} variant="row" />
       <Text variant="bodyStrong" numberOfLines={1} style={styles.name}>
-        {player.name}
+        {name}
       </Text>
       {onPress ? (
         <Text variant="body" color="textFaint" style={styles.chevron}>
@@ -114,9 +118,7 @@ function Row({ player, onPress }: { player: SquadPlayerView; onPress?: () => voi
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={
-        player.shirt === null ? player.name : `${player.name}, ${player.shirt}`
-      }
+      accessibilityLabel={player.shirt === null ? name : `${name}, ${player.shirt}`}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       {body}
     </Pressable>

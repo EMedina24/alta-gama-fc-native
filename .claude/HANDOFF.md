@@ -25,6 +25,21 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
+> ⭐ **NEW 2026-09-02 — the app carries FIVE leagues.** Puerto Rico
+> (`lpr-pro-clausura`, shown as **LPR Clausura**) joined the catalogue
+> ([0105](./decisions/0105-lpr-clausura-and-league-capability-flags.md)) and is
+> the first league whose source cannot feed the whole app: a table, a schedule,
+> crests and excellent squad portraits — and **no matchweeks, no match events and
+> no live, permanently**. It is therefore the first league gated by the
+> catalogue's own capability flags (`rounds`, `matchEvents`), which until now
+> nothing read. It does not appear on **Matchdays** at all, by design.
+>
+> ⚠ Two things about it that look like bugs and are not: it ships **no artwork**,
+> so its chip is the text branch (0031) and its `FINISHED TODAY` header is
+> neutral; and its whole season reads **unplayed** — see trap 54. Its sibling
+> `lpr-pro-apertura` exists in the backend config but has **no league row**, so it
+> is deliberately absent here.
+
 > ⭐ **NEW 2026-08-27 — the app has live scores.** `GET /cronogol/live` carries
 > in-play status, score and a **minute**, refreshed every ~30s while a match is
 > played, and — unlike `/cronogol/scores` — every row **joins to a fixture** by
@@ -862,6 +877,41 @@ documented at the code that handles them; this is the index.
     be re-composed for another. ⚠ Calibrate it by sampling a screenshot of the
     real screen (the Today body ground measures `#0f3832` … `#101f1e`, green
     channel typically 31–45), never by eye.
+54. **⚠⚠ A league can publish a FINISHED table over fixtures that are all still
+    `scheduled`** ([0106](./decisions/0106-next-up-card-refuses-a-stale-pick.md)).
+    Puerto Rico's federation enters results into the standings and never onto the
+    matches: `lpr-pro-clausura` serves 11 clubs at 110 of 110 played with a form
+    guide on every row, while all 20 of Ponce's fixtures sit `scheduled` with
+    null scores and kickoffs in February–June. `nextUpIndex` — which picks by
+    ORDER, deliberately, never by clock — therefore elected a February match and
+    the club page announced it as NEXT UP, under a countdown. ⚠ The general rule:
+    **`status` and the table are separate claims and either can be the stale
+    one.** Null scores on a `scheduled` past fixture do NOT mean 0-0 and must
+    never be written as such (the backend's own mapper carries the same warning).
+55. **⚠ An unsupported league answers `200` with an empty collection, not 404 —
+    so an ungated screen renders a convincing skeleton of nothing**
+    ([0105](./decisions/0105-lpr-clausura-and-league-capability-flags.md)).
+    `GET /cronogol/jornada/lpr-pro-clausura/2026` returns `matchweeks: []` beside
+    `totalMatchweeks: 20`, which is enough for Matchdays to draw a full 20-round
+    pager and strip where every single round is empty. `?matchweek=` on standings
+    is the same shape — an empty table, deliberately. ⚠ The capability is not
+    discoverable from any payload and there is no capabilities endpoint: it lives
+    on `League` (`rounds`, `matchEvents`) and is copied by hand from
+    `CRONOGOL-API.md`. Inferring it from an empty response is exactly how trap 32
+    happens — an empty array is also what a WORKING league serves mid-sweep.
+56. **⚠ A fixed-width row of chips given a FLEX SHARE overflows, and short test
+    data hides it for months.** The club page's standing strip sized its form
+    column at `flex: 1.45`. Five `FormChip`s are 22pt each plus 4pt gaps and the
+    cell's padding — **142pt, fixed** — while 1.45 of a 402pt screen is 115. The
+    fifth chip sat outside the tray. It shipped that way and was invisible the
+    whole time because **no league had ever served five results**: every European
+    table was three matchdays old, and Puerto Rico's completed season was the
+    first full `form` array the component had seen. ⚠ Raising the fraction is not
+    the fix — the value that fits a 402pt screen still overflows a 375pt one. The
+    column takes `flex: 0` and sizes to its own chips. ⚠ The general rule:
+    **content with an intrinsic width gets `flex: 0`, never a share** — and
+    whenever a component is fed a capped list (`max = 5`), draw the cap once
+    before believing the layout.
 
 ---
 

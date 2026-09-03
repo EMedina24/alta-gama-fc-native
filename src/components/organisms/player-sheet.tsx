@@ -34,6 +34,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Crest, PlayerPhoto, Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { playerDisplayName } from '@/lib/cronogol/derive';
 import type { SquadPlayerView } from '@/lib/cronogol/types';
 
 export interface PlayerSheetLabels {
@@ -136,9 +137,10 @@ export function PlayerSheet({
             </Text>
           </View>
 
-          {/* The full registered name — often the legal one, and long. */}
+          {/* The full registered name — often the legal one, and long. Read
+              in given-name-first order; some federations serve it inverted. */}
           <Text variant="title" numberOfLines={2}>
-            {player.name}
+            {playerDisplayName(player.name)}
           </Text>
 
           {/* ⚠ A chip has no blank form, so a null field drops its chip entirely

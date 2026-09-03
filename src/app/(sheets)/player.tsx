@@ -23,9 +23,11 @@ import { Button, SkeletonRows, Text } from '@/components/atoms';
 import { PlayerSheet } from '@/components/organisms/player-sheet';
 import { Size, Spacing } from '@/constants/theme';
 import { abbreviate, displayName } from '@/lib/cronogol/derive';
-import { seasonLabel } from '@/lib/cronogol/leagues';
+import { leagueSeasonLabel } from '@/lib/cronogol/leagues';
+import { leagueOfClub } from '@/lib/cronogol/standings';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubSquad } from '@/queries/use-club';
+import { useStandings } from '@/queries/use-standings';
 import { StyleSheet, View } from 'react-native';
 
 export default function PlayerSheetRoute() {
@@ -34,6 +36,13 @@ export default function PlayerSheetRoute() {
   const { copy } = useI18n();
 
   const squad = useClubSquad(slug);
+  /**
+   * ⚠ Also a cache read, like the squad above — every screen that can reach
+   * this sheet has already loaded the standings. It is here only to learn how
+   * this club's league NAMES its season: Puerto Rico's is the calendar year
+   * `2026`, not the European `2026/27`.
+   */
+  const standings = useStandings();
   const player = squad.data?.players.find((p) => p.id === id);
   const close = () => router.back();
 
@@ -66,8 +75,13 @@ export default function PlayerSheetRoute() {
         crestUrl: team.crestUrl,
         abbr: abbreviate(team.name, team.slug, team.shortName),
       }}
-      // ⚠ A null season is a blank cell. Never a guessed year.
-      seasonLabel={squad.data.season === null ? null : seasonLabel(squad.data.season)}
+      // ⚠ A null season is a blank cell. Never a guessed year. An unresolved
+      // league keeps the European form, which is what this printed before.
+      seasonLabel={
+        squad.data.season === null
+          ? null
+          : leagueSeasonLabel(leagueOfClub(standings.data?.tables, slug), squad.data.season)
+      }
       positionLabel={copy.player.positionNames[player.position]}
       // ⚠ `"both"` is a real value, not a placeholder for unknown.
       footLabel={player.foot === null ? null : copy.player.footValues[player.foot]}

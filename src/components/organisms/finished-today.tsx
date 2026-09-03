@@ -23,6 +23,10 @@
  * STATUS, not on whether events exist, because knowing that in advance would
  * mean pre-fetching the whole section. **One row open at a time.**
  *
+ * ⚠ The one exception is a league that publishes no events AT ALL (`League`'s
+ * `matchEvents`): its rows keep their empty chevron column, so the goals stay
+ * in the same place down the card, and simply do not open.
+ *
  * ⚠ Each league header sits on that league's brand band — `LeagueBand`, keyed by
  * API slug (ADR 0062). Serie A's is a gradient drawn with `react-native-svg`
  * rather than `expo-linear-gradient`, which would cost a native rebuild. A slug
@@ -37,6 +41,7 @@ import { Chevron, Crest, Hairline, Text } from '@/components/atoms';
 import { Colors, LeagueBand, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 import type { LeagueBandSpec } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
+import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import { scoreEmphasis } from '@/lib/cronogol/scores';
 import type { FixtureWindowView, LeagueRef, WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
@@ -90,8 +95,14 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
   return (
     <View style={styles.card}>
       {groups.map((group, index) => {
-        const band = bandFor(group.league?.slug ?? group.fixtures[0].leagueSlug);
+        const slug = group.league?.slug ?? group.fixtures[0].leagueSlug;
+        const band = bandFor(slug);
         const mark = markFor(group.league);
+        /** Our own config for this league — absent for one we hold none for. */
+        const config = findLeagueByApiSlug(slug);
+        // ⚠ A league that never publishes a timeline (Puerto Rico) discloses
+        // nothing. `!== false` so an unconfigured league keeps today's chevron.
+        const canExpand = config?.matchEvents !== false;
         return (
           <Fragment key={group.league?.slug ?? index}>
             <View style={[styles.leagueHeader, band && 'solid' in band && { backgroundColor: band.solid }]}>
@@ -114,8 +125,11 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
                   accessible={false}
                 />
               ) : null}
+              {/* ⚠ OUR display name first — the wire's is the competition's
+                  own copy (`LPR Pro Masculina Clausura`, `LALIGA EA SPORTS`),
+                  which is not what the league chips or the Table print. */}
               <Text variant="eyebrow" color={band ? 'text' : 'textSecondary'}>
-                {group.league?.name ?? group.fixtures[0].leagueSlug}
+                {config?.name ?? group.league?.name ?? slug}
               </Text>
             </View>
 
@@ -127,14 +141,20 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
               return (
                 <View key={fixture.id}>
                   <Pressable
-                    onPress={() => setOpenId(expanded ? null : fixture.id)}
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded }}
+                    onPress={canExpand ? () => setOpenId(expanded ? null : fixture.id) : undefined}
+                    disabled={!canExpand}
+                    accessibilityRole={canExpand ? 'button' : undefined}
+                    accessibilityState={canExpand ? { expanded } : undefined}
                     // One stop for the whole row: without this VoiceOver reads
                     // crest, name, goal, crest, name, goal as six.
                     accessibilityLabel={`${homeName} ${fixture.goalsHome}, ${awayName} ${fixture.goalsAway}`}
-                    accessibilityHint={expanded ? eventsCopy.collapse : eventsCopy.expand}
-                    style={({ pressed }) => [styles.row, pressed && { opacity: 0.75 }]}>
+                    accessibilityHint={
+                      canExpand ? (expanded ? eventsCopy.collapse : eventsCopy.expand) : undefined
+                    }
+                    style={({ pressed }) => [
+                      styles.row,
+                      pressed && canExpand && { opacity: 0.75 },
+                    ]}>
                     <View style={styles.pair}>
                       {(
                         [
@@ -170,12 +190,14 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
                       </Text>
                     </View>
 
+                    {/* ⚠ The column stays even with no chevron in it: the goals
+                        are read DOWN the card and must not shift by group. */}
                     <View style={styles.disclosure}>
-                      <Chevron expanded={expanded} />
+                      {canExpand ? <Chevron expanded={expanded} /> : null}
                     </View>
                   </Pressable>
 
-                  {expanded ? (
+                  {canExpand && expanded ? (
                     <MatchEvents
                       fixtureId={fixture.id}
                       home={fixture.homeTeam}

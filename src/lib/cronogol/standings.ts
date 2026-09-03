@@ -8,6 +8,7 @@
  * suppressed) and `completedMatchweek` (why the caption is measured against the
  * table's own `lastMatchUtc` and not the wall clock).
  */
+import { findLeagueByApiSlug } from "./leagues";
 import type { League, ZoneKind } from "./leagues";
 import type { StandingsRowView, StandingsTableView } from "./types";
 
@@ -71,6 +72,34 @@ export function zoneFor(rank: number, league: League): ZoneKind | null {
  */
 export function bandsApply(table: StandingsTableView, league: League): boolean {
   return table.clubs === league.clubCount && table.matchesPlayed > 0;
+}
+
+/**
+ * Which league a club plays in, read off the standings payload.
+ *
+ * ⚠ **No `TeamView` carries its league** — the API's club payloads do not name
+ * one — so the published tables are the only place the association is written
+ * down, and any screen holding a club slug but not a league has to look it up
+ * here rather than assume.
+ *
+ * ⚠ Deliberately NOT gated on `bandsApply`, unlike the club page's stats strip:
+ * that gate asks "may this table be COLOURED", which is a question about
+ * completeness. This one asks which competition a club is in, and a half-played
+ * table answers it perfectly well.
+ *
+ * Undefined for a club in no published table, and for one in a table this app
+ * holds no config for — every caller must have a defined behaviour for that.
+ */
+export function leagueOfClub(
+  tables: readonly StandingsTableView[] | undefined,
+  slug: string,
+): League | undefined {
+  for (const table of tables ?? []) {
+    if (table.rows.some((row) => row.team.slug === slug)) {
+      return findLeagueByApiSlug(table.league.slug);
+    }
+  }
+  return undefined;
 }
 
 /**

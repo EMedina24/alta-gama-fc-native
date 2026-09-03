@@ -32,7 +32,7 @@ import {
   displayName,
   hasCompleteSchedule,
   matchday,
-  nextUpIndex,
+  nextUp,
   primaryCompetition,
 } from '@/lib/cronogol/derive';
 import { formatFixtureDate, formatKickoffTime } from '@/lib/format';
@@ -53,6 +53,11 @@ export default function ClubScreen() {
   const { clock, followed } = usePreferences();
 
   const [tab, setTab] = useState<'fixtures' | 'players'>('fixtures');
+  /**
+   * ⚠ Once at mount — `Date.now()` in a render body is impure and lint rejects
+   * it. The 48-hour staleness test below does not need a ticking clock.
+   */
+  const [now] = useState(() => Date.now());
 
   const fixtures = useClubFixtures(slug);
   const squad = useClubSquad(slug);
@@ -86,14 +91,18 @@ export default function ClubScreen() {
   }, [standings.data, slug]);
 
   /**
-   * The next fixture, as the spine already resolves it — `nextUpIndex`, the
-   * first `scheduled`/`live` row, NEVER a clock comparison (the API has served
-   * a finished season before).
+   * The next fixture, as the spine already resolves it — the first
+   * `scheduled`/`live` row, NEVER a clock comparison (the API has served a
+   * finished season before).
+   *
+   * ⚠ `nextUp` adds ONE refusal on top of that pick and only for this card:
+   * a kickoff more than two days gone is not announced as the next match. The
+   * spine below still lists it. Puerto Rico is why — it publishes a finished
+   * table over fixtures that stay `scheduled` forever.
    */
   const next = useMemo(() => {
     if (!data) return null;
-    const index = nextUpIndex(data.fixtures);
-    const fixture = data.fixtures[index];
+    const fixture = nextUp(data.fixtures, now);
     if (!fixture) return null;
     /**
      * The OPPONENT's colour, not this club's — see `ClubNextCard`.
@@ -106,7 +115,7 @@ export default function ClubScreen() {
     const opponentTeam =
       (teams.data ?? []).find((t) => t.name === fixture.opponent) ?? null;
     return { fixture, tint: opponentTeam ? clubTint(opponentTeam) : null };
-  }, [data, teams.data]);
+  }, [data, teams.data, now]);
 
   return (
     <View style={styles.screen}>

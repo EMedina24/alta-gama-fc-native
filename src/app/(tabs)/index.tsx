@@ -36,6 +36,7 @@ import {
   type BoardLive,
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
+import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import {
   articleTopic,
   newsAge,
@@ -459,6 +460,10 @@ export default function TodayScreen() {
           outcome={lastOutcome ? phrases.formLetters[lastOutcome] : null}
           copy={copy.today}
           events={copy.events}
+          // ⚠ The league's capability, off the fixture's own `leagueSlug` (the
+          // API slug). A league that never publishes events loses the
+          // disclosure rather than opening it on copy that says "not yet".
+          matchEvents={findLeagueByApiSlug(last.leagueSlug)?.matchEvents !== false}
         />
       ) : null}
 

@@ -9,7 +9,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { getSeasonJornadas, getStandings } from '@/lib/cronogol/client';
-import { LEAGUES, SEASON, type League } from '@/lib/cronogol/leagues';
+import { ROUND_LEAGUES, SEASON, type League } from '@/lib/cronogol/leagues';
 import { keys } from './keys';
 import { STALE } from './stale';
 
@@ -30,10 +30,17 @@ export function useSeasonJornadas(league: League) {
   });
 }
 
-/** Every league's matchweek index at once, for the table captions. */
+/**
+ * Every ROUNDS league's matchweek index at once, for the table captions.
+ *
+ * ⚠ `ROUND_LEAGUES`, not `LEAGUES`: a league with no matchweek index answers
+ * `200` with an empty `matchweeks[]`, so asking would cost a request per Table
+ * visit to learn nothing. The caption's own `null` branch already covers the
+ * absence — it degrades to the club count, which is trap 2's honest state.
+ */
 export function useAllSeasonJornadas() {
   return useQueries({
-    queries: LEAGUES.map((league) => ({
+    queries: ROUND_LEAGUES.map((league) => ({
       queryKey: keys.seasonJornadas(league.apiSlug, SEASON),
       queryFn: () => getSeasonJornadas(league.apiSlug, SEASON),
       staleTime: STALE.feed,
@@ -41,7 +48,7 @@ export function useAllSeasonJornadas() {
     combine: (results) => ({
       // Keyed by apiSlug so a caller never has to trust array order.
       byLeague: Object.fromEntries(
-        LEAGUES.map((league, i) => [league.apiSlug, results[i]?.data ?? null]),
+        ROUND_LEAGUES.map((league, i) => [league.apiSlug, results[i]?.data ?? null]),
       ),
       isPending: results.some((r) => r.isPending),
     }),

@@ -7,16 +7,30 @@
  * shipped a finished season before, and a clock test then renders a spine with
  * no next node forever.
  *
+ * ⚠ The ACCENT on that node is a different question from which row it is, and
+ * takes `nextUp`'s answer (ADR 0106): a pick whose kickoff is long past is
+ * still LISTED, in its place, but is not lit as the match to come. Lighting it
+ * would make the same claim the NEXT UP card declines to make, one screen down.
+ *
  * ⚠ Scores here are `goalsFor`/`goalsAgainst`, the REQUESTED club's perspective.
  * The jornada routes use `goalsHome`/`goalsAway`. Mixing them silently inverts
  * every away result — and now the emphasis too: the `Score` atom dims whichever
  * DIGIT is lower, so a swap dims the wrong side of an away loss (ADR 0044).
  */
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Crest, Score, Text, WashGradient } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
-import { abbreviate, crestSrc, displayName, matchday, nextUpIndex, outcome } from '@/lib/cronogol/derive';
+import {
+  abbreviate,
+  crestSrc,
+  displayName,
+  matchday,
+  nextUp,
+  nextUpIndex,
+  outcome,
+} from '@/lib/cronogol/derive';
 import type { FixtureView, TeamFixturesView } from '@/lib/cronogol/types';
 import { fixtureDateParts, formatKickoffTime } from '@/lib/format';
 import type { Phrases } from '@/lib/i18n/phrases';
@@ -53,11 +67,19 @@ export function SeasonSpine({
   tint = null,
 }: SeasonSpineProps) {
   const next = nextUpIndex(data.fixtures);
+  /**
+   * ⚠ Read ONCE at mount, not per render — `Date.now()` in a render body is
+   * impure and the lint rule rejects it. A 48-hour threshold does not need a
+   * ticking clock, and the screen remounts whenever it is opened.
+   */
+  const [now] = useState(() => Date.now());
+  /** The same row, lit only while it is still a claim about the future. */
+  const accented = nextUp(data.fixtures, now) === null ? -1 : next;
 
   return (
     <View>
       {data.fixtures.map((fixture: FixtureView, index) => {
-        const isNext = index === next;
+        const isNext = index === accented;
         const past = index < next;
         const played = fixture.status === 'finished' && fixture.goalsFor !== null;
         const result = outcome(fixture);

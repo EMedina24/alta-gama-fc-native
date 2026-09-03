@@ -31,7 +31,7 @@ import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaf
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { currentMatchweek, isIda, isMidweek } from '@/lib/cronogol/jornada';
-import { LEAGUES, SEASON, leagueOptions, seasonLabel } from '@/lib/cronogol/leagues';
+import { ROUND_LEAGUES, SEASON, leagueOptions, seasonLabel } from '@/lib/cronogol/leagues';
 import { formatDateRange } from '@/lib/format';
 import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
@@ -46,8 +46,13 @@ export default function MatchdaysScreen() {
   const zone = useZone();
   const { clock } = usePreferences();
 
-  const [leagueSlug, setLeagueSlug] = useState(LEAGUES[0].slug);
-  const league = LEAGUES.find((l) => l.slug === leagueSlug) ?? LEAGUES[0];
+  /**
+   * ⚠ `ROUND_LEAGUES` throughout this screen, never the whole catalogue. A
+   * league without a matchweek index (Puerto Rico) does not 404 here — it
+   * returns an empty index, which would draw a full pager of empty rounds.
+   */
+  const [leagueSlug, setLeagueSlug] = useState(ROUND_LEAGUES[0].slug);
+  const league = ROUND_LEAGUES.find((l) => l.slug === leagueSlug) ?? ROUND_LEAGUES[0];
 
   const artwork = useLeagueArtwork();
   const index = useSeasonJornadas(league);
@@ -88,7 +93,7 @@ export default function MatchdaysScreen() {
     return (n: number) => done.has(n);
   }, [index.data]);
 
-  const options: LeagueOption[] = leagueOptions(artwork.data);
+  const options: LeagueOption[] = leagueOptions(artwork.data, ROUND_LEAGUES);
 
   const summary = index.data?.matchweeks.find((w) => w.matchweek === matchweek) ?? null;
   const half = league.hasHalves && matchweek !== null

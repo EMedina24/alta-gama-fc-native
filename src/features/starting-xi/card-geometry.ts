@@ -11,6 +11,8 @@
  * ⚠ `pitchHeight` is PINNED to the card height, never derived from the header:
  * the pitch must be the same size for a one-line and a two-line title.
  */
+import { playerFamilyName } from '@/lib/cronogol/derive';
+
 export const EXPORT_SIZE_IDS = ['4:5', '1:1', '9:16'] as const;
 export type ExportSize = (typeof EXPORT_SIZE_IDS)[number];
 /** ⚠ Not persisted, like the web — every visit opens on 4:5. */
@@ -97,9 +99,16 @@ export function nameSize(name: string): number {
   return 19;
 }
 
-/** The name drawn on a token: the short form when the league gives one. */
+/**
+ * The name drawn on a token: the short form when the league gives one.
+ *
+ * ⚠ Falls back to the SURNAME half, not the whole string, for a league that
+ * serves `"Surname, Given"` and no `shortName` — a token is shirt-sized, and a
+ * caption reading `COTTO MARTINEZ, LUIS ALEJANDRO` would set at the smallest
+ * step and still be clipped. Names without a comma are unchanged.
+ */
 export function tokenName(player: { name: string; shortName: string | null }): string {
-  return player.shortName ?? player.name;
+  return player.shortName ?? playerFamilyName(player.name);
 }
 
 /** Up to three initials for a token with no shirt and no portrait — never `0` or `—`. */

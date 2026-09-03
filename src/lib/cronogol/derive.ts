@@ -384,6 +384,95 @@ export function nextUpIndex(fixtures: readonly FixtureView[]): number {
   );
 }
 
+/**
+ * How far past a kickoff a still-`scheduled` fixture may be and still be
+ * offered as "next up".
+ *
+ * Two full days. The fixture sweep runs three-hourly, so between a final
+ * whistle and the row being marked `finished` there is a real window — for
+ * EVERY league — where a past kickoff sitting at `scheduled` is simply the
+ * truth arriving late, and suppressing that would blank a correct card. Two
+ * days clears that window many times over while still catching a fixture whose
+ * result is never coming.
+ */
+const NEXT_UP_STALE_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * The fixture to draw on the NEXT UP card, or null.
+ *
+ * `nextUpIndex` picks by ORDER and never by clock, deliberately — see its
+ * comment: a past season served whole would otherwise render an empty app.
+ * That rule is right for the SPINE, which is a list of a season and should draw
+ * whatever it is given.
+ *
+ * ⚠ A CARD is a different claim. It says "this is the match to come", and
+ * Puerto Rico breaks it: the federation publishes a completed standings table
+ * while leaving every fixture at `scheduled` with no score, so the order-based
+ * pick is a match played in February being announced as the next one. That is
+ * not a rendering nit — the card carries a countdown.
+ *
+ * So the pick stays exactly as the spine makes it and only the CARD refuses it,
+ * when the kickoff is more than two days gone. A league whose results land
+ * normally is untouched; one whose results never land shows no card at all,
+ * which is the honest state.
+ */
+export function nextUp(
+  fixtures: readonly FixtureView[],
+  now: number,
+): FixtureView | null {
+  const fixture = fixtures[nextUpIndex(fixtures)];
+  if (!fixture) return null;
+  // A fixture with no kickoff at all cannot be stale — it has made no promise
+  // about when it is, so the card's own TBD state is the right one.
+  if (fixture.kickoffUtc === null) return fixture;
+  const kickoff = Date.parse(fixture.kickoffUtc);
+  if (Number.isNaN(kickoff)) return fixture;
+  return now - kickoff > NEXT_UP_STALE_MS ? null : fixture;
+}
+
+/**
+ * A player's name as a reader expects it: `"Given Surname Surname"`.
+ *
+ * Most of this API serves names already in that order and this returns them
+ * untouched. Puerto Rico's federation serves `"COTTO MARTINEZ, LUIS ALEJANDRO"`
+ * — surnames first, comma, then given names — so the comma is the discriminant
+ * and the flip happens on the FIRST one only: Puerto Rican names carry two
+ * surnames and both belong to the same half.
+ *
+ * ⚠ **Never title-case.** The source's capitalisation is kept verbatim on
+ * purpose upstream, and there is no casing rule that survives `O'NEILL`,
+ * `DE JESUS` and `McCARTHY` at once. A name is a person's, not a string to
+ * normalise — this reorders and does nothing else.
+ */
+export function playerDisplayName(name: string): string {
+  const comma = name.indexOf(",");
+  if (comma === -1) return name;
+  const surnames = name.slice(0, comma).trim();
+  const given = name.slice(comma + 1).trim();
+  // A trailing or leading comma is malformed rather than surname-first; keep
+  // whichever half is real instead of rendering a fragment or an empty row.
+  if (surnames.length === 0 || given.length === 0) return name;
+  return `${given} ${surnames}`;
+}
+
+/**
+ * The surname half of a surname-first name — the short form a shirt carries.
+ *
+ * For the leagues that serve `"Surname, Given"` this is the playing name and
+ * the only form that fits a lineup token. Every other league has no comma and
+ * gets its whole name back, exactly as before this existed.
+ *
+ * ⚠ Not a substitute for `playerDisplayName` in a list or a header: two
+ * brothers on one squad share a surname, and the token is told apart by the
+ * shirt beside it.
+ */
+export function playerFamilyName(name: string): string {
+  const comma = name.indexOf(",");
+  if (comma === -1) return name;
+  const surnames = name.slice(0, comma).trim();
+  return surnames.length > 0 ? surnames : name;
+}
+
 /** Fixtures that can still be added to a calendar. */
 export function isAddable(fixture: FixtureView): boolean {
   return fixture.status !== "cancelled";

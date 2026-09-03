@@ -11,6 +11,10 @@
  *
  * ⚠ GD carries its sign through `signedGoalDifference` and goes lime only when
  * POSITIVE: a green `-4` would read as a good number.
+ *
+ * ⚠ The form column is sized by its CHIPS, not by a share of the row — see
+ * `styles.wide`. Five chips are a fixed width and a fraction of the screen is
+ * not.
  */
 import { StyleSheet, View } from 'react-native';
 
@@ -107,6 +111,21 @@ const styles = StyleSheet.create({
   },
   /** The mock's dividers: a left rule on every cell but the first. */
   ruled: { borderLeftWidth: 1, borderLeftColor: Colors.dark.trayLine },
-  /** The form column carries five chips and needs the extra share. */
-  wide: { flex: 1.45 },
+  /**
+   * The form column sizes to ITS CHIPS, and the three number cells share what
+   * is left.
+   *
+   * ⚠ **Not a flex share.** It was `flex: 1.45`, which is a fraction of the
+   * screen — but five 22pt chips plus their gaps and padding are a FIXED 142pt,
+   * and at 402pt wide that share is only 115. The chips ran out of the tray's
+   * right edge. It was invisible for as long as it shipped because no league
+   * had served five results yet: every European table was three games old, and
+   * Puerto Rico's completed season was the first full `form` array to reach it.
+   *
+   * ⚠ A bigger fraction is not the fix — 2.03 fits a 402pt screen and still
+   * overflows a 375pt one. `flex: 0` (grow 0, shrink 0, basis auto) cannot
+   * overflow at any width or any form length, and a short array simply hands
+   * the numbers more room.
+   */
+  wide: { flex: 0 },
 });

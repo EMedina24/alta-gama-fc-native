@@ -54,6 +54,22 @@ export interface League {
   live: boolean;
   /** Whether the league has published matchweek rounds. */
   rounds: boolean;
+  /**
+   * Whether a finished fixture here can ever grow an events timeline. False
+   * hides the events disclosure outright: Puerto Rico's federation enters no
+   * player events at all, so `/cronogol/fixtures/{id}/events` answers
+   * `count: 0` forever and a chevron would promise data that cannot arrive.
+   * ⚠ NOT "events observed today" — a league can serve an empty array on one
+   * real match (trap 32) and still keep `true`; a missing match's timeline is
+   * the disclosure's own pending copy, a missing CAPABILITY is this flag.
+   */
+  matchEvents: boolean;
+  /**
+   * True for a season named by ONE calendar year (Puerto Rico's `2026`),
+   * false for the European cross-year form (`2026/27`). Feeds
+   * `leagueSeasonLabel`; nothing else may branch on it.
+   */
+  calendarYearSeason: boolean;
   /** Whether ida/vuelta halves are a meaningful division for this league. */
   hasHalves: boolean;
   /**
@@ -92,6 +108,8 @@ export const LEAGUES: readonly League[] = [
     clubCount: 20,
     live: true,
     rounds: true,
+    matchEvents: true,
+    calendarYearSeason: false,
     hasHalves: true,
     zone: 'Europe/Madrid',
     zones: [
@@ -109,6 +127,8 @@ export const LEAGUES: readonly League[] = [
     clubCount: 20,
     live: true,
     rounds: true,
+    matchEvents: true,
+    calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/London',
     zones: [
@@ -128,6 +148,8 @@ export const LEAGUES: readonly League[] = [
     clubCount: 18,
     live: true,
     rounds: true,
+    matchEvents: true,
+    calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/Berlin',
     zones: [
@@ -148,6 +170,8 @@ export const LEAGUES: readonly League[] = [
     clubCount: 20,
     live: true,
     rounds: true,
+    matchEvents: true,
+    calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/Rome',
     zones: [
@@ -157,10 +181,62 @@ export const LEAGUES: readonly League[] = [
       { kind: 'rel', from: 18, to: 20 },
     ],
   },
+  {
+    /**
+     * ⚠ Puerto Rico is TWO leagues, not one. `lpr-pro-apertura` and
+     * `lpr-pro-clausura` are separate championships with separate tables that
+     * both run inside one calendar year — the `laliga`/`segunda` relationship,
+     * not a two-half season. Only CLAUSURA is registered on the backend today
+     * (2026-09-02); Apertura joins as a sibling entry when its league row
+     * exists, and asking for it before then returns an empty table, not a 404.
+     *
+     * ⚠ The first league here whose source cannot feed the whole app. The
+     * federation publishes a standings table and a schedule and nothing else:
+     * no matchweek on any fixture (so `rounds: false` keeps it off Matchdays),
+     * no player events ever (`matchEvents: false`), and it can never appear on
+     * `/cronogol/live`. Squads are the best of any league — a real portrait on
+     * essentially every player. The capability table this mirrors is
+     * `senpai-backend/CRONOGOL-API.md` §"Puerto Rico"; there is no
+     * capabilities field on the wire, so it is copied by hand.
+     *
+     * ⚠ `live: true` is not a claim about live SCORES — it means the league
+     * has clubs to browse, which Puerto Rico does. Live scores are gated by
+     * the data (`/cronogol/live` simply never carries a row) and by the
+     * widget's own `laliga` check.
+     */
+    slug: 'lpr-pro-clausura',
+    apiSlug: 'lpr-pro-clausura',
+    // ⚠ NOT the wire's `LPR Pro Masculina Clausura`. This league serves NO
+    // artwork, so it is the first to render the chip's text branch (ADR 0031)
+    // — the name has to fit a 36pt chip, and "LPR Apertura" must sit beside it.
+    name: 'LPR Clausura',
+    order: 5,
+    // ⚠ Eleven, and `bandsApply` compares the table's `clubs` against it — a
+    // wrong number silently drops the rank badges and the club-page strip.
+    clubCount: 11,
+    live: true,
+    rounds: false,
+    matchEvents: false,
+    calendarYearSeason: true,
+    hasHalves: false,
+    zone: 'America/Puerto_Rico',
+    // No continental qualification and no relegation published. Empty says
+    // "no bands"; omitting it would not compile, which is the point.
+    zones: [],
+  },
 ];
 
 export const DEFAULT_LEAGUE = LEAGUES[0];
 export const LIVE_LEAGUES = LEAGUES.filter((l) => l.live);
+/**
+ * The leagues that have a matchweek index behind them.
+ *
+ * ⚠ Every screen built on rounds must take THIS list, not `LEAGUES`. Puerto
+ * Rico answers `/cronogol/jornada/...` with `200` and `matchweeks: []` rather
+ * than a 404, so an ungated screen does not fail — it draws a full pager whose
+ * every round is empty, which reads as twenty broken rounds.
+ */
+export const ROUND_LEAGUES = LEAGUES.filter((l) => l.rounds);
 
 /** The season every route is pinned to. Baked into permanent `webcal://` URLs. */
 export const SEASON = 2026;
@@ -211,13 +287,19 @@ export function byEditorialOrder(a: League, b: League): number {
  * the next time that artwork changes ink, which it already has once.
  *
  * Artwork is optional: a league with none renders as its name (ADR 0031), and
- * the row is still usable while `useLeagueArtwork` is in flight.
+ * the row is still usable while `useLeagueArtwork` is in flight. Puerto Rico
+ * is the first league to actually take that branch — it serves no artwork.
+ *
+ * `leagues` narrows the row to a capability's subset — `ROUND_LEAGUES` on the
+ * Matchdays screen. It defaults to the whole catalogue, so a caller that has no
+ * capability to respect reads exactly as before.
  */
 export function leagueOptions(
   artwork: Record<string, { logoUrl?: string | null; logoUrls?: Record<string, string> | null }>
     | undefined,
+  leagues: readonly League[] = LEAGUES,
 ): { slug: string; name: string; logoUrl: string | null }[] {
-  return [...LEAGUES].sort(byEditorialOrder).map((league) => {
+  return [...leagues].sort(byEditorialOrder).map((league) => {
     const art = artwork?.[league.apiSlug];
     return {
       slug: league.slug,
@@ -235,4 +317,20 @@ export function leagueOptions(
 /** `2026` → `"2026/27"`. */
 export function seasonLabel(season: number): string {
   return `${season}/${String((season + 1) % 100).padStart(2, '0')}`;
+}
+
+/**
+ * The season as THIS league names it: `"2026/27"` for a European league,
+ * `"2026"` for one whose championship starts and finishes inside one year.
+ *
+ * ⚠ Puerto Rico's Clausura runs February–June 2026 and is called the 2026
+ * season. Printing `2026/27` beside a Ponce player would be a straightforward
+ * factual error, not a formatting preference.
+ *
+ * An unknown league keeps the European form — the same string this app printed
+ * before the parameter existed, so a caller that cannot resolve a league (a
+ * club in no table, a table still loading) is never worse off than it was.
+ */
+export function leagueSeasonLabel(league: League | undefined, season: number): string {
+  return league?.calendarYearSeason ? String(season) : seasonLabel(season);
 }
