@@ -109,6 +109,8 @@ const styles = StyleSheet.create({
   rail: { paddingHorizontal: Spacing.five, gap: Spacing.two },
   group: { gap: Spacing.three },
   tiles: { flexDirection: 'row', gap: Spacing.three },
-  /** Hairline rows carry their own top rule — no gap between them. */
-  rows: { gap: 0 },
+  /** ⚠ Glass CARDS since 0092, not 0070's hairline rows — `gap: 0` was that
+      era's rule and survived the repaint by mistake, leaving the cards
+      touching. `three` matches the sibling `tiles` and `group` gaps. */
+  rows: { gap: Spacing.three },
 });
