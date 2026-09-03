@@ -29,23 +29,6 @@ enum W {
   }
 }
 
-/// The two crests of one fixture, with the design's `v` between them.
-struct CrestPair: View {
-  let row: WidgetSnapshot.Entry
-  let copy: WidgetSnapshot.Copy
-  var size: CGFloat = 30
-
-  var body: some View {
-    HStack(spacing: 8) {
-      CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: size, tone: .open)
-      Text(copy.versus)
-        .font(Tok.micro(size * 0.34))
-        .foregroundStyle(Tok.ink45)
-      CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: size, tone: .open)
-    }
-  }
-}
-
 /// Nothing to count down to, said honestly.
 ///
 /// ⚠ Two different sentences, because they are two different situations and the

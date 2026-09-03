@@ -92,7 +92,12 @@ struct YourWeekView: View {
             // rail. A hairline with nothing beside it reads as a widget that
             // failed to finish loading, which is the same lie the filler rows
             // the old layout refused would have told.
-            heroColumn(hero)
+            // ⚠ `spoken` is the harness's 114pt hero against this body, plus
+            // margin (ADR 0108): a standard tile's 124pt body affords the
+            // spoken day line; a mini's 112 and an SE's ≤109 do not, and fall
+            // back to the inline tag. Height, not device — Dynamic Type moves
+            // nothing here (the tile's type is fixed), so the branch is stable.
+            heroColumn(hero, spoken: geo.size.height >= 118)
               .frame(width: rail.isEmpty ? nil : heroWidth(geo.size.width),
                      alignment: .leading)
 
@@ -154,8 +159,18 @@ struct YourWeekView: View {
 
   // MARK: Hero
 
-  /// The next kickoff: time, day and side tag on one baseline, then the two
+  /// The next kickoff: the SPOKEN day over the time (ADR 0108), then the two
   /// clubs stacked home over away.
+  ///
+  /// ⚠⚠ **`Viernes` in full, on its own line — and only where it FITS.** The
+  /// old inline `VIE` tag wore the tile's lime tag voice (TU SEMANA and FUERA
+  /// wear the same dress) and was read as furniture, not a day. The spoken
+  /// line answers that — but it costs height: the hero measures 114pt against
+  /// a 124pt body on a standard tile, 112 on a mini and ≤109 on an SE
+  /// (`ImageRenderer` harness, ADR 0108). `spoken` is that measurement as a
+  /// branch: compact tiles keep the inline tag, which is why `kickoffDay`
+  /// still travels on a v5 snapshot. Do not add height here without re-running
+  /// the harness.
   ///
   /// ⚠⚠ **STACKED, where the mock draws one row — and the number said so.**
   /// The mock's `crest · name · v · crest · name` wants 168pt for its own
@@ -172,49 +187,62 @@ struct YourWeekView: View {
   /// ⚠ A `Link`, never `widgetURL` — three fixtures are three destinations and
   /// `widgetURL` carries one; the two together are a documented conflict where
   /// the row taps silently lose.
-  private func heroColumn(_ row: WidgetSnapshot.Entry) -> some View {
-    Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
+  private func heroColumn(_ row: WidgetSnapshot.Entry, spoken: Bool) -> some View {
+    // The spoken line replaces the inline tag; both never draw together.
+    let saysDay = spoken && row.kickoffDayName != nil
+
+    return Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
       VStack(alignment: .leading, spacing: 7) {
-        HStack(alignment: .firstTextBaseline, spacing: 7) {
-          Text(row.kickoffTime ?? row.kickoffLabel)
-            .font(Tok.numerals(27, .ultraLight))
-            .tracking(-0.95)
-            .foregroundStyle(Tok.ink)
-            .lineLimit(1)
-
-          if let day = row.kickoffDay {
-            Text(day)
-              .font(.system(size: 9.5, weight: .semibold))
-              .tracking(1.5)
+        VStack(alignment: .leading, spacing: 3) {
+          if saysDay, let dayName = row.kickoffDayName {
+            Text(dayName)
+              .font(.system(size: 15, weight: .semibold))
+              .tracking(-0.2)
               .foregroundStyle(Tok.accent)
+              .lineLimit(1)
           }
 
-          // ⚠ Neutral, not the accent capsule ADR 0059 drew. The lime is spent
-          // on the followed club's NAME and the day; a third lime object beside
-          // them makes the reader hunt for which one means "yours".
-          if let tag = row.isHome ? entry.copy.homeTag : entry.copy.awayTag {
-            Text(tag)
-              .font(.system(size: 8.5, weight: .semibold))
-              .tracking(1.2)
-              .foregroundStyle(Tok.ink62)
-              .padding(.horizontal, 5)
-              .frame(height: 13)
-              // ⚠ `glassFill`/`glassLine`, the app's named pair — the same
-              // values this site already used by hand, now tracking `theme.ts`.
-              // ⚠ r4 stays: at 13pt tall a `Rad.chip` corner is a pill, and a
-              // pill here would read as the accent capsule the header owns.
-              .background(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                  .fill(Tok.glassFill)
-              )
-              .overlay(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                  .strokeBorder(Tok.glassLine, lineWidth: 0.5)
-              )
-              .fixedSize()
+          HStack(alignment: .firstTextBaseline, spacing: 7) {
+            Text(row.kickoffTime ?? row.kickoffLabel)
+              .font(Tok.numerals(27, .ultraLight))
+              .tracking(-0.95)
+              .foregroundStyle(Tok.ink)
+              .lineLimit(1)
+
+            if !saysDay, let day = row.kickoffDay {
+              Text(day)
+                .font(.system(size: 9.5, weight: .semibold))
+                .tracking(1.5)
+                .foregroundStyle(Tok.accent)
+            }
+
+            // ⚠ Neutral, not the accent capsule ADR 0059 drew. The lime is spent
+            // on the followed club's NAME and the day; a third lime object beside
+            // them makes the reader hunt for which one means "yours".
+            if let tag = row.isHome ? entry.copy.homeTag : entry.copy.awayTag {
+              Text(tag)
+                .font(.system(size: 8.5, weight: .semibold))
+                .tracking(1.2)
+                .foregroundStyle(Tok.ink62)
+                .padding(.horizontal, 5)
+                .frame(height: 13)
+                // ⚠ `glassFill`/`glassLine`, the app's named pair — the same
+                // values this site already used by hand, now tracking `theme.ts`.
+                // ⚠ r4 stays: at 13pt tall a `Rad.chip` corner is a pill, and a
+                // pill here would read as the accent capsule the header owns.
+                .background(
+                  RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Tok.glassFill)
+                )
+                .overlay(
+                  RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .strokeBorder(Tok.glassLine, lineWidth: 0.5)
+                )
+                .fixedSize()
+            }
           }
+          .fixedSize(horizontal: false, vertical: true)
         }
-        .fixedSize(horizontal: false, vertical: true)
 
         // ⚠ Home on top, always — the same rule `W.pairLabel` states. Flipping
         // it so "your" club leads would make one match read two ways for two
@@ -285,7 +313,16 @@ struct YourWeekView: View {
         Spacer(minLength: 2)
 
         VStack(alignment: .trailing, spacing: 2.5) {
-          if let day = row.kickoffDay {
+          // ⚠ `Dom 6`, sentence case with the date — a code beside a number
+          // reads as a date, alone it reads as a badge (ADR 0108). Costs no
+          // width: the time below is wider on every clock (28 v ~42pt,
+          // measured). The tracked uppercase form is the v4 fallback only.
+          if let dated = row.kickoffDayDate {
+            Text(dated)
+              .font(.system(size: 8, weight: .semibold))
+              .tracking(0.2)
+              .foregroundStyle(Tok.ink45)
+          } else if let day = row.kickoffDay {
             Text(day)
               .font(.system(size: 8, weight: .semibold))
               .tracking(1.1)

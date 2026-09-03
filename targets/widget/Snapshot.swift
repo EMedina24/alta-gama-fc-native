@@ -94,6 +94,16 @@ struct WidgetSnapshot: Codable {
     /// `kickoffLabel` on one line.
     let kickoffDay: String?
     let kickoffTime: String?
+    /// `Sábado` / `Saturday` — the SPOKEN day, v5 (ADR 0108): the medium
+    /// hero's headline and the small widget's footer. Sentence case, because
+    /// it is a word and not a tag — `VIE` in the tile's lime tag voice read as
+    /// furniture. ⚠ Optional: absent from a v4 snapshot, and absence falls
+    /// back to the `kickoffDay` tag / `kickoffLabel`, never to a blank.
+    let kickoffDayName: String?
+    /// `Sáb 5` — the rail column's dated short form, v5 (ADR 0108). A code
+    /// beside a number reads as a date; alone it reads as a badge. ⚠ Optional
+    /// like `kickoffDayName`; absence falls back to uppercase `kickoffDay`.
+    let kickoffDayDate: String?
     /// `J4`. Null for a competition without rounds.
     let roundLabel: String?
     let venue: String?
@@ -279,6 +289,7 @@ extension WidgetSnapshot {
           opponentName: "Real Madrid", opponentAbbr: "RMA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(100_800),
           kickoffLabel: "Sat 21:00", kickoffDay: "SAT", kickoffTime: "21:00",
+          kickoffDayName: "Saturday", kickoffDayDate: "Sat 5",
           roundLabel: "J4", venue: "Mestalla", leagueSlug: "laliga"
         ),
         .init(
@@ -289,6 +300,7 @@ extension WidgetSnapshot {
           opponentName: "Osasuna", opponentAbbr: "OSA", opponentSlot: "away",
           kickoffUtc: now.addingTimeInterval(169_200),
           kickoffLabel: "Sun 16:15", kickoffDay: "SUN", kickoffTime: "16:15",
+          kickoffDayName: "Sunday", kickoffDayDate: "Sun 6",
           roundLabel: "J4", venue: "Sánchez-Pizjuán", leagueSlug: "laliga"
         ),
         .init(
@@ -299,6 +311,7 @@ extension WidgetSnapshot {
           opponentName: "Girona", opponentAbbr: "GIR", opponentSlot: "home",
           kickoffUtc: now.addingTimeInterval(177_300),
           kickoffLabel: "Sun 18:30", kickoffDay: "SUN", kickoffTime: "18:30",
+          kickoffDayName: "Sunday", kickoffDayDate: "Sun 6",
           roundLabel: "J4", venue: "Montilivi", leagueSlug: "laliga"
         ),
       ]

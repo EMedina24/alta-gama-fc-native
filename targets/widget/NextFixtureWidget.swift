@@ -69,11 +69,12 @@ struct NextFixtureView: View {
 
   // MARK: Home screen
 
-  /// ⚠ **Centred, and the crests are the subject** (ADR 0058). The first cut had
-  /// this column left-aligned with 30pt crests under a 30pt countdown, which made
-  /// the card a clock with two badges on it — the same inverted hierarchy
-  /// [0034](../../.claude/decisions/0034-next-up-card-live-seconds-countdown.md)
-  /// corrected on the Today board. The clubs are what the reader is looking for.
+  /// ⚠ **Centred, and the clubs are the subject** (ADR 0058) — and each side is
+  /// now a NAMED column, crest over name (ADR 0107). The bare 38pt pair left the
+  /// tile's middle a ~35pt void on a 158pt tile; the in-app NEXT UP card and the
+  /// medium hero both already spend that space on the answer to *who*, and this
+  /// tile joins them. The hairline-then-countdown block is `next-up-card.tsx`'s
+  /// own rule row, at tile scale.
   private var small: some View {
     Group {
       if let live {
@@ -90,23 +91,31 @@ struct NextFixtureView: View {
           }
           .frame(maxWidth: .infinity)
 
-          // ⚠ 38 is derived, not eyeballed: the small widget's usable width is
-          // ~109pt on an iPhone SE, and `38 + 10 + v + 10 + 38 ≈ 99` is the
-          // largest pair that fits there without the system scaling it down.
-          CrestPair(row: row, copy: entry.copy, size: 38)
-            .padding(.top, 8)
+          // ⚠ The two spacers CENTRE the pair in the tile's flexible middle and
+          // their minimums are the SE budget: the whole column measures 114.5pt
+          // against a 115pt content box on a Display-Zoomed SE (ADR 0107 has
+          // the harness numbers). Padding added anywhere here must come out of
+          // something else.
+          Spacer(minLength: 2)
 
-          Spacer(minLength: 4)
+          pair(row)
+
+          Spacer(minLength: 2)
+
+          Rectangle().fill(Tok.hairline).frame(height: 0.5)
 
           countdown(row)
+            .padding(.top, 6)
 
           // ⚠ `ink62`, up from `ink55` (ADR 0096): the app found its faint inks
           // read a tier weaker once the ground was lit rather than flat black,
           // and stepped every one of them up. Same ground here now.
-          Text(footer(row))
-            .font(.system(size: 12, weight: .medium))
+          // ⚠ Kickoff only — the venue is gone (ADR 0107). At this width it
+          // rendered as `Estadio La Car…` on live data, which names nothing;
+          // the club page one tap away has the full line.
+          Text(smallFooter(row))
+            .font(.system(size: 11.5, weight: .medium))
             .foregroundStyle(Tok.ink62)
-            .multilineTextAlignment(.center)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
             .padding(.top, 2)
@@ -116,6 +125,51 @@ struct NextFixtureView: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+  }
+
+  /// The pairing, each side a column — crest over name, the in-app card's
+  /// stacked idiom (its header records why: a ROW layout truncated both sides
+  /// of `Real Madrid v Real Sociedad` to `Real…` against `Real…`).
+  ///
+  /// ⚠ Crests 32, names 10.5 at `minimumScaleFactor(0.8)` — measured, not
+  /// chosen: the worst realistic name (`R. Sociedad`, 61pt) lands in a ~52pt
+  /// half-column on the SE floor at scale 0.85, above the 0.8 floor and above
+  /// the design's 8.5pt smallest type (ADR 0086's rule). One VoiceOver stop for
+  /// the whole pairing, as the app card does — four stops read crest, name,
+  /// "v", name.
+  private func pair(_ row: WidgetSnapshot.Entry) -> some View {
+    HStack(alignment: .top, spacing: 2) {
+      side(row, slot: "home")
+      Text(entry.copy.versus)
+        .font(Tok.micro(11))
+        .foregroundStyle(Tok.ink45)
+        .frame(height: 32)
+      side(row, slot: "away")
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      "\(row.homeName ?? row.homeAbbr) \(entry.copy.versus) \(row.awayName ?? row.awayAbbr)"
+    )
+  }
+
+  /// ⚠ Home on the left, always — `W.pairLabel`'s rule. The followed side's
+  /// name takes the accent, the medium hero's own marking; `homeName`/`awayName`
+  /// are nil on a v1 snapshot and the abbr is the fallback, never a blank.
+  private func side(_ row: WidgetSnapshot.Entry, slot: String) -> some View {
+    let isHome = slot == "home"
+    let abbr = isHome ? row.homeAbbr : row.awayAbbr
+    let name = (isHome ? row.homeName : row.awayName) ?? abbr
+
+    return VStack(spacing: 3) {
+      CrestView(fixtureId: row.fixtureId, slot: slot, abbr: abbr, size: 32, tone: .open)
+      Text(name)
+        .font(.system(size: 10.5, weight: .semibold))
+        .tracking(-0.2)
+        .foregroundStyle(isHome == row.isHome ? Tok.accent : Tok.ink90)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+    }
+    .frame(maxWidth: .infinity)
   }
 
   /// The figure that moves — `9:34:12` ticking inside the final 12 hours,
@@ -140,18 +194,22 @@ struct NextFixtureView: View {
       // nothing in any log. `snapshot.rows(after:)` already filters to
       // `kickoffUtc > date`, so this should be unreachable — which is precisely
       // the kind of guarantee worth one call to not depend on.
+      // ⚠ 22, and 24 was measured OUT: the timer's widest form `11:59:59`
+      // is 102pt at 22pt heavy mono against the SE floor's 115pt content box
+      // — at 24pt it is 111pt, and `minimumScaleFactor` is unreliable on
+      // auto-updating text (ADR 0058), so there is no rescue if it clips.
       Text(
         timerInterval: entry.date...max(entry.date.addingTimeInterval(1), row.kickoffUtc),
         countsDown: true
       )
-      .font(Tok.numerals(20, .heavy))
+      .font(Tok.numerals(22, .heavy))
       .foregroundStyle(Tok.ink)
       .multilineTextAlignment(.center)
       .lineLimit(1)
       .minimumScaleFactor(0.5)
     } else {
       Text(Cadence.countdown(from: entry.date, to: row.kickoffUtc))
-        .font(Tok.numerals(20, .heavy))
+        .font(Tok.numerals(22, .heavy))
         .foregroundStyle(Tok.ink)
         .lineLimit(1)
         .minimumScaleFactor(0.6)
@@ -337,8 +395,14 @@ struct NextFixtureView: View {
     return "\(entry.copy.next) · \(round)"
   }
 
-  private func footer(_ row: WidgetSnapshot.Entry) -> String {
-    guard let venue = row.venue else { return row.kickoffLabel }
-    return "\(row.kickoffLabel) · \(venue)"
+  /// `Sábado 21:00` — the day SPOKEN, the widget family's one date voice
+  /// (ADR 0108). Widest form `Wednesday 10:15 am` measures 118pt against the
+  /// SE floor's 115 and rides the footer's `minimumScaleFactor`; a v4 snapshot
+  /// has no `kickoffDayName` and falls back to the old `Sat 21:00`.
+  private func smallFooter(_ row: WidgetSnapshot.Entry) -> String {
+    guard let dayName = row.kickoffDayName, let time = row.kickoffTime else {
+      return row.kickoffLabel
+    }
+    return "\(dayName) \(time)"
   }
 }

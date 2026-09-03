@@ -204,13 +204,21 @@ export function formatWidgetKickoff(
 }
 
 /**
- * `{ day: 'SAT', time: '21:00' }` — the medium widget's stacked kickoff column
- * (ADR 0059).
+ * `{ day: 'SAT', time: '21:00', dayName: 'Sábado', dayDate: 'Sáb 5' }` — the
+ * widgets' kickoff strings (ADR 0059 · ADR 0108).
  *
- * ⚠ UPPERCASE where `formatWidgetKickoff` is sentence case, and that is the
- * same rule applied to a different placement: this is a stacked date block,
- * which is where caps are the design (`formatFixtureDate`, the season spine).
- * The inline `Sat 21:00` still serves the small widget and the accessories.
+ * ⚠ `day` is UPPERCASE where `formatWidgetKickoff` is sentence case, and that
+ * is the same rule applied to a different placement: it is a stacked date
+ * block, which is where caps are the design (`formatFixtureDate`, the season
+ * spine). The inline `Sat 21:00` still serves the accessories.
+ *
+ * ⚠ `dayName` and `dayDate` are the SPOKEN forms (ADR 0108): Ed read `VIE` as
+ * furniture, not a day, because lime + tracking is the tile's tag voice. The
+ * medium hero says `Viernes` in full; the rail and compact fallbacks say
+ * `Vie 4` — a code beside a number reads as a date. Sentence case throughout,
+ * because a word is what they are. `dayName` leans on `Intl` long weekdays
+ * (`phrases.intl`, the `formatWeekdayLong` precedent); Spanish arrives
+ * lowercase and is sentence-cased here, since the widget prints verbatim.
  *
  * ⚠ Same `kickoffTbd` precondition as `formatWidgetKickoff`.
  */
@@ -219,9 +227,16 @@ export function formatWidgetKickoffParts(
   zone: string,
   clock: '24' | '12',
   phrases: Phrases,
-): { day: string; time: string } {
-  const { weekday } = zonedParts(iso, zone, phrases);
-  return { day: weekday.toUpperCase(), time: formatKickoffTime(iso, zone, clock) };
+): { day: string; time: string; dayName: string; dayDate: string } {
+  const { weekday, day } = zonedParts(iso, zone, phrases);
+  const sentence = (word: string) =>
+    word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '';
+  return {
+    day: weekday.toUpperCase(),
+    time: formatKickoffTime(iso, zone, clock),
+    dayName: sentence(formatWeekdayLong(iso, zone, phrases)),
+    dayDate: `${sentence(weekday)} ${day}`.trim(),
+  };
 }
 
 /** "Saturday" / "Sábado" — the Today board's eyebrow. */

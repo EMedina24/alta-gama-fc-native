@@ -25,6 +25,35 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
+> ⭐ **NEW 2026-09-03 (later) — the widgets SPEAK the day
+> ([0108](./decisions/0108-widgets-speak-the-day.md)).** Ed read `VIE` on the
+> medium tile as furniture (lime + tracking is the tile's TAG voice) and picked
+> "Spoken day" from a four-direction mockup
+> (`claude.ai/code/artifact/5458faa7-9532-47c3-8d28-cc3d01bde348`). Medium hero
+> now says **`Viernes`** at 15pt accent on its own line; the rail says
+> **`Dom 6`** (costs no width — the time column is wider); the small NEXT
+> footer says **`Sábado 21:00`**. Snapshot **v5** adds `kickoffDayName` +
+> `kickoffDayDate` through `formatWidgetKickoffParts` (one injection point, no
+> call-site changes; both optional in Swift, v4 degrades to the old forms).
+> ⚠⚠ The spoken hero is 114pt against a 124pt standard body but 112 on a mini
+> and ≤109 on an SE — `heroColumn(_:spoken:)` branches on measured body height
+> (≥118) and COMPACT TILES KEEP THE INLINE TAG, which is why `kickoffDay`
+> still travels. Verified on the simulator (ES real data 12h clock + EN
+> `week3` sample 24h). ⚠ Needs a new NATIVE build to reach a device; the
+> compact fallback has been reasoned+harnessed, never seen on a real mini/SE.
+>
+> ⭐ **NEW 2026-09-03 — the small NEXT tile names its sides
+> ([0107](./decisions/0107-next-tile-names-its-sides.md)).** Ed flagged the
+> tile's empty middle; the upcoming state now stacks each side as a column
+> (crest over name, followed side in lime — the in-app NEXT UP card's idiom at
+> tile scale), takes that card's hairline-then-countdown rule row, bumps the
+> countdown 20→22pt and drops the venue from the footer (it only ever rendered
+> truncated). `CrestPair` deleted. Every size is measured against the
+> Display-Zoomed SE's 115pt box (column min 114.5pt; the un-scalable timer is
+> why 22pt not 24). Verified on the simulator: `week3` worst-case (EN) and real
+> Betis/Madrid data (ES). ⚠ Paint only — live ledger, accessories, provider,
+> reload budget untouched. ⚠ Needs a new NATIVE build to reach a device.
+>
 > ⭐ **NEW 2026-09-02 — the app carries FIVE leagues.** Puerto Rico
 > (`lpr-pro-clausura`, shown as **LPR Clausura**) joined the catalogue
 > ([0105](./decisions/0105-lpr-clausura-and-league-capability-flags.md)) and is

@@ -30,7 +30,7 @@ import type { WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 
 /** Bump when `WidgetEntry`/`WidgetSnapshot` changes shape. Swift tolerates all. */
-export const SNAPSHOT_VERSION = 4;
+export const SNAPSHOT_VERSION = 5;
 
 /**
  * How many fixtures travel.
@@ -89,9 +89,30 @@ export interface WidgetEntry {
   /** ⚠ The only raw instant. Everything else is a finished string. */
   kickoffUtc: string;
   kickoffLabel: string;
-  /** `SAT` over `21:00` — the medium widget's stacked column (ADR 0059). */
+  /**
+   * `SAT` over `21:00` — the medium widget's stacked column (ADR 0059).
+   *
+   * ⚠ Still written on v5 and still read: it is the compact tiles' fallback
+   * when the spoken forms below don't fit, and older extensions know nothing
+   * else.
+   */
   kickoffDay: string;
   kickoffTime: string;
+  /**
+   * `Sábado` / `Saturday` — the SPOKEN day, v5 (ADR 0108). The medium hero's
+   * headline and the small widget's footer (`Sábado 21:00`). Sentence case: a
+   * word, not a tag — `VIE` in the tag voice read as furniture and got asked
+   * about. ⚠ Optional in `Snapshot.swift`; absence falls back to the
+   * `kickoffDay` tag on the hero and `kickoffLabel` on the footer.
+   */
+  kickoffDayName: string;
+  /**
+   * `Sáb 5` — the rail column's dated short form, v5 (ADR 0108). A code
+   * beside a number reads as a date; alone it reads as a badge. ⚠ Costs no
+   * width: the time under it is wider on every clock. ⚠ Optional in
+   * `Snapshot.swift`; absence falls back to the uppercase `kickoffDay`.
+   */
+  kickoffDayDate: string;
   roundLabel: string | null;
   venue: string | null;
   /**
@@ -219,7 +240,9 @@ export function buildSnapshot(
   now: Date,
   copy: Copy,
   formatKickoff: (iso: string) => string,
-  formatKickoffParts: (iso: string) => { day: string; time: string },
+  formatKickoffParts: (
+    iso: string,
+  ) => { day: string; time: string; dayName: string; dayDate: string },
 ): WidgetSnapshot {
   const picked = selectWidgetFixtures(fixtures, followed, now);
 
@@ -270,6 +293,8 @@ export function buildSnapshot(
       kickoffLabel: formatKickoff(fixture.kickoffUtc),
       kickoffDay: parts.day,
       kickoffTime: parts.time,
+      kickoffDayName: parts.dayName,
+      kickoffDayDate: parts.dayDate,
       // ⚠ `copy.today.md` — the SAME matchday label the last-result card uses
       // (`J 4` / `MD 4`). The mock draws `J4` closed up; one source of truth for
       // the label is worth more than one space.
