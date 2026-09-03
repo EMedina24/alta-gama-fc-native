@@ -25,6 +25,16 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
+> ⭐ **NEW 2026-09-03 (latest) — the medium rail becomes a CARD for one match
+> ([0109](./decisions/0109-rail-solo-card.md)).** Ed flagged the two-club
+> state off a live screenshot: one rail fixture wore the multi-row format —
+> `Valen…`/`Barce…` truncated beside `10:15 am`, floating in ~90pt of empty
+> glass. `railSolo` now anchors the clubs (named in FULL, 20pt crests) to the
+> column's top and the `Dom 6` + 18pt-time block to its bottom — clubs-first
+> is 0107's order, not the hero's, so the two "when"s don't race. ⚠ `roomy`
+> reuses 0108's 118pt height branch; compact tiles take a smaller cut. Two
+> rail rows are untouched. No wire change.
+>
 > ⭐ **NEW 2026-09-03 (later) — the widgets SPEAK the day
 > ([0108](./decisions/0108-widgets-speak-the-day.md)).** Ed read `VIE` on the
 > medium tile as furniture (lime + tracking is the tile's TAG voice) and picked

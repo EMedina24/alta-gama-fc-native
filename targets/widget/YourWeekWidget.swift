@@ -108,14 +108,25 @@ struct YourWeekView: View {
               // content area and it reads as the tile's second column, which is
               // what it is.
               GlassSurface(radius: Rad.tile) {
-                railColumn
-                  // ⚠ 4.5, and it is load-bearing arithmetic rather than a
-                  // taste: 9pt of inset is what the rail gains back from the
-                  // dropped gap, so this is what keeps its content box equal to
-                  // ADR 0086's measured one. See `heroWidth`.
-                  .padding(.horizontal, 4.5)
-                  .padding(.vertical, 3)
-                  .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Group {
+                  // ⚠ ONE fixture behind the hero draws as a CARD, not a
+                  // squeezed row (ADR 0109): a lone row floats mid-column with
+                  // its names truncated beside a 12-hour time ("Valen…" on
+                  // live data). The column's height is the space to spend.
+                  if rail.count == 1, let solo = rail.first {
+                    railSolo(solo, roomy: geo.size.height >= 118)
+                      .padding(.horizontal, 10)
+                  } else {
+                    railColumn
+                      // ⚠ 4.5, and it is load-bearing arithmetic rather than a
+                      // taste: 9pt of inset is what the rail gains back from
+                      // the dropped gap, so this is what keeps its content box
+                      // equal to ADR 0086's measured one. See `heroWidth`.
+                      .padding(.horizontal, 4.5)
+                      .padding(.vertical, 3)
+                  }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
               }
               .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -313,21 +324,7 @@ struct YourWeekView: View {
         Spacer(minLength: 2)
 
         VStack(alignment: .trailing, spacing: 2.5) {
-          // ⚠ `Dom 6`, sentence case with the date — a code beside a number
-          // reads as a date, alone it reads as a badge (ADR 0108). Costs no
-          // width: the time below is wider on every clock (28 v ~42pt,
-          // measured). The tracked uppercase form is the v4 fallback only.
-          if let dated = row.kickoffDayDate {
-            Text(dated)
-              .font(.system(size: 8, weight: .semibold))
-              .tracking(0.2)
-              .foregroundStyle(Tok.ink45)
-          } else if let day = row.kickoffDay {
-            Text(day)
-              .font(.system(size: 8, weight: .semibold))
-              .tracking(1.1)
-              .foregroundStyle(Tok.ink45)
-          }
+          railDay(row)
           Text(row.kickoffTime ?? row.kickoffLabel)
             .font(Tok.numerals(10, .medium))
             .tracking(-0.2)
@@ -337,6 +334,92 @@ struct YourWeekView: View {
         .fixedSize()
       }
       .padding(.vertical, 6.5)
+    }
+  }
+
+  /// `Dom 6`, sentence case with the date — a code beside a number reads as a
+  /// date, alone it reads as a badge (ADR 0108). Costs no width in the row:
+  /// the time beside it is wider on every clock (28 v ~42pt, measured). The
+  /// tracked uppercase form is the v4 fallback only.
+  @ViewBuilder
+  private func railDay(_ row: WidgetSnapshot.Entry) -> some View {
+    if let dated = row.kickoffDayDate {
+      Text(dated)
+        .font(.system(size: 8, weight: .semibold))
+        .tracking(0.2)
+        .foregroundStyle(Tok.ink45)
+    } else if let day = row.kickoffDay {
+      Text(day)
+        .font(.system(size: 8, weight: .semibold))
+        .tracking(1.1)
+        .foregroundStyle(Tok.ink45)
+    }
+  }
+
+  /// The rail's ONE-fixture form (ADR 0109): a card that SPENDS the column —
+  /// clubs named in full anchored to the top, the kickoff block anchored to
+  /// the bottom, the flexible gap between them. The multi-row format in a
+  /// column with one occupant truncated both names beside a 12-hour time and
+  /// floated the row in ~90pt of empty glass.
+  ///
+  /// ⚠ Clubs FIRST, kickoff below — the small NEXT tile's order (0107),
+  /// deliberately not the hero's: the hero beside this card already leads
+  /// with the kickoff, and two tellings of "when" stacked level with each
+  /// other would race. Subordinate scale throughout: 18pt medium time against
+  /// the hero's 27 ultralight, 20pt crests against its 24.
+  ///
+  /// ⚠ `roomy` is the hero's own 118pt height branch (ADR 0108): the full
+  /// card is ~102pt minimum against a 118pt standard column but overflows a
+  /// zoomed SE's ~95; compact tiles take the smaller cut (~90pt). Same
+  /// measurement, same threshold, one constant to move.
+  ///
+  /// ⚠ A `Link` like every rail row — `widgetURL` carries one destination and
+  /// this tile has up to three.
+  private func railSolo(_ row: WidgetSnapshot.Entry, roomy: Bool) -> some View {
+    Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
+      VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 5) {
+          soloSide(row, slot: "home", followed: row.isHome, roomy: roomy)
+          soloSide(row, slot: "away", followed: !row.isHome, roomy: roomy)
+        }
+
+        Spacer(minLength: 6)
+
+        railDay(row)
+        Text(row.kickoffTime ?? row.kickoffLabel)
+          .font(Tok.numerals(roomy ? 18 : 15, .medium))
+          .tracking(-0.3)
+          .foregroundStyle(Tok.ink)
+          .lineLimit(1)
+          .padding(.top, 2.5)
+      }
+      .padding(.vertical, 8)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+  }
+
+  /// ⚠ `homeName`/`awayName` are nil on a v1 snapshot; the abbr is the
+  /// fallback, never a blank — the same rule as `heroSide`. The worst name
+  /// (`R. Sociedad`, 61pt at 10.5pt) has 98pt on a standard tile and 67 on an
+  /// SE; the scale factor is the SE's 4pt of margin, engaged nowhere else.
+  private func soloSide(
+    _ row: WidgetSnapshot.Entry, slot: String, followed: Bool, roomy: Bool
+  ) -> some View {
+    let isHome = slot == "home"
+    let abbr = isHome ? row.homeAbbr : row.awayAbbr
+    let name = (isHome ? row.homeName : row.awayName) ?? abbr
+
+    return HStack(spacing: 5) {
+      CrestView(
+        fixtureId: row.fixtureId, slot: slot, abbr: abbr,
+        size: roomy ? 20 : 16, tone: .open
+      )
+      Text(name)
+        .font(.system(size: roomy ? 10.5 : 9.5, weight: .semibold))
+        .tracking(-0.14)
+        .foregroundStyle(followed ? Tok.accent : Tok.ink90)
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
     }
   }
 
