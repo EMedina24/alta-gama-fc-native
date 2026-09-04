@@ -952,6 +952,23 @@ documented at the code that handles them; this is the index.
     whenever a component is fed a capped list (`max = 5`), draw the cap once
     before believing the layout.
 
+57. **⚠⚠ A COLD deep link builds the whole navigation stack from the URL — and
+    without an anchor, the target is the stack's ONLY route.** Tapping a widget
+    with the app killed resolved `altagamafc://club/{slug}` into `[club/[slug]]`
+    alone: no tab bar (the club page sits outside `(tabs)`, trap-free by 0020),
+    a hero back pill whose `router.back()` had nothing to pop, and a swipe-back
+    with nothing beneath — the reader's only exit was force-quitting. It shipped
+    because every test tap was WARM (a running app pushes the URL onto the
+    existing stack, which works) and because the notification path is a
+    different code path that never had the bug (`routing.ts` lands on `(tabs)`
+    then pushes). The root `_layout.tsx` now exports
+    `unstable_settings = { anchor: '(tabs)' }`
+    ([0110](./decisions/0110-deep-links-anchor-on-the-tab-shell.md)) — the
+    router inserts `(tabs)` beneath any deep-linked route. ⚠ A new top-level
+    route reached by URL gets this floor for free; do not "fix" a specific
+    screen with a hand-rolled fallback instead. ⚠ Verifying it needs a KILLED
+    app — `simctl terminate` then `simctl openurl` — a warm tap proves nothing.
+
 ---
 
 ## Where things stand

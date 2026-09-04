@@ -24,6 +24,18 @@ import { hydrateStartingXi } from '@/store/starting-xi';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ fade: true, duration: 250 });
 
+// ⚠ A deep link must land ON TOP of the tab shell, never instead of it. The
+// widgets' `altagamafc://club/{slug}` on a COLD launch is resolved by the
+// router itself — not by `routing.ts`, which only handles notification taps —
+// and without an anchor it made `club/[slug]` the root stack's ONLY route: no
+// tab bar on that screen, nothing beneath the hero's back pill to pop to, the
+// reader stranded (ADR 0110). The notification path never hit this because it
+// launches on `(tabs)` and `router.push`es. `anchor` is per-navigator, so a
+// normal launch is unchanged — `(tabs)` was already the initial route.
+export const unstable_settings = {
+  anchor: '(tabs)',
+};
+
 export default function RootLayout() {
   // AsyncStorage is async, so preferences arrive after first paint. Holding the
   // tree back for one read avoids every screen having to distinguish "follows
