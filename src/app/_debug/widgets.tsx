@@ -82,6 +82,7 @@ export default function DebugWidgets() {
   const [newsImages, setNewsImages] = useState<string[]>([]);
   const [written, setWritten] = useState<string>('…');
   const [crests, setCrests] = useState<string[]>([]);
+  const [allCrests, setAllCrests] = useState<string[]>([]);
   const [status, setStatus] = useState('idle');
 
   const container = groupContainer();
@@ -111,6 +112,7 @@ export default function DebugWidgets() {
     setOnDisk(next.summary);
     setWritten(next.written);
     setCrests(next.crests);
+    setAllCrests(await readAllCrests());
     setLiveOnDisk(await readLive());
     const nextNews = await readNews();
     setNewsOnDisk(nextNews.summary);
@@ -172,6 +174,15 @@ export default function DebugWidgets() {
       <View style={styles.box}>
         <Text variant="micro" color="textSecondary" style={styles.mono}>
           {crests.length ? crests.join('\n') : '(none)'}
+        </Text>
+      </View>
+
+      <Text variant="eyebrowSm" color="textFaint">
+        EVERY crest directory on disk — the Live Activity&apos;s fixture is here or nowhere
+      </Text>
+      <View style={styles.box}>
+        <Text variant="micro" color="textSecondary" style={styles.mono}>
+          {allCrests.length ? allCrests.join('\n') : '(none)'}
         </Text>
       </View>
 
@@ -297,6 +308,47 @@ export default function DebugWidgets() {
       <Button label="Re-inspect" tone="quiet" onPress={() => void inspect()} />
     </ScrollView>
   );
+}
+
+/**
+ * Every `crests/{fixtureId}/` directory in the App Group, whether or not the
+ * fixture is in the widget snapshot.
+ *
+ * ⚠⚠ **The list above is keyed on the SNAPSHOT's entries, and that is exactly
+ * the wrong key for the Live Activity.** The card's fixture is chosen by the
+ * SERVER at T−10 and need not be one of the widget's ≤ 6; on a busy matchday it
+ * routinely is not. Such a fixture is invisible in that list whether its artwork
+ * is on disk or not — which is the question this screen exists to answer
+ * (ADR 0111).
+ *
+ * ⚠ Prints the raw fixture id, not an abbreviation: there is no snapshot row to
+ * take a name from, and the id is what `CrestView` actually keys on.
+ */
+async function readAllCrests(): Promise<string[]> {
+  const directory = groupContainer();
+  if (!directory) return ['(no App Group container)'];
+
+  try {
+    const root = new Directory(directory, 'crests');
+    if (!root.exists) return ['(no crests directory)'];
+
+    return root
+      .list()
+      .map((entry) => {
+        // ⚠ A `Directory`'s uri ends in a slash and a `File`'s does not — the
+        // same trap `pruneCrestCache` documents. Strip it before taking the name.
+        const id = entry.uri.replace(/\/+$/, '').split('/').pop() ?? '';
+        if (!id) return null;
+        const folder = new Directory(directory, 'crests', id);
+        const home = new File(folder, 'home.png');
+        const away = new File(folder, 'away.png');
+        return `${id}  home:${home.exists ? '\u2713' : '\u2717'} away:${away.exists ? '\u2713' : '\u2717'}`;
+      })
+      .filter((row): row is string => row !== null)
+      .sort();
+  } catch (error) {
+    return [`unreadable: ${error instanceof Error ? error.message : String(error)}`];
+  }
 }
 
 /**

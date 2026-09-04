@@ -968,6 +968,30 @@ documented at the code that handles them; this is the index.
     route reached by URL gets this floor for free; do not "fix" a specific
     screen with a hand-rolled fallback instead. ⚠ Verifying it needs a KILLED
     app — `simctl terminate` then `simctl openurl` — a warm tap proves nothing.
+58. **⚠⚠ Crest WRITES are budgeted, foreground-only and debounced; crest DELETES
+    are unbudgeted, run on the same foreground, and are the tail of a
+    fire-and-forget promise.** The Live Activity is the one crest consumer whose
+    demand set is chosen by the SERVER — a push-to-start at T−10 with the app
+    closed — so its artwork must already be on disk, and three separate paths
+    were destroying it. (a) `pinWidgetCrests` sits behind `if (snapshot)`, so a
+    cold launch where the 7-day `useUpcoming` beats the 21-day `useWidgetWindow`
+    ran `pruneCrestCache` against the module initialiser `[]` and swept the
+    container down to the reminder queue — and a `widgetWindow` query that
+    merely FAILED did it for the whole session. (b) `applyReminders` is fired
+    with `void` and ends in the prune, while `scheduleWidgetSync`'s 1s timer
+    runs `warmLongLookCrests` concurrently: the sweep can `delete()` the
+    directory a download is mid-write into, the throw is swallowed, and the
+    crest is silently absent **for a fixture that was in the keep-list**.
+    (c) With `planned` and `pins` both empty the sweep emptied `crests/`
+    outright. Both pin modules now answer `null` for "not yet known" and the
+    App Group sweep is SKIPPED while either is, an in-flight set is treated as
+    wanted, and the activity's own 48-hour selection is a fourth keep-list
+    ([0111](./decisions/0111-live-activity-crests-are-a-fourth-keep-list.md)).
+    ⚠ It shipped because 0085 §1 asserted the crest was "already warmed by
+    `crests.ts`" and nothing ever checked — the widget kept drawing crests from
+    a timeline rendered before the sweep, so the damage was invisible until a
+    card rendered fresh on a lock screen. ⚠ Keeping too much is disk; deleting
+    too much is artwork missing ninety minutes later, with nothing in any log.
 
 ---
 

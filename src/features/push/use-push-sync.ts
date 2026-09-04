@@ -20,7 +20,9 @@ import { scheduleNewsSync } from '@/features/news/sync';
 import { pinWidgetCrests } from '@/features/widgets/pins';
 import { buildSnapshot } from '@/features/widgets/snapshot';
 import { scheduleWidgetSync } from '@/features/widgets/sync';
+import { pinActivityCrests, selectActivityFixtures } from './activity-crests';
 import { registerNotificationCategories } from './categories';
+import { warmLongLookCrests } from './crest-cache';
 import { applyReminders, selectReminders } from './reminders';
 import { initialRoute, onNotificationTap } from './routing';
 import { schedulePushSync, syncPushRegistration } from './sync';
@@ -143,6 +145,22 @@ export function usePushSync(): void {
       // lettered tiles for clubs that have real crests.
       if (snapshot) pinWidgetCrests(snapshot.entries.map((entry) => entry.fixtureId));
 
+      // The fixtures that could have a Live Activity started on them (ADR 0111).
+      //
+      // ⚠⚠ **SYNCHRONOUSLY too, and for a stronger reason than the widget's.**
+      // This is the only crest keep-list whose consumer runs with the app CLOSED:
+      // the server push-to-starts a card at T−10 and `CrestView` reads the App
+      // Group and never the network, so artwork pruned here is artwork missing
+      // from a lock screen ninety minutes later, with nothing anywhere saying so.
+      //
+      // ⚠ Built from `upcoming.data` (7 days), NOT `widgetWindow.data` (21) — the
+      // shorter query lands first on a cold launch, which is exactly the moment
+      // the prune below runs.
+      const activityFixtures = upcoming.data
+        ? selectActivityFixtures(upcoming.data.fixtures, prefs.followed, now)
+        : null;
+      if (activityFixtures) pinActivityCrests(activityFixtures);
+
       if (PUSH_AVAILABLE && prefs.alertReminder && upcoming.data) {
         const planned = selectReminders(
           upcoming.data.fixtures,
@@ -155,6 +173,21 @@ export function usePushSync(): void {
           title: copy.reminders.title,
           body: copy.reminders.body,
         });
+      }
+
+      // ⚠⚠ **NOT gated on `alertReminder`, and that is the point.** ADR 0055 §5
+      // hangs Live Activity consent on `alertGoals`, a different switch — so a
+      // reader with kickoff reminders off still gets cards, while the reminder
+      // path that used to be their only crest writer never runs. Ungated on
+      // `liveActivitiesAvailable()` as well: these same files serve the long-look
+      // card and both widgets, so they are not wasted on a device that cannot
+      // show a card, and a reader who switches activities on mid-week finds the
+      // artwork already there.
+      //
+      // ⚠ No widget reload here — reloads are rationed and spending them is
+      // silent (trap 34). A crest landing is not a snapshot change.
+      if (activityFixtures) {
+        for (const fixtureId of activityFixtures) void warmLongLookCrests(fixtureId);
       }
 
       // ⚠ Debounced and change-guarded inside — WidgetKit rations reloads and

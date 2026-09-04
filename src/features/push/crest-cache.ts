@@ -29,10 +29,28 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { API_BASE } from '@/lib/cronogol/client';
 import { groupContainer } from '@/features/app-group';
 import { widgetCrestPins } from '@/features/widgets/pins';
+import { activityCrestPins } from './activity-crests';
 
 const CACHE_DIR = 'notif-crests';
 const ATTACH_DIR = 'notif-attach';
 const GROUP_DIR = 'crests';
+
+/**
+ * Fixtures whose crests are being downloaded RIGHT NOW.
+ *
+ * ⚠⚠ **The writer and the deleter run concurrently and nothing else serialises
+ * them.** `applyReminders` is fired with `void` from the re-arm and ends by
+ * calling `pruneCrestCache`, while `scheduleWidgetSync`'s 1s timer runs
+ * `warmLongLookCrests` on its own schedule. Without this set the warm can pass
+ * its `file.exists` check, start `downloadFileAsync`, and have the sweep
+ * `entry.delete()` the directory out from under it — the download then throws
+ * into the `catch` above, which swallows it, and the crest is silently absent
+ * **for a fixture that was in the keep-list all along** (ADR 0111).
+ *
+ * ⚠ Belt and braces with the keep-lists, not a replacement for them: this only
+ * covers the moments a download is actually open.
+ */
+const inFlightCrests = new Set<string>();
 
 export type CrestSlot = 'pair' | 'home' | 'away';
 
@@ -108,6 +126,10 @@ export async function warmLongLookCrests(fixtureId: string): Promise<void> {
   const container = groupContainer();
   if (!container) return; // Simulator without the group provisioned, or Android.
 
+  // ⚠⚠ **CLAIMED BEFORE THE FIRST AWAIT, and released in `finally`.** See
+  // `inFlightCrests` — without this the prune below can delete the directory
+  // this function is mid-download into.
+  inFlightCrests.add(fixtureId);
   try {
     const target = new Directory(container, GROUP_DIR, fixtureId);
     if (!target.exists) target.create({ intermediates: true, idempotent: true });
@@ -121,6 +143,8 @@ export async function warmLongLookCrests(fixtureId: string): Promise<void> {
     );
   } catch {
     // Nothing to recover. The tile fallback covers it.
+  } finally {
+    inFlightCrests.delete(fixtureId);
   }
 }
 
@@ -177,9 +201,26 @@ export function pruneCrestCache(
     //
     // ⚠ The two `Paths.cache` sweeps above are deliberately NOT unioned: the
     // widget uses neither the composed `pair` plate nor the attachment copies.
+    // ⚠⚠ **A FOURTH keep-list since ADR 0111 — the Live Activity's.** Its horizon
+    // is a third one again (48 hours, and it keeps `kickoffTbd`/`postponed`
+    // fixtures both other selections drop), and it is the only one whose consumer
+    // is chosen by the SERVER while the app is closed. Missing it here deletes
+    // the artwork for a card that starts ninety minutes later.
+    //
+    // ⚠⚠ **AND THE SWEEP IS SKIPPED ENTIRELY WHILE EITHER SET IS UNKNOWN.** Both
+    // pin modules answer `null` until their selection has been built once. The
+    // 7-day `useUpcoming` query normally lands before the 21-day
+    // `useWidgetWindow` one, so this ran on a cold launch with the widget's pins
+    // still unset and swept the container down to the reminder queue — and a
+    // `widgetWindow` query that merely failed left it that way all session.
+    // Keeping too much costs disk; deleting too much costs a card its crests.
     const container = groupContainer();
-    if (container) {
-      const wantedGroup = new Set([...keepFixtures, ...widgetCrestPins()]);
+    const widgetPins = widgetCrestPins();
+    const activityPins = activityCrestPins();
+    if (container && widgetPins && activityPins) {
+      const wantedGroup = new Set([...keepFixtures, ...widgetPins, ...activityPins]);
+      // ⚠ Never delete a directory a download is currently writing into.
+      for (const id of inFlightCrests) wantedGroup.add(id);
       sweep(new Directory(container, GROUP_DIR), wantedGroup, (name) => name);
     }
   } catch {
