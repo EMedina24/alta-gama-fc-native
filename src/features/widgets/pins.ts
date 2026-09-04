@@ -13,17 +13,32 @@
  * the reminders. If the prune wins that race the crests are simply re-downloaded
  * on the next warm — self-healing, but a visible flash of lettered tiles.
  *
- * ⚠ In-memory only, and deliberately: on a cold launch nothing is pinned until
- * the first snapshot is built, and the prune that runs before it would sweep the
- * App Group down to the reminder queue. That is correct — a snapshot has not
- * been built yet, so there is nothing the widget is drawing to protect.
+ * ⚠⚠ **`null` means NOT YET KNOWN, and that is different from an empty pin set.**
+ * This module used to initialise to `[]`, and the reasoning was that on a cold
+ * launch there is no snapshot yet so there is nothing the widget is drawing to
+ * protect. That is true of the WIDGET and false of the App Group, which the
+ * long-look card and the Live Activity also read. The 7-day `useUpcoming` query
+ * normally resolves before the 21-day `useWidgetWindow` one, so the re-arm — and
+ * with it `pruneCrestCache` — routinely ran while `pins` was still the
+ * initialiser, sweeping the container down to the reminder queue. A `widgetWindow`
+ * query that merely FAILS left it that way for the whole session.
+ *
+ * ⚠ So the prune now declines to sweep the App Group at all until a snapshot has
+ * been built at least once. Keeping too much is a disk-space problem; deleting
+ * too much is artwork missing from a card ninety minutes later (ADR 0111).
  */
-let pins: readonly string[] = [];
+let pins: readonly string[] | null = null;
 
 export function pinWidgetCrests(fixtureIds: readonly string[]): void {
   pins = fixtureIds;
 }
 
-export function widgetCrestPins(): readonly string[] {
+/** ⚠ `null` means NOT YET KNOWN, which is not the same as empty. */
+export function widgetCrestPins(): readonly string[] | null {
   return pins;
+}
+
+/** ⚠ Test seam only. Nothing in the app un-pins. */
+export function resetWidgetCrestPins(): void {
+  pins = null;
 }
