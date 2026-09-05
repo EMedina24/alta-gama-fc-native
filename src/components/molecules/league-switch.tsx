@@ -54,6 +54,8 @@ const SVG_IDLE_OPACITY = 0.45;
 
 export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: LeagueSwitchProps) {
   const crown = tone === 'crown';
+  // The crown row wears the larger cut (ADR 0116); the ground row keeps 0089's.
+  const markStyle = crown ? [styles.mark, styles.markCrown] : [styles.mark];
   return (
     <ScrollView
       horizontal
@@ -80,7 +82,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
                 <Image
                   source={{ uri: league.logoUrl }}
                   style={[
-                    styles.mark,
+                    ...markStyle,
                     !selected && { opacity: SVG_IDLE_OPACITY },
                   ]}
                   contentFit="contain"
@@ -91,7 +93,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
                 // style's, and the filter id is its own (no trap-40 collision).
                 <FilterImage
                   source={{ uri: league.logoUrl }}
-                  style={[styles.mark, { opacity: IDLE_MARK_OPACITY }]}
+                  style={[...markStyle, { opacity: IDLE_MARK_OPACITY }]}
                   resizeMode="contain"
                   filters={[{ name: 'feColorMatrix', type: 'saturate', values: '0' }]}
                 />
@@ -130,7 +132,11 @@ const styles = StyleSheet.create({
   },
   // On the crown the chip takes the tighter control radius; on the ground it
   // matches the segmented thumb's.
-  chipCrown: { borderRadius: Radius.crownControl, backgroundColor: Colors.dark.onCrownFill },
+  chipCrown: {
+    borderRadius: Radius.crownControl,
+    backgroundColor: Colors.dark.onCrownFill,
+    height: Size.leagueChipHCrown,
+  },
   chipGround: { borderRadius: Radius.thumb, backgroundColor: 'transparent', borderColor: Colors.dark.glassLine },
   // The double inversion (ADR 0089): a near-black plate, mark back in colour.
   onCrown: { backgroundColor: Colors.dark.crownChipOn, borderColor: Colors.dark.crownChipOnLine },
@@ -139,4 +145,5 @@ const styles = StyleSheet.create({
   // both grounds.
   idleCrown: { opacity: 0.72, borderColor: Colors.dark.onCrownLine },
   mark: { width: Size.leagueChipMarkW, height: Size.leagueChipMarkH },
+  markCrown: { width: Size.leagueChipMarkWCrown, height: Size.leagueChipMarkHCrown },
 });
