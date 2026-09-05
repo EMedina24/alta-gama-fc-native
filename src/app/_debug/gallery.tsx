@@ -30,6 +30,7 @@ import { NewsCard } from '@/components/organisms/news-card';
 import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { NextUpCard } from '@/components/organisms/next-up-card';
+import { NextUpDeck } from '@/components/organisms/next-up-deck';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import {
   detailLine,
@@ -187,6 +188,49 @@ const NEXT_CASES = [
   { label: 'Arsenal v Liverpool — no colours on file: ⚠ must be TODAY\'S card, lime ring',
     home: NEXT_SIDE('Arsenal', 'ARS'), away: NEXT_SIDE('Liverpool', 'LIV'),
     wash: pairWash(WASH_TEAM(null, null), WASH_TEAM(null, null)) },
+];
+
+/**
+ * The DECK's fabricated same-day fixtures (ADR 0113), built on `NEXT_CASES`'
+ * pairings so a stack of washes proves the gradients keep their own SVG ids
+ * (trap 40). Kickoffs step off `SOON` two hours apart — every countdown in a
+ * stack ticks a different figure, and all of them are real `Countdown`s.
+ */
+const DECK_AT = (hours: number) =>
+  new Date(Date.parse(SOON) + 1000 * 60 * 60 * hours).toISOString();
+const DECK_CARD = (
+  id: string,
+  from: (typeof NEXT_CASES)[number],
+  hoursAfter: number,
+  kickoffLabel: string,
+  venue: string | null,
+) => ({
+  id,
+  home: from.home,
+  away: from.away,
+  wash: from.wash,
+  kickoffUtc: DECK_AT(hoursAfter),
+  kickoffTbd: false,
+  kickoffLabel,
+  venue,
+});
+const DECK_TWO = [
+  DECK_CARD('deck-a1', NEXT_CASES[0], 0, '16:15', 'Santiago Bernabéu'),
+  DECK_CARD('deck-a2', NEXT_CASES[1], 2, '18:30', 'Estadio de la Cerámica'),
+];
+const DECK_THREE = [
+  ...DECK_TWO,
+  DECK_CARD('deck-a3', NEXT_CASES[2], 4, '21:00', 'San Mamés'),
+];
+const DECK_FIVE = [
+  ...DECK_THREE,
+  DECK_CARD('deck-a4', NEXT_CASES[3], 5, '21:00', null),
+  DECK_CARD('deck-a5', NEXT_CASES[0], 6, '22:00', 'Santiago Bernabéu'),
+];
+/** ⚠ The only legal mixed-looking deck: TBD days never merge with confirmed. */
+const DECK_TBD = [
+  { ...DECK_CARD('deck-t1', NEXT_CASES[3], 24, '--:--', null), kickoffTbd: true },
+  { ...DECK_CARD('deck-t2', NEXT_CASES[2], 24, '--:--', 'San Mamés'), kickoffTbd: true },
 ];
 
 /**
@@ -397,6 +441,7 @@ export default function GalleryScreen() {
    * scroll and the shell cannot drive one (no `idb`, no Accessibility), so a
    * section deep in it is otherwise unreachable from a deep link + screenshot.
    */
+  // ⚠ `?only=next-deck` joined the list with ADR 0113.
   const { only } = useLocalSearchParams<{ only?: string }>();
   const [on, setOn] = useState(true);
   // ⚠ `null` and derived, exactly as `MatchEvents` does it — the gallery must
@@ -424,6 +469,32 @@ export default function GalleryScreen() {
           />
         </Case>
       ))}
+    </>
+  );
+
+  /** The copy-dependent half of a deck card, joined at render. */
+  const deckCard = (card: (typeof DECK_FIVE)[number]) => ({
+    ...card,
+    meta: copy.today.nextUp,
+    dateLabel: 'SAT 5 SEP',
+    zoneLabel: `CEST · ${copy.today.yourTime}`,
+  });
+
+  const nextDeck = (
+    <>
+      <SectionHeader title="Next up deck" meta="same-day stack (ADR 0113)" />
+      <Case label="two cards — one peek layer, two dots; the smallest deck">
+        <NextUpDeck cards={DECK_TWO.map(deckCard)} copy={copy.today} />
+      </Case>
+      <Case label="three cards — max drawn layers; the washes must not bleed ids (trap 40)">
+        <NextUpDeck cards={DECK_THREE.map(deckCard)} copy={copy.today} />
+      </Case>
+      <Case label="five cards — still 3 layers drawn, 5 dots; the cap, drawn (trap 56)">
+        <NextUpDeck cards={DECK_FIVE.map(deckCard)} copy={copy.today} />
+      </Case>
+      <Case label="all-TBD pair — --:-- lead, the tbd note, no countdown">
+        <NextUpDeck cards={DECK_TBD.map(deckCard)} copy={copy.today} />
+      </Case>
     </>
   );
 
@@ -699,6 +770,14 @@ export default function GalleryScreen() {
     );
   }
 
+  if (only === 'next-deck') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {nextDeck}
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text variant="title">Molecules</Text>
@@ -937,6 +1016,7 @@ export default function GalleryScreen() {
       </Case>
 
       {nextUp}
+      {nextDeck}
       {finishedToday}
       {news}
 

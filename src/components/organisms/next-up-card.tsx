@@ -24,7 +24,7 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 
 import { Crest, Text, VersusBadge, WashGradient } from '@/components/atoms';
 import { Countdown, type ScoreSide } from '@/components/molecules';
-import { ClubWash2, Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { ClubWash2, Colors, DeckGround, Radius, Size, Spacing } from '@/constants/theme';
 import type { PairWash } from '@/lib/cronogol/club-wash';
 
 /** Decided once at module scope — the gate must pick a path BEFORE mount (0090). */
@@ -55,6 +55,16 @@ export interface NextUpCardProps {
    */
   wash?: PairWash | null;
   /**
+   * The card's body (ADR 0113). `glass` is the single card's liquid-glass
+   * shell (ADR 0096); `opaque` is the DECK's variant — a solid `card` base,
+   * no glass, no recess dim. ⚠ Stacked layers must be opaque: anything behind
+   * a glass card shows through it — text ghosts and even featureless fills
+   * glow (trap 59) — and Ed called the resulting near-black peeks off. On the
+   * opaque base the club wash returns to its full 0087 alphas; the whisper
+   * exists only because a tint over a translucent shell double-blends.
+   */
+  surface?: 'glass' | 'opaque';
+  /**
    * Kickoff, announced by this card's own countdown (ADR 0052).
    *
    * ⚠ **Nothing else on the screen can detect it.** The fixture windows behind
@@ -80,13 +90,17 @@ export function NextUpCard({
   zoneLabel,
   venue,
   wash = null,
+  surface = 'glass',
   onKickoff,
   copy,
 }: NextUpCardProps) {
+  const glass = surface === 'glass';
   return (
     <View style={styles.card}>
-      {/* The glass body, then the overlays — all decorative, all clipped. */}
-      {LIQUID ? (
+      {/* The body, then the overlays — all decorative, all clipped. */}
+      {!glass ? (
+        <View style={[styles.body, styles.bodyOpaque]} />
+      ) : LIQUID ? (
         <GlassView style={styles.body} glassEffectStyle="clear" />
       ) : (
         <View style={[styles.body, styles.bodyFlat]} />
@@ -94,10 +108,15 @@ export function NextUpCard({
       {/* A dark scrim over the glass — the card must sit a step BELOW the
           crown it refracts, or the ink loses its ground ("a bit darker",
           ADR 0096). `recess` is the translucent black that works on any
-          ground, which is exactly the job. */}
-      <View pointerEvents="none" style={[styles.body, styles.dim]} />
+          ground, which is exactly the job. ⚠ Glass only — the opaque base
+          IS its own ground. */}
+      {glass ? <View pointerEvents="none" style={[styles.body, styles.dim]} /> : null}
       {/* A gentle top sheen — the card's one lit surface, not a colour. */}
       <View pointerEvents="none" style={styles.body}>
+        {/* ⚠ Opaque only: the crown, baked (ADR 0113). The glass card SHOWS
+            the gradient behind it; the opaque card must paint the same light
+            itself or read as a black slab on the bright band. */}
+        {!glass ? <WashGradient angle="vertical" stops={DeckGround} /> : null}
         <WashGradient
           angle="vertical"
           stops={[
@@ -105,18 +124,21 @@ export function NextUpCard({
             { offset: 0.4, color: '#ffffff', opacity: 0 },
           ]}
         />
-        {/* ⚠ The club pair at WHISPER strength only (ADR 0096) — the dead-
-            transparent middle still keeps the two colours from mixing. */}
+        {/* ⚠ The club pair at WHISPER strength on glass (ADR 0096) — a tint
+            over a translucent shell double-blends — and at the FULL 0087
+            alphas on the opaque base, where the whisper's reason is gone
+            (ADR 0113). The dead-transparent middle still keeps the two
+            colours from mixing. */}
         {wash ? (
           <WashGradient
             angle="pair"
             stops={[
-              { offset: 0, color: wash.home, opacity: ClubWash2.edgeOnGlass },
-              { offset: ClubWash2.midAt, color: wash.home, opacity: ClubWash2.midOnGlass },
+              { offset: 0, color: wash.home, opacity: glass ? ClubWash2.edgeOnGlass : ClubWash2.edge },
+              { offset: ClubWash2.midAt, color: wash.home, opacity: glass ? ClubWash2.midOnGlass : ClubWash2.mid },
               { offset: ClubWash2.gapStart, color: wash.home, opacity: 0 },
               { offset: ClubWash2.gapEnd, color: wash.away, opacity: 0 },
-              { offset: 1 - ClubWash2.midAt, color: wash.away, opacity: ClubWash2.midOnGlass },
-              { offset: 1, color: wash.away, opacity: ClubWash2.edgeOnGlass },
+              { offset: 1 - ClubWash2.midAt, color: wash.away, opacity: glass ? ClubWash2.midOnGlass : ClubWash2.mid },
+              { offset: 1, color: wash.away, opacity: glass ? ClubWash2.edgeOnGlass : ClubWash2.edge },
             ]}
           />
         ) : null}
@@ -129,10 +151,16 @@ export function NextUpCard({
           {meta}
         </Text>
         {venue ? (
-          // ⚠ One ink now (ADR 0096): `washInk` existed for legibility on the
-          // full-alpha wash, and the whisper does not move the ground enough
-          // to need it.
-          <Text variant="eyebrowSm" color="textFaint" numberOfLines={1} style={styles.venue}>
+          // ⚠ One ink on GLASS (ADR 0096): `washInk` existed for legibility on
+          // the full-alpha wash, and the whisper does not move the ground
+          // enough to need it. The OPAQUE deck card brings the full wash and
+          // a lively baked top back (ADR 0113) — `textFaint` died on it, so
+          // `washInk`'s reason returns with it.
+          <Text
+            variant="eyebrowSm"
+            color={glass ? 'textFaint' : 'washInk'}
+            numberOfLines={1}
+            style={styles.venue}>
             {venue}
           </Text>
         ) : null}
@@ -217,6 +245,12 @@ const styles = StyleSheet.create({
   body: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   /** The floor where liquid glass is not available — the spec's own fallback. */
   bodyFlat: { backgroundColor: Colors.dark.glassFill },
+  /**
+   * The deck variant's base (ADR 0113): the `DeckGround` ramp's own floor,
+   * under the gradient — never `card`, whose charcoal read as a black slab
+   * on the bright band.
+   */
+  bodyOpaque: { backgroundColor: DeckGround[DeckGround.length - 1].color },
   dim: { backgroundColor: Colors.dark.recess },
   topEdge: {
     position: 'absolute',

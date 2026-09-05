@@ -993,6 +993,24 @@ documented at the code that handles them; this is the index.
     card rendered fresh on a lock screen. ⚠ Keeping too much is disk; deleting
     too much is artwork missing ninety minutes later, with nothing in any log.
 
+59. **⚠⚠ ANYTHING layered directly behind a LIQUID-GLASS card shows through
+    it — text ghosts, and even a featureless slab GLOWS.** The NEXT UP deck
+    hit this twice ([0113](./decisions/0113-same-day-next-up-deck.md)). First
+    build: full cards behind the lead under a dimming scrim — the under-card's
+    kickoff double-exposed straight through the lead's `GlassView`; blur does
+    not hide what is behind glass, it smears it into legibility. Second
+    build: featureless full-height shells — and their fill + dimmed ring
+    still glowed a light band across the lead's head row, washing out the
+    venue text on the bright crown; cut to slivers, the peeks read as a
+    pasted near-black slab. ⚠ The real fix was the SURFACE, not the layers:
+    deck cards render `NextUpCard surface="opaque"` (Ed's call — "remove
+    transparency from this card only"), and on an opaque lead the waiting
+    cards are simply visible, scrim-dimmed, mock-exact. ⚠ The rule for every
+    future glass surface stands: a glass card may refract ONLY the screen's
+    own ground — gradient or mesh — never a sibling layer, however
+    featureless it looks on a dark backdrop. If a design needs layers under
+    a card, the card goes opaque.
+
 ---
 
 ## Where things stand

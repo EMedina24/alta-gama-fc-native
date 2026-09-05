@@ -309,6 +309,14 @@ export interface Copy {
     upcoming: string;
     /** The next card's own meta — a date, not the section name. */
     nextUp: string;
+    /**
+     * The deck's VoiceOver position (ADR 0113), appended after "home v away".
+     * The dots under the deck are decorative; this sentence is the count.
+     */
+    deckOf: (position: number, total: number) => string;
+    /** The two accessibility actions that shuffle the deck without the gesture. */
+    deckNext: string;
+    deckPrevious: string;
     /** ⚠ Says whose clock the kickoff is in. */
     yourTime: string;
     /** The day word under an upcoming kickoff — rendered as an eyebrow. */
@@ -827,6 +835,9 @@ export const esCopy: Copy = {
       'Resultados finales de todas las ligas que seguimos. Se confirman unos minutos después del pitido.',
     upcoming: 'Próximos de tus clubes',
     nextUp: 'Siguiente partido',
+    deckOf: (position, total) => `partido ${position} de ${total} del día`,
+    deckNext: 'Siguiente partido del día',
+    deckPrevious: 'Partido anterior',
     yourTime: 'tu hora',
     tonight: 'Hoy',
     tomorrow: 'Mañana',
@@ -1251,6 +1262,9 @@ export const enCopy: Copy = {
       'Full-time scores from every league we track. Settled a few minutes after the whistle.',
     upcoming: 'Upcoming from your clubs',
     nextUp: 'Next up',
+    deckOf: (position, total) => `match ${position} of ${total} today`,
+    deckNext: 'Next match of the day',
+    deckPrevious: 'Previous match',
     yourTime: 'your time',
     tonight: 'Tonight',
     tomorrow: 'Tomorrow',

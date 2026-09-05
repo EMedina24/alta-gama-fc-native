@@ -12,6 +12,7 @@
  * ⚠ A `live` fixture is a snapshot from the last ~3h sweep, and its goals were
  * true then. Nothing here reads a clock or implies a minute.
  */
+import { dayGroups, type DayGroupable } from "./jornada";
 import type { TeamRef, WindowFixtureView } from "./types";
 
 /** True when either side is a followed club. */
@@ -111,4 +112,23 @@ export function upcomingRow(
     return { club: fixture.awayTeam, opponent: fixture.homeTeam, isHome: false };
   }
   return null;
+}
+
+/**
+ * The crown DECK (ADR 0113): every fixture sharing the SOONEST kickoff's
+ * calendar day in the reader's zone. The day rule is `dayGroups`' (ADR 0035's
+ * grouping, reused verbatim): a TBD kickoff is a floating day keyed in UTC and
+ * never merges with a confirmed one — so a confirmed lead never drags a TBD
+ * fixture into the deck, and an all-TBD deck is the only mixed-looking case.
+ *
+ * Order is preserved: `deck[0]` is always the input's first item — the same
+ * fixture the single NEXT UP card shows today. The caller passes fixtures
+ * already filtered to followed clubs and future kickoffs; the clock stays at
+ * the screen so this selector remains pure.
+ */
+export function nextUpDeck<T extends DayGroupable>(
+  upcoming: readonly T[],
+  zone: string,
+): T[] {
+  return dayGroups(upcoming, zone)[0]?.items ?? [];
 }

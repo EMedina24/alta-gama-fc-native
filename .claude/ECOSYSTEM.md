@@ -54,6 +54,28 @@ too. So a reader gets `Alta Gama FC` on the app's launch screen and
 this repo back to match them — 0042 is the newer decision. Copy brand strings from
 the table above, not from `senpai-backend`, until it is re-synced.
 
+## ⚠ Social & paid — the brand ships on two Pages
+
+⚠⚠ **Alta Gama's Meta presence is split across two Facebook Pages, and the split is live.**
+
+| Page | ID | What it carries |
+| --- | --- | --- |
+| `altagama.fc` | `1208965545641551` | **All current ad spend.** Both campaigns delivering as of 2026-09-04 |
+| `Alta Gama FC` | `1234014533133945` | The **newest** creative (2026-09-04) |
+
+So the Page holding the money spells the brand the **closed-up** way this repo's
+[0042](./decisions/0042-brand-spelling-spaced-form-reinstated.md) reversed, while the
+spaced mark sits on a Page with no spend history. ⛔ **Which Page is canonical is Ed's
+call and is not made** — until it is, do not publish a creative on either, because
+publishing casts the vote.
+
+Ads run out of the **Social-Logistics** ad account `267894487225077` — ⚠ a *shared*
+account carrying six unrelated brands back to 2022. An agent can read all of it through
+the claude.ai Meta MCP connector; ⛔ nothing writes to it.
+
+Full detail, call mechanics and the Instagram-enumeration gap: **[META-ADS.md](./META-ADS.md)**,
+stance in [decisions/0112](./decisions/0112-meta-ads-read-over-mcp.md).
+
 ## ⚠ Domains — two hosts, on purpose
 
 | Host | What it is |
@@ -151,6 +173,7 @@ building a screen. The ones that bite hardest:
 | Account/auth behavior | `senpai-backend/CRONOGOL-ACCOUNT-PAGE.md` |
 | Push registration, payloads, account deletion (this app) | [.claude/PUSH-AND-ACCOUNTS.md](./PUSH-AND-ACCOUNTS.md) |
 | Live scores — the route, the caveats, why the scoreboard stays suppressed | [.claude/LIVE-SCORES.md](./LIVE-SCORES.md) |
+| Meta Ads — what is running, the two Pages, the IG gap | [.claude/META-ADS.md](./META-ADS.md) |
 | Deploy/infra | `senpai-backend/DEPLOY.md` |
 | Web app ground rules | `cronogol/AGENTS.md` |
 | Web feature/gotcha notes | `cronogol/docs/{features,gotchas,plans}/` |

@@ -384,6 +384,85 @@ export const ClubWash2 = {
   edgeOnGlass: 0.1, midOnGlass: 0.02,
 } as const;
 
+/**
+ * The NEXT UP deck (ADR 0113) — the crown's stack of same-day cards.
+ *
+ * Geometry: each waiting layer shows `peek` pt below the layer above and sits
+ * `inset` pt narrower per side (the scale step is derived from `inset` at the
+ * measured card width). At most `layers` are DRAWN; deeper cards stay mounted
+ * at opacity 0 — their countdowns are the only thing that can observe a hidden
+ * kickoff (ADR 0052/0078).
+ *
+ * ⚠⚠ Deck cards are OPAQUE (`NextUpCard surface="opaque"`), and that is what
+ * lets real cards stack: anything behind a GLASS card shows through it —
+ * text ghosts, featureless fills glow (trap 59) — which had forced the peeks
+ * down to near-black slivers Ed rejected. On the opaque lead, the waiting
+ * cards are simply VISIBLE, dimmed by a black scrim (`scrimNext`/`scrimBack`
+ * of `scrimColor`) that fades off the next card as the drag reveals it —
+ * the approved mock's exact look. The scrim lands the 0.45 `accentRing` at
+ * ≈0.26 / ≈0.14 effective on the waiting rings.
+ *
+ * Gesture: the pan activates at `activateX` pt of horizontal travel and FAILS
+ * at `failY` pt of vertical — the scaffold's scroll wins a mostly-vertical
+ * drag (the app's first scroll-contended gesture). A release commits past
+ * `commitFraction` of the card's width, or on a flick above `flickVelocity`.
+ *
+ * `spring` is the app's FIRST spring (every other settle is `withTiming` off
+ * `Motion`) — it lives here rather than on `Motion`, whose contract is
+ * "durations, in milliseconds". Tuned calm, the `orbit` lesson.
+ */
+export const Deck = {
+  peek: 10,
+  inset: 8,
+  layers: 3,
+  scrimColor: '#000000',
+  scrimNext: 0.42,
+  scrimBack: 0.69,
+  /** The top card's max tilt while dragged, in degrees. */
+  tiltDeg: 4,
+  commitFraction: 0.4,
+  /** pt/s of horizontal velocity — a flick commits below the distance bar. */
+  flickVelocity: 800,
+  activateX: 10,
+  failY: 8,
+  /**
+   * How far past one card width the commit exit flies, as a factor. ⚠ At
+   * exactly one width the tilted card's corner hung at the screen edge for
+   * the spring's settle tail (seen on device); the overshoot clears it.
+   */
+  exitFactor: 1.25,
+  spring: { damping: 18, stiffness: 180, mass: 1 },
+  /**
+   * Loose rest thresholds for the commit EXIT only — the callback that swaps
+   * the deck fires the moment the card is effectively off-screen instead of
+   * waiting out the spring's invisible settle tail, which read as the next
+   * peek appearing late (Ed). ⚠ Never on the spring-back: a 24pt rest there
+   * would visibly stop the card short of home.
+   */
+  exitRest: { restDisplacementThreshold: 24, restSpeedThreshold: 400 },
+} as const;
+
+/**
+ * The opaque deck card's ground (ADR 0113): the crown, BAKED. `card`'s flat
+ * charcoal read as a black slab on the bright band ("waay too dark" — Ed);
+ * the glass card looked right precisely because the crown's green showed
+ * through it. The deck card sits at a FIXED place in the crown (the payload
+ * slot), so a vertical ramp echoing the gradient behind it — the glass
+ * look's brightness, sampled from the pre-deck card — holds at every scroll
+ * position. Opaque stops, deliberately: translucency here would re-open
+ * trap 59.
+ *
+ * ⚠ Calibrated against the glass single card's rendered colours, not
+ * derived from `CrownGrad` — re-measure against a screenshot before moving
+ * any stop.
+ */
+export const DeckGround = [
+  { offset: 0, color: '#446340', opacity: 1 },
+  { offset: 0.42, color: '#2a4b40', opacity: 1 },
+  { offset: 0.78, color: '#1b332e', opacity: 1 },
+  { offset: 1, color: '#132523', opacity: 1 },
+] as const;
+
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */
 export const Spacing = {
   half: 2, one: 4, two: 8, three: 12, four: 16, five: 20, six: 24, seven: 32, eight: 44,

@@ -73,6 +73,20 @@ export async function hapticToggle(): Promise<void> {
 }
 
 /**
+ * A NEXT UP deck shuffle committing (ADR 0113) — the card crossing the point
+ * of no return, not the drag itself. `.light`, the same weight as a token
+ * placing: both are a small object landing where the finger sent it. Never
+ * fired on a spring-back — an aborted swipe changed nothing.
+ */
+export async function hapticShuffle(): Promise<void> {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch {
+    // As above.
+  }
+}
+
+/**
  * The first press of the two-step account delete (ADR 0081). A Warning, the
  * same notification type the XI's `cleared` uses — this is the moment the
  * reader is told the next tap is final, and it should feel unlike every other

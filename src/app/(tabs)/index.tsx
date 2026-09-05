@@ -16,12 +16,19 @@ import { FinishedToday } from '@/components/organisms/finished-today';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
+import { NextUpDeck } from '@/components/organisms/next-up-deck';
 import { NewsCard } from '@/components/organisms/news-card';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { applyWidgetLive } from '@/features/widgets/live';
 import { Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
-import { boardOutcome, involvesFollowed, lastResult, upcomingRow } from '@/lib/cronogol/board';
+import {
+  boardOutcome,
+  involvesFollowed,
+  lastResult,
+  nextUpDeck,
+  upcomingRow,
+} from '@/lib/cronogol/board';
 import { pairWash } from '@/lib/cronogol/club-wash';
 import {
   boardFromKickoff,
@@ -228,8 +235,16 @@ export default function TodayScreen() {
     );
   })();
 
+  /**
+   * The crown DECK (ADR 0113): every fixture sharing the soonest kickoff's
+   * calendar day in the reader's zone. `deck[0]` is `upcomingMine[0]` by
+   * construction, so the single-card path and every kickoff contract below
+   * read exactly the fixture they always did. Not memoised — its input isn't.
+   */
+  const deck = nextUpDeck(upcomingMine, zone);
+
   /** The soonest upcoming match involving a followed club. */
-  const next = upcomingMine[0] ?? null;
+  const next = deck[0] ?? null;
 
   const mine = upcomingMine.slice(0, 6);
 
@@ -359,6 +374,65 @@ export default function TodayScreen() {
   const catalogueTeam = (team: WindowFixtureView['homeTeam']) =>
     team ? (teams.data ?? []).find((t) => t.slug === team.slug) ?? null : null;
 
+  /**
+   * One NEXT UP card's props — the single card and every deck layer share this
+   * builder verbatim (ADR 0113), so a deck card can never drift from the card
+   * it generalises.
+   */
+  const nextCardProps = (fixture: WindowFixtureView) => ({
+    id: fixture.id,
+    home: nextSide(fixture.homeTeam),
+    away: nextSide(fixture.awayTeam),
+    kickoffUtc: fixture.kickoffUtc,
+    kickoffTbd: fixture.kickoffTbd,
+    // ⚠ Its OWN label, not the section header's — the card sat directly
+    // above a section with the identical title.
+    meta: copy.today.nextUp,
+    kickoffLabel: fixture.kickoffTbd
+      ? '--:--'
+      : formatKickoffTime(fixture.kickoffUtc, zone, clock),
+    dateLabel: formatFixtureDate(fixture.kickoffUtc, zone, phrases),
+    zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
+    venue: fixture.venue,
+    wash: pairWash(catalogueTeam(fixture.homeTeam), catalogueTeam(fixture.awayTeam)),
+    /**
+     * Kick-off, announced by the card's own countdown (ADR 0052).
+     *
+     * ⚠⚠ **Nothing else on this screen knows a match has started.**
+     * `todayBounds` and `recentBounds` both END at the instant they were
+     * fetched, so a fixture that kicks off after that fetch is in NEITHER
+     * window — and `boardLive` tier 1 joins the live row onto a fixture it
+     * holds, so with no fixture there is nothing for `/cronogol/live` to
+     * upgrade no matter how often it polls. The countdown was already
+     * counting to the one moment that fixes it.
+     *
+     * ⚠⚠ **`upcoming` is deliberately NOT refetched, on two grounds.** Its
+     * window starts at `now`, so refetching it drops the match that just
+     * kicked off — and until the live row lands (the backend re-reads every
+     * ~30s) the screen would replace this card with the match AFTER it,
+     * which reads as the fixture having vanished. It is also what keeps this
+     * safe: `next` and the deck are fed by `upcoming` alone, so nothing here
+     * can change `kickoffUtc`, re-arm the countdown's guard and loop.
+     *
+     * ⚠ One shot, not a burst. `useLive` is already polling every 15s while
+     * this screen is focused; what it was missing is the fixture to join to,
+     * and that arrives with these two.
+     *
+     * ⚠ EVERY deck card carries this, hidden ones included (ADR 0113): a
+     * card at the back of the stack is still the only observer of its own
+     * kickoff. Two same-second kickoffs firing twice is harmless — the
+     * refetches dedupe in flight and the bump is idempotent.
+     */
+    onKickoff: () => {
+      // ⚠ First, and synchronously: the kicked-off card is built from rows
+      // already on screen, so it needs a render, not a response.
+      bumpKickoff();
+      void finished.refetch();
+      void recent.refetch();
+      void live.refetch();
+    },
+  });
+
   return (
     <ScreenScaffold
       title={copy.today.title}
@@ -369,66 +443,31 @@ export default function TodayScreen() {
       // eyebrow + title, exactly as APP-SHELL asks.
       /**
        * The crown's payload is the screen's LEAD CARD, whichever it is (ADR
-       * 0095): the live plate while a match is in play, otherwise NEXT UP. The
+       * 0095): the live plate while a match is in play, otherwise NEXT UP —
+       * the single card, or the same-day DECK of them (ADR 0113). The
        * gradient runs over it either way, so the head of the screen is one
        * object rather than a header with a card under it.
        *
-       * ⚠ The two are never both drawn — a live match outranks the fixture it
-       * became, and the body's LAST RESULT is what follows either.
+       * ⚠ A live match outranks the whole deck exactly as it outranks the
+       * fixture it became — the two are never both drawn, and the body's
+       * LAST RESULT is what follows either.
+       *
+       * ⚠ The deck's `key` is its membership: any change — a kickoff passing,
+       * a refetch, a zone switch — remounts it with the soonest back on top.
+       * A shuffle is a peek, not a preference (ADR 0113), and a remount is
+       * the reset that needs no effect.
        */
       payload={
         !hasClubs ? undefined : board ? (
           <LivePlate {...liveCard(board)} copy={copy.today} events={copy.events} />
-        ) : next ? (
-          <NextUpCard
-            home={nextSide(next.homeTeam)}
-            away={nextSide(next.awayTeam)}
-            kickoffUtc={next.kickoffUtc}
-            kickoffTbd={next.kickoffTbd}
-            // ⚠ Its OWN label, not the section header's — the card sat
-            // directly above a section with the identical title.
-            meta={copy.today.nextUp}
-            kickoffLabel={
-              next.kickoffTbd ? '--:--' : formatKickoffTime(next.kickoffUtc, zone, clock)
-            }
-            dateLabel={formatFixtureDate(next.kickoffUtc, zone, phrases)}
-            zoneLabel={`${zoneAbbreviation(zone)} · ${copy.today.yourTime}`}
-            venue={next.venue}
-            wash={pairWash(catalogueTeam(next.homeTeam), catalogueTeam(next.awayTeam))}
-            /**
-             * Kick-off, announced by the card's own countdown (ADR 0052).
-             *
-             * ⚠⚠ **Nothing else on this screen knows a match has started.**
-             * `todayBounds` and `recentBounds` both END at the instant they
-             * were fetched, so a fixture that kicks off after that fetch is in
-             * NEITHER window — and `boardLive` tier 1 joins the live row onto a
-             * fixture it holds, so with no fixture there is nothing for
-             * `/cronogol/live` to upgrade no matter how often it polls. The
-             * countdown was already counting to the one moment that fixes it.
-             *
-             * ⚠⚠ **`upcoming` is deliberately NOT refetched, on two grounds.**
-             * Its window starts at `now`, so refetching it drops the match that
-             * just kicked off — and until the live row lands (the backend
-             * re-reads every ~30s) the screen would replace this card with the
-             * match AFTER it, which reads as the fixture having vanished. It is
-             * also what keeps this safe: `next` is fed by `upcoming` alone, so
-             * nothing here can change `next.kickoffUtc`, re-arm the countdown's
-             * guard and loop.
-             *
-             * ⚠ One shot, not a burst. `useLive` is already polling every 15s
-             * while this screen is focused; what it was missing is the fixture
-             * to join to, and that arrives with these two.
-             */
-            onKickoff={() => {
-              // ⚠ First, and synchronously: the kicked-off card is built from
-              // rows already on screen, so it needs a render, not a response.
-              bumpKickoff();
-              void finished.refetch();
-              void recent.refetch();
-              void live.refetch();
-            }}
+        ) : deck.length > 1 ? (
+          <NextUpDeck
+            key={`${zone}:${deck.map((f) => f.id).join('|')}`}
+            cards={deck.map(nextCardProps)}
             copy={copy.today}
           />
+        ) : next ? (
+          <NextUpCard {...nextCardProps(next)} copy={copy.today} />
         ) : undefined
       }
       onRefresh={() => {
