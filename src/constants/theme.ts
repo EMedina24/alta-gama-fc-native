@@ -848,12 +848,14 @@ export const Size = {
    * The CROWN row's larger cut (ADR 0116, Ed: "a bit bigger" on Matchdays and
    * Table). The crown band is the screen's header and its chips are the
    * screen's primary control; the Clubs body row keeps the 0089 size above.
-   * 44 also lands the chip ON `minTouch`, which the 36 chip never reached.
-   * Mark box scales with the chip (×1.22), same landscape ratio.
+   * Above `minTouch`, which the 36 chip never reached. Mark box is 1.5× the
+   * 0089 mark, same landscape ratio. ⚠ Device-judged like `groundLift`: the
+   * first cut (44 / 54×27) was approved on the simulator and still read
+   * small on the phone.
    */
-  leagueChipHCrown: 44,
-  leagueChipMarkWCrown: 54,
-  leagueChipMarkHCrown: 27,
+  leagueChipHCrown: 52,
+  leagueChipMarkWCrown: 66,
+  leagueChipMarkHCrown: 33,
   bigCrestBleed: 238,
   oppCrestBleed: 146,
 } as const;

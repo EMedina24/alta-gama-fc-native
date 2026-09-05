@@ -9,22 +9,24 @@
 
 ## Decision
 
-`LeagueSwitch` in `tone="crown"` (Matchdays, Table) draws at **44pt chip
-height with a 54×27 mark box** — new `Size.leagueChipHCrown` /
+`LeagueSwitch` in `tone="crown"` (Matchdays, Table) draws at **52pt chip
+height with a 66×33 mark box** — new `Size.leagueChipHCrown` /
 `leagueChipMarkWCrown` / `leagueChipMarkHCrown` — while `tone="ground"`
-(Clubs) keeps 0089's 36pt / 44×22.
+(Clubs) keeps 0089's 36pt / 44×22. (First cut 44 / 54×27 read "still a bit
+too small" on the phone — this token is device-judged, the `groundLift`
+lesson from [0115](./0115-widget-tiles-take-a-lifted-ground.md).)
 
 - Scoped by TONE, not a new prop: the two screens Ed named are exactly the
   two crown call sites, and the crown row is those screens' primary control
   where the Clubs row is a filter over a list that is the subject.
-- 44 lands the crown chip on `minTouch`, which the 36 chip never reached
+- The crown chip now clears `minTouch`, which the 36 chip never reached
   (0089 noted it rode below with hitSlop).
-- The mark box scales with the chip (×1.22, same landscape ratio); LaLiga's
-  1:1 icon still letterboxes inside it.
+- The mark box is 1.5× 0089's, same landscape ratio; LaLiga's 1:1 icon still
+  letterboxes inside it.
 
 ## Consequences
 
-- The crown header on both screens grows 8pt taller; the band flows, nothing
-  is fixed against it.
+- The crown header on both screens grows 16pt taller; the band flows,
+  nothing is fixed against it.
 - Ground-tone chips are untouched — the Clubs screen shows 0089's size,
   deliberately smaller than the same control one tab over.
