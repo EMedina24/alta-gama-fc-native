@@ -117,7 +117,7 @@ enum Tok {
   /// tile is the app again. ⚠ Painted, not transparency: container-background
   /// alpha composites over BLACK (measured, ADR 0114), so lightening is the
   /// only lever the default appearance has.
-  static let groundLift = Color.white.opacity(0.045)
+  static let groundLift = Color.white.opacity(0.09)
 
   /// theme.ts `glassFill` / `glassLine` / `glassFillDim` — the GLASS system
   /// (ADR 0087 §2), the pair `Surfaces.glass` spreads on every body card.

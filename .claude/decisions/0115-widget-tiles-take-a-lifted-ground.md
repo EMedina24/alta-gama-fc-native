@@ -22,10 +22,13 @@ wallpaper that is usually darker than it — where `#0f1316` read near-black.
 
 ## Decision
 
-`MeshPlate` paints **`Tok.groundLift` — `white.opacity(0.045)` — over
-`Tok.ground`, UNDER the pools** (`Shell.swift`), widgets only. (Converged by
-screenshot rounds: 0.06 read too light, its half 0.03 too dark; Ed settled
-the midpoint.)
+`MeshPlate` paints **`Tok.groundLift` — `white.opacity(0.09)` — over
+`Tok.ground`, UNDER the pools** (`Shell.swift`), widgets only. (Converged
+twice: simulator rounds landed 0.045 — 0.06 "too light", 0.03 too dark — and
+then the DEVICE pass overruled it: on the phone's OLED against Ed's wallpaper
+0.045 still read "too dark", and the value doubled. ⚠ The simulator on a Mac
+display reads LIGHTER than hardware; final taste calls on this token belong
+to a device.)
 
 - **A lift, not a second hex**, so the relationship to the app's ground stays
   explicit: remove the overlay and the tile is the app again. `Tok.ground`
@@ -42,9 +45,10 @@ the midpoint.)
 - The tile is now deliberately one step LIGHTER than the app screen it opens
   — reversing 0104's exact-match rationale for the wallpaper context, on
   Ed's call.
-- ⚠ 0.045 is a taste value, verified by eye on the simulator against a dark
-  wallpaper (0.06 read a step too light, 0.03 a step too dark; the midpoint
-  landed it). Tune it as one number in `Tokens.swift`; do not compensate by
+- ⚠ 0.09 is a taste value, and it is DEVICE-calibrated: the simulator rounds
+  settled 0.045, which the phone then read as still too dark. Judge any
+  future change to this number on hardware, not the Mac's rendering of the
+  simulator. Tune it as one number in `Tokens.swift`; do not compensate by
   touching `Tok.ground` or the `MeshTile` alphas.
 - The glass panels (`glassFill` white .06) sit on a lighter base and read
   slightly softer; accepted — the hairline still delineates them.
