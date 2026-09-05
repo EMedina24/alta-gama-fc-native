@@ -73,10 +73,11 @@ export async function hapticToggle(): Promise<void> {
 }
 
 /**
- * A NEXT UP deck shuffle committing (ADR 0113) — the card crossing the point
- * of no return, not the drag itself. `.light`, the same weight as a token
- * placing: both are a small object landing where the finger sent it. Never
- * fired on a spring-back — an aborted swipe changed nothing.
+ * A NEXT UP deck shuffle completing (ADR 0113) — the card CLEARING THE
+ * VIEWPORT, not the drag and not the deck swap a spring-tail later. `.light`,
+ * the same weight as a token placing: both are a small object landing where
+ * the finger sent it. Never fired on a spring-back — an aborted swipe
+ * changed nothing.
  */
 export async function hapticShuffle(): Promise<void> {
   try {

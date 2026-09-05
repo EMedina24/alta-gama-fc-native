@@ -118,7 +118,12 @@ finger-tracking itself stays, being direct manipulation, not an animation.
 
 **Haptic.** `hapticShuffle()` (`.light`) on commit only — Ed's call. The same
 weight as an XI token placing: a small object landing where the finger sent
-it. Never on a spring-back.
+it. Never on a spring-back. ⚠ It fires when the card CLEARS THE VIEWPORT
+(an armed `useAnimatedReaction` on the drag crossing width + gutter), NOT in
+the completion callback with the deck swap — ticking at the swap read as
+"the haptic happens when the card resets to the bottom of the queue" (Ed).
+The flightless commits — Reduce Motion, the VoiceOver actions — tick at the
+commit itself, where the card is out that same instant.
 
 **Accessibility.** The deck is ONE VoiceOver stop like the single card's
 pairing; the label carries what collapsing hides — the pairing, the kickoff

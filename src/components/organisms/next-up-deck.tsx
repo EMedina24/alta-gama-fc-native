@@ -45,6 +45,7 @@ import Animated, {
   Extrapolation,
   interpolate,
   runOnJS,
+  useAnimatedReaction,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -102,9 +103,21 @@ export function NextUpDeck({ cards, copy }: NextUpDeckProps) {
   const measured = cardWidth > 0 && cards.every((card) => heights[card.id] !== undefined);
   const maxHeight = measured ? Math.max(...cards.map((card) => heights[card.id])) : 0;
 
+  /**
+   * The haptic marks the card LEAVING THE VIEWPORT, not the deck swapping —
+   * the swap lands a spring-tail later and ticking there read as "the haptic
+   * happens when the card resets to the bottom of the queue" (Ed). Armed in
+   * the commit path only — and disarmed on every fresh grab — so an aborted
+   * swipe never ticks; the `HapticSentinel` below the layers fires it the
+   * frame the card clears the far gutter.
+   */
+  const hapticArmed = useSharedValue(false);
+  const fireHaptic = () => {
+    void hapticShuffle();
+  };
+
   const commitTop = (dir: 1 | -1) => {
     const next = (top + dir + n) % n;
-    void hapticShuffle();
     // ⚠ Only the BACKWARD shuffle's incoming top fades (a card popping onto
     // centre stage jars); everything landing in a PEEK appears instantly —
     // a fade there read as the below card arriving late (Ed). Two-card decks
@@ -128,6 +141,11 @@ export function NextUpDeck({ cards, copy }: NextUpDeckProps) {
   const pan = Gesture.Pan()
     .activeOffsetX([-Deck.activateX, Deck.activateX])
     .failOffsetY([-Deck.failY, Deck.failY])
+    .onStart(() => {
+      // A fresh grab — possibly seizing a card mid-exit — must not inherit
+      // the previous commit's armed tick.
+      hapticArmed.value = false;
+    })
     .onUpdate((e) => {
       dragX.value = e.translationX;
     })
@@ -146,9 +164,12 @@ export function NextUpDeck({ cards, copy }: NextUpDeckProps) {
       // Either direction shuffles; left reads as "next", right as "previous".
       const dir: 1 | -1 = e.translationX < 0 ? 1 : -1;
       if (reduceMotion) {
+        // No flight — the card is "out" this instant, so the tick is too.
+        runOnJS(fireHaptic)();
         runOnJS(commitTop)(dir);
         return;
       }
+      hapticArmed.value = true;
       // ⚠ Well past one width: the card is tilted, and at exactly one width
       // a rotated corner hung visibly at the screen edge (seen on device).
       // ⚠ `exitRest`'s loose thresholds land the completion — and with it
@@ -165,8 +186,10 @@ export function NextUpDeck({ cards, copy }: NextUpDeckProps) {
 
   const onAccessibilityAction = (event: AccessibilityActionEvent) => {
     const name = event.nativeEvent.actionName;
-    if (name === 'increment') commitTop(1);
-    else if (name === 'decrement') commitTop(-1);
+    if (name !== 'increment' && name !== 'decrement') return;
+    // A flightless commit — the tick lands with it, as on Reduce Motion.
+    fireHaptic();
+    commitTop(name === 'increment' ? 1 : -1);
   };
 
   const lead = cards[top];
@@ -212,6 +235,12 @@ export function NextUpDeck({ cards, copy }: NextUpDeckProps) {
               <NextUpCard {...card} surface="opaque" copy={copy} />
             </DeckLayer>
           ))}
+          <HapticSentinel
+            dragX={dragX}
+            armed={hapticArmed}
+            threshold={cardWidth + Spacing.five}
+            onCross={fireHaptic}
+          />
         </View>
       </GestureDetector>
       <View style={styles.dots}>
@@ -219,6 +248,35 @@ export function NextUpDeck({ cards, copy }: NextUpDeckProps) {
       </View>
     </View>
   );
+}
+
+/**
+ * Fires `onCross` the frame the drag clears `threshold` while `armed` — the
+ * card leaving the viewport (one width + one gutter), where the shuffle's
+ * haptic belongs. Renders nothing. Its own component for the same reason as
+ * `DeckLayer`: a hook capturing the shared values must not live beside the
+ * gesture worklets that WRITE them, or `react-hooks/immutability` reads every
+ * write as mutating hook state. Rising-edge detection (`out && !was`) keeps
+ * the reaction write-free; arming and disarming stay in the gesture.
+ */
+function HapticSentinel({
+  dragX,
+  armed,
+  threshold,
+  onCross,
+}: {
+  dragX: SharedValue<number>;
+  armed: SharedValue<boolean>;
+  threshold: number;
+  onCross: () => void;
+}) {
+  useAnimatedReaction(
+    () => armed.value && Math.abs(dragX.value) >= threshold,
+    (out, was) => {
+      if (out && !was) runOnJS(onCross)();
+    },
+  );
+  return null;
 }
 
 /**
