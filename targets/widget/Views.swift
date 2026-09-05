@@ -42,7 +42,11 @@ struct EmptyState: View {
 
   var body: some View {
     VStack(alignment: alignment, spacing: 6) {
+      // ⚠ Accentable here is safe ONLY because this view never draws on the
+      // Lock Screen — the accessory families carry their own empty branches
+      // (ADR 0114 marks the lime voice at call sites, never inside `Mark`).
       Mark(size: 18)
+        .widgetAccentable()
       Text(followsNothing ? copy.followPrompt : copy.noFixtures)
         .font(.system(size: 13, weight: .semibold))
         .foregroundStyle(Tok.ink62)

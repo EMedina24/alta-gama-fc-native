@@ -108,6 +108,17 @@ enum Tok {
   /// has to, or it inherits whatever the home screen is showing.
   static let ground = Color(red: 0.059, green: 0.075, blue: 0.086) // #0f1316
 
+  /// The step the WIDGET tiles are lifted above `ground` — and only they
+  /// (ADR 0115, Ed: "a bit lighter"). The app's screen and the widget tile
+  /// share a hex but not a context: the screen fills the display, while a
+  /// tile floats on a wallpaper that is usually darker than it, where
+  /// `#0f1316` read near-black. A LIFT rather than a second hex keeps the
+  /// relationship to the app's ground explicit — remove this overlay and the
+  /// tile is the app again. ⚠ Painted, not transparency: container-background
+  /// alpha composites over BLACK (measured, ADR 0114), so lightening is the
+  /// only lever the default appearance has.
+  static let groundLift = Color.white.opacity(0.045)
+
   /// theme.ts `glassFill` / `glassLine` / `glassFillDim` — the GLASS system
   /// (ADR 0087 §2), the pair `Surfaces.glass` spreads on every body card.
   ///
@@ -115,8 +126,11 @@ enum Tok {
   /// records that 0.33pt disappears against the mesh, and a widget is drawn at
   /// the same scale.
   ///
-  /// ⚠ These are the FALLBACK. On iOS 26 `GlassSurface` draws the real
-  /// `glassEffect(.clear)` instead and these are not used — see `Shell.swift`.
+  /// ⚠ These are THE glass, at every iOS version — there is no real-glass
+  /// branch above them. `glassEffect()` inside a widget silently renders its
+  /// subtree as nothing (HANDOFF trap 52, ADR 0104); the one real glass a tile
+  /// ever gets is the SYSTEM's own slab on a Tinted/Clear home screen, where
+  /// `GlassSurface` keeps exactly this fill and line (ADR 0114).
   static let glassFill = Color.white.opacity(0.06)
   static let glassLine = Color.white.opacity(0.11)
   static let glassFillDim = Color.white.opacity(0.05)

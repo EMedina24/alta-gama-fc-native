@@ -25,7 +25,23 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-03 (latest) — the medium rail becomes a CARD for one match
+> ⭐ **NEW 2026-09-05 (latest) — the widgets are DESIGNED for the system's
+> glass ([0114](./decisions/0114-widgets-under-system-glass.md)),** amending
+> 0104 §8. On an iOS 18 Tinted / iOS 26 Clear home screen the system strips
+> the container background, draws real glass and tints content white AT ITS
+> OWN OPACITY — so the white-alpha `Tok` system survives by construction,
+> and the work was everything that isn't white-alpha: `GlassSurface` now
+> paints fill + hairline in `.accented` (no `recess` scrim — BLACK INVERTS
+> under the tint, trap 60 — no ring, no lit edge; `.vibrant` still bails),
+> the lime voice is `.widgetAccentable()` at call sites (followed names
+> conditionally, accessories untouched), and the NEWS lead draws its photo
+> only in `.fullColor` because its near-black fade tints to a white wash
+> that erases both the picture and the headline on it. ⚠ Typechecked at
+> every floor; the visual pass needs the by-hand Customize → Clear toggle
+> on the simulator. ⚠ No API forces glass in the default appearance — that
+> mode is unchanged, and trap 52 (`glassEffect` erases its subtree) stands.
+>
+> ⭐ **NEW 2026-09-03 — the medium rail becomes a CARD for one match
 > ([0109](./decisions/0109-rail-solo-card.md)).** Ed flagged the two-club
 > state off a live screenshot: one rail fixture wore the multi-row format —
 > `Valen…`/`Barce…` truncated beside `10:15 am`, floating in ~90pt of empty
@@ -1010,6 +1026,22 @@ documented at the code that handles them; this is the index.
     own ground — gradient or mesh — never a sibling layer, however
     featureless it looks on a dark backdrop. If a design needs layers under
     a card, the card goes opaque.
+
+60. **⚠⚠ Accented widget rendering (Tinted/Clear home screens) tints EVERY
+    unmarked color white at its own opacity — which INVERTS anything dark.**
+    A design's white-alpha layers survive the mode untouched, but its black
+    ones flip sides: the `recess` scrim (black .28) that SINKS a panel in
+    full color becomes a white .28 wash that LIFTS it, and the NEWS lead's
+    near-black `Tok.scrim` fade becomes a white .62→.94 gradient that erases
+    the photo under it and drowns the white headline sitting ON it — with no
+    opt-out, because `widgetAccentedRenderingMode` is declared on `Image`
+    alone and a gradient is not an image. [0114](./decisions/0114-widgets-under-system-glass.md)
+    routes both around the mode (accented `GlassSurface` takes no scrim; the
+    lead takes its imageless branch). ⚠ The audit rule for any new widget
+    paint: ask what every non-white color becomes when it is forced white at
+    its own alpha — dark washes, dark plates and photo scrims all read as
+    the OPPOSITE of their full-color selves, and nothing in the typechecker,
+    the build or a full-color screenshot will say so.
 
 ---
 

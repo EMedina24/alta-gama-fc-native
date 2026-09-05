@@ -150,8 +150,14 @@ struct YourWeekView: View {
   // MARK: Header
 
   private var header: some View {
+    // ⚠ `.widgetAccentable()` on the lime voice only (ADR 0114): under the
+    // system's glass every unmarked color flattens to white, and the accent
+    // group is what keeps the brand voice and the followed side distinct.
+    // The capsule is marked as ONE group — text, wash and ring tint together,
+    // or the pill's fill and its type drift into two different colors.
     HStack(spacing: 6) {
       Mark(size: 12)
+        .widgetAccentable()
       Text(entry.copy.yourWeek)
         .font(.system(size: 8.5, weight: .semibold))
         .tracking(1.7)
@@ -161,6 +167,7 @@ struct YourWeekView: View {
         .frame(height: 15)
         .background(Capsule().fill(Tok.accentWash))
         .overlay(Capsule().strokeBorder(Tok.accentRing, lineWidth: 0.5))
+        .widgetAccentable()
         .fixedSize()
       Spacer(minLength: 4)
       W.eyebrow(entry.copy.clubCount, color: Tok.ink34, size: 8.5)
@@ -210,6 +217,7 @@ struct YourWeekView: View {
               .font(.system(size: 15, weight: .semibold))
               .tracking(-0.2)
               .foregroundStyle(Tok.accent)
+              .widgetAccentable()
               .lineLimit(1)
           }
 
@@ -225,6 +233,7 @@ struct YourWeekView: View {
                 .font(.system(size: 9.5, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(Tok.accent)
+                .widgetAccentable()
             }
 
             // ⚠ Neutral, not the accent capsule ADR 0059 drew. The lime is spent
@@ -279,6 +288,10 @@ struct YourWeekView: View {
         .font(.system(size: 11.5, weight: .semibold))
         .tracking(-0.23)
         .foregroundStyle(followed ? Tok.accent : Tok.ink90)
+        // ⚠ Conditional, mirroring the lime: the followed side keeps its
+        // distinction through the accent group on the system's glass
+        // (ADR 0114). Same rule on every name in this file.
+        .widgetAccentable(followed)
         .lineLimit(1)
         // ⚠ 0.74, not 0.7 — the design's floor on device is 8.5pt and
         // 11.5 × 0.74 is exactly that. Measured, this never engages.
@@ -418,6 +431,7 @@ struct YourWeekView: View {
         .font(.system(size: roomy ? 10.5 : 9.5, weight: .semibold))
         .tracking(-0.14)
         .foregroundStyle(followed ? Tok.accent : Tok.ink90)
+        .widgetAccentable(followed)
         .lineLimit(1)
         .minimumScaleFactor(0.85)
     }
@@ -433,6 +447,7 @@ struct YourWeekView: View {
       .font(.system(size: 9, weight: weight))
       .tracking(-0.14)
       .foregroundStyle(followed ? Tok.accent : Tok.ink90)
+      .widgetAccentable(followed)
       .lineLimit(1)
   }
 }

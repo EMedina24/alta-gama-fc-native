@@ -94,9 +94,14 @@ struct NewsView: View {
   }
 
   private var header: some View {
+    // ⚠ `.widgetAccentable()` on the lime voice only (ADR 0114): under the
+    // system's glass every unmarked color flattens to white, and the accent
+    // group is what keeps the brand voice reading as a voice.
     HStack(spacing: 7) {
       Mark(size: 16)
+        .widgetAccentable()
       W.eyebrow(entry.copy.news)
+        .widgetAccentable()
       Spacer(minLength: 4)
       W.eyebrow(entry.copy.clubCount, color: Tok.ink45, size: 10)
     }
@@ -110,12 +115,23 @@ struct NewsView: View {
 /// indistinguishable from a broken widget. It becomes a lime-ruled headline
 /// block, which is a deliberate-looking layout at any width.
 private struct LeadStory: View {
+  /// ⚠ **The photo only draws in `.fullColor` (ADR 0114).** Under the system's
+  /// glass the fade below cannot come: `Tok.scrim` is near-BLACK, and accented
+  /// rendering tints unaccented content WHITE at its own opacity — the fade
+  /// becomes a white .62→.94 wash that erases the picture and drowns the white
+  /// headline sitting on it. The gradient cannot opt out the way the photo
+  /// does (`widgetAccentedRenderingMode` is declared on `Image` alone), and
+  /// meta moved BELOW the photo spends height this tile has never had measured
+  /// (ADR 0104's 326pt against ~344). So a tinted render takes the imageless
+  /// branch, which was designed to look deliberate at any width.
+  @Environment(\.widgetRenderingMode) private var mode
+
   let item: NewsSnapshot.Item
   let now: Date
 
   var body: some View {
     Link(destination: item.url) {
-      if let image = NewsImage.load(item) {
+      if mode == .fullColor, let image = NewsImage.load(item) {
         ZStack(alignment: .bottomLeading) {
           Image(uiImage: image)
             .resizable()
@@ -139,6 +155,7 @@ private struct LeadStory: View {
       } else {
         HStack(spacing: 0) {
           Rectangle().fill(Tok.accent).frame(width: 2)
+            .widgetAccentable()
           meta.padding(.leading, 9)
         }
         .padding(.bottom, 3)
@@ -199,6 +216,7 @@ private struct Attribution: View {
     HStack(spacing: 5) {
       if let topic = item.topic, !topic.isEmpty {
         W.eyebrow(topic.uppercased(), size: 8.5)
+          .widgetAccentable()
         Circle().fill(Tok.ink45).frame(width: 2.5, height: 2.5)
       }
       W.eyebrow(item.publisher, color: Tok.tileInk, size: 8.5)

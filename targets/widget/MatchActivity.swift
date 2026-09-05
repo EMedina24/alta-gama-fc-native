@@ -146,8 +146,9 @@ private struct LockScreenCard: View {
   /// ⚠ **No `glassEffect` on this card, at any iOS version.** The system already
   /// composites a Live Activity onto its own material and gives it glass chrome
   /// of its own on iOS 26; a second material inside that reads muddy rather than
-  /// deeper. The widgets refract their own ground because they OWN their whole
-  /// rectangle — this card does not.
+  /// deeper. (The widgets draw no real glass either — theirs erases its own
+  /// subtree, HANDOFF trap 52 / ADR 0104 — but the reason differs: they paint
+  /// their glass because they OWN their whole rectangle; this card does not.)
   ///
   /// ⚠ Costs zero height, which is the binding constraint here: this is a
   /// `.background(…)` and an `.overlay(…)`, neither of which is a layout child.

@@ -84,10 +84,18 @@ struct NextFixtureView: View {
           // ⚠ `maxWidth: .infinity` — without it the centred parent pulls this
           // row in on itself and the eyebrow and mark drift toward the middle
           // instead of sitting on the card's two edges.
+          // ⚠ `.widgetAccentable()` on the lime voice only (ADR 0114): under
+          // the system's glass every unmarked color flattens to white, and the
+          // accent group is the one channel that keeps "this is the brand /
+          // this is yours" distinct. Marked at CALL SITES, never inside `Mark`
+          // or `W.eyebrow` — the Lock Screen accessories chose their own
+          // accentable set and must not move.
           HStack(alignment: .top) {
             W.eyebrow(eyebrowText(row))
+              .widgetAccentable()
             Spacer(minLength: 4)
             Mark(size: 18)
+              .widgetAccentable()
           }
           .frame(maxWidth: .infinity)
 
@@ -166,6 +174,10 @@ struct NextFixtureView: View {
         .font(.system(size: 10.5, weight: .semibold))
         .tracking(-0.2)
         .foregroundStyle(isHome == row.isHome ? Tok.accent : Tok.ink90)
+        // ⚠ Conditional, mirroring the lime: on the system's glass the
+        // followed side keeps its distinction through the accent group, or
+        // both names read as the same white (ADR 0114).
+        .widgetAccentable(isHome == row.isHome)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
     }
@@ -229,10 +241,12 @@ struct NextFixtureView: View {
           W.eyebrow(entry.copy.fullTimeLabel, color: Tok.ink55)
         } else {
           LiveEyebrow(text: entry.copy.liveLabel)
+            .widgetAccentable()
         }
         Spacer(minLength: 4)
         if finished {
           Mark(size: 18)
+            .widgetAccentable()
         } else if let minute {
           Text(minute.text)
             .font(Tok.numerals(13, .heavy))

@@ -30,6 +30,13 @@ import WidgetKit
 /// newer SDK without re-running the check: the failure is invisible in code
 /// review, in the typechecker, and in the build.
 ///
+/// ⚠ **The one real glass these tiles ever get is the SYSTEM's** (ADR 0114): on
+/// an iOS 26 Clear or iOS 18 Tinted home screen the system removes the
+/// container background and renders the widget on its own glass slab, tinting
+/// unaccented content white at its own opacity. `MeshPlate` hands that mode
+/// nothing; `GlassSurface` keeps only its fill and hairline there — see
+/// `accented` below for why each of the other layers has to go.
+///
 /// ⚠ **Every surface here is decoration.** Nothing may encode liveness, the
 /// followed side, or how many fixtures there are — the same rule the old `Plate`
 /// carried. The moment a reader can learn something from the light, the light has
@@ -65,7 +72,17 @@ struct MeshPlate: View {
 
   var body: some View {
     if mode == .fullColor {
+      // ⚠ Opaque BY MEASUREMENT, not habit. "Make the default a bit more
+      // transparent" was tried (2026-09-05): `ground` at 0.5 alpha composited
+      // over BLACK, not the wallpaper — a tile edge read (13,28,36) beside a
+      // wallpaper pixel of (67,108,203), where a real blend would have been
+      // ~(41,63,112). Alpha here only darkens; the wallpaper is unreachable in
+      // fullColor at any opacity. See-through is the SYSTEM's Clear/Tinted
+      // modes alone (ADR 0114).
       Tok.ground
+        // The widget-only lift — under the pools, so their calibrated colours
+        // ride a lighter base rather than being washed out from above.
+        .overlay { Tok.groundLift }
         .overlay { pools }
         // The lit top edge every glass card in the app carries. A 1pt rule, not
         // a stroked rounded rect: the tile's corner is the SYSTEM's, and a
@@ -157,33 +174,56 @@ struct GlassSurface<Content: View>: View {
   }
 
   var body: some View {
-    // ⚠ Same rule as `MeshPlate`: in a tinted or vibrant render the system owns
-    // the surface, and a fill of ours only muddies it.
-    if mode != .fullColor {
-      content
+    if mode == .fullColor {
+      full
+    } else if mode == .accented {
+      accented
     } else {
+      // ⚠ Vibrant (the Lock Screen) still gets nothing of ours: the system
+      // renders those families into a single material, and a fill only muddies
+      // it — `MeshPlate`'s rule, unchanged from ADR 0104.
       content
-        .modifier(Scrim(shape: shape, on: scrim))
-        .background(shape.fill(dim ? Tok.glassFillDim : Tok.glassFill))
-        .overlay {
-          shape.strokeBorder(ring ?? Tok.glassLine, lineWidth: ring == nil ? 0.5 : 1)
-        }
-        // The lit top edge, clipped to the surface's own corner and fading out
-        // down the sides — a stroked rounded rect lit all the way round reads as
-        // an outline rather than as light landing on a top edge.
-        .overlay {
-          shape.stroke(Tok.plateTop, lineWidth: 1)
-            .mask(alignment: .top) {
-              LinearGradient(
-                colors: [.white, .white.opacity(0)],
-                startPoint: .top,
-                endPoint: .bottom
-              )
-              .frame(height: radius)
-              .frame(maxHeight: .infinity, alignment: .top)
-            }
-        }
     }
+  }
+
+  /// The panel under the SYSTEM's glass — iOS 18 Tinted, iOS 26 Clear
+  /// (ADR 0114). Fill and hairline only, and each omission is deliberate:
+  /// the system tints unaccented content white AT ITS OWN OPACITY, so the
+  /// white-alpha fill and line survive as themselves, while the black `recess`
+  /// scrim would tint to white .28 and LIGHTEN the panel it exists to sink, a
+  /// colored ring would tint to plain white anyway, and the lit top edge is
+  /// the system glass's own job — it lights its slab, and a second painted
+  /// light reads as a smudge on it.
+  private var accented: some View {
+    content
+      .background(shape.fill(dim ? Tok.glassFillDim : Tok.glassFill))
+      .overlay {
+        shape.strokeBorder(Tok.glassLine, lineWidth: 0.5)
+      }
+  }
+
+  private var full: some View {
+    content
+      .modifier(Scrim(shape: shape, on: scrim))
+      .background(shape.fill(dim ? Tok.glassFillDim : Tok.glassFill))
+      .overlay {
+        shape.strokeBorder(ring ?? Tok.glassLine, lineWidth: ring == nil ? 0.5 : 1)
+      }
+      // The lit top edge, clipped to the surface's own corner and fading out
+      // down the sides — a stroked rounded rect lit all the way round reads as
+      // an outline rather than as light landing on a top edge.
+      .overlay {
+        shape.stroke(Tok.plateTop, lineWidth: 1)
+          .mask(alignment: .top) {
+            LinearGradient(
+              colors: [.white, .white.opacity(0)],
+              startPoint: .top,
+              endPoint: .bottom
+            )
+            .frame(height: radius)
+            .frame(maxHeight: .infinity, alignment: .top)
+          }
+      }
   }
 }
 
