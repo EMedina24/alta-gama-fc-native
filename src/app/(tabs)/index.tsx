@@ -13,6 +13,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
 import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
+import { LiveDeck } from '@/components/organisms/live-deck';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
@@ -31,15 +32,11 @@ import {
 } from '@/lib/cronogol/board';
 import { pairWash } from '@/lib/cronogol/club-wash';
 import {
-  boardFromKickoff,
-  boardFromRoute,
-  boardLive,
+  boardLives,
   isStalled,
-  kickedOff,
   liveById,
   liveMinute,
   minutesSinceSeen,
-  routeLive,
   type BoardLive,
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
@@ -161,7 +158,9 @@ export default function TodayScreen() {
   }, [live.data, refetchFinished, refetchRecent]);
 
   /**
-   * The in-play match of a followed club, and whether it is genuinely live.
+   * The in-play matches of followed clubs, and whether each is genuinely
+   * live — earliest kickoff first. One is the solo plate; two-plus stack as
+   * the LIVE DECK (ADR 0126).
    *
    * ⚠⚠ **Tier 0 reads `/cronogol/live` ALONE** (ADR 0066). The route carries
    * our own slugs on both sides, so a followed club's in-play match needs NO
@@ -170,42 +169,36 @@ export default function TodayScreen() {
    * `now` and were the reason the card never appeared at a real kickoff
    * (Levante v Betis, 2026-08-29; HANDOFF trap 39).
    *
-   * ⚠ `boardLive` remains the fallback: the sweep's own `live` flag for every
-   * league the route does not cover. Nothing regresses there.
+   * ⚠⚠ **The tiers MERGE rather than cascade** (ADR 0126, reversing the
+   * single-winner rule of 0066/0078): a match thirty seconds past its whistle
+   * stacks BEHIND the one already at 67′ instead of vanishing under it, and a
+   * sweep-flagged match of a league the route does not cover stays on the
+   * board while a LaLiga match is live. `boardLives` owns the union, the
+   * dedupe and the order; `held` gets every window for 0078's reason —
+   * `upcoming` still holds a fixture on the countdown path, `today` on a cold
+   * mount inside the whistle gap — and `swept` keeps the old `finished`-then-
+   * `recent` window preference as first-occurrence-wins.
+   *
+   * ⚠ Not memoised, deliberately: the age cutoff reads the clock, so a
+   * `useMemo` would need `now` in its deps and recompute on every render
+   * regardless. Filters and sorts over one window of fixtures are cheaper
+   * than pretending otherwise.
    */
-  const board = ((): BoardLive | null => {
-    if (!hasClubs) return null;
-    // ⚠ Not memoised, deliberately: the age cutoff reads the clock, so a
-    // `useMemo` would need `now` in its deps and recompute on every render
-    // regardless. A filter and a sort over one window of fixtures is cheaper
-    // than pretending otherwise.
-    const byId = liveById(live.data?.matches ?? [], now.getTime());
-    const fromRoute = routeLive(byId, followed);
-    if (fromRoute) return boardFromRoute(fromRoute, teams.data ?? []);
-    /**
-     * ⚠⚠ **Kicked off, and nothing has reported yet** (ADR 0078). The route
-     * flips a match to `live` at the ACTUAL whistle, two to five minutes after
-     * the scheduled kickoff the countdown counted to; for that gap the match
-     * has no row and a fresh `upcoming` window has already dropped it. Every
-     * window is offered: `upcoming` still holds the fixture on the countdown
-     * path, `today` holds it on a cold mount inside the gap.
-     */
-    const held = kickedOff(
-      [
-        ...(finished.data?.fixtures ?? []),
-        ...(upcoming.data?.fixtures ?? []),
-        ...(recent.data?.fixtures ?? []),
-      ],
-      followed,
-      now.getTime(),
-      seenLive,
-    );
-    if (held) return boardFromKickoff(held);
-    return (
-      boardLive(finished.data?.fixtures ?? [], followed, byId) ??
-      boardLive(recent.data?.fixtures ?? [], followed, byId)
-    );
-  })();
+  const boards: BoardLive[] = !hasClubs
+    ? []
+    : boardLives({
+        byId: liveById(live.data?.matches ?? [], now.getTime()),
+        followed,
+        teams: teams.data ?? [],
+        held: [
+          ...(finished.data?.fixtures ?? []),
+          ...(upcoming.data?.fixtures ?? []),
+          ...(recent.data?.fixtures ?? []),
+        ],
+        swept: [...(finished.data?.fixtures ?? []), ...(recent.data?.fixtures ?? [])],
+        now: now.getTime(),
+        seenLive,
+      });
 
   /** The most recent finished match of a followed club, with a score. */
   const last = useMemo(() => {
@@ -448,18 +441,29 @@ export default function TodayScreen() {
        * gradient runs over it either way, so the head of the screen is one
        * object rather than a header with a card under it.
        *
-       * ⚠ A live match outranks the whole deck exactly as it outranks the
-       * fixture it became — the two are never both drawn, and the body's
-       * LAST RESULT is what follows either.
+       * ⚠ The live boards outrank the whole NEXT UP deck exactly as one
+       * outranks the fixture it became — live and next-up are never both
+       * drawn, and the body's LAST RESULT is what follows either. Two-plus
+       * live boards are their own deck (ADR 0126); one is the solo plate.
        *
-       * ⚠ The deck's `key` is its membership: any change — a kickoff passing,
-       * a refetch, a zone switch — remounts it with the soonest back on top.
-       * A shuffle is a peek, not a preference (ADR 0113), and a remount is
-       * the reset that needs no effect.
+       * ⚠ Each deck's `key` is its membership: any change — a kickoff
+       * passing, a refetch, a match ending — remounts it with the earliest
+       * back on top. A shuffle is a peek, not a preference (ADR 0113), and a
+       * remount is the reset that needs no effect. ⚠ The live key has no
+       * zone term — live boards are not zone-derived — and a kickoff→route
+       * source upgrade keeps its fixture id, so the card upgrades IN PLACE
+       * without resetting the shuffle.
        */
       payload={
-        !hasClubs ? undefined : board ? (
-          <LivePlate {...liveCard(board)} copy={copy.today} events={copy.events} />
+        !hasClubs ? undefined : boards.length > 1 ? (
+          <LiveDeck
+            key={boards.map((b) => b.fixture.id).join('|')}
+            cards={boards.map(liveCard)}
+            copy={copy.today}
+            events={copy.events}
+          />
+        ) : boards.length === 1 ? (
+          <LivePlate {...liveCard(boards[0])} copy={copy.today} events={copy.events} />
         ) : deck.length > 1 ? (
           <NextUpDeck
             key={`${zone}:${deck.map((f) => f.id).join('|')}`}
@@ -478,9 +482,9 @@ export default function TodayScreen() {
       }}
       refreshing={finished.isRefetching || upcoming.isRefetching || recent.isRefetching}>
       {/* LAST RESULT follows the crown's lead card (ADR 0095). Suppressed
-          while a match is live: the result the reader wants is the one being
+          while any match is live: the result the reader wants is the one being
           played, and the finished one is a distraction under it. */}
-      {hasClubs && !board && last ? (
+      {hasClubs && boards.length === 0 && last ? (
         <LastResultCard
           // ⚠ The fixture's own id and its two `TeamRef`s, for the events
           // panel (ADR 0045). `ScoreSide` carries no slug, and the panel

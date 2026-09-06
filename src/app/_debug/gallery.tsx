@@ -28,6 +28,7 @@ import {
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
 import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
+import { LiveDeck, type LiveDeckCard } from '@/components/organisms/live-deck';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpDeck } from '@/components/organisms/next-up-deck';
@@ -722,10 +723,92 @@ export default function GalleryScreen() {
     </>
   );
 
+  /**
+   * The LIVE DECK's fabricated concurrent matches (ADR 0126). Every card is
+   * the full `liveCard()` prop shape, so a deck layer can never drift from
+   * the solo plate it generalises.
+   *
+   * ⚠ Every card goes through `suppliedEvents`, so no toggle fires a request
+   * off a fake fixture id (the ERROR-copy trap the solo cases document) —
+   * `[]` on the non-route cards is the gallery's stand-in, not the sweep
+   * path's real shape, which is `undefined` + a durable-route fetch.
+   */
+  const liveDeckCase = (
+    id: string,
+    home: ReturnType<typeof LIVE_SIDE>,
+    away: ReturnType<typeof LIVE_SIDE>,
+    over: Partial<Omit<LiveDeckCard, 'id'>> = {},
+  ): LiveDeckCard => ({
+    id,
+    homeTeam: EV_HOME,
+    awayTeam: EV_AWAY,
+    suppliedEvents: [] as const,
+    home,
+    away,
+    isLive: true,
+    minute: null as string | null,
+    stalled: false,
+    note: copy.today.liveNote,
+    lastUpdateAt: null,
+    ...over,
+  });
+  const liveDeckRoute = [
+    liveDeckCase('live-deck-a', LIVE_SIDE('Barcelona', 'BAR', 1, false), LIVE_SIDE('Athletic Club', 'ATH', 0, true), {
+      minute: copy.today.minute(67),
+      suppliedEvents: LIVE_EVENTS,
+    }),
+    liveDeckCase('live-deck-b', LIVE_SIDE('Real Betis', 'BET', 0, false), LIVE_SIDE('Sevilla', 'SEV', 2, true), {
+      minute: copy.today.minute(23),
+    }),
+  ];
+  const liveDeckKickoff = liveDeckCase(
+    'live-deck-k',
+    LIVE_SIDE('Valencia', 'VAL', null, false),
+    LIVE_SIDE('Celta', 'CEL', null, false),
+    { isLive: false, awaitingUpdate: true, note: copy.today.kickedOffNote },
+  );
+  const liveDeckSweep = liveDeckCase(
+    'live-deck-s',
+    LIVE_SIDE('Bayern München', 'FCB', 2, false),
+    LIVE_SIDE('RB Leipzig', 'RBL', 1, true),
+    { isLive: false, note: copy.today.inPlayNote },
+  );
+
+  const liveDecks = (
+    <>
+      <SectionHeader title="Live deck" meta="concurrent matches stack (ADR 0126)" />
+      <Case label="two route cards — different minutes; lead expandable, waiting layer inert">
+        <LiveDeck cards={liveDeckRoute} copy={copy.today} events={copy.events} />
+      </Case>
+      <Case label="route + kicked off — ⚠ the waiting card keeps its dashes and no chevron">
+        <LiveDeck cards={[liveDeckRoute[0], liveDeckKickoff]} copy={copy.today} events={copy.events} />
+      </Case>
+      <Case label="route + sweep — ⚠ the union (ADR 0126): the cadence note rides behind the minute">
+        <LiveDeck cards={[liveDeckRoute[0], liveDeckSweep]} copy={copy.today} events={copy.events} />
+      </Case>
+      <Case label="three cards — max drawn layers, three dots; the opaque ground must not ghost">
+        <LiveDeck
+          cards={[...liveDeckRoute, liveDeckSweep]}
+          copy={copy.today}
+          events={copy.events}
+        />
+      </Case>
+    </>
+  );
+
   if (only === 'live') {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         {livePlates}
+      </ScrollView>
+    );
+  }
+
+  // ⚠ `?only=live-deck` joined the list with ADR 0126.
+  if (only === 'live-deck') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {liveDecks}
       </ScrollView>
     );
   }

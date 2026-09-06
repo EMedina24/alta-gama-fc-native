@@ -30,7 +30,7 @@ import type { WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 
 /** Bump when `WidgetEntry`/`WidgetSnapshot` changes shape. Swift tolerates all. */
-export const SNAPSHOT_VERSION = 5;
+export const SNAPSHOT_VERSION = 6;
 
 /**
  * How many fixtures travel.
@@ -113,6 +113,14 @@ export interface WidgetEntry {
    * `Snapshot.swift`; absence falls back to the uppercase `kickoffDay`.
    */
   kickoffDayDate: string;
+  /**
+   * `12 SEP` — the day spine's date step, v6 (ADR 0127): day-of-month + pinned
+   * short month, uppercase in both languages (it sits under the uppercase
+   * `kickoffDay` in a stacked gutter, where caps are the design). ⚠ Optional in
+   * `Snapshot.swift`; absence hides the date line — falling back to
+   * `kickoffDayDate` would print the weekday twice in one gutter.
+   */
+  kickoffDateLabel: string;
   roundLabel: string | null;
   venue: string | null;
   /**
@@ -242,7 +250,7 @@ export function buildSnapshot(
   formatKickoff: (iso: string) => string,
   formatKickoffParts: (
     iso: string,
-  ) => { day: string; time: string; dayName: string; dayDate: string },
+  ) => { day: string; time: string; dayName: string; dayDate: string; dateLabel: string },
 ): WidgetSnapshot {
   const picked = selectWidgetFixtures(fixtures, followed, now);
 
@@ -295,6 +303,7 @@ export function buildSnapshot(
       kickoffTime: parts.time,
       kickoffDayName: parts.dayName,
       kickoffDayDate: parts.dayDate,
+      kickoffDateLabel: parts.dateLabel,
       // ⚠ `copy.today.md` — the SAME matchday label the last-result card uses
       // (`J 4` / `MD 4`). The mock draws `J4` closed up; one source of truth for
       // the label is worth more than one space.

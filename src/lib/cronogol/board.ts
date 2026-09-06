@@ -27,19 +27,18 @@ export function involvesFollowed(
 }
 
 /**
- * The followed club's match flagged in play at the last sweep, or null.
- *
- * Earliest kickoff wins when two are in play at once — the one that started
- * first is the one most likely to have a score worth showing.
+ * Every followed club's match flagged in play at the last sweep, earliest
+ * kickoff first — the one that started first is the one most likely to have a
+ * score worth showing, and since ADR 0126 the ones behind it stack rather
+ * than vanish (a single winner was `liveFixture` until then).
  */
-export function liveFixture(
+export function liveFixtures(
   fixtures: readonly WindowFixtureView[],
   followed: readonly string[],
-): WindowFixtureView | null {
-  const live = fixtures
+): WindowFixtureView[] {
+  return fixtures
     .filter((f) => f.status === "live" && involvesFollowed(f, followed))
     .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
-  return live[0] ?? null;
 }
 
 /**

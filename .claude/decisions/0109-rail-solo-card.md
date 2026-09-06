@@ -1,7 +1,7 @@
 # 0109 — The rail becomes a card when it holds one match
 
 - **Date:** 2026-09-03
-- **Status:** Accepted — typechecked; simulator pass in the same change
+- **Status:** Superseded by [0127](./0127-medium-tile-day-spine.md) — the rail is gone, and the one-fixture case is the day spine's opened row filling the tile
 - **Decided by:** Ed Medina — flagged the single-match rail off a live
   screenshot ("can we update the format if there is only a single match")
 

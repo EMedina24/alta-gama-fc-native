@@ -32,9 +32,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Pill, Text } from '@/components/atoms';
+import { Pill, Text, WashGradient } from '@/components/atoms';
 import { EventsDisclosure, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, DeckGround, Radius, Size, Spacing } from '@/constants/theme';
 import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
@@ -98,6 +98,25 @@ export interface LivePlateProps {
   lastUpdateAt: string | null;
   /** The KICKED-OFF path (ADR 0078) — drops `FeedAge` and the disclosure. */
   awaitingUpdate?: boolean;
+  /**
+   * The plate's ground (ADR 0126, mirroring `NextUpCard`'s 0113 prop).
+   * `glass` is the solo plate's translucent `plateDark` paint; `opaque` is
+   * the DECK's variant — the same paint over the baked crown (`DeckGround`),
+   * so it composites to the very pixels the solo plate shows, with nothing
+   * behind it able to ghost through. ⚠ Stacked layers must be opaque: text
+   * showed through a translucent card and the deck scrim over one re-opened
+   * trap 59.
+   */
+  surface?: 'glass' | 'opaque';
+  /**
+   * The events panel, CONTROLLED (ADR 0126) — the live deck owns which single
+   * card may hold it open and collapses it on a shuffle. Absent, the plate
+   * keeps its own state, and the solo path is exactly what it always was.
+   * Both or neither: a controlled `eventsOpen` without `onToggleEvents` would
+   * be a chevron that ignores the finger.
+   */
+  eventsOpen?: boolean;
+  onToggleEvents?: () => void;
   copy: {
     inProgress: string;
     noScore: string;
@@ -106,10 +125,28 @@ export interface LivePlateProps {
   events: Copy['events'];
 }
 
-export function LivePlate({ copy, events, ...live }: LivePlateProps) {
-  const [showEvents, setShowEvents] = useState(false);
+export function LivePlate({
+  copy,
+  events,
+  surface = 'glass',
+  eventsOpen,
+  onToggleEvents,
+  ...live
+}: LivePlateProps) {
+  const [ownOpen, setOwnOpen] = useState(false);
+  const showEvents = eventsOpen ?? ownOpen;
+  const toggleEvents = onToggleEvents ?? (() => setOwnOpen((open) => !open));
   return (
-    <View style={styles.plate}>
+    <View style={[styles.plate, surface === 'opaque' ? styles.plateOpaque : null]}>
+      {/* The deck's opaque ground (ADR 0126): the crown, baked (`DeckGround`),
+          under the plate's own translucent paint — the composite the glass
+          plate produces live, produced once, so waiting layers ghost nothing. */}
+      {surface === 'opaque' ? (
+        <View pointerEvents="none" style={styles.body}>
+          <WashGradient angle="vertical" stops={DeckGround} />
+          <View style={[styles.body, styles.bodyTint]} />
+        </View>
+      ) : null}
       {/* The lit top edge — a border on an overlay, the repo's inset-highlight
           idiom (React Native has no inset shadow; see `molecules/tray.tsx`). */}
       <View pointerEvents="none" style={styles.plateTop} />
@@ -143,11 +180,7 @@ export function LivePlate({ copy, events, ...live }: LivePlateProps) {
 
       {live.id !== null && !live.awaitingUpdate ? (
         <>
-          <EventsDisclosure
-            open={showEvents}
-            onToggle={() => setShowEvents((open) => !open)}
-            copy={events}
-          />
+          <EventsDisclosure open={showEvents} onToggle={toggleEvents} copy={events} />
           {showEvents ? (
             <MatchEvents
               fixtureId={live.id}
@@ -175,6 +208,10 @@ const styles = StyleSheet.create({
     // its ground from squaring the two bottom corners.
     overflow: 'hidden',
   },
+  /** The deck variant (ADR 0126): the ground moves into `body`'s layers. */
+  plateOpaque: { backgroundColor: 'transparent' },
+  body: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  bodyTint: { backgroundColor: Colors.dark.plateDark },
   plateTop: {
     position: 'absolute',
     top: 0,

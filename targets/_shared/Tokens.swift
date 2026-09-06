@@ -106,18 +106,33 @@ enum Tok {
   /// ⚠ Widgets only. The notification card draws on the system's material and
   /// must never paint a ground of its own; a widget owns its whole rectangle and
   /// has to, or it inherits whatever the home screen is showing.
+  ///
+  /// ⚠ UNPAINTED since ADR 0126 — the tile ground is `plate` (plain black)
+  /// now. Kept because it is the app-mirror reference other tokens are
+  /// judged against (`activityGround`, `scrim` compare themselves to it).
   static let ground = Color(red: 0.059, green: 0.075, blue: 0.086) // #0f1316
 
-  /// The step the WIDGET tiles are lifted above `ground` — and only they
-  /// (ADR 0115, Ed: "a bit lighter"). The app's screen and the widget tile
-  /// share a hex but not a context: the screen fills the display, while a
-  /// tile floats on a wallpaper that is usually darker than it, where
-  /// `#0f1316` read near-black. A LIFT rather than a second hex keeps the
-  /// relationship to the app's ground explicit — remove this overlay and the
-  /// tile is the app again. ⚠ Painted, not transparency: container-background
-  /// alpha composites over BLACK (measured, ADR 0114), so lightening is the
-  /// only lever the default appearance has.
-  static let groundLift = Color.white.opacity(0.09)
+  /// The widget tile's inner PLATE — the tray shell's dark centre (ADR 0128,
+  /// `handoff_widget-redo/`), no longer plain black (0126).
+  ///
+  /// ⚠ Deliberately NOT `ground`: Ed walked the tile from the app-mirror
+  /// `#0f1316` (0104) through a lifted slate (0115), to black (0126), and now
+  /// to the handoff's own near-black. The tile does not track the app's
+  /// ground; the handoff is its whole palette.
+  static let plate = Color(red: 11 / 255, green: 13 / 255, blue: 15 / 255) // #0b0d0f
+
+  /// The tray around the plate (ADR 0128) — the mock's `white 5%` fill,
+  /// PRE-COMPOSITED over `plate`.
+  ///
+  /// ⚠⚠ Opaque on purpose: container-background alpha composites over BLACK,
+  /// never the wallpaper (0114's measurement), so a literal `.05` white wash
+  /// renders `#0d0d0d` — indistinguishable from the plate, erasing the very
+  /// step the tray exists to draw. `#17191b` = white 5% over `#0b0d0f`.
+  static let trayFill = Color(red: 23 / 255, green: 25 / 255, blue: 27 / 255) // #17191b
+
+  /// The tray's hairline at the container edge (ADR 0128) — mock `white 9%`,
+  /// drawn at 0.5pt like every hairline in this target.
+  static let trayLine = Color.white.opacity(0.09)
 
   /// theme.ts `glassFill` / `glassLine` / `glassFillDim` — the GLASS system
   /// (ADR 0087 §2), the pair `Surfaces.glass` spreads on every body card.
@@ -164,7 +179,11 @@ enum Tok {
   ///
   /// ⚠ `rx` and `ry` are INDEPENDENT fractions of the surface, which is the
   /// whole reason this is a struct rather than three `EllipticalGradient`s with
-  /// a single `endRadiusFraction`. See `MeshPlate` for how that is drawn.
+  /// a single `endRadiusFraction`.
+  ///
+  /// ⚠ `MeshPlate` no longer draws these — the widget plate went flat
+  /// (ADR 0125). The one remaining consumer is the Live Activity's floodlight
+  /// (`MatchActivity.swift`), which samples `mesh[2].color`.
   struct Pool {
     let cx: CGFloat
     let cy: CGFloat
@@ -192,6 +211,9 @@ enum Tok {
   /// ⚠ Calibrated against the real Today screen's body ground rather than
   /// judged by eye — see the token's note in `theme.ts` for the method and the
   /// numbers. Re-measure the same way before moving anything here.
+  ///
+  /// ⚠ Off the widget tiles since ADR 0125 (the plate is one solid colour);
+  /// kept for the Live Activity's floodlight only.
   static let mesh: [Pool] = [
     Pool(cx: 0.98, cy: 0.04, rx: 0.72, ry: 0.62,
          color: accent, alpha: 0.16, fade: 0.72), // #c8f25a

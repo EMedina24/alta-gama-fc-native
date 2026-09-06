@@ -204,8 +204,9 @@ export function formatWidgetKickoff(
 }
 
 /**
- * `{ day: 'SAT', time: '21:00', dayName: 'Sábado', dayDate: 'Sáb 5' }` — the
- * widgets' kickoff strings (ADR 0059 · ADR 0108).
+ * `{ day: 'SAT', time: '21:00', dayName: 'Sábado', dayDate: 'Sáb 5',
+ * dateLabel: '12 SEP' }` — the widgets' kickoff strings (ADR 0059 · ADR 0108 ·
+ * ADR 0127).
  *
  * ⚠ `day` is UPPERCASE where `formatWidgetKickoff` is sentence case, and that
  * is the same rule applied to a different placement: it is a stacked date
@@ -220,6 +221,11 @@ export function formatWidgetKickoff(
  * (`phrases.intl`, the `formatWeekdayLong` precedent); Spanish arrives
  * lowercase and is sentence-cased here, since the widget prints verbatim.
  *
+ * ⚠ `dateLabel` is the day spine's date step (ADR 0127): `12 SEP`, uppercase in
+ * BOTH languages — it sits under an uppercase day code in a stacked gutter,
+ * where caps are the design, so Spanish's lowercase `sep` is deliberately
+ * shouted here and nowhere else.
+ *
  * ⚠ Same `kickoffTbd` precondition as `formatWidgetKickoff`.
  */
 export function formatWidgetKickoffParts(
@@ -227,8 +233,8 @@ export function formatWidgetKickoffParts(
   zone: string,
   clock: '24' | '12',
   phrases: Phrases,
-): { day: string; time: string; dayName: string; dayDate: string } {
-  const { weekday, day } = zonedParts(iso, zone, phrases);
+): { day: string; time: string; dayName: string; dayDate: string; dateLabel: string } {
+  const { weekday, day, month } = zonedParts(iso, zone, phrases);
   const sentence = (word: string) =>
     word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '';
   return {
@@ -236,6 +242,7 @@ export function formatWidgetKickoffParts(
     time: formatKickoffTime(iso, zone, clock),
     dayName: sentence(formatWeekdayLong(iso, zone, phrases)),
     dayDate: `${sentence(weekday)} ${day}`.trim(),
+    dateLabel: `${day} ${month}`.trim().toUpperCase(),
   };
 }
 

@@ -25,7 +25,32 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-05 (latest) — the widgets are DESIGNED for the system's
+> ⭐ **NEW 2026-09-06 (latest) — YOUR WEEK becomes a DAY SPINE and every tile
+> takes a TRAY SHELL** ([0127](./decisions/0127-medium-tile-day-spine.md) ·
+> [0128](./decisions/0128-widget-tiles-take-a-tray-shell.md), the whole of
+> `handoff_widget-redo/`). The medium tile drops 0086's hero+rail (and 0109's
+> solo card) for one timeline in a fixed 48pt gutter — the next match's stop
+> opened, the rest collapsed to a line each; per-row `Link`s stay (Ed
+> overrode the handoff's one-tap note). Snapshot **v6** adds
+> `kickoffDateLabel` (`12 SEP`, uppercase both languages, injected in
+> `formatWidgetKickoffParts`; optional in Swift — a v5 file HIDES the date
+> line). `MeshPlate` now paints the handoff's shell on ALL THREE widgets
+> (NEXT/NEWS paint-only): `Tok.trayFill #17191b` (the mock's white 5%
+> PRE-composited — container alpha composites over black, 0114) around a
+> repointed `Tok.plate #0b0d0f`, corners via
+> `ContainerRelativeShape().inset(by: 2)` (never our own radius, 0085 §1),
+> plus the corner glow via the 0104 trap-50 recipe. ⚠ Mock's opaque greys
+> travel as WHITE-ALPHA (`Ink` in `YourWeekWidget.swift`) or the accented
+> tint flattens them; the collapsed stop is a clear ring over a SPLIT rail
+> (trap 60). Hero branches compact below a 44pt band (harness: full form
+> 44.0 v SE 42.9 / zoomed-SE 40.1; compact 39.0). `_debug/widgets` gains
+> `&clock=12`. **Verified on the iOS 26.5 simulator, placed widgets**: v5
+> degradation, v6 real ES 12h data, `week1`/`week2`/`week3&clock=12`
+> samples; tray/plate/glow pixel-swept (`#0b0d0f` exact). ⚠ Tinted/Clear
+> pass and device pass pending (needs a native build); NEWS unplaced, shell
+> shared by construction.
+>
+> ⭐ **NEW 2026-09-05 — the widgets are DESIGNED for the system's
 > glass ([0114](./decisions/0114-widgets-under-system-glass.md)),** amending
 > 0104 §8. On an iOS 18 Tinted / iOS 26 Clear home screen the system strips
 > the container background, draws real glass and tints content white AT ITS

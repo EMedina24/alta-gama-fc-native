@@ -1,7 +1,9 @@
 # 0115 — Widget tiles take a lifted ground
 
 - **Date:** 2026-09-05
-- **Status:** Accepted
+- **Status:** **Superseded by [0126](./0126-widget-plate-goes-black.md)**
+  (2026-09-06) — the plate is plain black now; the lift and `Tok.groundLift`
+  are gone
 - **Decided by:** Ed ("can we make it a bit lighter then please", after the
   transparency measurement in [0114](./0114-widgets-under-system-glass.md))
 - **Amends:** [0104](./0104-widgets-adopt-the-app-shell.md) — the tile ground

@@ -19,7 +19,7 @@
  * is shipped in the app" and has nothing to do with a match being played.
  * Nothing here reads it.
  */
-import { involvesFollowed, liveFixture } from "./board";
+import { involvesFollowed, liveFixtures } from "./board";
 import type {
   LiveMatchView,
   LiveTeamRef,
@@ -108,8 +108,11 @@ export interface BoardLive {
 }
 
 /**
- * A followed club's match that `/cronogol/live` says is in play RIGHT NOW —
- * read off the route alone, with no fixture window behind it (ADR 0066).
+ * The followed clubs' matches that `/cronogol/live` says are in play RIGHT
+ * NOW — read off the route alone, with no fixture window behind them (ADR
+ * 0066). Earliest kickoff first, the same rule as the tiers below; since ADR
+ * 0126 every one of them reaches the board, stacked, rather than only the
+ * first.
  *
  * ⚠⚠ **This is tier 0, and it exists because the join failed on a real
  * kickoff.** Levante v Betis, 2026-08-29: the board's fixture windows both end
@@ -121,21 +124,19 @@ export interface BoardLive {
  * added was crests, and `teamRefFromLive` takes those from the club catalogue.
  *
  * Freshness is `liveById`'s job — a row in `byId` is already inside
- * `LIVE_MAX_AGE_MS`. Earliest kickoff wins, the same rule as the tiers below.
+ * `LIVE_MAX_AGE_MS`.
  */
 export function routeLive(
   byId: ReadonlyMap<string, LiveMatchView>,
   followed: readonly string[],
-): LiveMatchView | null {
-  const playing = [...byId.values()]
+): LiveMatchView[] {
+  return [...byId.values()]
     .filter(
       (match) =>
         match.status === "live" &&
         (followed.includes(match.home.slug) || followed.includes(match.away.slug)),
     )
     .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
-
-  return playing[0] ?? null;
 }
 
 /**
@@ -191,8 +192,9 @@ export function boardFromRoute(
 export const KICKOFF_HOLD_MS = 150 * 60 * 1000;
 
 /**
- * A followed club's match whose scheduled kickoff has passed and which nothing
- * has reported on yet — the tier BETWEEN `routeLive` and the sweep (ADR 0078).
+ * The followed clubs' matches whose scheduled kickoffs have passed and which
+ * nothing has reported on yet — the tier BETWEEN `routeLive` and the sweep
+ * (ADR 0078). Earliest kickoff first, every one held (ADR 0126).
  *
  * ⚠⚠ **This exists because the whistle is late, every time.** Real Madrid v
  * Málaga, 2026-08-30, scheduled 15:00 UTC: `/cronogol/live` served no row at
@@ -220,16 +222,19 @@ export const KICKOFF_HOLD_MS = 150 * 60 * 1000;
  * off" on a match that just ended. A fixture the route has ever served is
  * never held here again.
  *
- * Earliest kickoff wins, the same rule as every other tier.
+ * ⚠ `seenLive` is NOT the same-render guard. It is written in an effect, so
+ * on the very render where a fixture's first live row appears, that fixture
+ * passes this filter AND `routeLive`'s — `boardLives` dedupes the union by
+ * the route's ids, and that dedupe is load-bearing.
  */
 export function kickedOff(
   fixtures: readonly WindowFixtureView[],
   followed: readonly string[],
   now: number,
   seenLive: ReadonlySet<string>,
-): WindowFixtureView | null {
+): WindowFixtureView[] {
   const seen = new Set<string>();
-  const held = fixtures
+  return fixtures
     .filter((fixture) => {
       if (seen.has(fixture.id)) return false;
       seen.add(fixture.id);
@@ -242,8 +247,6 @@ export function kickedOff(
       return since >= 0 && since < KICKOFF_HOLD_MS;
     })
     .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
-
-  return held[0] ?? null;
 }
 
 /** The kicked-off tier's `BoardLive`: the fixture as the board holds it, no row. */
@@ -252,18 +255,19 @@ export function boardFromKickoff(fixture: WindowFixtureView): BoardLive {
 }
 
 /**
- * The match to lead the board with, and whether it is genuinely live — the
- * FALLBACK behind `routeLive` (ADR 0066), which needs no fixture at all.
+ * The matches to lead the board with, and whether each is genuinely live —
+ * the FALLBACK behind `routeLive` (ADR 0066), which needs no fixture at all.
+ * Earliest kickoff first.
  *
- * **Two tiers, in this order:**
+ * **Two tiers, joined per fixture:**
  *
  * 1. a followed club's fixture that `/cronogol/live` says is in play right now;
- * 2. failing that, `liveFixture()` — the fixture sweep's own `live` flag.
+ * 2. beside those, `liveFixtures()` — the fixture sweep's own `live` flag.
  *
- * ⚠ Tier 1 is reached only when tier 0 found nothing, which today means it is
- * effectively never the winner: any row it could match, `routeLive` already
- * did. It is kept because it costs nothing and keeps the harness's assertions
- * meaningful; tier 2 is the one that matters here.
+ * ⚠ Tier 1 matters only when tier 0 missed something, which today means it is
+ * effectively never the source: any row it could match, `routeLive` already
+ * did and `exclude` carries. It is kept because it costs nothing and keeps
+ * the harness's assertions meaningful; tier 2 is the one that matters here.
  *
  * ⚠ **Tier 1 does NOT require `fixture.status === 'live'`.** The live route sees
  * kick-off within ~30s; the fixture sweep can be three hours behind it. Gating
@@ -273,32 +277,97 @@ export function boardFromKickoff(fixture: WindowFixtureView): BoardLive {
  * ⚠ **Tier 2 is not dead code and must not be removed as a simplification.**
  * The route is LaLiga-only. A followed Premier League, Serie A, Bundesliga or
  * Segunda club has no tier-1 row and never will today — it gets exactly the card
- * it gets now, with the caption that states its age.
+ * it gets now, with the caption that states its age. Since ADR 0126 it gets it
+ * even while a LaLiga match is live: the union stacks, it no longer cascades.
  *
- * Earliest kickoff wins within tier 1, the same rule `liveFixture` uses: the
- * match that started first is the one furthest along and most worth leading with.
+ * ⚠ First occurrence of a fixture id wins — the caller concatenates windows
+ * (`finished` then `recent`), and the pre-0126 `finished ?? recent` window
+ * preference survives as exactly that.
+ *
+ * `exclude` is the ids the higher tiers already hold (`boardLives`); those
+ * fixtures are theirs to caption.
  */
 export function boardLive(
   fixtures: readonly WindowFixtureView[],
   followed: readonly string[],
   byId: ReadonlyMap<string, LiveMatchView>,
-): BoardLive | null {
-  const playing = fixtures
-    .filter((fixture) => {
-      if (!involvesFollowed(fixture, followed)) return false;
-      return byId.get(fixture.id)?.status === "live";
-    })
-    .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
-
-  const first = playing[0];
-  if (first !== undefined) {
-    // Non-null by the filter above; narrowed here rather than asserted.
-    const live = byId.get(first.id);
-    if (live !== undefined) return { fixture: first, live, source: "route" };
+  exclude: ReadonlySet<string> = new Set(),
+): BoardLive[] {
+  const seen = new Set<string>(exclude);
+  const mine: WindowFixtureView[] = [];
+  for (const fixture of fixtures) {
+    if (seen.has(fixture.id)) continue;
+    seen.add(fixture.id);
+    if (involvesFollowed(fixture, followed)) mine.push(fixture);
   }
 
-  const swept = liveFixture(fixtures, followed);
-  return swept === null ? null : { fixture: swept, live: null, source: "sweep" };
+  const joined: BoardLive[] = [];
+  for (const fixture of mine) {
+    // Narrowed rather than asserted — the row is the filter AND the payload.
+    const live = byId.get(fixture.id);
+    if (live?.status === "live") joined.push({ fixture, live, source: "route" });
+  }
+  const joinedIds = new Set(joined.map((board) => board.fixture.id));
+
+  const swept: BoardLive[] = liveFixtures(mine, followed)
+    .filter((fixture) => !joinedIds.has(fixture.id))
+    .map((fixture) => ({ fixture, live: null, source: "sweep" }));
+
+  return [...joined, ...swept].sort(
+    (a, b) => Date.parse(a.fixture.kickoffUtc) - Date.parse(b.fixture.kickoffUtc),
+  );
+}
+
+/**
+ * Every match the board should hold as "in play", across ALL tiers, earliest
+ * kickoff first — the deck's roster (ADR 0126), where the tiers had been a
+ * cascade with a single winner.
+ *
+ * ⚠⚠ **The tiers MERGE now, and that is the feature.** The cascade recreated
+ * ADR 0078's vanishing-match bug one level up: with match A live on the route
+ * and match B thirty seconds past its whistle, "route wins outright" showed A
+ * and made B invisible — and a followed Premier League club's sweep-flagged
+ * match was invisible for as long as ANY LaLiga match was live. Each card
+ * captions its own truth (`source` → note), so a mixed deck stays honest
+ * per-card.
+ *
+ * ⚠⚠ **Deduped by fixture id, higher tier wins, and the route-vs-kickoff
+ * dedupe is load-bearing:** `seenLive` is written in an effect AFTER render,
+ * so on the render where a fixture's first live row appears the same fixture
+ * satisfies both `routeLive` and `kickedOff` — see the warning on `kickedOff`.
+ *
+ * ⚠ Ordering is GLOBAL earliest kickoff (Ed, 2026-09-06): one rule, the same
+ * three docblocks have always given — "the match that started first is the
+ * one furthest along". A stale sweep card that kicked off first outranks a
+ * fresher route card; the other is one swipe away. Ties keep tier order —
+ * route, then kickoff, then sweep — by concat + stable sort.
+ */
+export function boardLives(args: {
+  byId: ReadonlyMap<string, LiveMatchView>;
+  followed: readonly string[];
+  teams: readonly TeamView[];
+  /** `kickedOff`'s haystack: every window concatenated, as before (ADR 0078). */
+  held: readonly WindowFixtureView[];
+  /** The sweep's haystack: `finished` then `recent` — first occurrence wins. */
+  swept: readonly WindowFixtureView[];
+  now: number;
+  seenLive: ReadonlySet<string>;
+}): BoardLive[] {
+  const { byId, followed, teams, held, swept, now, seenLive } = args;
+
+  const route = routeLive(byId, followed).map((match) => boardFromRoute(match, teams));
+  const routeIds = new Set(route.map((board) => board.fixture.id));
+
+  const kicked = kickedOff(held, followed, now, seenLive)
+    .filter((fixture) => !routeIds.has(fixture.id))
+    .map(boardFromKickoff);
+
+  const exclude = new Set([...routeIds, ...kicked.map((board) => board.fixture.id)]);
+  const sweptBoards = boardLive(swept, followed, byId, exclude);
+
+  return [...route, ...kicked, ...sweptBoards].sort(
+    (a, b) => Date.parse(a.fixture.kickoffUtc) - Date.parse(b.fixture.kickoffUtc),
+  );
 }
 
 /**

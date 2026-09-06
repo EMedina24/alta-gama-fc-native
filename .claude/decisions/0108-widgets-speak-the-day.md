@@ -1,7 +1,7 @@
 # 0108 — The widgets speak the day: `Viernes`, not `VIE`
 
 - **Date:** 2026-09-03
-- **Status:** Accepted — typechecked at both floors; simulator pass in the same change
+- **Status:** Accepted — typechecked at both floors; simulator pass in the same change. MEDIUM parts superseded by [0127](./0127-medium-tile-day-spine.md) (the day spine has no spoken hero line and no rail); the small tile's spoken footer stands, and `kickoffDayName`/`kickoffDayDate` still travel
 - **Decided by:** Ed Medina — picked direction B ("Spoken day") off the mockup at
   `claude.ai/code/artifact/5458faa7-9532-47c3-8d28-cc3d01bde348`, and asked for
   the small widget to follow

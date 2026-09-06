@@ -64,7 +64,10 @@ export default function DebugWidgets() {
    * lettered crest tiles. That is fine: this is a preview, not a state.
    *
    * ⭐ ADR 0086 adds `?sample=week1|week2|week3|week3es` — the medium tile's
-   * hero-alone, hero-plus-one and full layouts, in the reader's worst case.
+   * one-, two- and three-stop layouts (the day spine since ADR 0127), in the
+   * reader's worst case. `&clock=12` writes the same sample on the 12-hour
+   * clock (`10:15 pm` is the tile's widest time and cannot be reached from a
+   * 24-hour device any other scriptable way).
    *
    * ⚠⚠ **These fabricate the WIRE, not the snapshot.** They build
    * `WindowFixtureView`s and run the real `buildSnapshot` over them, so every
@@ -74,7 +77,7 @@ export default function DebugWidgets() {
    * `la-liga`/`laliga` gate passed review AND simulator verification because
    * the fabricated row agreed with the bug.
    */
-  const { sample } = useLocalSearchParams<{ sample?: string }>();
+  const { sample, clock } = useLocalSearchParams<{ sample?: string; clock?: string }>();
 
   const [onDisk, setOnDisk] = useState<string>('…');
   const [liveOnDisk, setLiveOnDisk] = useState<string>('…');
@@ -125,12 +128,12 @@ export default function DebugWidgets() {
     const week = WEEK_SAMPLES[sample];
     if (sample !== 'live' && sample !== 'ft' && !week) return;
     void (async () => {
-      if (week) await writeWeekSample(week.count, week.lang);
+      if (week) await writeWeekSample(week.count, week.lang, clock === '12' ? '12' : '24');
       else await writeSample(sample as 'live' | 'ft');
       setStatus(`sample ${sample} written`);
       await inspect();
     })();
-  }, [sample, inspect]);
+  }, [sample, clock, inspect]);
 
   // ⚠ `react-hooks/set-state-in-effect` fires on any effect that reaches a
   // `setState`, however many awaits deep — and reading another process's
@@ -463,6 +466,7 @@ async function writeSample(kind: 'live' | 'ft'): Promise<void> {
         kickoffTime: '3:30',
         kickoffDayName: 'Sunday',
         kickoffDayDate: 'Sun 6',
+        kickoffDateLabel: '6 SEP',
         roundLabel: 'MD 3',
         venue: 'Balaídos',
         leagueSlug: 'laliga',
@@ -486,6 +490,7 @@ async function writeSample(kind: 'live' | 'ft'): Promise<void> {
         kickoffTime: '9:00',
         kickoffDayName: 'Wednesday',
         kickoffDayDate: 'Wed 9',
+        kickoffDateLabel: '9 SEP',
         roundLabel: 'MD 4',
         venue: 'Montilivi',
         leagueSlug: 'laliga',
@@ -580,7 +585,11 @@ function wireFixture(
   };
 }
 
-async function writeWeekSample(count: 1 | 2 | 3, lang: Locale): Promise<void> {
+async function writeWeekSample(
+  count: 1 | 2 | 3,
+  lang: Locale,
+  clock: '24' | '12' = '24',
+): Promise<void> {
   const now = new Date();
   // Saturday 21:00, Sunday 16:15 and Sunday 18:30 Madrid time, next weekend.
   const day = 24 * 3600 * 1000;
@@ -615,8 +624,8 @@ async function writeWeekSample(count: 1 | 2 | 3, lang: Locale): Promise<void> {
     [clubs.sociedad.slug, clubs.rayo.slug, clubs.palmas.slug].slice(0, count),
     now,
     COPY[lang],
-    (iso) => formatWidgetKickoff(iso, zone, '24', phrases),
-    (iso) => formatWidgetKickoffParts(iso, zone, '24', phrases),
+    (iso) => formatWidgetKickoff(iso, zone, clock, phrases),
+    (iso) => formatWidgetKickoffParts(iso, zone, clock, phrases),
   );
 
   writeSnapshot(snapshot);

@@ -443,6 +443,49 @@ export const Deck = {
 } as const;
 
 /**
+ * The CONTROL GLIDE (ADR 0117) — the league rail's liquid-glass plate sliding
+ * between chips. The app's SECOND spring, beside `Deck.spring` and for the
+ * same reason: `Motion`'s contract is durations-only. Tighter than the deck's
+ * (zeta ≈ 0.70, settles ~300ms) — a control snapping to the finger, echoing
+ * the system tab bar, not a card in flight.
+ */
+export const Glide = {
+  spring: { damping: 26, stiffness: 340, mass: 1 },
+  /**
+   * The plate DRAG's gesture thresholds (ADR 0118) — the deck's numbers, for
+   * the deck's reason: the pan activates at `activateX` pt of horizontal
+   * travel so taps fall through to the chips, and FAILS at `failY` pt of
+   * vertical so the screen's scroll wins a mostly-vertical drag.
+   */
+  activateX: 10,
+  failY: 8,
+  /**
+   * The lens's press swell, as a growth factor (ADR 0122) — OURS, because the
+   * system's interactive touch response would not fire reliably under RN
+   * compositing (the lens vanished under a held finger, twice). ⚠ Applied as
+   * BOUNDS growth, never a transform scale: scaling a glass view rasterizes
+   * its sampled backdrop and the lens dies to a murky smear (A/B-screenshotted
+   * via scripted hold). ⚠ Device-judged.
+   */
+  swell: 1.06,
+  /**
+   * How much the lens MAGNIFIES the mark under it (ADR 0122). The public
+   * glass material BLURS close content regardless of flags (A/B'd), so the
+   * crisp magnification is COMPOSED: sharp scaled mark copies ride inside
+   * the lens as a counter-translated viewport. ⚠ Device-judged.
+   */
+  magnify: 1.18,
+  /**
+   * How much the rail's CAPSULE inflates while the lens is held (ADR 0124) —
+   * the nav bar "gets bigger" in place, it does not shift (Ed's correction
+   * of the first cut's translateY). Points added to EVERY edge of the
+   * backdrop only — chips, plates and layout never move — as BOUNDS: a
+   * transform scale would sit over glass (0122's finding 3). ⚠ Device-judged.
+   */
+  hover: 3,
+} as const;
+
+/**
  * The opaque deck card's ground (ADR 0113): the crown, BAKED. `card`'s flat
  * charcoal read as a black slab on the bright band ("waay too dark" — Ed);
  * the glass card looked right precisely because the crown's green showed
@@ -854,8 +897,21 @@ export const Size = {
    * small on the phone.
    */
   leagueChipHCrown: 52,
-  leagueChipMarkWCrown: 66,
-  leagueChipMarkHCrown: 33,
+  /**
+   * ⚠ 0118 pulls the crown mark back to 0116's FIRST cut (54×27, from 66×33):
+   * the rail is STATIC now — five flexed slots share the gutter width
+   * (~61pt each at five leagues), and the 66 mark no longer fits its slot.
+   * The chip HEIGHT keeps 0116's 52.
+   */
+  leagueChipMarkWCrown: 54,
+  leagueChipMarkHCrown: 27,
+  /**
+   * The league rail's inset (ADR 0117): the solid ink capsule pads the chip
+   * slots by this on every side, so the rail stands 2× this taller than its
+   * chips (64 crown / 48 ground). ⚠ Device-judged like the chip cut above —
+   * the rail eats crown-band height that 0116 calibrated without it.
+   */
+  leagueRailPad: 6,
   bigCrestBleed: 238,
   oppCrestBleed: 146,
 } as const;

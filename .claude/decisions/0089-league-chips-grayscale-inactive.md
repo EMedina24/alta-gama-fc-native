@@ -1,7 +1,7 @@
 # 0089 — League chips: 36pt mark-hugging chips, grayscale when inactive, near-black when selected
 
 - **Date:** 2026-09-01
-- **Status:** Accepted — verified on the simulator (Matchdays/Table crowns, Clubs ground row)
+- **Status:** Accepted — verified on the simulator (Matchdays/Table crowns, Clubs ground row). Grayscale-inactive treatment and the double inversion **superseded by [0123](./0123-league-marks-full-colour-at-rest.md)** (2026-09-06); the mark-hugging geometry and artwork-only rule stand
 - **Decided by:** Ed Medina, from `handoff_new-paint/` (chip rows at mockup lines 326–328, 1631–1710)
 - **Supersedes:** [0031](./0031-league-filter-tiles-are-artwork-only.md)'s tile GEOMETRY and idle-opacity rule — its artwork-only rule and labelled no-artwork fallback survive
 

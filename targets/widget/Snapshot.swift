@@ -104,6 +104,12 @@ struct WidgetSnapshot: Codable {
     /// beside a number reads as a date; alone it reads as a badge. ⚠ Optional
     /// like `kickoffDayName`; absence falls back to uppercase `kickoffDay`.
     let kickoffDayDate: String?
+    /// `12 SEP` — the day spine's date step, v6 (ADR 0127): uppercase in both
+    /// languages, sitting under the uppercase `kickoffDay` in the gutter.
+    /// ⚠ Optional: absent from a v5 snapshot, and absence HIDES the date line
+    /// — `kickoffDayDate` is not a fallback here, because `SÁB` over `Sáb 5`
+    /// prints the weekday twice in one 48pt column.
+    let kickoffDateLabel: String?
     /// `J4`. Null for a competition without rounds.
     let roundLabel: String?
     let venue: String?
@@ -290,6 +296,7 @@ extension WidgetSnapshot {
           kickoffUtc: now.addingTimeInterval(100_800),
           kickoffLabel: "Sat 21:00", kickoffDay: "SAT", kickoffTime: "21:00",
           kickoffDayName: "Saturday", kickoffDayDate: "Sat 5",
+          kickoffDateLabel: "5 SEP",
           roundLabel: "J4", venue: "Mestalla", leagueSlug: "laliga"
         ),
         .init(
@@ -301,6 +308,7 @@ extension WidgetSnapshot {
           kickoffUtc: now.addingTimeInterval(169_200),
           kickoffLabel: "Sun 16:15", kickoffDay: "SUN", kickoffTime: "16:15",
           kickoffDayName: "Sunday", kickoffDayDate: "Sun 6",
+          kickoffDateLabel: "6 SEP",
           roundLabel: "J4", venue: "Sánchez-Pizjuán", leagueSlug: "laliga"
         ),
         .init(
@@ -312,6 +320,7 @@ extension WidgetSnapshot {
           kickoffUtc: now.addingTimeInterval(177_300),
           kickoffLabel: "Sun 18:30", kickoffDay: "SUN", kickoffTime: "18:30",
           kickoffDayName: "Sunday", kickoffDayDate: "Sun 6",
+          kickoffDateLabel: "6 SEP",
           roundLabel: "J4", venue: "Montilivi", leagueSlug: "laliga"
         ),
       ]

@@ -1,7 +1,7 @@
 # 0086 — YOUR WEEK becomes a hero kickoff and a rail, on a flush floodlit plate — and the hero STACKS, because the mock's row is 26pt too wide
 
 - **Date:** 2026-08-31
-- **Status:** Accepted — harness-measured; **not yet seen on a simulator or a device**
+- **Status:** Superseded by [0127](./0127-medium-tile-day-spine.md) — the medium tile is a day spine now; the hero + rail split and its stacked hero are history
 - **Decided by:** Ed Medina
 - **Design:** `handoff_week-widget/` — `YOUR-WEEK-WIDGET.md`, `Your Week Widget.dc.html`
 - **Builds on:** [0047](./0047-widgets.md), [0058](./0058-next-widget-centres-and-ticks.md), [0085](./0085-broadcast-card-redesign.md)

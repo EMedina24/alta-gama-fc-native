@@ -1,22 +1,28 @@
 import SwiftUI
 import WidgetKit
 
-/// **YOUR WEEK** — the week ahead, medium (ADR 0086, `handoff_week-widget/`).
+/// **YOUR WEEK** — the week ahead, medium (ADR 0127, `handoff_widget-redo/`).
 ///
-/// A week has one next match, not three. The tile spends the left column on that
-/// kickoff and demotes the rest to a rail — the hero open on the ground, the
-/// rail grouped onto one glass column beside it.
+/// A day SPINE: one vertical timeline in a fixed date gutter, three stops. The
+/// next match's stop opens up to hold the kickoff; the rest collapse to a line
+/// each. The split-panel hero + glass rail this replaces (ADR 0086/0108/0109)
+/// read as two widgets stapled together and truncated club names in the rail.
 ///
-/// ⚠ **The floodlit plate is gone (ADR 0104).** This tile borrowed the Live
-/// Activity's lit language because the app had nothing else to borrow; the app
-/// now has the aurora mesh and the glass card, and a widget that opens a lit
-/// mesh should not itself be a black tile with a lime corner.
+/// ⚠ **Geometry and colour come from the mock CSS ÷2** (`Your Week
+/// Widget.dc.html`, drawn at 2× a 338×158 tile) — where the MD token table
+/// disagrees on a width, the mock wins. The handoff's own reference Swift is
+/// NOT this file's ancestor: it invents snapshot types, draws crests with
+/// `AsyncImage` (dead in a widget), and ignores rendering modes.
 ///
-/// ⚠ **`.contentMarginsDisabled()`, and the plate is the CONTAINER background.**
-/// The mock draws a nested tray (r24) inside a plate (r21.5); a second corner
-/// radius inside the system's own container mask double-rounds every edge, which
-/// is the mistake ADR 0085 §1 already caught on the Live Activity. The system
-/// corner IS the tray — disabling the margins is what puts the plate against it.
+/// ⚠ **The mock's opaque grey inks are transcribed as WHITE-ALPHA over the
+/// plate** (`Ink` below, values within ~2 RGB points of the hexes). Under the
+/// system's glass the tint is applied white AT THE COLOUR'S OWN OPACITY
+/// (ADR 0114) — an opaque `#59626a` would flatten to full white and the
+/// tile's whole hierarchy with it.
+///
+/// ⚠ **`.contentMarginsDisabled()`, and the shell is the CONTAINER
+/// background.** The tray's corner is the system's own mask (ADR 0085 §1);
+/// content pays the tray's 2pt inset in its padding instead.
 struct YourWeekWidget: Widget {
   var body: some WidgetConfiguration {
     AppIntentConfiguration(
@@ -32,11 +38,53 @@ struct YourWeekWidget: Widget {
     .configurationDisplayName("Your week")
     .description("The next match from the clubs you follow, and the week behind it.")
     .supportedFamilies([.systemMedium])
-    // ⚠ Without this the system's ~16pt margins leave the plate floating in a
-    // black frame — a card inside a card, which is the look the flush plate
-    // exists to avoid. Content supplies its own 11/13 padding instead.
+    // ⚠ Without this the system's ~16pt margins leave the shell floating in a
+    // black frame — a card inside a card. Content supplies its own padding.
     .contentMarginsDisabled()
   }
+}
+
+// MARK: - Ink
+
+/// The spine's own palette — the mock's greys as white-alpha over `Tok.plate`
+/// (`#0b0d0f`), so the hierarchy survives `.accented` (see the header).
+/// File-private: these belong to this tile, not to `Tok`'s shared list.
+private enum Ink {
+  /// Kickoff time — mock `#f4f6f6`.
+  static let time = Color.white.opacity(0.96)
+  /// Hero club names (the unfollowed side) — mock `#e7ebec`.
+  static let club = Color.white.opacity(0.92)
+  /// Collapsed fixture line — mock `#dfe4e6`.
+  static let restName = Color.white.opacity(0.89)
+  /// Collapsed time — mock `#aab3b8`.
+  static let restTime = Color.white.opacity(0.68)
+  /// Collapsed day code — mock `#8d979d`.
+  static let restDay = Color.white.opacity(0.56)
+  /// Hero date step — mock `#6b747b`.
+  static let date = Color.white.opacity(0.43)
+  /// `3 CLUBS` and the collapsed date step — mock `#59626a`.
+  static let dim = Color.white.opacity(0.35)
+  /// The `v` — mock `#4f575d`.
+  static let versus = Color.white.opacity(0.30)
+  /// The spine rail's resting colour, and the hero rail's fade-out tail.
+  static let rail = Color.white.opacity(0.10)
+  /// The collapsed stop's hollow ring.
+  static let ring = Color.white.opacity(0.32)
+  /// The hairline above each collapsed row — mock `white 7%`.
+  static let rowRule = Color.white.opacity(0.07)
+}
+
+// MARK: - Geometry
+
+private enum G {
+  /// The date gutter — FIXED so the spine stays plumb whatever the labels say.
+  static let gutter: CGFloat = 48
+  /// The spine's own column; node, ring and rail all centre in it.
+  static let spine: CGFloat = 7
+  /// Content indent right of the spine.
+  static let inset: CGFloat = 9
+  /// The opened row's share against 1 per collapsed row (mock `1.34fr/1fr`).
+  static let heroShare: CGFloat = 1.34
 }
 
 // MARK: - Tile
@@ -44,98 +92,54 @@ struct YourWeekWidget: Widget {
 struct YourWeekView: View {
   let entry: FixtureEntry
 
-  /// Hero plus at most two rail rows.
+  /// The opened stop plus at most two collapsed ones.
   ///
-  /// ⚠ **No live ledger here any more** (ADR 0086). `entry.live` and
-  /// `entry.liveStale` are still on the entry because `NextFixtureView` draws
-  /// them; this tile deliberately reads neither. A match in play is simply
-  /// absent — `rows(after:)` filters on `kickoffUtc > now` — and the hero
-  /// becomes the next kickoff after it. The tile says what is COMING.
+  /// ⚠ **No live ledger here** (ADR 0086's rule, unchanged): `entry.live` and
+  /// `entry.liveStale` are for `NextFixtureView`; this tile reads neither. A
+  /// match in play is simply absent — `rows(after:)` filters on
+  /// `kickoffUtc > now` — and the opened stop becomes the kickoff after it.
+  /// The tile says what is COMING.
   private var rows: [WidgetSnapshot.Entry] { Array(entry.rows.prefix(3)) }
   private var hero: WidgetSnapshot.Entry? { rows.first }
-  private var rail: [WidgetSnapshot.Entry] { Array(rows.dropFirst()) }
-
-  /// The mock's `1.32fr / 1fr`.
-  ///
-  /// ⚠ A `layoutPriority` cannot express a ratio — it decides who gets its
-  /// ideal size first, not how the slack is split — so the column widths are
-  /// measured off the geometry instead.
-  ///
-  /// ⚠⚠ **`- 6`, where ADR 0086 had `- 26 - 0.5`, and the rail keeps its
-  /// measured content box to within a sixth of a point.** The fading hairline
-  /// and one of the two 13pt gaps went with the plate — the rail's own glass
-  /// edge is the seam now, so the row no longer pays for a drawn one — and the
-  /// width that frees up is handed straight back as the slab's 4.5pt inset.
-  /// The arithmetic is exact and width-independent: the rail gains `20.5/2.32`
-  /// = 8.84pt and spends 9pt on the inset, so its content lands within 0.2pt of
-  /// 0086's number at EVERY tile width (125.6 → 125.5 on this device, 119.2 →
-  /// 119.1 on an SE). The hero takes the rest and gains 11.7pt everywhere.
-  ///
-  /// ⚠ **The rail is the constraint, not the hero, and 12-hour locales are why.**
-  /// The `?sample=` fixtures print `16:15`; a US reader gets `10:15 am`, which is
-  /// far wider and truncates the club name beside it. 0086 chose truncation over
-  /// shrinking deliberately — see `railName` — but that choice was measured
-  /// against 0086's column, so this one has to match it rather than approximate
-  /// it. Change either constant and re-derive both columns.
-  private func heroWidth(_ total: CGFloat) -> CGFloat {
-    max(0, (total - 6)) * 1.32 / 2.32
-  }
+  private var collapsed: [WidgetSnapshot.Entry] { Array(rows.dropFirst()) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       header
 
-      if let hero {
+      if hero != nil {
+        // ⚠ A `layoutPriority` cannot express a ratio — it decides who gets
+        // its ideal size first, not how the slack is split — so the row bands
+        // are measured off the geometry: hero 1.34 shares, each collapsed row
+        // 1, of whatever height this tile actually has. Fewer fixtures mean
+        // fewer terms, so the spine self-degrades: two rows split 1.34:1, one
+        // row hands the whole area to the opened stop.
         GeometryReader { geo in
-          HStack(spacing: 6) {
-            // ⚠ ONE fixture draws the hero at FULL WIDTH — no divider, no empty
-            // rail. A hairline with nothing beside it reads as a widget that
-            // failed to finish loading, which is the same lie the filler rows
-            // the old layout refused would have told.
-            // ⚠ `spoken` is the harness's 114pt hero against this body, plus
-            // margin (ADR 0108): a standard tile's 124pt body affords the
-            // spoken day line; a mini's 112 and an SE's ≤109 do not, and fall
-            // back to the inline tag. Height, not device — Dynamic Type moves
-            // nothing here (the tile's type is fixed), so the branch is stable.
-            heroColumn(hero, spoken: geo.size.height >= 118)
-              .frame(width: rail.isEmpty ? nil : heroWidth(geo.size.width),
-                     alignment: .leading)
-
-            if !rail.isEmpty {
-              // ⚠ **The glass column is FULL HEIGHT beside the hero, and that is
-              // deliberate.** A slab that wrapped its two rows would sit as a
-              // short box floating against a tall one; run to both edges of the
-              // content area and it reads as the tile's second column, which is
-              // what it is.
-              GlassSurface(radius: Rad.tile) {
-                Group {
-                  // ⚠ ONE fixture behind the hero draws as a CARD, not a
-                  // squeezed row (ADR 0109): a lone row floats mid-column with
-                  // its names truncated beside a 12-hour time ("Valen…" on
-                  // live data). The column's height is the space to spend.
-                  if rail.count == 1, let solo = rail.first {
-                    railSolo(solo, roomy: geo.size.height >= 118)
-                      .padding(.horizontal, 10)
-                  } else {
-                    railColumn
-                      // ⚠ 4.5, and it is load-bearing arithmetic rather than a
-                      // taste: 9pt of inset is what the rail gains back from
-                      // the dropped gap, so this is what keeps its content box
-                      // equal to ADR 0086's measured one. See `heroWidth`.
-                      .padding(.horizontal, 4.5)
-                      .padding(.vertical, 3)
-                  }
+          let unit = geo.size.height / (G.heroShare + CGFloat(collapsed.count))
+          VStack(spacing: 0) {
+            if let hero {
+              // ⚠ `compact` is a MEASUREMENT, not a device check (0108's
+              // idiom): the full form is 44.0pt on the harness — under a
+              // 46.9pt band on a standard tile and 45.7 on a mini, but over
+              // the SE's 42.9 and a zoomed SE's 40.1, where the compact cut
+              // (20pt time, 4pt gap) measures 39.0. Only three stops on a
+              // small tile ever take it; one or two stops leave the opened
+              // row more band than either form needs.
+              heroRow(hero, showsRail: !collapsed.isEmpty, compact: unit * G.heroShare < 44)
+                .frame(height: unit * G.heroShare, alignment: .top)
+            }
+            ForEach(collapsed) { row in
+              collapsedRow(row)
+                .frame(height: unit)
+                // ⚠ An OVERLAY, not a stacked Rectangle: the hairline must
+                // cost no height or the measured bands drift off the ratio.
+                .overlay(alignment: .top) {
+                  Rectangle().fill(Ink.rowRule).frame(height: 0.5)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-              }
-              .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
           }
-          // ⚠ `.leading`, not the default centre. With one fixture the HStack
-          // holds only the hero and would centre it in the tile — a left-aligned
-          // design floating in the middle of the plate.
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
+        .padding(.top, 4)
       } else {
         // ⚠ Two different sentences for two different situations — follow a
         // club, or wait for the fixtures to be published.
@@ -143,311 +147,257 @@ struct YourWeekView: View {
           .padding(.top, 10)
       }
     }
-    .padding(EdgeInsets(top: 11, leading: 13, bottom: 11, trailing: 13))
+    // The handoff's 10/13/8 plate padding PLUS the tray's 2pt inset — content
+    // is laid out from the tile's edge, not the plate's.
+    .padding(EdgeInsets(top: 12, leading: 15, bottom: 10, trailing: 15))
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
   // MARK: Header
 
+  /// ⚠ The lime capsule around YOUR WEEK is GONE (0127) — plain tracked lime,
+  /// the mock's header. `.widgetAccentable()` on the lime voice only
+  /// (ADR 0114): mark and wordmark tint together, the count stays quiet.
   private var header: some View {
-    // ⚠ `.widgetAccentable()` on the lime voice only (ADR 0114): under the
-    // system's glass every unmarked color flattens to white, and the accent
-    // group is what keeps the brand voice and the followed side distinct.
-    // The capsule is marked as ONE group — text, wash and ring tint together,
-    // or the pill's fill and its type drift into two different colors.
     HStack(spacing: 6) {
-      Mark(size: 12)
+      Mark(size: 11)
+        .opacity(0.92)
         .widgetAccentable()
       Text(entry.copy.yourWeek)
-        .font(.system(size: 8.5, weight: .semibold))
+        .font(.system(size: 8.5, weight: .bold))
         .tracking(1.7)
         .foregroundStyle(Tok.accent)
-        .lineLimit(1)
-        .padding(.horizontal, 6.5)
-        .frame(height: 15)
-        .background(Capsule().fill(Tok.accentWash))
-        .overlay(Capsule().strokeBorder(Tok.accentRing, lineWidth: 0.5))
         .widgetAccentable()
-        .fixedSize()
+        .lineLimit(1)
       Spacer(minLength: 4)
-      W.eyebrow(entry.copy.clubCount, color: Tok.ink34, size: 8.5)
+      Text(entry.copy.clubCount)
+        .font(.system(size: 8.5, weight: .medium))
+        .tracking(1.2)
+        .foregroundStyle(Ink.dim)
+        .lineLimit(1)
     }
-    .padding(.bottom, 9)
+    .frame(height: 15)
   }
 
-  // MARK: Hero
+  // MARK: The opened stop
 
-  /// The next kickoff: the SPOKEN day over the time (ADR 0108), then the two
-  /// clubs stacked home over away.
-  ///
-  /// ⚠⚠ **`Viernes` in full, on its own line — and only where it FITS.** The
-  /// old inline `VIE` tag wore the tile's lime tag voice (TU SEMANA and FUERA
-  /// wear the same dress) and was read as furniture, not a day. The spoken
-  /// line answers that — but it costs height: the hero measures 114pt against
-  /// a 124pt body on a standard tile, 112 on a mini and ≤109 on an SE
-  /// (`ImageRenderer` harness, ADR 0108). `spoken` is that measurement as a
-  /// branch: compact tiles keep the inline tag, which is why `kickoffDay`
-  /// still travels on a v5 snapshot. Do not add height here without re-running
-  /// the harness.
-  ///
-  /// ⚠⚠ **STACKED, where the mock draws one row — and the number said so.**
-  /// The mock's `crest · name · v · crest · name` wants 168pt for its own
-  /// sample pair and 183pt for the realistic worst (`R. Sociedad` v
-  /// `Villarreal`), against a 157pt hero column on an SE. Neither trim rescues
-  /// it: dropping the `v` saves 11pt and the crests 20 → 18 save **4** — the
-  /// crest is not what binds, the two names are, which is exactly the lesson
-  /// ADR 0085 §3 paid for. Stacked, the same worst pair is 95pt with 62pt to
-  /// spare, and the tile had 33pt of unused HEIGHT to spend. See ADR 0086.
-  ///
-  /// ⚠ The stack also lets the crests go 20 → 24, matching the size the ledger
-  /// used on this widget before it, so the badges stay the subject.
-  ///
-  /// ⚠ A `Link`, never `widgetURL` — three fixtures are three destinations and
+  /// ⚠ A `Link`, never `widgetURL` — three stops are three destinations and
   /// `widgetURL` carries one; the two together are a documented conflict where
-  /// the row taps silently lose.
-  private func heroColumn(_ row: WidgetSnapshot.Entry, spoken: Bool) -> some View {
-    // The spoken line replaces the inline tag; both never draw together.
-    let saysDay = spoken && row.kickoffDayName != nil
+  /// the row taps silently lose. (The handoff's "one tap target" note was
+  /// overridden by Ed — ADR 0127.)
+  private func heroRow(_ row: WidgetSnapshot.Entry, showsRail: Bool, compact: Bool) -> some View {
+    let timeSize: CGFloat = compact ? 20 : 23
 
     return Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
-      VStack(alignment: .leading, spacing: 7) {
-        VStack(alignment: .leading, spacing: 3) {
-          if saysDay, let dayName = row.kickoffDayName {
-            Text(dayName)
-              .font(.system(size: 15, weight: .semibold))
-              .tracking(-0.2)
+      HStack(alignment: .top, spacing: 0) {
+        VStack(alignment: .trailing, spacing: 3) {
+          // ⚠ `kickoffDay` is optional only for a pre-v2 file; absence drops
+          // the label, and the time below falls back to the dated
+          // `kickoffLabel` — never a blank stop.
+          if let day = row.kickoffDay {
+            Text(day)
+              .font(.system(size: 8.5, weight: .bold))
+              .tracking(1.4)
               .foregroundStyle(Tok.accent)
               .widgetAccentable()
-              .lineLimit(1)
           }
+          // ⚠ Hidden when nil (a v5 file): `kickoffDayDate` is NOT a fallback
+          // here — `SÁB` over `Sáb 5` says the weekday twice in one gutter.
+          if let date = row.kickoffDateLabel {
+            Text(date)
+              .font(.system(size: 7.5, weight: .medium))
+              .tracking(0.45)
+              .foregroundStyle(Ink.date)
+          }
+        }
+        .frame(width: G.gutter, alignment: .trailing)
+        .padding(.top, 4)
 
-          HStack(alignment: .firstTextBaseline, spacing: 7) {
+        heroSpine(showsRail: showsRail)
+
+        VStack(alignment: .leading, spacing: compact ? 4 : 6) {
+          HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(row.kickoffTime ?? row.kickoffLabel)
-              .font(Tok.numerals(27, .ultraLight))
-              .tracking(-0.95)
-              .foregroundStyle(Tok.ink)
+              .font(Tok.numerals(timeSize, .ultraLight))
+              .tracking(-0.8)
+              .foregroundStyle(Ink.time)
               .lineLimit(1)
 
-            if !saysDay, let day = row.kickoffDay {
-              Text(day)
-                .font(.system(size: 9.5, weight: .semibold))
-                .tracking(1.5)
-                .foregroundStyle(Tok.accent)
-                .widgetAccentable()
-            }
-
-            // ⚠ Neutral, not the accent capsule ADR 0059 drew. The lime is spent
-            // on the followed club's NAME and the day; a third lime object beside
-            // them makes the reader hunt for which one means "yours".
             if let tag = row.isHome ? entry.copy.homeTag : entry.copy.awayTag {
               Text(tag)
-                .font(.system(size: 8.5, weight: .semibold))
-                .tracking(1.2)
-                .foregroundStyle(Tok.ink62)
+                .font(.system(size: 7.5, weight: .bold))
+                .tracking(1.05)
+                .foregroundStyle(Tok.accent)
                 .padding(.horizontal, 5)
                 .frame(height: 13)
-                // ⚠ `glassFill`/`glassLine`, the app's named pair — the same
-                // values this site already used by hand, now tracking `theme.ts`.
-                // ⚠ r4 stays: at 13pt tall a `Rad.chip` corner is a pill, and a
-                // pill here would read as the accent capsule the header owns.
+                // ⚠ r4 stays r4: at 13pt tall a `Rad.chip` corner is a pill.
                 .background(
                   RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(Tok.glassFill)
+                    .fill(Tok.accent.opacity(0.12))
                 )
                 .overlay(
                   RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .strokeBorder(Tok.glassLine, lineWidth: 0.5)
+                    .strokeBorder(Tok.accent.opacity(0.28), lineWidth: 0.5)
                 )
                 .fixedSize()
+                // ⚠ ONE group — text, wash and ring tint together, or the
+                // pill's fill and its type drift into two colours (ADR 0114).
+                .widgetAccentable()
             }
           }
-          .fixedSize(horizontal: false, vertical: true)
-        }
+          // ⚠ The mock's `line-height: 1` as a frame: SwiftUI's own line box
+          // for 23pt SF is ~27.5pt, and those 4.5 phantom points are what
+          // overflowed the 1.34 band on the harness. Digits have no
+          // descenders; nothing is clipped.
+          .frame(height: timeSize)
 
-        // ⚠ Home on top, always — the same rule `W.pairLabel` states. Flipping
-        // it so "your" club leads would make one match read two ways for two
-        // readers, and the crests are composed home-then-away regardless.
-        VStack(alignment: .leading, spacing: 5) {
-          heroSide(row, slot: "home", followed: row.isHome)
-          heroSide(row, slot: "away", followed: !row.isHome)
+          // ⚠ Home first, always — the same rule `W.pairLabel` states.
+          // ⚠ ONE row, where 0086 stacked. The stacking constraint died with
+          // the split panel: this column is ~244pt (227 on an SE) and the
+          // worst realistic pair (`R. Sociedad` v `Villarreal`) draws ~158pt
+          // at these sizes.
+          HStack(spacing: 5) {
+            CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: 15, tone: .open)
+            heroName(row.homeName ?? row.homeAbbr, followed: row.isHome)
+            Text(entry.copy.versus)
+              .font(.system(size: 8))
+              .foregroundStyle(Ink.versus)
+            CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: 15, tone: .open)
+            heroName(row.awayName ?? row.awayAbbr, followed: !row.isHome)
+          }
         }
+        .padding(.leading, G.inset)
+
+        Spacer(minLength: 0)
       }
     }
   }
 
   /// ⚠ `homeName`/`awayName` are nil on a v1 snapshot; the abbr is the
   /// fallback, never a blank.
-  private func heroSide(_ row: WidgetSnapshot.Entry, slot: String, followed: Bool) -> some View {
-    let isHome = slot == "home"
-    let abbr = isHome ? row.homeAbbr : row.awayAbbr
-    let name = (isHome ? row.homeName : row.awayName) ?? abbr
-
-    return HStack(spacing: 6) {
-      CrestView(fixtureId: row.fixtureId, slot: slot, abbr: abbr, size: 24, tone: .open)
-      Text(name)
-        .font(.system(size: 11.5, weight: .semibold))
-        .tracking(-0.23)
-        .foregroundStyle(followed ? Tok.accent : Tok.ink90)
-        // ⚠ Conditional, mirroring the lime: the followed side keeps its
-        // distinction through the accent group on the system's glass
-        // (ADR 0114). Same rule on every name in this file.
-        .widgetAccentable(followed)
-        .lineLimit(1)
-        // ⚠ 0.74, not 0.7 — the design's floor on device is 8.5pt and
-        // 11.5 × 0.74 is exactly that. Measured, this never engages.
-        .minimumScaleFactor(0.74)
-    }
+  private func heroName(_ text: String, followed: Bool) -> some View {
+    Text(text)
+      .font(.system(size: 10.5, weight: .semibold))
+      .tracking(-0.21)
+      .foregroundStyle(followed ? Tok.accent : Ink.club)
+      // ⚠ Conditional, mirroring the lime: the followed side keeps its
+      // distinction through the accent group on the system's glass (ADR 0114).
+      .widgetAccentable(followed)
+      .lineLimit(1)
+      // ⚠ 0.81, not lower — the design's floor on device is 8.5pt and
+      // 10.5 × 0.81 is exactly that. Measured, this never engages.
+      .minimumScaleFactor(0.81)
   }
 
-  // MARK: Rail
-
-  private var railColumn: some View {
-    VStack(spacing: 0) {
-      // ⚠ Rows CENTRE in the column, the same idiom `NewsView` uses for the
-      // space its lead leaves: a week that returned two fixtures must not look
-      // like one that failed to finish loading.
-      Spacer(minLength: 0)
-      ForEach(Array(rail.enumerated()), id: \.element.id) { index, row in
-        // ⚠ The first row draws no rule — a rule under the header would read as
-        // a second divider rather than a separator between two rows.
-        if index > 0 {
-          Rectangle().fill(Tok.hairline).frame(height: 0.5)
-        }
-        railRow(row)
+  /// The opened stop's spine: a solid lime node under a 2pt halo, rail fading
+  /// lime → `rail` below it. Node, halo and rail are ONE accent group — the
+  /// spine's lime is the "next" voice and must survive the tint (ADR 0114).
+  ///
+  /// ⚠ Spine colour carries the state, and the state is only WHICH STOP IS
+  /// NEXT — a fact of the schedule, not of the clock. Liveness never (the old
+  /// `Plate` rule).
+  private func heroSpine(showsRail: Bool) -> some View {
+    ZStack(alignment: .top) {
+      if showsRail {
+        LinearGradient(
+          colors: [Tok.accent.opacity(0.75), Ink.rail],
+          startPoint: .top,
+          endPoint: .bottom
+        )
+        .frame(width: 1)
+        .padding(.top, 8)
       }
-      Spacer(minLength: 0)
+      // The halo: a 2pt stroke centred on a 9pt circle spans r3.5→5.5 — the
+      // mock's `box-shadow` spread exactly. Stroke overflow costs no layout.
+      ZStack {
+        Circle()
+          .stroke(Tok.accent.opacity(0.16), lineWidth: 2)
+          .frame(width: 9, height: 9)
+        Circle()
+          .fill(Tok.accent)
+          .frame(width: 7, height: 7)
+      }
+      .padding(.top, 3)
     }
+    .widgetAccentable()
+    .frame(width: G.spine)
+    .frame(maxHeight: .infinity, alignment: .top)
   }
 
-  private func railRow(_ row: WidgetSnapshot.Entry) -> some View {
+  // MARK: Collapsed stops
+
+  /// ⚠ A `Link` like the opened stop — every row is its own destination.
+  private func collapsedRow(_ row: WidgetSnapshot.Entry) -> some View {
     Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
-      HStack(spacing: 6) {
-        // Butted 1pt apart: at 13pt the pair reads as one object — the fixture
-        // — rather than as two badges with something missing between them.
-        HStack(spacing: 1) {
-          CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: 13, tone: .open)
-          CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: 13, tone: .open)
-        }
-
-        VStack(alignment: .leading, spacing: 2.5) {
-          railName(row.homeName ?? row.homeAbbr, followed: row.isHome, weight: .semibold)
-          railName(row.awayName ?? row.awayAbbr, followed: !row.isHome, weight: .medium)
-        }
-
-        Spacer(minLength: 2)
-
+      HStack(spacing: 0) {
         VStack(alignment: .trailing, spacing: 2.5) {
-          railDay(row)
+          if let day = row.kickoffDay {
+            Text(day)
+              .font(.system(size: 8, weight: .semibold))
+              .tracking(1.3)
+              .foregroundStyle(Ink.restDay)
+          }
+          // ⚠ 7pt — the design's ONE step under its 8.5 floor, accepted by
+          // the handoff for this date alone. Nothing else may join it.
+          if let date = row.kickoffDateLabel {
+            Text(date)
+              .font(.system(size: 7, weight: .medium))
+              .tracking(0.42)
+              .foregroundStyle(Ink.dim)
+          }
+        }
+        .frame(width: G.gutter, alignment: .trailing)
+
+        collapsedSpine
+
+        HStack(spacing: 6) {
+          // Butted 1pt apart: at 12pt the pair reads as one object — the
+          // fixture — rather than as two badges with something missing
+          // between them.
+          HStack(spacing: 1) {
+            CrestView(fixtureId: row.fixtureId, slot: "home", abbr: row.homeAbbr, size: 12, tone: .open)
+            CrestView(fixtureId: row.fixtureId, slot: "away", abbr: row.awayAbbr, size: 12, tone: .open)
+          }
+          // ⚠ Truncates rather than shrinks (0086's rule, still the floor
+          // here): 9pt has no scale factor that stays legible, a shorter name
+          // is a fair loss, and the time beside it is a NUMBER, which must
+          // never give.
+          Text("\(row.homeName ?? row.homeAbbr) \(entry.copy.versus) \(row.awayName ?? row.awayAbbr)")
+            .font(.system(size: 9, weight: .semibold))
+            .tracking(-0.14)
+            .foregroundStyle(Ink.restName)
+            .lineLimit(1)
+          Spacer(minLength: 2)
           Text(row.kickoffTime ?? row.kickoffLabel)
             .font(Tok.numerals(10, .medium))
             .tracking(-0.2)
-            .foregroundStyle(Tok.ink90)
+            .foregroundStyle(Ink.restTime)
             .lineLimit(1)
+            .fixedSize()
         }
-        .fixedSize()
+        .padding(.leading, G.inset)
       }
-      .padding(.vertical, 6.5)
     }
   }
 
-  /// `Dom 6`, sentence case with the date — a code beside a number reads as a
-  /// date, alone it reads as a badge (ADR 0108). Costs no width in the row:
-  /// the time beside it is wider on every clock (28 v ~42pt, measured). The
-  /// tracked uppercase form is the v4 fallback only.
-  @ViewBuilder
-  private func railDay(_ row: WidgetSnapshot.Entry) -> some View {
-    if let dated = row.kickoffDayDate {
-      Text(dated)
-        .font(.system(size: 8, weight: .semibold))
-        .tracking(0.2)
-        .foregroundStyle(Tok.ink45)
-    } else if let day = row.kickoffDay {
-      Text(day)
-        .font(.system(size: 8, weight: .semibold))
-        .tracking(1.1)
-        .foregroundStyle(Tok.ink45)
-    }
-  }
-
-  /// The rail's ONE-fixture form (ADR 0109): a card that SPENDS the column —
-  /// clubs named in full anchored to the top, the kickoff block anchored to
-  /// the bottom, the flexible gap between them. The multi-row format in a
-  /// column with one occupant truncated both names beside a 12-hour time and
-  /// floated the row in ~90pt of empty glass.
+  /// A collapsed stop: flat rail, hollow 5pt ring centred on it.
   ///
-  /// ⚠ Clubs FIRST, kickoff below — the small NEXT tile's order (0107),
-  /// deliberately not the hero's: the hero beside this card already leads
-  /// with the kickoff, and two tellings of "when" stacked level with each
-  /// other would race. Subordinate scale throughout: 18pt medium time against
-  /// the hero's 27 ultralight, 20pt crests against its 24.
-  ///
-  /// ⚠ `roomy` is the hero's own 118pt height branch (ADR 0108): the full
-  /// card is ~102pt minimum against a 118pt standard column but overflows a
-  /// zoomed SE's ~95; compact tiles take the smaller cut (~90pt). Same
-  /// measurement, same threshold, one constant to move.
-  ///
-  /// ⚠ A `Link` like every rail row — `widgetURL` carries one destination and
-  /// this tile has up to three.
-  private func railSolo(_ row: WidgetSnapshot.Entry, roomy: Bool) -> some View {
-    Link(destination: W.url(row) ?? URL(string: "altagamafc://")!) {
-      VStack(alignment: .leading, spacing: 0) {
-        VStack(alignment: .leading, spacing: 5) {
-          soloSide(row, slot: "home", followed: row.isHome, roomy: roomy)
-          soloSide(row, slot: "away", followed: !row.isHome, roomy: roomy)
-        }
-
-        Spacer(minLength: 6)
-
-        railDay(row)
-        Text(row.kickoffTime ?? row.kickoffLabel)
-          .font(Tok.numerals(roomy ? 18 : 15, .medium))
-          .tracking(-0.3)
-          .foregroundStyle(Tok.ink)
-          .lineLimit(1)
-          .padding(.top, 2.5)
+  /// ⚠⚠ **The rail is TWO segments and the ring's fill is CLEAR, deliberately
+  /// — not the mock's plate-filled dot over a through rail.** The looks are
+  /// identical in fullColor, but under the system's tint a near-black fill
+  /// INVERTS to a solid bright dot (trap 60); splitting the rail needs no
+  /// fill, no mode branch, and nothing that can bloom.
+  private var collapsedSpine: some View {
+    ZStack {
+      VStack(spacing: 5) {
+        Rectangle().fill(Ink.rail).frame(width: 1).frame(maxHeight: .infinity)
+        Rectangle().fill(Ink.rail).frame(width: 1).frame(maxHeight: .infinity)
       }
-      .padding(.vertical, 8)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      Circle()
+        .strokeBorder(Ink.ring, lineWidth: 1)
+        .frame(width: 5, height: 5)
     }
-  }
-
-  /// ⚠ `homeName`/`awayName` are nil on a v1 snapshot; the abbr is the
-  /// fallback, never a blank — the same rule as `heroSide`. The worst name
-  /// (`R. Sociedad`, 61pt at 10.5pt) has 98pt on a standard tile and 67 on an
-  /// SE; the scale factor is the SE's 4pt of margin, engaged nowhere else.
-  private func soloSide(
-    _ row: WidgetSnapshot.Entry, slot: String, followed: Bool, roomy: Bool
-  ) -> some View {
-    let isHome = slot == "home"
-    let abbr = isHome ? row.homeAbbr : row.awayAbbr
-    let name = (isHome ? row.homeName : row.awayName) ?? abbr
-
-    return HStack(spacing: 5) {
-      CrestView(
-        fixtureId: row.fixtureId, slot: slot, abbr: abbr,
-        size: roomy ? 20 : 16, tone: .open
-      )
-      Text(name)
-        .font(.system(size: roomy ? 10.5 : 9.5, weight: .semibold))
-        .tracking(-0.14)
-        .foregroundStyle(followed ? Tok.accent : Tok.ink90)
-        .widgetAccentable(followed)
-        .lineLimit(1)
-        .minimumScaleFactor(0.85)
-    }
-  }
-
-  /// ⚠ **Truncates rather than shrinks, and that is the design's own floor.**
-  /// At 9pt a `minimumScaleFactor` low enough to rescue `R. Sociedad` in a
-  /// 119pt SE rail would put the name under 8.5pt, below the smallest type this
-  /// widget draws anywhere. A shorter name is a fair loss; unreadable type is
-  /// not — and the kickoff beside it is a NUMBER, which must never give.
-  private func railName(_ text: String, followed: Bool, weight: Font.Weight) -> some View {
-    Text(text)
-      .font(.system(size: 9, weight: weight))
-      .tracking(-0.14)
-      .foregroundStyle(followed ? Tok.accent : Tok.ink90)
-      .widgetAccentable(followed)
-      .lineLimit(1)
+    .frame(width: G.spine)
+    .frame(maxHeight: .infinity)
   }
 }

@@ -44,82 +44,101 @@ import WidgetKit
 
 // MARK: - Ground
 
-/// The aurora mesh: `Tok.ground` under theme.ts's three static `MeshTile` pools.
+/// The TRAY SHELL (ADR 0128, `handoff_widget-redo/`): a `trayFill` tray at the
+/// tile's edge, a `plate` centre inset 2pt inside it, a lit top edge on the
+/// plate, and a lime corner glow. One view, all three widgets.
 ///
-/// ⚠ **`MeshTile`, not `Mesh`** — see `Tok.mesh` for why copying the app's own
-/// table verbatim renders a dead tile.
+/// ⚠ **The aurora pools this view was named for are GONE** (0125), and so is
+/// the flat black that followed them (0126). The name stays because ADRs and
+/// comments across this target refer to `MeshPlate`; the pool table
+/// (`Tok.mesh`) survives only for the Live Activity's floodlight. Do not
+/// re-attach it here.
 ///
-/// ⚠⚠ **`.position` inside a `GeometryReader`, NOT `EllipticalGradient`'s own
-/// `center:`/`endRadiusFraction:`.** The pools have INDEPENDENT `rx`/`ry`
-/// (`0.72 × 0.62`, `0.70 × 0.76`, `0.78 × 0.68`); SwiftUI's elliptical gradient
-/// fits its ellipse to the view's own aspect and takes a single radius fraction,
-/// so it cannot express any of them. Sizing the gradient's FRAME to `2rx × 2ry`
-/// and positioning that frame's centre at `cx, cy` reproduces the SVG exactly —
-/// the default `endRadiusFraction` of 0.5 is precisely "fill this frame's
-/// inscribed ellipse". This is the same substitution ADR 0085/0086 record for
-/// `RadialGradient`, resolved rather than approximated.
+/// ⚠⚠ **No radius here is OURS.** The tile's corner is the SYSTEM's, and a
+/// second radius inside its mask double-rounds every edge (ADR 0085 §1). The
+/// tray corner is therefore the container mask itself (the fill runs
+/// edge-to-edge and the system rounds it), and every inner corner is
+/// `ContainerRelativeShape().inset(by: 2)` — an `InsettableShape`, so the
+/// plate's corner stays concentric with the container's on every device,
+/// which is the handoff's "radii stay concentric at any size" without ever
+/// writing 23 or 21.
 ///
-/// ⚠ Two pools are still centred slightly OFF the tile (`cx` −0.02, `cy` 1.02).
-/// That is the design — they are the edges of a larger wash — and it is why this
-/// clips.
+/// ⚠ `ContainerRelativeShape` resolves the container's corner ONLY inside a
+/// widget context (elsewhere it degrades to a rectangle) — safe here because
+/// this view draws only as `containerBackground`.
 struct MeshPlate: View {
   /// ⚠⚠ **Tinted and vibrant modes get NO ground of ours.** In `.accented`
   /// (iOS 18+ tinted home screen) and `.vibrant` (Lock Screen) the system
-  /// flattens every colour to one tint and supplies its own backing; painting a
-  /// three-pool mesh into that renders as grey mush and hides the type. Handing
-  /// back `Color.clear` is what lets the system draw what it means to.
+  /// flattens every colour to one tint and supplies its own backing; painting
+  /// a tray-and-glow shell into that renders as grey mush and hides the type.
+  /// Handing back `Color.clear` is what lets the system draw what it means to.
   @Environment(\.widgetRenderingMode) private var mode
+
+  private var plateShape: some InsettableShape {
+    ContainerRelativeShape().inset(by: 2)
+  }
 
   var body: some View {
     if mode == .fullColor {
-      // ⚠ Opaque BY MEASUREMENT, not habit. "Make the default a bit more
-      // transparent" was tried (2026-09-05): `ground` at 0.5 alpha composited
-      // over BLACK, not the wallpaper — a tile edge read (13,28,36) beside a
-      // wallpaper pixel of (67,108,203), where a real blend would have been
-      // ~(41,63,112). Alpha here only darkens; the wallpaper is unreachable in
-      // fullColor at any opacity. See-through is the SYSTEM's Clear/Tinted
-      // modes alone (ADR 0114).
-      Tok.ground
-        // The widget-only lift — under the pools, so their calibrated colours
-        // ride a lighter base rather than being washed out from above.
-        .overlay { Tok.groundLift }
-        .overlay { pools }
-        // The lit top edge every glass card in the app carries. A 1pt rule, not
-        // a stroked rounded rect: the tile's corner is the SYSTEM's, and a
-        // second radius inside that mask double-rounds it (ADR 0085 §1).
-        .overlay(alignment: .top) {
-          Rectangle().fill(Tok.plateTop).frame(height: 1)
-        }
+      // ⚠ `trayFill` is opaque BY MEASUREMENT, not habit: container-background
+      // alpha composites over BLACK, never the wallpaper (ADR 0114), so the
+      // mock's `white 5%` is pre-composited into `#17191b` — see the token.
+      // See-through is the SYSTEM's Clear/Tinted modes alone.
+      ZStack {
+        Tok.trayFill
+        plateShape.fill(Tok.plate)
+        // Decoration only — never a data channel (the old `Plate`'s rule).
+        CornerGlow()
+          .clipShape(plateShape)
+        // The plate's lit top edge — the mock's 0.5px inset highlight. Stroked
+        // on the INSET shape and masked to a top fade (GlassSurface's idiom),
+        // so it follows the plate's corner instead of ruling straight across
+        // the tray.
+        plateShape
+          .strokeBorder(Tok.hairline, lineWidth: 0.5)
+          .mask(alignment: .top) {
+            LinearGradient(
+              colors: [.white, .white.opacity(0)],
+              startPoint: .top,
+              endPoint: .bottom
+            )
+            .frame(height: 21)
+            .frame(maxHeight: .infinity, alignment: .top)
+          }
+        // The tray's own hairline, on the container's edge — the outermost
+        // stroke, drawn last so the plate never overlaps it.
+        ContainerRelativeShape()
+          .strokeBorder(Tok.trayLine, lineWidth: 0.5)
+      }
     } else {
       Color.clear
     }
   }
+}
 
-  private var pools: some View {
+/// The handoff's corner glow: the mock's
+/// `radial-gradient(58% 78% at 100% −10%, lime .16 → clear 64%)`.
+///
+/// ⚠ `EllipticalGradient` cannot take independent rx/ry through
+/// `endRadiusFraction` (trap 50) — so this is the ADR 0104 recipe: size the
+/// gradient's own frame to `2rx × 2ry`, `.position` its centre at the mock's
+/// `(100%, −10%)`, and let the default fraction 0.5 mean "fill this frame's
+/// inscribed ellipse". The centre is legitimately OUTSIDE the surface, so the
+/// caller clips.
+private struct CornerGlow: View {
+  var body: some View {
     GeometryReader { geo in
-      ZStack {
-        ForEach(Array(Tok.mesh.enumerated()), id: \.offset) { _, pool in
-          EllipticalGradient(
-            gradient: Gradient(stops: [
-              .init(color: pool.color.opacity(pool.alpha), location: 0),
-              .init(color: pool.color.opacity(0), location: pool.fade),
-            ]),
-            center: .center,
-            startRadiusFraction: 0,
-            endRadiusFraction: 0.5
-          )
-          .frame(
-            width: geo.size.width * pool.rx * 2,
-            height: geo.size.height * pool.ry * 2
-          )
-          .position(
-            x: geo.size.width * pool.cx,
-            y: geo.size.height * pool.cy
-          )
-        }
-      }
+      let w = geo.size.width
+      let h = geo.size.height
+      EllipticalGradient(
+        stops: [
+          .init(color: Tok.accent.opacity(0.16), location: 0),
+          .init(color: Tok.accent.opacity(0), location: 0.64),
+        ]
+      )
+      .frame(width: 2 * 0.58 * w, height: 2 * 0.78 * h)
+      .position(x: w, y: -0.10 * h)
     }
-    .clipped()
   }
 }
 
