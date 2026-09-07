@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><style>
+body{margin:0;background:#e9e6e0;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
+.ph{width:393px;height:852px;background:#0f1316;border-radius:48px;overflow:hidden;position:relative;display:flex;flex-direction:column;color:#f4f6f6;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 0 9px #1a1b1d,0 30px 70px rgba(0,0,0,.45)}
+.sb{position:relative;flex:none;height:56px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 9px;font:600 15px/1 -apple-system,system-ui;letter-spacing:-.01em}
+.hi{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.32);z-index:40;pointer-events:none}
+a{color:#c8f25a}a:hover{color:#d9f785}
+</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px 20px 34px;box-sizing:border-box">
+<div class="ph">
+  <div class="sb"><span>9:41</span><span style="display:flex;align-items:center;gap:6px"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.6" y="5" width="3" height="6" rx="1"></rect><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"></rect><rect x="13.8" y="0" width="3" height="11" rx="1"></rect></svg><span style="width:25px;height:12px;border:1px solid rgba(255,255,255,.5);border-radius:3.5px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:1.5px;bottom:1.5px;width:15px;background:#f4f6f6;border-radius:2px;display:block"></span></span></span></div>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div style="flex:1;min-height:0;position:relative;overflow:hidden">
+
+      <div style="position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+        <sc-for list="{{ reel }}" as="r" hint-placeholder-count="3">
+          <div style="position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;background:#0b0e10">
+            {{ r.photo }}
+            <div onClick="{{ r.onTap }}" style="position:relative;height:100%;box-sizing:border-box;padding:118px 20px 26px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer">
+
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 11px;border-radius:13px;background:rgba(8,11,12,.42);border:.5px solid rgba(255,255,255,.16);backdrop-filter:blur(14px)">
+                  <span style="font:800 9.5px/1 -apple-system,system-ui;letter-spacing:.14em;color:#f4f6f6">{{ r.publisher }}</span>
+                  <span style="width:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.35)"></span>
+                  <span style="font:600 9.5px/1 -apple-system,system-ui;color:rgba(244,246,246,.62)">{{ r.age }}</span>
+                </div>
+                <div style="width:38px;height:38px;flex:none;display:{{ r.crestShow }};align-items:center;justify-content:center;filter:drop-shadow(0 3px 10px rgba(0,0,0,.5))">{{ r.crest }}</div>
+              </div>
+
+              <div>
+                <div style="font:700 31px/1.05 -apple-system,system-ui;letter-spacing:-.035em;color:#fff;text-shadow:0 2px 22px rgba(4,7,8,.72),0 1px 3px rgba(4,7,8,.5);text-wrap:pretty;margin-bottom:20px">{{ r.title }}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#c8f25a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l4-4 4 4"></path></svg>
+                    <span style="font:700 9.5px/1 -apple-system,system-ui;letter-spacing:.16em;color:#c8f25a">{{ t.reelRead }}</span>
+                  </div>
+                  <div style="display:flex;gap:9px;flex:none">
+                    <div onClick="{{ r.onSave }}" style="width:44px;height:44px;border-radius:22px;background:{{ r.saveBg }};border:.5px solid {{ r.saveLine }};backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                      <svg width="15" height="15" viewBox="0 0 16 16" fill="{{ r.saveFill }}" stroke="{{ r.saveInk }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2.2h9v11.6L8 10.4l-4.5 3.4z"></path></svg>
+                    </div>
+                    <div onClick="{{ r.onShare }}" style="width:44px;height:44px;border-radius:22px;background:rgba(8,11,12,.42);border:.5px solid rgba(255,255,255,.16);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#f4f6f6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10.6V2.4M4.9 5.3L8 2.2l3.1 3.1M3.2 9.4v3.3a1.2 1.2 0 001.2 1.2h7.2a1.2 1.2 0 001.2-1.2V9.4"></path></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position:absolute;left:0;right:0;top:0;z-index:12;pointer-events:none">
+        <div aria-hidden="true" style="position:absolute;left:0;right:0;top:0;height:196px;background:linear-gradient(180deg,rgba(6,10,8,.62) 0%,rgba(6,12,11,.4) 40%,rgba(6,12,12,.16) 70%,rgba(15,19,22,0) 100%)"></div>
+        <div style="position:relative;padding:4px 20px 0;pointer-events:auto">
+          <div style="display:inline-flex;align-items:center;gap:5px;color:#c8f25a;cursor:pointer;margin-bottom:10px"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4l-6 6 6 6"></path></svg><span style="font:600 14px/1 -apple-system,system-ui">{{ t.boardTitle }}</span></div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+            <div>
+              <div style="font:300 38px/1 -apple-system,system-ui;letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(4,7,8,.5)">{{ t.newsScreenTitle }}</div>
+              <div style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.18em;color:rgba(244,246,246,.66);margin-top:8px">{{ reelCount }}</div>
+            </div>
+            <div onClick="{{ toggleNf }}" style="flex:none;display:flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:17px;background:{{ nfBg }};border:.5px solid {{ nfLine }};backdrop-filter:blur(14px);color:#f4f6f6;cursor:pointer">
+              <span style="font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em">{{ nfLabel }}</span>
+              <svg width="10" height="7" viewBox="0 0 10 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="transform:{{ nfArrow }}"><path d="M1 1.5l4 4 4-4"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ nfOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:14">
+        <div onClick="{{ toggleNf }}" style="position:absolute;inset:0;background:rgba(4,6,8,.45)"></div>
+        <div style="position:absolute;left:12px;right:12px;top:112px;background:rgba(16,19,22,.9);border:.5px solid rgba(255,255,255,.12);border-radius:24px;padding:14px;backdrop-filter:blur(24px);box-shadow:0 22px 50px rgba(0,0,0,.5)">
+          <div style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.18em;color:#a3abb0;padding:2px 4px 12px">{{ t.reelFilter }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ newsChips }}" as="f" hint-placeholder-count="5">
+              <div onClick="{{ f.onPick }}" style="flex:none;height:34px;padding:0 14px;border-radius:17px;display:flex;align-items:center;white-space:nowrap;font:600 13px/1 -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer;background:{{ f.bg }};color:{{ f.color }};border:1px solid {{ f.border }}">{{ f.label }}</div>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px;padding:12px 4px 0;border-top:1px solid rgba(255,255,255,.07);font:400 11.5px/1.5 -apple-system,system-ui;color:#59626a;text-wrap:pretty">{{ t.newsAttribution }}</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ reelQuiet }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:0;right:0;top:210px;padding:0 24px;text-align:center;font:400 14.5px/1.5 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">{{ t.newsQuiet }}</div>
+      </sc-if>
+
+      <sc-if value="{{ reelToast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:50%;bottom:30px;transform:translateX(-50%);z-index:16;height:34px;padding:0 16px;border-radius:17px;background:rgba(244,246,246,.94);color:#101316;display:flex;align-items:center;font:600 12.5px/1 -apple-system,system-ui;letter-spacing:-.01em;box-shadow:0 12px 30px rgba(0,0,0,.4)">{{ reelToast }}</div>
+      </sc-if>
+
+    </div>
+
+    <div style="flex:none;height:80px;background:rgba(10,11,12,.92);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:repeat(4,1fr);padding:11px 8px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#c8f25a"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"></circle><circle cx="11" cy="11" r="2.4" fill="currentColor" stroke="none"></circle></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabToday }}</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="15" height="13" rx="3.5"></rect><path d="M3.5 9.5h15M8 5V3M14 5V3"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabMatchdays }}</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9M11 18V4M18 18v-6"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabTable }}</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#7c858b"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 3.5l6.5 2.6v5.4c0 3.4-2.7 5.8-6.5 7-3.8-1.2-6.5-3.6-6.5-7V6.1L11 3.5z"></path></svg><span style="font:600 10px/1 -apple-system,system-ui">{{ t.tabClubs }}</span></div>
+    </div>
+  </div>
+
+  <sc-if value="{{ shStory }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:35;background:rgba(4,6,8,.62);display:flex;flex-direction:column;justify-content:flex-end">
+    <div onClick="{{ closeStory }}" style="flex:1;min-height:44px"></div>
+    <div style="background:#101316;border-radius:28px 28px 0 0;padding:12px 20px 30px">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px"></div>
+      <div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="font:800 9px/1 -apple-system,system-ui;letter-spacing:.12em;color:#c8f25a;display:{{ story.topicShow }}">{{ story.topic }}</span><span style="width:3px;height:3px;border-radius:2px;background:#4f575d;display:{{ story.dotShow }}"></span><span style="font:700 9px/1 -apple-system,system-ui;letter-spacing:.1em;color:#7c858b">{{ story.publisher }}</span><span style="font:600 9px/1 -apple-system,system-ui;color:#59626a">{{ story.age }}</span></div>
+      <div style="font:700 22px/1.25 -apple-system,system-ui;letter-spacing:-.025em;margin:11px 0 10px;text-wrap:pretty">{{ story.title }}</div>
+      <div style="font:400 13.5px/1.5 -apple-system,system-ui;color:#8fa0a6;margin-bottom:18px;text-wrap:pretty">{{ story.note }}</div>
+      <div onClick="{{ closeStory }}" style="height:50px;border-radius:15px;background:#c8f25a;color:#101806;display:flex;align-items:center;justify-content:center;gap:9px;font:600 16px -apple-system,system-ui;letter-spacing:-.01em;cursor:pointer;margin-bottom:9px">{{ story.cta }}</div>
+      <div style="display:flex;gap:9px">
+        <div onClick="{{ closeStory }}" style="flex:1;height:46px;border-radius:14px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0;cursor:pointer">{{ t.share }}</div>
+        <div onClick="{{ closeStory }}" style="flex:1;height:46px;border-radius:14px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font:600 15px -apple-system,system-ui;color:#a3abb0;cursor:pointer">{{ t.close }}</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div class="hi"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;es&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'es'&quot;}}">
+class Component extends DCLogic {
+  LG = [{id:'laliga',name:'LaLiga'},{id:'premier',name:'Premier League'},{id:'bundesliga',name:'Bundesliga'}];
+  CR = {sevilla:'187c6c09c22f7c3f09c57e8bcda2ae528237770ed30a63de38de7a5fd4d7e89a',
+    atletico:'08eeee63b3528d564505dfcec064d31600380c0c53a30ab95d7c37bb26b9707a',
+    alaves:'5b2dae24a0ea76cd51dc78481a752bfef6b3096961bde09d0b9e0a33ac5412f4',
+    villarreal:'dd4e531a6722f5526b8870d2f5febf3812e5a70fdc80740a39a4de2e424e1c63'};
+  /* ⚠ Headlines are QUOTES — the publisher's language, never translated. Only
+     the furniture around them follows the reader's language (ADR 0064). */
+  NEWS = [
+    {id:'n1',topic:'SEVILLA',publisher:'MARCA',age:'3h',club:'sevilla',league:'laliga',
+      title:'El Sevilla vuelve a preguntar por Zeballos',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/6a92121e79c8b.jpeg'},
+    {id:'n2',topic:'ATLÉTICO',publisher:'MARCA',age:'3h',club:'atletico',league:'laliga',
+      title:'Sevilla – Atlético: y pese al lío… hay partidazo',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/28/6a91d2d76f4a3.jpeg'},
+    {id:'n3',topic:'',publisher:'SPORT',age:'5h',club:'',league:'laliga',
+      title:'Acuerdo del Deportivo con la Federación de Peñas: vuelve la normalidad a Riazor',
+      img:'https://estaticos-cdn.prensaiberica.es/clip/f012b8ea-6eaf-42fc-87ea-57130a0d8b3f_media-libre-aspect-ratio_default_0.jpg'},
+    {id:'n4',topic:'ALAVÉS',publisher:'MARCA',age:'6h',club:'alaves',league:'laliga',
+      title:'El Alavés vuela alto: igualan el mejor arranque en Primera de la historia',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/6a9208e530bd8.jpeg'},
+    {id:'n5',topic:'CRYSTAL PALACE',publisher:'ESPN',age:'14h',club:'',league:'premier',
+      title:'De cabeza al gol: Haaland abrió la cuenta ante Crystal Palace',
+      img:'https://a.espncdn.com/photo/2026/0828/r1708203_1296x729_16-9.jpg'},
+    {id:'n6',topic:'VILLARREAL',publisher:'MARCA',age:'18h',club:'villarreal',league:'laliga',
+      title:'Mendizorroza se confirma como un campo maldito para el Villarreal',
+      img:'https://objetos-xlk.estaticos-marca.com/files/og_thumbnail/uploads/2026/08/29/6a9205270c7f7.jpeg'}
+  ];
+  /* No end (product call): the filtered feed rolls forward in laps, each lap
+     re-aged a day older. Six laps is far past any real session. */
+  REEL_LAPS = ['', '1d', '2d', '3d', '4d', '5d'];
+  I18N = {
+    en:{boardTitle:'Board',newsScreenTitle:'News',newsAll:'All',storyOne:'STORY',storyMany:'STORIES',
+      reelRead:'PULL UP TO READ',reelFilter:'LEAGUE',share:'Share',close:'Close',
+      newsQuiet:'Nothing new right now. Check back in a while.',
+      newsAttribution:'Headlines from third-party publishers are collected here and open at the original article; Alta Gama FC does not host or edit that reporting.',
+      tabToday:'Today',tabMatchdays:'Matchdays',tabTable:'Table',tabClubs:'Clubs'},
+    es:{boardTitle:'Inicio',newsScreenTitle:'Noticias',newsAll:'Todas',storyOne:'NOTICIA',storyMany:'NOTICIAS',
+      reelRead:'DESLIZA PARA LEER',reelFilter:'LIGA',share:'Compartir',close:'Cerrar',
+      newsQuiet:'Sin noticias por ahora. Vuelve dentro de un rato.',
+      newsAttribution:'Los titulares de medios externos se recogen aquí y se abren en el artículo original; Alta Gama FC no aloja ni edita esa información.',
+      tabToday:'Hoy',tabMatchdays:'Partidos',tabTable:'Clasificación',tabClubs:'Clubes'}
+  };
+  state = {newsFilter:'all',nfOpen:false,story:null,saved:[],toast:null};
+  lang(){ return this.props.lang || 'en'; }
+  crest(id){ return 'https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/' + this.CR[id] + '.png'; }
+  /* Built here, not as a template <img src="{{ }}">: an unresolved hole would
+     have the browser fetch the literal "{{ r.img }}" on first paint. */
+  reelPhoto(url){ return React.createElement('img', {src: url, alt: '', style: {position: 'absolute',
+    inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+    filter: 'brightness(.62) contrast(1.06) saturate(1.04)'}}); }
+  crestWm(id){ return this.CR[id] ? React.createElement('img', {src: this.crest(id), alt: '',
+    style: {width: '100%', height: '100%', objectFit: 'contain', display: 'block'}}) : null; }
+  toast(msg){ clearTimeout(this.toastT); this.setState({toast: msg});
+    this.toastT = setTimeout(() => this.setState({toast: null}), 1600); }
+  componentWillUnmount(){ clearTimeout(this.toastT); }
+  renderVals(){
+    const st = this.state, lang = this.lang(), i = lang === 'es', t = this.I18N[lang];
+    const nf = st.newsFilter, saved = st.saved;
+    const shown = this.NEWS.filter(n => nf === 'all' || n.league === nf);
+    const reel = [];
+    this.REEL_LAPS.forEach(lapAge => shown.forEach(n => {
+      const has = n.club && this.CR[n.club], on = saved.includes(n.id);
+      reel.push({photo: this.reelPhoto(n.img), title: n.title, publisher: n.publisher, age: lapAge || n.age,
+        crest: has ? this.crestWm(n.club) : null, crestShow: has ? 'flex' : 'none',
+        saveBg: on ? 'rgba(200,242,90,.9)' : 'rgba(8,11,12,.42)',
+        saveLine: on ? '#c8f25a' : 'rgba(255,255,255,.16)',
+        saveFill: on ? '#101806' : 'none', saveInk: on ? '#101806' : '#f4f6f6',
+        onTap: () => this.setState({story: n.id}),
+        onSave: (e) => { e.stopPropagation();
+          this.setState(s => ({saved: s.saved.includes(n.id)
+            ? s.saved.filter(x => x !== n.id) : s.saved.concat(n.id)})); },
+        onShare: (e) => { e.stopPropagation(); this.toast(i ? 'Enlace copiado' : 'Link copied'); }});
+    }));
+    /* ⚠ The chips stay reachable over an empty list — a reader who picked a
+       quiet league must be able to pick another. */
+    const newsChips = [{id:'all', label:t.newsAll}].concat(this.LG.map(l => ({id:l.id, label:l.name})))
+      .map(ch => ({label: ch.label,
+        bg: nf === ch.id ? '#c8f25a' : '#15171a', color: nf === ch.id ? '#101806' : '#a3abb0',
+        border: nf === ch.id ? '#c8f25a' : 'rgba(255,255,255,.1)',
+        onPick: () => this.setState({newsFilter: ch.id, nfOpen: false})}));
+    const nfLg = this.LG.find(l => l.id === nf);
+    const sIt = this.NEWS.find(n => n.id === st.story) || this.NEWS[0];
+    return {
+      t, newsChips, reel, reelQuiet: reel.length === 0, reelToast: st.toast,
+      reelCount: shown.length + ' ' + (shown.length === 1 ? t.storyOne : t.storyMany),
+      nfOpen: st.nfOpen, nfLabel: nf === 'all' || !nfLg ? t.newsAll : nfLg.name,
+      nfBg: st.nfOpen ? 'rgba(200,242,90,.2)' : 'rgba(8,11,12,.42)',
+      nfLine: st.nfOpen ? 'rgba(200,242,90,.55)' : 'rgba(255,255,255,.16)',
+      nfArrow: st.nfOpen ? 'rotate(180deg)' : 'none',
+      toggleNf: () => this.setState(s => ({nfOpen: !s.nfOpen})),
+      shStory: st.story !== null, closeStory: () => this.setState({story: null}),
+      story: Object.assign({}, sIt, {
+        topicShow: sIt.topic ? 'inline' : 'none', dotShow: sIt.topic ? 'block' : 'none',
+        cta: (i ? 'Abrir en ' : 'Open at ') + sIt.publisher,
+        note: i ? 'Se abre en ' + sIt.publisher + ', en tu navegador. La información es suya; la app solo ha recogido el titular.'
+                : 'Opens at ' + sIt.publisher + ' in your browser. The reporting is theirs; the app only collected the headline.'})
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -600,14 +600,10 @@ export interface Copy {
     /** Section eyebrow on the card AND the pushed screen's title. */
     title: string;
     allNews: string;
-    /** The kicker on the front page's lead — `LEAD` / `DESTACADO` (ADR 0070). */
-    lead: string;
     /** `4 NEW` — fully formed, uppercased by the eyebrow token. */
     newCount: (n: number) => string;
     /** The filter chips' first entry. */
     all: string;
-    today: string;
-    yesterday: string;
     /** Feed empty, or every story aged out. Chips stay visible above it. */
     quiet: string;
     /**
@@ -623,6 +619,28 @@ export interface Copy {
     cancel: string;
     /** The sheet opened on a story the cache no longer holds. */
     gone: string;
+    /**
+     * `By Javier Marcos` — the story sheet's byline lead (ADR 0129). The name
+     * is the author, or the publisher when the wire has none; the rest of the
+     * row (`· MARCA · 2 Sep, 06:22`) is assembled by the route.
+     */
+    byline: (name: string) => string;
+    /**
+     * The reel (ADR 0129). `reelRead` is `TAP TO READ` — Ed's device feedback
+     * (2026-09-06) replacing the handoff's `PULL UP TO READ`: the gesture is a
+     * tap, and the copy must not promise a pull. `leagueFilter` and it are
+     * eyebrows, stored upper as the dc handoff writes them. `savedStory`
+     * doubles as the toggled save button's a11y label.
+     */
+    reelRead: string;
+    leagueFilter: string;
+    saveStory: string;
+    savedStory: string;
+    /** The Saved screen. */
+    savedTitle: string;
+    savedEmpty: string;
+    /** The reel's quiet end card — drawn only when `nextBefore` came back null. */
+    caughtUp: string;
   };
 }
 
@@ -1041,11 +1059,8 @@ export const esCopy: Copy = {
   news: {
     title: 'Noticias',
     allNews: 'Todas las noticias',
-    lead: 'Destacado',
     newCount: (n: number) => `${n} ${n === 1 ? 'nueva' : 'nuevas'}`,
     all: 'Todas',
-    today: 'Hoy',
-    yesterday: 'Ayer',
     quiet: 'Sin noticias por ahora. Vuelve dentro de un rato.',
     attribution:
       'Los titulares de medios externos se recogen aquí y se abren en el artículo original; Alta Gama FC no aloja ni edita esa información. Nuestras propias piezas se abren en altagamafc.com.',
@@ -1055,6 +1070,14 @@ export const esCopy: Copy = {
     share: 'Compartir',
     cancel: 'Cancelar',
     gone: 'Esta noticia ya no está disponible.',
+    byline: (name: string) => `Por ${name}`,
+    reelRead: 'TOCA PARA LEER',
+    leagueFilter: 'LIGA',
+    saveStory: 'Guardar noticia',
+    savedStory: 'Guardada',
+    savedTitle: 'Guardadas',
+    savedEmpty: 'Las noticias que guardes aparecerán aquí.',
+    caughtUp: 'Estás al día.',
   },
 };
 
@@ -1465,11 +1488,8 @@ export const enCopy: Copy = {
   news: {
     title: 'News',
     allNews: 'All news',
-    lead: 'Lead',
     newCount: (n: number) => `${n} new`,
     all: 'All',
-    today: 'Today',
-    yesterday: 'Yesterday',
     quiet: 'Nothing new right now. Check back in a while.',
     attribution:
       'Headlines from third-party publishers are collected here and open at the original article; Alta Gama FC does not host or edit that reporting. Our own pieces open on altagamafc.com.',
@@ -1479,6 +1499,14 @@ export const enCopy: Copy = {
     share: 'Share',
     cancel: 'Cancel',
     gone: 'This story is no longer available.',
+    byline: (name: string) => `By ${name}`,
+    reelRead: 'TAP TO READ',
+    leagueFilter: 'LEAGUE',
+    saveStory: 'Save story',
+    savedStory: 'Saved',
+    savedTitle: 'Saved',
+    savedEmpty: 'Stories you save appear here.',
+    caughtUp: "You're all caught up.",
   },
 };
 

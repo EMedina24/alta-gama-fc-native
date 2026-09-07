@@ -17,7 +17,7 @@ import { getNews, getNewsLeagues } from '@/lib/cronogol/client';
 import { keys } from './keys';
 import { GC_TIME, STALE } from './stale';
 
-const FEED_LIMIT = 30;
+export const FEED_LIMIT = 30;
 
 export function useNews() {
   return useQuery({

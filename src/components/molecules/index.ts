@@ -38,3 +38,5 @@ export { ClubBubble, type ClubBubbleProps } from './club-bubble';
 export { ClubRow, type ClubRowProps } from './club-row';
 export { FormField, type FormFieldProps } from './form-field';
 export { SegmentedControl, type SegmentedControlProps } from './segmented-control';
+export { ReelMetaChip, type ReelMetaChipProps } from './reel-meta-chip';
+export { ReelActions, type ReelActionsProps } from './reel-actions';

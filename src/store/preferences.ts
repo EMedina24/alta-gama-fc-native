@@ -28,11 +28,12 @@ const STORAGE_KEY = 'altagama:preferences';
 /**
  * Bump when the stored SHAPE changes.
  *
- * ⚠ 2 added `reminderLeads` (ADR 0040). Bumping is safe precisely because
- * `FOLLOWED_RULE_VERSION` did NOT move — that separation is what stops a shape
- * bump from emptying every reader's follow list.
+ * ⚠ 2 added `reminderLeads` (ADR 0040); 5 added `savedStories` (ADR 0129).
+ * Bumping is safe precisely because `FOLLOWED_RULE_VERSION` did NOT move —
+ * that separation is what stops a shape bump from emptying every reader's
+ * follow list.
  */
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -69,6 +70,38 @@ export type ReminderLead = (typeof REMINDER_LEAD_OPTIONS)[number];
 export function isReminderLead(value: unknown): value is ReminderLead {
   return REMINDER_LEAD_OPTIONS.includes(value as ReminderLead);
 }
+
+/**
+ * One saved story (ADR 0129) — a SNAPSHOT, not a reference.
+ *
+ * ⚠ Keyed on `url`, never the API `id`: articles are purged from the backend
+ * 30 days after publication and their ids die with them (`types.ts`), so a
+ * saved story must render entirely from what is stored here. The fields are
+ * frozen at save time — `title` already through `plainText`.
+ */
+export interface SavedStory {
+  url: string;
+  title: string;
+  publisher: string;
+  /** Drives open-in-app vs the link-out sheet, exactly as on the feed. */
+  isFirstParty: boolean;
+  imageUrl: string | null;
+  publishedAt: string;
+  topic: string | null;
+  /** The story sheet's description and byline — nullable on the wire, and
+   *  absent on rows saved before the sheet rendered them (parse → null). */
+  excerpt: string | null;
+  author: string | null;
+  savedAt: string;
+}
+
+/**
+ * ⚠ Newest-saved-first, capped: preferences travel through AsyncStorage as one
+ * JSON string, and an unbounded list of snapshots is how that write starts
+ * failing quietly. A hundred is weeks of deliberate saving — ~40 KB worst case
+ * with every row carrying a full 400-char excerpt, well inside the store.
+ */
+export const SAVED_STORY_CAP = 100;
 
 export interface Preferences {
   v: number;
@@ -143,6 +176,8 @@ export interface Preferences {
    * past a row — the handoff's open question, resolved the simple way.
    */
   newsSeenAt: string | null;
+  /** Saved stories, newest-saved-first (ADR 0129). See `SavedStory`. */
+  savedStories: readonly SavedStory[];
 }
 
 const DEFAULTS: Preferences = {
@@ -159,6 +194,7 @@ const DEFAULTS: Preferences = {
   alertGoals: false,
   reminderLeads: [30],
   newsSeenAt: null,
+  savedStories: [],
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -198,6 +234,8 @@ function parse(raw: string | null): Preferences {
       reminderLeads: parseLeads(data.reminderLeads),
       // Absent on every v1–v3 payload; absent means "never opened".
       newsSeenAt: typeof data.newsSeenAt === 'string' ? data.newsSeenAt : null,
+      // Absent on every v1–v4 payload; absent means "nothing saved".
+      savedStories: parseSavedStories(data.savedStories),
     };
   } catch {
     return DEFAULTS;
@@ -218,6 +256,42 @@ function sameLeads(a: readonly ReminderLead[], b: readonly ReminderLead[]): bool
   return a.length === b.length && a.every((lead, i) => lead === b[i]);
 }
 
+/**
+ * ⚠ A row missing any REQUIRED string is dropped whole, never patched: a saved
+ * story with no publisher would print an unattributed headline (the one thing
+ * the aggregation rules forbid), and one with no date has no honest age.
+ * Deduped by `url` — the key — and capped, first (newest) wins.
+ */
+function parseSavedStories(raw: unknown): readonly SavedStory[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const stories: SavedStory[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const story = entry as Partial<SavedStory>;
+    if (typeof story.url !== 'string' || story.url === '') continue;
+    if (typeof story.title !== 'string' || story.title === '') continue;
+    if (typeof story.publisher !== 'string' || story.publisher === '') continue;
+    if (typeof story.publishedAt !== 'string' || story.publishedAt === '') continue;
+    if (seen.has(story.url)) continue;
+    seen.add(story.url);
+    stories.push({
+      url: story.url,
+      title: story.title,
+      publisher: story.publisher,
+      isFirstParty: story.isFirstParty === true,
+      imageUrl: typeof story.imageUrl === 'string' ? story.imageUrl : null,
+      publishedAt: story.publishedAt,
+      topic: typeof story.topic === 'string' ? story.topic : null,
+      excerpt: typeof story.excerpt === 'string' ? story.excerpt : null,
+      author: typeof story.author === 'string' ? story.author : null,
+      savedAt: typeof story.savedAt === 'string' ? story.savedAt : story.publishedAt,
+    });
+    if (stories.length >= SAVED_STORY_CAP) break;
+  }
+  return stories;
+}
+
 function same(a: Preferences, b: Preferences): boolean {
   return (
     a.tz === b.tz &&
@@ -231,7 +305,11 @@ function same(a: Preferences, b: Preferences): boolean {
     sameLeads(a.reminderLeads, b.reminderLeads) &&
     a.newsSeenAt === b.newsSeenAt &&
     a.followed.length === b.followed.length &&
-    a.followed.every((slug, i) => slug === b.followed[i])
+    a.followed.every((slug, i) => slug === b.followed[i]) &&
+    // `url` alone: the writers only ever add or remove whole rows, so a list
+    // with the same urls in the same order is the same list.
+    a.savedStories.length === b.savedStories.length &&
+    a.savedStories.every((story, i) => story.url === b.savedStories[i].url)
   );
 }
 
@@ -242,12 +320,23 @@ function commit(next: Preferences) {
   // equal-but-new object schedules a render whether anything was emitted or not.
   if (changed) snapshot = next;
 
-  // ⚠ The write happens either way. Persisting an unchanged value is what makes
-  // an explicit timezone pick that matches the detected one stick: without it
-  // nothing is stored, and the next launch re-detects over the user's choice.
-  void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {
-    // Storage full or unavailable. The value still holds for this session.
-  });
+  // ⚠⚠ NEVER persist before hydration (trap 61). In production nothing can get
+  // here un-hydrated — the root layout holds the tree until `hydratePreferences`
+  // resolves — but a dev FAST REFRESH of THIS FILE resets `snapshot` to
+  // `DEFAULTS` and `hydrated` to false while the layout's `ready` stays true and
+  // never re-hydrates. The next writer (the News screen's mount stamp, on
+  // 2026-09-06) then serialised DEFAULTS over the stored payload: follows,
+  // onboarding and saved stories, gone. In memory the write still holds — only
+  // the flush waits for a real hydrate.
+  if (hydrated) {
+    // ⚠ The write happens even when nothing changed. Persisting an unchanged
+    // value is what makes an explicit timezone pick that matches the detected
+    // one stick: without it nothing is stored, and the next launch re-detects
+    // over the user's choice.
+    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {
+      // Storage full or unavailable. The value still holds for this session.
+    });
+  }
 
   if (changed) emit();
 }
@@ -336,6 +425,24 @@ export function setOnboarded(onboarded: boolean) {
 /** The reader opened the News screen — everything filed before `iso` is seen. */
 export function setNewsSeenAt(iso: string) {
   update({ newsSeenAt: iso });
+}
+
+/**
+ * Save a story, or un-save it if its `url` is already held (ADR 0129).
+ * Prepends — the Saved screen reads newest-saved-first — and enforces the cap
+ * by dropping the OLDEST save, never refusing the new one.
+ */
+export function toggleSavedStory(story: SavedStory) {
+  const held = snapshot.savedStories.some((entry) => entry.url === story.url);
+  const next = held
+    ? snapshot.savedStories.filter((entry) => entry.url !== story.url)
+    : [story, ...snapshot.savedStories].slice(0, SAVED_STORY_CAP);
+  update({ savedStories: next });
+}
+
+export function removeSavedStory(url: string) {
+  if (!snapshot.savedStories.some((entry) => entry.url === url)) return;
+  update({ savedStories: snapshot.savedStories.filter((entry) => entry.url !== url) });
 }
 
 /**

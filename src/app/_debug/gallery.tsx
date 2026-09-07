@@ -9,7 +9,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BAND_COLOR, Button, ChipButton, Hairline, PlusGlyph, Score, Switch, Text } from '@/components/atoms';
+import { BAND_COLOR, BookmarkGlyph, Button, ChipButton, Hairline, PlusGlyph, Score, Switch, Text } from '@/components/atoms';
 import {
   ClubBubble,
   ClubRow,
@@ -21,13 +21,16 @@ import {
   FormStrip,
   HomeAwayTag,
   ListRow,
+  NewsRow,
   ScoreLine,
   SectionHeader,
   StatRow,
 } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
-import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
+import { ReelCard } from '@/components/organisms/reel-card';
+import { ReelCrown } from '@/components/organisms/reel-crown';
+import { ReelFilterPanel } from '@/components/organisms/reel-filter-panel';
 import { LiveDeck, type LiveDeckCard } from '@/components/organisms/live-deck';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { NextUpCard } from '@/components/organisms/next-up-card';
@@ -293,16 +296,24 @@ const NEWS_STORIES: NewsArticleView[] = [
   STORY('n5', 'Deportivo - Valencia | Riazor quiere tener la fiesta en paz: previa, análisis, pronóstico y predicción', null, IMG('6a932fb775b3a'), 3),
   STORY('n6', 'Baena hace que se cumplan los sueños', null, null, 4, 'Atlético'),
 ];
-/** The screen's own mapping, in miniature — every story a card (ADR 0092). */
-const newsGroup = (label: string, items: NewsArticleView[], count: string): NewsGroup => ({
-  label,
-  count,
-  rows: items.map((a) => ({
-    key: a.id, title: a.title, imageUrl: a.imageUrl, topic: a.categories[0] ?? null,
-    publisher: a.publisher.name, age: '2h', onPress: () => {},
-  })),
-});
 const NEWS_CHIPS = [{ id: 'all', label: 'All' }, { id: 'laliga', label: 'LaLiga' }];
+/** The reel screen's item mapping, in miniature (ADR 0129). */
+const reelCard = (a: NewsArticleView, saved = false) => ({
+  title: a.title,
+  imageUrl: a.imageUrl,
+  publisher: a.publisher.name,
+  age: '2h',
+  saved,
+  hint: 'TAP TO READ',
+  saveLabel: 'Save story',
+  savedLabel: 'Saved',
+  shareLabel: 'Share',
+  topInset: 0,
+  bottomInset: 0,
+  onPress: () => {},
+  onToggleSave: () => {},
+  onShare: () => {},
+});
 /** The Today screen's `story()` mapper, in miniature. */
 const cardStory = (a: NewsArticleView) => ({
   title: a.title, imageUrl: a.imageUrl, topic: a.categories[0] ?? null, publisher: a.publisher.name, age: '2h',
@@ -532,25 +543,75 @@ export default function GalleryScreen() {
         />
       </Case>
 
-      <SectionHeader title="News front page" meta="lead · tiles · rows (ADR 0070)" />
-      <Case label="six stories — lead with excerpt, two tiles, three rows">
-        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading={false}
-          newLabel="4 new" copy={copy.news}
-          groups={[newsGroup('Today', NEWS_STORIES, '6 stories'), newsGroup('Yesterday', NEWS_STORIES.slice(3), '3 stories')]} />
+      <SectionHeader title="News reel" meta="full-screen snap cards (ADR 0129)" />
+      <Case label="a story with its photo — dim overlay, no scrim, glass chips">
+        <View style={styles.reelBox}>
+          <ReelCard {...reelCard(NEWS_STORIES[0])} height={600} />
+        </View>
       </Case>
-      <Case label="lead with NO picture — a text lead, same story, same slot">
-        <NewsList chips={NEWS_CHIPS} activeChip="laliga" onChip={() => {}} loading={false}
-          newLabel={null} copy={copy.news}
-          groups={[newsGroup('Today', [{ ...NEWS_STORIES[0], imageUrl: null }, ...NEWS_STORIES.slice(1, 4)], '4 stories')]} />
+      <Case label="NO picture — the designed typographic card, never a grey hole">
+        <View style={styles.reelBox}>
+          <ReelCard {...reelCard({ ...NEWS_STORIES[2], imageUrl: null })} height={600} />
+        </View>
       </Case>
-      <Case label="two stories — lead and ONE wide tile">
-        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading={false}
-          newLabel={null} copy={copy.news} groups={[newsGroup('Today', NEWS_STORIES.slice(0, 2), '2 stories')]} />
+      <Case label="a DEAD image URL — onError flips to the imageless branch live">
+        <View style={styles.reelBox}>
+          <ReelCard
+            {...reelCard({ ...NEWS_STORIES[1], imageUrl: 'https://invalid.example/gone.jpg' })}
+            height={600}
+          />
+        </View>
       </Case>
-      <Case label="one story — lead alone · then the loading skeleton">
-        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading={false}
-          newLabel={null} copy={copy.news} groups={[newsGroup('Today', NEWS_STORIES.slice(2, 3), '1 story')]} />
-        <NewsList chips={NEWS_CHIPS} activeChip="all" onChip={() => {}} loading newLabel={null} copy={copy.news} groups={[]} />
+      <Case label="saved ON — lime plate, filled bookmark, onAccent ink">
+        <View style={styles.reelBox}>
+          <ReelCard {...reelCard(NEWS_STORIES[3], true)} height={600} />
+        </View>
+      </Case>
+      <Case label="the pinned crown — veil, back link, count, filter pill, saved door">
+        <View style={styles.reelCrownBox}>
+          <ReelCrown
+            backLabel="Board"
+            title="News"
+            count="7 STORIES"
+            filterLabel="All"
+            filterOpen={false}
+            savedLabel="Saved"
+            topInset={0}
+            onBack={() => {}}
+            onToggleFilter={() => {}}
+            onSaved={() => {}}
+          />
+        </View>
+      </Case>
+      <Case label="the league pull-down — chips, and the attribution's only home">
+        <View style={styles.reelPanelBox}>
+          <ReelFilterPanel
+            chips={NEWS_CHIPS}
+            activeChip="laliga"
+            onChip={() => {}}
+            onClose={() => {}}
+            eyebrow={copy.news.leagueFilter}
+            attribution={copy.news.attribution}
+            topInset={-Spacing.eight}
+          />
+        </View>
+      </Case>
+
+      <SectionHeader title="Saved stories" meta="url-keyed snapshots (ADR 0129)" />
+      <Case label="a saved row — the 0092 card with the un-save control trailing">
+        <NewsRow
+          title={NEWS_STORIES[0].title}
+          imageUrl={NEWS_STORIES[0].imageUrl}
+          topic="Atlético"
+          publisher="MARCA"
+          age="3d"
+          onPress={() => {}}
+          accessory={
+            <View style={styles.unsave}>
+              <BookmarkGlyph saved />
+            </View>
+          }
+        />
       </Case>
     </>
   );
@@ -1123,6 +1184,32 @@ const styles = StyleSheet.create({
   },
   screen: { flex: 1, backgroundColor: Colors.dark.background },
   content: { padding: Spacing.five, paddingTop: Spacing.eight * 2, gap: Spacing.four },
+  // The reel previews: a card-shaped window onto components that ship
+  // full-screen. 600 is arbitrary but FIXED — the card fills whatever it gets.
+  reelBox: { height: 600, borderRadius: Radius.card, overflow: 'hidden' },
+  reelCrownBox: {
+    height: 260,
+    borderRadius: Radius.card,
+    overflow: 'hidden',
+    backgroundColor: Colors.dark.reelGround,
+  },
+  reelPanelBox: {
+    height: 420,
+    borderRadius: Radius.card,
+    overflow: 'hidden',
+    backgroundColor: Colors.dark.reelGround,
+  },
+  // The Saved screen's un-save control, in miniature (see `news-saved.tsx`).
+  unsave: {
+    width: Size.reelAction,
+    height: Size.reelAction,
+    borderRadius: Size.reelAction / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.dark.savedFill,
+    borderWidth: Size.glassBorder,
+    borderColor: Colors.dark.accent,
+  },
   case: { gap: Spacing.two },
   body: { paddingVertical: Spacing.two },
   rowOfCells: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.four },

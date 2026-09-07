@@ -1,7 +1,7 @@
 # 0092 — News becomes uniform glass story cards; the Today card leads with a thumbnail
 
 - **Date:** 2026-09-01
-- **Status:** Accepted — verified on the simulator (`/news` on live data, Today's doorway)
+- **Status:** Accepted — verified on the simulator (`/news` on live data, Today's doorway) · News-screen half superseded by [0129](./0129-news-reel.md) (the reel); the Today-card half and `NewsRow` stand
 - **Decided by:** Ed Medina, from `handoff_new-paint/` (mockup lines 584–616 and 136–160)
 - **Supersedes:** [0070](./0070-news-front-page.md)'s front page · [0071](./0071-today-news-card-lead-picture.md)'s full-bleed lead picture
 

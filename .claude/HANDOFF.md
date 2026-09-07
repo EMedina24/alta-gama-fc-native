@@ -1068,6 +1068,23 @@ documented at the code that handles them; this is the index.
     the OPPOSITE of their full-color selves, and nothing in the typechecker,
     the build or a full-color screenshot will say so.
 
+61. **⚠⚠ A dev FAST REFRESH of `store/preferences.ts` can WIPE the persisted
+    store.** The module holds its state at file scope (`snapshot`, `hydrated`);
+    fast-refreshing the file resets both to their initial values — but the
+    root layout's `ready` flag lives in another module, stays `true`, and its
+    mount effect never re-runs, so `hydratePreferences()` is not called again.
+    Every reader then sees `DEFAULTS` (the OnboardingGate even redirects to
+    welcome), and the FIRST WRITER — the News screen's `setNewsSeenAt` mount
+    stamp, on 2026-09-06 — serialises `{...DEFAULTS, patch}` over the stored
+    payload: follows, onboarding and saved stories, gone, silently.
+    Production never hits it (module state only resets on a real launch, and a
+    real launch hydrates before the tree mounts). Fixed in `commit()`: the
+    AsyncStorage flush is gated on `hydrated` — an un-hydrated write still
+    updates memory but never touches disk. ⚠ The general rule: any file-scope
+    store that persists on write must gate the persist on its own hydration
+    flag, because fast refresh resets the module without re-running whoever
+    hydrates it.
+
 ---
 
 ## Where things stand

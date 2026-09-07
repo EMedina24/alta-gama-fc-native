@@ -3,13 +3,15 @@
  * off RSS is made safe to print.
  *
  * ⚠ PORTED FROM `cronogol/lib/cronogol/news.ts` (ADR 0061): `plainText` and
- * `articleTopic` verbatim. `NewsScope`, `articleHref`, `articleByline` and the
- * excerpt helper were NOT ported — the widget draws a headline, a publisher and
- * an age, and a helper nothing renders is a helper that drifts.
+ * `articleTopic` verbatim. `articleExcerpt` followed at ADR 0129 when the
+ * story sheet grew a description. `NewsScope`, `articleHref` and
+ * `articleByline` remain un-ported — a helper nothing renders is a helper
+ * that drifts (the sheet's byline needs to KNOW whether an author existed,
+ * which `articleByline`'s fallback collapses, so the route derives it).
  *
  * ⚠ No native import, deliberately. This is the module the harness exercises.
  */
-import type { NewsArticleView } from './types';
+import type { NewsArticleView, NewsFeedView } from './types';
 
 const HTML_TAG = /<[^>]*>/g;
 const ENTITY = /&(#\d+|#x[0-9a-f]+|[a-z]+);/gi;
@@ -62,6 +64,18 @@ export function articleTopic(article: NewsArticleView): string | null {
   if (article.publisher.isFirstParty) return null;
   const topic = article.categories[0] ? plainText(article.categories[0]) : '';
   return topic || null;
+}
+
+/**
+ * The publisher's own summary, or null.
+ *
+ * ⚠ Already truncated server-side to 400 chars on a word boundary. Clamp it
+ * with styles if the layout needs to, but never cut it again here — that ends
+ * up with two ellipses.
+ */
+export function articleExcerpt(article: NewsArticleView): string | null {
+  const excerpt = article.excerpt ? plainText(article.excerpt) : '';
+  return excerpt || null;
 }
 
 /**
@@ -123,49 +137,43 @@ export function newsAge(filedAt: string, now: Date): string {
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
-export interface NewsDayGroup {
-  /** `today` / `yesterday` get a word; `date` gets the day formatted. */
-  kind: 'today' | 'yesterday' | 'date';
-  /** `YYYY-MM-DD` in the reader's zone. */
-  dayKey: string;
-  items: NewsArticleView[];
+// ---------------------------------------------------------------- news reel (ADR 0129)
+
+/**
+ * Pages off the reel's infinite query, flattened newest-first.
+ *
+ * ⚠ Dedupe by `id`, FIRST occurrence wins — a page-one refetch after new
+ * stories arrive shifts the keyset window, so the same article can straddle
+ * two pages. (The web's `mergeArticles` rule: by `id` only, never by title —
+ * two publishers filing the same headline are two stories.)
+ */
+export function mergeNewsPages(pages: readonly NewsFeedView[]): NewsArticleView[] {
+  const seen = new Set<string>();
+  const merged: NewsArticleView[] = [];
+  for (const page of pages) {
+    for (const article of page.articles) {
+      if (seen.has(article.id)) continue;
+      seen.add(article.id);
+      merged.push(article);
+    }
+  }
+  return merged;
 }
 
 /**
- * Today / Yesterday / date groups, newest first, in the READER's zone.
+ * What the reel draws — every printable story, however old.
  *
- * ⚠ `dayKey(iso)` is injected rather than computed here so this module stays
- * free of `Intl`-dependent code the harness cannot pin — the screen passes
- * `zonedDayKey` from `lib/format.ts`. The handoff's version bucketed on
- * `toISOString().slice(0, 10)`, which is UTC: a story filed at 23:30 Madrid
- * would have sat under TODAY until 02:00 the next day.
- *
- * ⚠ Compute against `now` at RENDER, not at fetch: a list opened at 00:05 must
- * move last night's stories into YESTERDAY without a refetch.
+ * ⚠ Deliberately NOT `selectNewsItems`: the 48h cutoff belongs to the widget
+ * and the Today card, and the reel pages BACK in time — a cutoff would empty
+ * every page after the first. The unprintable rules stay: no `url`, no
+ * printable title, or no parseable `publishedAt` (no honest age) → no card.
+ * No re-sort either — keyset pages arrive newest-first already.
  */
-export function groupNewsByDay(
-  items: readonly NewsArticleView[],
-  now: Date,
-  dayKey: (iso: string) => string,
-): NewsDayGroup[] {
-  const today = dayKey(now.toISOString());
-  const yesterday = dayKey(new Date(now.getTime() - 86_400_000).toISOString());
-  const buckets = new Map<string, NewsArticleView[]>();
-
-  for (const item of [...items].sort(
-    (a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
-  )) {
-    const key = dayKey(item.publishedAt);
-    const bucket = buckets.get(key);
-    if (bucket) bucket.push(item);
-    else buckets.set(key, [item]);
-  }
-
-  return [...buckets.entries()].map(([key, group]) => ({
-    kind: key === today ? 'today' : key === yesterday ? 'yesterday' : 'date',
-    dayKey: key,
-    items: group,
-  }));
+export function selectReelItems(articles: readonly NewsArticleView[]): NewsArticleView[] {
+  return articles.filter((article) => {
+    if (!article.url || !plainText(article.title)) return false;
+    return !Number.isNaN(Date.parse(article.publishedAt));
+  });
 }
 
 export interface NewsCardPick {

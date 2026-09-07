@@ -1,57 +1,59 @@
 /**
- * The News screen — pushed from the Today card (ADR 0064).
+ * The News screen — a full-screen vertical snap reel (ADR 0129), pushed from
+ * the Today card (ADR 0064).
  *
  * ⚠ Sits outside `(tabs)/` so it pushes over the tab bar, like `club/[slug]`.
- * The handoff drew the tab bar still visible; keeping it would mean nesting a
- * Stack inside the Today tab under `NativeTabs`, which nothing else in the app
- * does. Recorded as a deliberate deviation.
+ * The reel handoff drew the tab bar still visible; keeping it would mean
+ * nesting a Stack inside the Today tab under `NativeTabs`, which nothing else
+ * in the app does. Recorded as a deliberate deviation (0129) — the cards get
+ * the WHOLE window instead, measured by `onLayout`, and the first render waits
+ * for that measure so `snapToInterval` and the card heights never disagree.
  *
- * ⚠ ONE feed, three consumers. `useNews()` is the query the widget writer and
- * the Today card already hold — opening this screen is a cache read. Only a
- * league chip spends a request, and only while it is active.
+ * ⚠ ONE feed, three consumers — and now a fourth. `useNewsReel` pages by
+ * keyset but SEEDS page one from the `useNews()` cache the widget writer and
+ * the Today card already hold, so opening this screen is still a cache read.
+ * Only swiping past page one, or a league chip, spends a request.
  *
- * ⚠ Age and day groups are computed against `now` at RENDER, never at fetch:
- * a list opened at 00:05 re-buckets last night's stories into YESTERDAY
- * without a refetch. One `now` per render, as the Today board does.
+ * ⚠ Ages are computed against `now` at RENDER, never at fetch — one `now` per
+ * render, as the Today board does.
  *
  * ⚠ `newsSeenAt` is written on MOUNT — opening the screen is what clears the
- * card's NEW count. It is an effect with no setState, so it is not the lint
- * error this repo already carries six of.
+ * Today card's NEW count. The reel itself prints no NEW pill (the crown
+ * carries a story count instead), so 0070's frozen-at-open capture has no
+ * reader here any more; if a NEW eyebrow ever returns, it must read a stamp
+ * captured at open, never the live preference (trap 41).
  *
- * ⚠⚠ **The `N NEW` pill reads the stamp CAPTURED AT OPEN, never the live
- * preference** (ADR 0070). The mount effect above overwrites `newsSeenAt`
- * within the first frame; a pill computed from the store would say `6 NEW`
- * for one render and `0` for the rest. `seenAtOpen` is a lazy `useState`
- * initialiser and does not change while the screen is up.
- *
- * ⚠ Every group is a flat list of story CARDS (ADR 0092). The front page —
- * one lead and two tiles on the first group — is gone, and with it the last
- * consumer of `frontPagePick`.
+ * ⚠ Saves are SNAPSHOTS keyed by `url` (never `id` — purged at 30 days), and
+ * the haptic fires on save ON only. Share is the native sheet with the URL,
+ * the same call the link-out sheet makes.
  */
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Eyebrow, MeshGround, Text } from '@/components/atoms';
-import { NewsList, type NewsGroup } from '@/components/organisms/news-list';
-import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
+import { Text } from '@/components/atoms';
+import { NewsReel } from '@/components/organisms/news-reel';
+import { ReelCrown } from '@/components/organisms/reel-crown';
+import { ReelFilterPanel } from '@/components/organisms/reel-filter-panel';
+import { Colors, Size, Spacing } from '@/constants/theme';
 import { openArticle } from '@/features/news/open';
+import { hapticSaveStory } from '@/lib/haptics';
 import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import {
+  articleExcerpt,
   articleTopic,
-  groupNewsByDay,
   isOurs,
+  mergeNewsPages,
   newsAge,
-  newsCardPick,
   plainText,
-  selectNewsItems,
+  selectReelItems,
 } from '@/lib/cronogol/news';
 import type { NewsArticleView, NewsLeagueView } from '@/lib/cronogol/types';
-import { formatFixtureDate, zonedDayKey } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
-import { useNews, useNewsByLeague, useNewsLeagues } from '@/queries/use-news';
-import { setNewsSeenAt, usePreferences, useZone } from '@/store/preferences';
+import { useNewsLeagues } from '@/queries/use-news';
+import { useNewsReel } from '@/queries/use-news-reel';
+import { setNewsSeenAt, toggleSavedStory, usePreferences } from '@/store/preferences';
 
 const ALL = 'all';
 
@@ -61,7 +63,7 @@ const ALL = 'all';
  *
  * ⚠ Not hardcoded — the contract forbids it — and not re-sorted, which it
  * forbids twice. The intersection is ours: the registry answers nine leagues,
- * seven of which no reader here follows a club in, and a nine-chip rail is a
+ * seven of which no reader here follows a club in, and a nine-chip panel is a
  * worse filter than a four-chip one.
  */
 function leagueChips(leagues: readonly NewsLeagueView[]) {
@@ -75,22 +77,21 @@ export default function NewsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { copy, phrases } = useI18n();
-  const zone = useZone();
 
   const [filter, setFilter] = useState<string>(ALL);
-  const { newsSeenAt } = usePreferences();
-  // ⚠ Captured once — see the docblock. Not `newsSeenAt` itself.
-  const [seenAtOpen] = useState(() => newsSeenAt);
+  const [filterOpen, setFilterOpen] = useState(false);
+  /** The measured scroll area — 0 until `onLayout`, which gates the list. */
+  const [cardHeight, setCardHeight] = useState(0);
 
-  const global = useNews();
-  const byLeague = useNewsByLeague(filter === ALL ? null : filter);
+  const { savedStories } = usePreferences();
+
+  const reel = useNewsReel(filter === ALL ? null : filter);
   const leagues = useNewsLeagues();
 
   useEffect(() => {
     setNewsSeenAt(new Date().toISOString());
   }, []);
 
-  const feed = filter === ALL ? global : byLeague;
   const now = new Date();
 
   const chips = useMemo(
@@ -98,15 +99,17 @@ export default function NewsScreen() {
     [leagues.data, copy.news.all],
   );
 
-  /**
-   * ⚠ Through `selectNewsItems` with the feed's own length as the budget: the
-   * 48h cutoff and the unprintable-row filter are the widget's rules and this
-   * screen's too — a story with no parseable date has no honest age to print.
-   */
-  const articles = feed.data?.articles ?? [];
-  const items = selectNewsItems(articles, now, articles.length);
-  /** Over the WHOLE selected feed, not the Today card's three. */
-  const newCount = newsCardPick(items, seenAtOpen).newCount;
+  const articles = useMemo(
+    () => selectReelItems(mergeNewsPages(reel.data?.pages ?? [])),
+    [reel.data],
+  );
+
+  const savedUrls = useMemo(
+    () => new Set(savedStories.map((story) => story.url)),
+    [savedStories],
+  );
+
+  const byId = (id: string) => articles.find((article) => article.id === id);
 
   const open = (article: NewsArticleView) => {
     if (isOurs(article)) {
@@ -119,84 +122,116 @@ export default function NewsScreen() {
     });
   };
 
-  const row = (article: NewsArticleView) => ({
-    key: article.id,
+  const toggleSave = (article: NewsArticleView) => {
+    // Haptic on save ON only — un-saving changed the reader's mind, not the world.
+    if (!savedUrls.has(article.url)) void hapticSaveStory();
+    toggleSavedStory({
+      url: article.url,
+      title: plainText(article.title),
+      publisher: article.publisher.name,
+      isFirstParty: article.publisher.isFirstParty,
+      imageUrl: article.imageUrl,
+      publishedAt: article.publishedAt,
+      topic: articleTopic(article),
+      excerpt: articleExcerpt(article),
+      author: article.author ? plainText(article.author) : null,
+      savedAt: new Date().toISOString(),
+    });
+  };
+
+  const items = articles.map((article) => ({
+    id: article.id,
     title: plainText(article.title),
     imageUrl: article.imageUrl,
-    topic: articleTopic(article),
     publisher: article.publisher.name,
     age: newsAge(article.publishedAt, now),
-    onPress: () => open(article),
-  });
+    saved: savedUrls.has(article.url),
+  }));
 
-  /**
-   * ⚠ EVERY story in the group is a row now (ADR 0092): the front-page split
-   * — `frontPagePick`'s lead and tiles — is gone, and the whole group maps
-   * straight to cards. Nothing may be dropped here; a story that is neither
-   * lead nor row simply vanishes from the screen, which is what a partial
-   * migration would have done.
-   */
-  const groups: NewsGroup[] = groupNewsByDay(items, now, (iso) => zonedDayKey(iso, zone)).map(
-    (group) => ({
-      label:
-        group.kind === 'today'
-          ? copy.news.today
-          : group.kind === 'yesterday'
-            ? copy.news.yesterday
-            : formatFixtureDate(group.items[0].publishedAt, zone, phrases),
-      count: phrases.stories(group.items.length),
-      rows: group.items.map(row),
-    }),
-  );
+  const quiet = !reel.isPending && items.length === 0;
+  const filterLabel = chips.find((chip) => chip.id === filter)?.label ?? copy.news.all;
 
   return (
-    <View style={styles.screen}>
-      <MeshGround />
-      {/* ⚠ No native header (ADR 0092, as the club page did in 0091): the
-          screen draws its own lime back link, which can NAME where it goes —
-          the native button's inherited label printed the route group. */}
+    <View
+      style={styles.screen}
+      onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)}>
+      {/* ⚠ No native header (ADR 0092, kept by 0129): the crown draws its own
+          lime back link, which can NAME where it goes. */}
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + Spacing.two, paddingBottom: BottomTabInset },
-        ]}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={copy.today.title}
-          hitSlop={8}
-          style={({ pressed }) => [styles.back, pressed && { opacity: 0.7 }]}>
-          <Text variant="bodyStrong" color="accent">
-            {`‹  ${copy.today.title}`}
+
+      {cardHeight > 0 ? (
+        <NewsReel
+          items={items}
+          cardHeight={cardHeight}
+          hasMore={reel.hasNextPage}
+          onEndReached={() => {
+            if (reel.hasNextPage && !reel.isFetchingNextPage) void reel.fetchNextPage();
+          }}
+          endTitle={copy.news.caughtUp}
+          hint={copy.news.reelRead}
+          saveLabel={copy.news.saveStory}
+          savedLabel={copy.news.savedStory}
+          shareLabel={copy.news.share}
+          topInset={insets.top}
+          bottomInset={insets.bottom}
+          onOpen={(id) => {
+            const article = byId(id);
+            if (article) open(article);
+          }}
+          onToggleSave={(id) => {
+            const article = byId(id);
+            if (article) toggleSave(article);
+          }}
+          onShare={(id) => {
+            const article = byId(id);
+            // ⚠ The URL, never the id — a share must outlive the 30-day purge.
+            if (article) void Share.share({ message: plainText(article.title), url: article.url });
+          }}
+        />
+      ) : null}
+
+      {quiet ? (
+        // ⚠ The crown and its filter pill stay interactive over an empty feed:
+        // a reader who picked a quiet league must be able to pick another.
+        <View pointerEvents="none" style={[styles.quiet, { top: Size.reelQuietTop + insets.top }]}>
+          <Text variant="body" color="textDim" center>
+            {copy.news.quiet}
           </Text>
-        </Pressable>
-        <View style={styles.masthead}>
-          <Text variant="largeTitle">{copy.news.title}</Text>
-          {/* The reader's own day, in their zone — the same formatter every
-              date on the app uses, so the two never disagree. */}
-          <Eyebrow color="textFaint" style={styles.date}>
-            {formatFixtureDate(now.toISOString(), zone, phrases)}
-          </Eyebrow>
         </View>
-        <NewsList
+      ) : null}
+
+      <ReelCrown
+        backLabel={copy.today.title}
+        title={copy.news.title}
+        count={phrases.stories(items.length)}
+        filterLabel={filterLabel}
+        filterOpen={filterOpen}
+        savedLabel={copy.news.savedTitle}
+        topInset={insets.top}
+        onBack={() => router.back()}
+        onToggleFilter={() => setFilterOpen((openNow) => !openNow)}
+        onSaved={() => router.push('/news-saved')}
+      />
+
+      {filterOpen ? (
+        <ReelFilterPanel
           chips={chips}
           activeChip={filter}
-          onChip={setFilter}
-          groups={groups}
-          loading={feed.isPending}
-          newLabel={newCount > 0 ? copy.news.newCount(newCount) : null}
-          copy={copy.news}
+          onChip={(id) => {
+            setFilter(id);
+            setFilterOpen(false);
+          }}
+          onClose={() => setFilterOpen(false)}
+          eyebrow={copy.news.leagueFilter}
+          attribution={copy.news.attribution}
+          topInset={insets.top}
         />
-      </ScrollView>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { paddingHorizontal: Spacing.five, gap: Spacing.four },
-  back: { alignSelf: 'flex-start' },
-  masthead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  date: { paddingBottom: Spacing.one },
+  screen: { flex: 1, backgroundColor: Colors.dark.reelGround },
+  quiet: { position: 'absolute', left: 0, right: 0, paddingHorizontal: Spacing.six },
 });

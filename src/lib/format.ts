@@ -175,6 +175,26 @@ export function formatKickoffTime(
 }
 
 /**
+ * `2 Sep, 06:22` — when a story was FILED, in the reader's zone (ADR 0129's
+ * story sheet). Ported from the web's `formatFiled`, with two deliberate
+ * differences: it takes the reader's `clock` (the web pins news to 24-hour;
+ * the app already renders a non-fixture timestamp clock-aware — the account
+ * sheet's synced line), and the month is SENTENCE-cased in both languages —
+ * `phrases.months` stores en UPPER / es lower, and this inline byline is the
+ * first caller that shows the month un-shouted.
+ */
+export function formatFiled(
+  iso: string,
+  zone: string,
+  phrases: Phrases,
+  clock: '24' | '12' = '24',
+): string {
+  const { day, month } = zonedParts(iso, zone, phrases);
+  const sentence = month ? month.charAt(0).toUpperCase() + month.slice(1).toLowerCase() : '';
+  return `${day} ${sentence}, ${formatKickoffTime(iso, zone, clock)}`;
+}
+
+/**
  * `Sat 21:00` / `Sáb 21:00` — the WIDGET's one date string (SPEC §4).
  *
  * ⚠ **Sentence case, where every other date block in this app is UPPERCASE.**

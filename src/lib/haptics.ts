@@ -88,6 +88,22 @@ export async function hapticShuffle(): Promise<void> {
 }
 
 /**
+ * A story saved on the news reel (ADR 0129) — `.light`, the same weight as a
+ * token placing: a small object landing where the finger sent it.
+ *
+ * ⚠ Fired on save ON only, never on un-save: removing a bookmark is the reader
+ * changing their mind, not the world changing under their finger — the same
+ * doctrine as `hapticShuffle`'s "never on a spring-back".
+ */
+export async function hapticSaveStory(): Promise<void> {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch {
+    // As above.
+  }
+}
+
+/**
  * The first press of the two-step account delete (ADR 0081). A Warning, the
  * same notification type the XI's `cleared` uses — this is the moment the
  * reader is told the next tap is final, and it should feel unlike every other
