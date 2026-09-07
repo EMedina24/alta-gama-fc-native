@@ -51,7 +51,7 @@ export default function OnboardingWelcome() {
         <Mark width={Size.markWelcome} />
         <View style={styles.words}>
           <Eyebrow color="accent">Alta Gama FC</Eyebrow>
-          <Text variant="largeTitle" center style={styles.title}>
+          <Text variant="heroTitle" center style={styles.title}>
             {copy.onboarding.welcomeTitle}
           </Text>
           <Text variant="body" color="textSecondary" center style={styles.body}>
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     gap: Spacing.six + Spacing.one,
   },
   words: { alignItems: 'center', gap: Spacing.three },
-  title: { lineHeight: 37 },
+  title: { lineHeight: 39 },
   body: { lineHeight: 21, maxWidth: 300 },
   footer: { paddingHorizontal: Spacing.five, paddingTop: Spacing.three, gap: Spacing.two },
   dots: { alignItems: 'center', paddingBottom: Spacing.three },

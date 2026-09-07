@@ -67,7 +67,7 @@ export default function NewsSavedScreen() {
         </Pressable>
 
         <View style={styles.masthead}>
-          <Text variant="largeTitle">{copy.news.savedTitle}</Text>
+          <Text variant="crownTitle">{copy.news.savedTitle}</Text>
           {savedStories.length > 0 ? (
             <Eyebrow color="textFaint" style={styles.count}>
               {phrases.stories(savedStories.length)}

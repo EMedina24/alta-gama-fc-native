@@ -553,19 +553,31 @@ export const Radius = {
  * Type: system font (SF Pro) throughout — no expo-font, no licensing, and it
  * inherits Dynamic Type. Sizes are the iOS scale, not the web app's.
  * Every numeric run sets fontVariant: ['tabular-nums'].
+ *
+ * ⚠ SCREEN TITLES SHARE ONE DISPLAY VOICE (ADR 0131): weight 300, tracking
+ * −0.04em of the size — the crown's look, now the rule everywhere a screen
+ * introduces itself. Three sizes only: 48 (Clubs), 40 (every other tab-level
+ * screen), 36 (a hero inside content). The stock-iOS bold `largeTitle`
+ * (34/700) is deleted; a new screen title picks one of these three, it never
+ * mints a fourth. Section/sheet headings (`title`, `title3`) stay 700 — the
+ * weight contrast against the light display voice IS the hierarchy.
  */
 export const Type = {
-  largeTitle: { fontSize: 34, fontWeight: '700', letterSpacing: -1 },
   /**
-   * The crown's title (ADR 0087): larger and LIGHTER than every other title —
-   * weight 300 where the scale is 700 — because it sits on the lime band, not
-   * beside content. Tracking is the mock's −0.04em of the size. `crownTitleLg`
-   * is the Clubs screen's 48, whose subhead carries the follow count.
+   * The crown's title (ADR 0087) and, since 0131, the title of every
+   * tab-level screen — crowned or not (News wears it white on the hero
+   * photo). `crownTitleLg` is the Clubs screen's 48, whose subhead carries
+   * the follow count.
    */
   crownTitle: { fontSize: 40, fontWeight: '300', letterSpacing: -1.6 },
   crownTitleLg: { fontSize: 48, fontWeight: '300', letterSpacing: -1.9 },
-  /** The club page hero's name (ADR 0091) — the crownless screens' large title. */
-  heroTitle: { fontSize: 36, fontWeight: '700', letterSpacing: -1.5 },
+  /**
+   * A hero INSIDE content: the club page's name (ADR 0091) and the welcome
+   * screen's two-line statement. 36 because club names run long
+   * (`Espanyol de Barcelona`); 300 since 0131 — the 700 first cut read as a
+   * different typeface beside the crown screens.
+   */
+  heroTitle: { fontSize: 36, fontWeight: '300', letterSpacing: -1.45 },
   title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.8 },
   title3: { fontSize: 22, fontWeight: '700', letterSpacing: -0.55 },
   headline: { fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },

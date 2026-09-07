@@ -159,7 +159,7 @@ export default function NewsScreen() {
             </Text>
           </Pressable>
           <View style={styles.masthead}>
-            <Text variant="largeTitle">{copy.news.title}</Text>
+            <Text variant="crownTitle">{copy.news.title}</Text>
             <View style={styles.dateBlock}>
               <Text variant="eyebrowSm" color="textSecondary">
                 {formatWeekdayLong(now.toISOString(), zone, phrases)}
