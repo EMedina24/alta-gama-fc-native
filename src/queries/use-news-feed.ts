@@ -1,11 +1,11 @@
 /**
- * The reel's feed — the SAME route as `useNews`, paged by keyset (ADR 0129).
+ * The News screen's feed — the SAME route as `useNews`, paged by keyset (ADR 0129).
  *
  * ⚠ A separate infinite query, not a rewrite of `useNews`: that query's key
  * and shape are held by three consumers (widget writer ADR 0061, Today card,
  * link sheet) and an infinite envelope would break all of them. Page one is
- * SEEDED from their cache instead, so opening the reel from the Today card
- * stays a cache read — only swiping past page one spends a request.
+ * SEEDED from their cache instead, so opening the screen from the Today card
+ * stays a cache read — only scrolling past page one spends a request.
  *
  * ⚠ Only whitelisted params travel (`limit` / `before` / `league`): the route's
  * DTO is `forbidNonWhitelisted` and a stray param 400s the whole call.
@@ -22,16 +22,16 @@ import { keys } from './keys';
 import { GC_TIME, STALE } from './stale';
 import { FEED_LIMIT } from './use-news';
 
-export function useNewsReel(leagueId: string | null) {
+export function useNewsFeed(leagueId: string | null) {
   const qc = useQueryClient();
   const seedKey = leagueId === null ? keys.news() : keys.newsLeague(leagueId);
 
   return useInfiniteQuery({
-    queryKey: keys.newsReel(leagueId ?? 'all'),
+    queryKey: keys.newsFeed(leagueId ?? 'all'),
     queryFn: ({ pageParam }) =>
       getNews({ limit: FEED_LIMIT, league: leagueId ?? undefined, before: pageParam }),
     initialPageParam: undefined as string | undefined,
-    /** `nextBefore: null` is the last page — the reel's "caught up" card. */
+    /** `nextBefore: null` is the last page — the list's caught-up footer. */
     getNextPageParam: (last) => last.nextBefore ?? undefined,
     /** Page one straight from the shared single-page cache (see docblock). */
     initialData: () => {

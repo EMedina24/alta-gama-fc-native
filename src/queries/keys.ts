@@ -49,12 +49,12 @@ export const keys = {
   /** The feed sliced to one news-league id (`?league=`) — the screen's chips. */
   newsLeague: (leagueId: string) => ['news', 'league', leagueId] as const,
   /**
-   * The reel's infinite feed (ADR 0129) — same route, paged by keyset
-   * (`?before=`). `'all'` for the global feed. Shares the `'news'` prefix so a
-   * broad invalidation reaches it; the two keys above keep their exact shape
-   * for the widget writer, the Today card and the link sheet.
+   * The News screen's infinite feed (ADR 0129/0130) — same route, paged by
+   * keyset (`?before=`). `'all'` for the global feed. Shares the `'news'`
+   * prefix so a broad invalidation reaches it; the two keys above keep their
+   * exact shape for the widget writer, the Today card and the link sheet.
    */
-  newsReel: (leagueId: string) => ['news', 'reel', leagueId] as const,
+  newsFeed: (leagueId: string) => ['news', 'feed', leagueId] as const,
   /** `GET /cronogol/news/leagues` — the chip set, server-ordered. */
   newsLeagues: () => ['news-leagues'] as const,
 } as const;

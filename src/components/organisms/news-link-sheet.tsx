@@ -38,9 +38,13 @@ export interface NewsLinkSheetProps {
   note: string;
   openLabel: string;
   shareLabel: string;
+  /** `Save` / `Saved` — save lives on this sheet since ADR 0130. */
+  saveLabel: string;
+  saved: boolean;
   cancelLabel: string;
   onOpen: () => void;
   onShare: () => void;
+  onToggleSave: () => void;
   onCancel: () => void;
 }
 
@@ -55,9 +59,12 @@ export function NewsLinkSheet({
   note,
   openLabel,
   shareLabel,
+  saveLabel,
+  saved,
   cancelLabel,
   onOpen,
   onShare,
+  onToggleSave,
   onCancel,
 }: NewsLinkSheetProps) {
   return (
@@ -86,10 +93,13 @@ export function NewsLinkSheet({
       <View style={styles.actions}>
         <Button label={openLabel} onPress={onOpen} full />
         <View style={styles.secondary}>
-          <View style={styles.half}>
+          <View style={styles.third}>
             <Button label={shareLabel} tone="secondary" onPress={onShare} full />
           </View>
-          <View style={styles.half}>
+          <View style={styles.third}>
+            <Button label={saveLabel} tone={saved ? 'primary' : 'secondary'} onPress={onToggleSave} full />
+          </View>
+          <View style={styles.third}>
             <Button label={cancelLabel} tone="secondary" onPress={onCancel} full />
           </View>
         </View>
@@ -118,5 +128,5 @@ const styles = StyleSheet.create({
   byline: { flexShrink: 1, minWidth: 0 },
   actions: { gap: Spacing.two, paddingTop: Spacing.two },
   secondary: { flexDirection: 'row', gap: Spacing.two },
-  half: { flex: 1 },
+  third: { flex: 1 },
 });

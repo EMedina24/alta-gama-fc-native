@@ -227,30 +227,13 @@ const dark = {
   cardGround: '#101215',
 
   /**
-   * The NEWS REEL (ADR 0129) — a photo-first screen with its own furniture.
-   *
-   * ⚠ `reelGlass` is a FLAT translucent fill, not liquid glass: the chips sit
-   * over a PHOTO, and anything layered behind real glass shows through it
-   * (trap 59). The handoff's `backdrop-filter: blur(14px)` is deliberately not
-   * reproduced — dc's own RN reference dropped it too.
-   *
-   * ⚠ `reelDim` replaces the mock's CSS `filter: brightness(.62)` — RN has no
-   * filters, so the photo is dimmed by an overlay at the same effective value.
-   * There is NO bottom scrim on a reel card; the spec forbids it twice.
+   * The NEWS screen's own furniture (ADR 0129, kept by 0130): the saved
+   * bookmark's lime plate — the Saved screen's un-save control, the story
+   * sheet's toggled Save — and the meta line's separator dot.
    */
-  reelGround: '#0b0e10',                    // card base / imageless card's ground
-  reelInk: '#ffffff',                       // headline + crown title — the dc's #fff, not `text`
-  reelDim: 'rgba(6,9,10,0.38)',             // the photo's dim overlay
-  reelGlass: 'rgba(8,11,12,0.42)',          // meta chip / action circle / filter pill
-  reelGlassLine: 'rgba(255,255,255,0.16)',  // their `Size.glassBorder` hairline
   savedFill: 'rgba(200,242,90,0.9)',        // saved bookmark's fill; ink is `onAccent`
-  reelHeadlineShadow: 'rgba(4,7,8,0.72)',   // headline textShadow, radius 22, 0/2
-  reelTitleShadow: 'rgba(4,7,8,0.5)',       // crown title textShadow, radius 18
-  reelPanelFill: 'rgba(16,19,22,0.9)',      // the league pull-down panel
-  reelScrimFill: 'rgba(4,6,8,0.45)',        // tap-to-dismiss veil behind the panel
-  reelMetaDot: 'rgba(255,255,255,0.35)',    // the 3pt dot between publisher and age
-  reelAgeInk: 'rgba(244,246,246,0.62)',     // age in the chip
-  reelCountInk: 'rgba(244,246,246,0.66)',   // the crown's story count — dc's .66, not the age's .62
+  /** The News meta line's 3pt separator dot (ADR 0130) — lead card and rows. */
+  newsMetaDot: 'rgba(255,255,255,0.35)',
 } as const;
 
 export const Colors = { dark, light: dark } as const;
@@ -386,26 +369,22 @@ export const CrownHighlight = {
 } as const;
 
 /**
- * The reel crown's veil (ADR 0129): the news reel's PINNED, TRANSPARENT crown —
- * one dark ramp over the photo, no lime, gone by the bottom. Because the band
- * is dark, ink on it is the normal dark-theme set, never `onCrown`.
- * Shaped as `WashStop`s so translucency travels as `opacity` (trap 42).
+ * The News front page's HERO (ADR 0130): the lead story's photo bleeds from
+ * behind the status bar, the white title sits ON it, and the lead card
+ * overlaps its foot. `height` is a fraction of the window. `dim` keeps the
+ * title legible on any photo. `fade` dissolves the photo's foot into
+ * `background` across `fadeH` points — WashStops, hex + `opacity` (trap 42).
+ * `overlap` is how far the lead card rides up over the photo.
  */
-export const ReelVeil = [
-  { offset: 0, color: '#060a08', opacity: 0.62 },
-  { offset: 0.4, color: '#060c0b', opacity: 0.4 },
-  { offset: 0.7, color: '#060c0c', opacity: 0.16 },
-  { offset: 1, color: '#0f1316', opacity: 0 },
-] as const;
-
-/**
- * The imageless reel card's pool (ADR 0129) — `Mesh`'s mid-teal re-aimed at a
- * single full-screen card, so a story whose photo is null or dead is a
- * designed typographic card, never a grey hole. Same shape as a `Mesh` pool;
- * `alpha` rides `WashStop.opacity` at the consumer (trap 42).
- */
-export const ReelFallbackPool = {
-  cx: 0.5, cy: 0.72, rx: 0.9, ry: 0.6, color: '#105c4a', alpha: 0.35, fade: 0.7,
+export const NewsHero = {
+  height: 0.52,
+  overlap: 56,
+  fadeH: 140,
+  dim: 'rgba(10,13,14,0.38)',
+  fade: [
+    { offset: 0, color: '#0f1316', opacity: 0 },
+    { offset: 1, color: '#0f1316', opacity: 1 },
+  ],
 } as const;
 
 /** The bubble's inner vertical glass (ADR 0090) — white, opacity-only stops. */
@@ -691,23 +670,10 @@ export const Type = {
   railName: { fontSize: 12, fontWeight: '600', letterSpacing: -0.18 },
   rankBadge: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.4 },
   /**
-   * The news reel (ADR 0129). `reelHeadline` is the handoff's 700 31/1.05 at
-   * −.035em — the lineHeight (33) rides the card's own style, as every
-   * lineHeight here does. `reelTitle` is the crown's "News" at 300 38 — NOT
-   * `crownTitle` (40): the reel's crown is transparent and its title sits two
-   * points smaller by spec, and the lime crowns must be free to move without
-   * dragging this screen along. `reelHint` is `PULL UP TO READ`; `reelMeta`
-   * is the age beside an `eyebrowSm` publisher.
+   * The News lead card's headline (ADR 0130) — between `title` (26) and the
+   * mock's drawn ~28: a quote two lines deep on a glass card over the hero.
    */
-  reelHeadline: { fontSize: 31, fontWeight: '700', letterSpacing: -1.09 },
-  reelTitle: { fontSize: 38, fontWeight: '300', letterSpacing: -1.52 },
-  // ⚠ 12, up from the dc's 9.5 — Ed on device (2026-09-06): bigger. Stays lime.
-  reelHint: { fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
-  reelMeta: { fontSize: 9.5, fontWeight: '600' },
-  /** The crown's `7 STORIES` line — dc's 700 9/.18em, under the 38pt title. */
-  reelCount: { fontSize: 9, fontWeight: '700', letterSpacing: 1.62, textTransform: 'uppercase' },
-  /** The filter pill's label and (by geometry, not name) the dc panel chips — 600 13. */
-  reelControl: { fontSize: 13, fontWeight: '600', letterSpacing: -0.13 },
+  leadHeadline: { fontSize: 28, fontWeight: '700', letterSpacing: -0.9 },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -774,20 +740,11 @@ export const Size = {
   /** The Today card's LEAD thumbnail (ADR 0092) — the doorway's one big one. */
   newsCardLead: 96,
   /**
-   * The news reel (ADR 0129). `reelCrown` is the pinned veil's height and
-   * `reelCardTop` the card padding that clears it — the two move together.
-   * `reelAction` is the save/share circle: 44 — equal to `minTouch`, and it
-   * must never fall below it (the spec calls 44 the minimum hit target).
-   * `reelPanelTop` is where the league pull-down hangs, under the crown title.
+   * The News screen's bookmark circles (ADR 0129, kept by 0130): the header's
+   * Saved doorway, the Saved screen's un-save control, 44 — equal to
+   * `minTouch`, and it must never fall below it.
    */
-  reelCrown: 196,
-  reelCardTop: 118,
-  reelCardBottom: 26,
-  reelMetaChip: 26,
-  reelAction: 44,
-  reelPanelTop: 112,
-  /** Where the quiet "nothing new" line hangs on an empty reel — dc's 210. */
-  reelQuietTop: 210,
+  newsAction: 44,
   /**
    * Player portraits. ⚠ The SOURCE aspect ratio varies by league — 256×278
    * (LaLiga), 110×140 (Premier League), and an operator stopgap has no

@@ -1,7 +1,7 @@
 # 0129 — News becomes a full-screen snap reel; saves persist as url-keyed snapshots
 
 - **Date:** 2026-09-06
-- **Status:** Accepted — typechecked and linted; simulator pass pending
+- **Status:** Presentation superseded by [0130](./0130-news-front-page-returns.md) (the front page returns; the reel lived one day) — the data layer, saves, Saved screen and story sheet stand
 - **Decided by:** Ed Medina, from `handoff_newsreel/` (NEWS-REEL.md is the spec, `News Reel.dc.html` the pixel truth, `NewsReel.tsx` the RN paging reference)
 - **Supersedes:** [0092](./0092-news-uniform-story-cards.md)'s **News-screen half** (day groups, the uniform-card list). 0092's Today-card half — the 96pt-thumb doorway — stands untouched, and its `NewsRow` card survives its own screen's death as the Saved screen's row.
 
@@ -26,11 +26,20 @@ Saved-stories screen** in the same pass.
    cards cannot disagree. `windowSize` stays small: every row is a
    screen-sized photo.
 2. **The pinned crown is a NEW organism (`ReelCrown`), not `templates/crown.tsx`.**
-   Crown's contract — scrolls away, lime band, `onCrown` ink — is the opposite
-   on every axis of pinned/transparent/dark-ink. The veil is `WashGradient` +
-   the new `ReelVeil` stops (hex + `stopOpacity`, trap 42), run behind the
-   status bar (0094's reasoning). The crown also carries the Saved doorway —
-   a 44pt bookmark circle the handoff did not draw (it had no Saved surface).
+   Crown's contract is scrolls-away; this one is pinned over a snap feed.
+   The dc's dark veil lasted a day: Ed steered the screen to "match our crown
+   in the Board screen" (2026-09-07), so the crown paints **`ReelBand`** —
+   `CrownGrad`'s colours verbatim at the reel's own 340pt geometry (the fade
+   must be spent before the photo's top edge) — and the ink flips to the
+   `onCrown` set exactly as the tabs use it, the filter pill and Saved
+   doorway taking `onCrownFill`/`onCrownLine` and the open pill the 0089
+   double inversion. ⚠ The band is pinned WITH the crown, never per card — a
+   band riding the cards would slide dark ground under the dark ink
+   mid-swipe. The screen renders the scaffold's focused-gated
+   `<StatusBar style="dark">` (⚠ NOT `Stack.Screen`'s `statusBarStyle`,
+   which asserts an Info.plist key this app does not set — it red-boxes).
+   The Saved doorway is a 44pt bookmark circle the handoff did not draw (it
+   had no Saved surface).
 3. **The league filter is a pull-down panel (`ReelFilterPanel`), and the
    attribution's only home on the reel.** Chips are the SAME `ChipButton
    tone="neutral"` as every filter in the app — the active/quiet colour
@@ -75,6 +84,21 @@ Saved-stories screen** in the same pass.
    param mode that renders from the snapshot when the caches have long
    forgotten the article.
 
+8. **The swipe is a RIBBON with scroll-linked depth** (Ed picked all three
+   proposals, 2026-09-07). `ReelWash` grew a mirrored head CAP —
+   lime→transparent inside 140pt, hidden entirely under the pinned band's
+   ~204pt opaque zone when settled — so mid-swipe the outgoing card's lime
+   foot flows into the incoming card's cap instead of slamming into black.
+   The list became an `Animated.FlatList` (snap recipe untouched; the shared
+   `scrollY` only observes), and each card runs two worklets off its offset
+   (`ReelMotion`): the photo unit — picture AND its fade bands, one wrapper,
+   or the bands would fade the wrong strip — lags by `photoLag` 0.12, and the
+   type block lags by `textLag` 0.05 while fading to nothing by `textFadeAt`
+   0.6 of a viewport off-centre (opacity only — VoiceOver targets never
+   unmount). Both worklets go inert under `useReducedMotion()`, and the
+   motion props are OPTIONAL on `ReelCard` so the gallery's static cases
+   stay static.
+
 ## Deliberate deviations from the handoff
 
 - **No tab bar under the cards** — `/news` stays outside `(tabs)/` (0064's
@@ -97,13 +121,33 @@ Saved-stories screen** in the same pass.
 - **No crest** — no club exists on `NewsArticleView`; a `categories` mapping
   is explicitly forbidden as a key. Separable follow-up if the wire grows a
   club field (a backend milestone, scoped with Ed separately).
-- **No bottom scrim** (the spec forbids it twice): the photo is dimmed by the
-  `reelDim` overlay — RN has no CSS filters — plus the headline's own shadow.
-- **The imageless card is DESIGNED, not a failure state**: `reelGround` +
-  `ReelFallbackPool` (Mesh's mid-teal re-aimed) behind pure type; `onError`
-  flips to it without reflow. On a photo-first screen fed by hot-linked RSS
-  thumbnails (~1 in 50 null, 404 at will, never re-hosted), that branch is
-  routine.
+- **The photo is CONTAINED, not covered** (Ed, 2026-09-07 — amending the dc's
+  full-bleed `cover` + brightness filter): publisher images are 16:9
+  syndication thumbnails, and the cover crop kept a ~third of the frame
+  upscaled ~3× — "too small for full screen". The picture now renders
+  un-dimmed at its own measured aspect, centred, its edges dissolving into
+  `reelGround` across `ReelPhoto.fade` bands (mock approved on device against
+  a blur-backdrop alternative; `reelDim` deleted with the cover). **No bottom
+  scrim** still stands — the spec forbids it twice, and nothing needs one any
+  more. Colour arrived over three rounds of device mocks (all 2026-09-07): a
+  quiet CrownGrad-family ramp beat the Mesh pools and the plain fade; then
+  Ed's swatch made the extremes LIGHT; then "match our crown in the Board
+  screen" landed the final shape — the pinned `ReelBand` at the head (see
+  Decision 2) and **`ReelWash`** on every card, a foot-only rise through
+  `CrownGrad`'s colours to full lime at the bottom edge, as light as the band
+  above. The bright zone begins under the hint row — the headline keeps its
+  WHITE ink and must stay on the dark teals; the hint row flipped to
+  `onCrown` ink with the wash. Per card, deliberately: the foot scrolls with
+  the card it ends (the "never per card" aurora rule guards the screen mesh,
+  not a card's own paint). One wash serves photo, imageless AND end cards, so
+  `ReelFallbackPool` was deleted. The band buried one thing: the META CHIP,
+  whose dc slot was the card's top — opaque lime now covers it there ("the
+  tags are no longer visible", Ed) — so the chip moved down to sit directly
+  above the headline, on the dark teals with the rest of the type.
+- **The imageless card is DESIGNED, not a failure state**: the same
+  `ReelWash` ground every card carries, minus its picture; `onError` reaches
+  it without reflow. On a photo-first screen fed by hot-linked RSS thumbnails
+  (~1 in 50 null, 404 at will, never re-hosted), that branch is routine.
 
 ## Consequences
 
@@ -116,7 +160,7 @@ Saved-stories screen** in the same pass.
   The reel prints no `N NEW` pill — the crown carries a story count — so
   0070's frozen-at-open capture has no reader; trap 41 still governs any
   future NEW count.
-- New theme groups: `reel*` colors, `ReelVeil`, `ReelFallbackPool`,
+- New theme groups: `reel*` colors, `ReelBand`, `ReelWash`, `ReelPhoto`,
   `Type.reel*`, `Size.reel*`. New atoms `BookmarkGlyph` / `ShareGlyph` /
   `RiseGlyph`; molecules `ReelMetaChip` / `ReelActions`; organisms
   `ReelCard` / `NewsReel` / `ReelCrown` / `ReelFilterPanel`.

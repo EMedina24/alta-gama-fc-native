@@ -1,17 +1,18 @@
 /**
- * `TOPIC · PUBLISHER 3h` — the attribution line under every headline.
+ * `TOPIC · PUBLISHER 3h` — the attribution line under a headline.
  *
- * ⚠ Topic is OPTIONAL and a null draws NO chip: every SPORT story files under
- * none, and the publisher then leads the line. Never a dash — it reads as a
- * value that failed to load (handoff rule, same as the widget).
+ * ⚠ Since ADR 0130 the topic is lime TEXT, not a pill — the mock reserves the
+ * one pill per screen for the lead card (`NewsLeadCard` draws its own). A
+ * null topic draws NOTHING and the publisher leads the line. Never a dash —
+ * it reads as a value that failed to load (handoff rule, same as the widget).
  *
  * ⚠ Publisher on every row. Attribution is what makes an aggregator
  * defensible; it is not decoration to drop on a tight row.
  */
 import { StyleSheet, View } from 'react-native';
 
-import { Eyebrow, Pill, Text } from '@/components/atoms';
-import { Spacing } from '@/constants/theme';
+import { Text } from '@/components/atoms';
+import { Colors, Spacing } from '@/constants/theme';
 
 export interface NewsMetaProps {
   topic: string | null;
@@ -23,10 +24,17 @@ export interface NewsMetaProps {
 export function NewsMeta({ topic, publisher, age }: NewsMetaProps) {
   return (
     <View style={styles.row}>
-      {topic ? <Pill label={topic} tone="accent" /> : null}
-      <Eyebrow numberOfLines={1} style={styles.publisher}>
+      {topic ? (
+        <>
+          <Text variant="eyebrowSm" color="accent" numberOfLines={1} style={styles.topic}>
+            {topic}
+          </Text>
+          <View style={styles.dot} />
+        </>
+      ) : null}
+      <Text variant="eyebrowSm" color="textSecondary" numberOfLines={1} style={styles.publisher}>
         {publisher}
-      </Eyebrow>
+      </Text>
       <Text variant="eyebrowSm" color="textFaint">
         {age}
       </Text>
@@ -36,5 +44,7 @@ export function NewsMeta({ topic, publisher, age }: NewsMetaProps) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minWidth: 0 },
+  topic: { flexShrink: 1, minWidth: 0 },
+  dot: { width: 3, height: 3, borderRadius: 2, backgroundColor: Colors.dark.newsMetaDot },
   publisher: { flexShrink: 1, minWidth: 0 },
 });

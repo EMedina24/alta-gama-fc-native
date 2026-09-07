@@ -1,6 +1,7 @@
 /**
- * Saved stories (ADR 0129) — the reel's bookmarks, rendered entirely from
- * LOCAL SNAPSHOTS. Reached from the crown's bookmark circle on the reel.
+ * Saved stories (ADR 0129/0130) — the reader's bookmarks, rendered entirely
+ * from LOCAL SNAPSHOTS. Reached from the bookmark circle by the News
+ * header's date block; stories are saved from the story sheet.
  *
  * ⚠ Outside `(tabs)/`, like `/news`: it pushes over the tab bar.
  *
@@ -10,7 +11,7 @@
  * computed against `now` at render, as everywhere else.
  *
  * ⚠ `NewsRow` survives its own screen's death for this list (0092's card, kept
- * by 0129): a saved story is a story card, not a reel.
+ * by 0129/0130): a saved story is a story card.
  *
  * ⚠ The attribution line stands here too — third-party headlines live on this
  * screen indefinitely, which is exactly when the line matters most.
@@ -121,9 +122,9 @@ const styles = StyleSheet.create({
   count: { paddingBottom: Spacing.one },
   rows: { gap: Spacing.three },
   unsave: {
-    width: Size.reelAction,
-    height: Size.reelAction,
-    borderRadius: Size.reelAction / 2,
+    width: Size.newsAction,
+    height: Size.newsAction,
+    borderRadius: Size.newsAction / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.dark.savedFill,

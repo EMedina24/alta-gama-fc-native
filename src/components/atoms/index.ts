@@ -30,5 +30,3 @@ export { PersonGlyph, type PersonGlyphProps } from './person-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';
 export { GoogleMark } from './google-mark';
 export { BookmarkGlyph, type BookmarkGlyphProps } from './bookmark-glyph';
-export { ShareGlyph, type ShareGlyphProps } from './share-glyph';
-export { RiseGlyph, type RiseGlyphProps } from './rise-glyph';

@@ -3,7 +3,7 @@
  * from a SAVED story.
  *
  * ⚠ **This fetches nothing.** By `id`, the article is looked up in the SAME
- * queries the reel rendered from — a cache read, the player-sheet pattern.
+ * queries the News screen rendered from — a cache read, the player-sheet pattern.
  * Nothing is serialised through the router, and the id is never persisted:
  * it is purged at 30 days and only ever lives as long as this navigation.
  *
@@ -30,10 +30,11 @@ import {
   plainText,
 } from '@/lib/cronogol/news';
 import { formatFiled } from '@/lib/format';
+import { hapticSaveStory } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useNews, useNewsByLeague } from '@/queries/use-news';
-import { useNewsReel } from '@/queries/use-news-reel';
-import { usePreferences, useZone } from '@/store/preferences';
+import { useNewsFeed } from '@/queries/use-news-feed';
+import { toggleSavedStory, usePreferences, useZone } from '@/store/preferences';
 
 export default function NewsLinkSheetRoute() {
   const { id, league, url } = useLocalSearchParams<{
@@ -48,10 +49,10 @@ export default function NewsLinkSheetRoute() {
 
   const global = useNews();
   const byLeague = useNewsByLeague(league ? league : null);
-  // ⚠ The REEL cache first (ADR 0129): the screen that opened this sheet pages
-  // by keyset, and a story swiped to on page three exists in no other query.
-  // The single-page feeds stay as the fallback for any older caller.
-  const reel = useNewsReel(league ? league : null);
+  // ⚠ The infinite FEED cache first (ADR 0129/0130): the screen that opened
+  // this sheet pages by keyset, and a story on page three exists in no other
+  // query. The single-page feeds stay as the fallback for any older caller.
+  const pager = useNewsFeed(league ? league : null);
   const feed = league ? byLeague : global;
   const saved = url ? savedStories.find((entry) => entry.url === url) : undefined;
   const article = saved
@@ -64,13 +65,15 @@ export default function NewsLinkSheetRoute() {
         // `?? null` — rows saved before the snapshot carried these fields.
         excerpt: saved.excerpt ?? null,
         author: saved.author ?? null,
+        imageUrl: saved.imageUrl,
+        isFirstParty: saved.isFirstParty,
       }
     : fromFeed();
   const close = () => router.back();
 
   function fromFeed() {
     const hit =
-      mergeNewsPages(reel.data?.pages ?? []).find((entry) => entry.id === id) ??
+      mergeNewsPages(pager.data?.pages ?? []).find((entry) => entry.id === id) ??
       feed.data?.articles.find((entry) => entry.id === id);
     if (!hit) return undefined;
     return {
@@ -81,6 +84,8 @@ export default function NewsLinkSheetRoute() {
       topic: articleTopic(hit),
       excerpt: articleExcerpt(hit),
       author: hit.author ? plainText(hit.author) : null,
+      imageUrl: hit.imageUrl,
+      isFirstParty: hit.publisher.isFirstParty,
     };
   }
 
@@ -96,6 +101,24 @@ export default function NewsLinkSheetRoute() {
   }
 
   const title = plainText(article.title);
+  const isSaved = savedStories.some((entry) => entry.url === article.url);
+  // Save lives HERE since ADR 0130 (the front page's cards carry no controls).
+  // Snapshot keyed by `url` — ids purge at 30 days. Haptic on save ON only.
+  const toggleSave = () => {
+    if (!isSaved) void hapticSaveStory();
+    toggleSavedStory({
+      url: article.url,
+      title,
+      publisher: article.publisherName,
+      isFirstParty: article.isFirstParty,
+      imageUrl: article.imageUrl,
+      publishedAt: article.publishedAt,
+      topic: article.topic,
+      excerpt: article.excerpt,
+      author: article.author,
+      savedAt: new Date().toISOString(),
+    });
+  };
   // Who to credit: the author, or the publisher when the wire has none
   // (every LALIGA article) — attribution is what makes an aggregator
   // defensible. The publisher is named ONCE: beside a real author, never
@@ -121,6 +144,8 @@ export default function NewsLinkSheetRoute() {
       note={copy.news.noteExternal(article.publisherName)}
       openLabel={copy.news.openAt(article.publisherName)}
       shareLabel={copy.news.share}
+      saveLabel={isSaved ? copy.news.savedStory : copy.news.saveStory}
+      saved={isSaved}
       cancelLabel={copy.sheets.close}
       // ⚠ Browser FIRST, sheet after: `close()` before `openArticle` attaches
       // the browser to a sheet that is mid-dismissal, and iOS tears it down
@@ -131,6 +156,7 @@ export default function NewsLinkSheetRoute() {
       }}
       // ⚠ The URL, never the id — a share must outlive the 30-day purge.
       onShare={() => void Share.share({ message: title, url: article.url })}
+      onToggleSave={toggleSave}
       onCancel={close}
     />
   );

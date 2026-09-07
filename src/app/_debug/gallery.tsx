@@ -21,6 +21,7 @@ import {
   FormStrip,
   HomeAwayTag,
   ListRow,
+  NewsLeadCard,
   NewsRow,
   ScoreLine,
   SectionHeader,
@@ -28,9 +29,6 @@ import {
 } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
-import { ReelCard } from '@/components/organisms/reel-card';
-import { ReelCrown } from '@/components/organisms/reel-crown';
-import { ReelFilterPanel } from '@/components/organisms/reel-filter-panel';
 import { LiveDeck, type LiveDeckCard } from '@/components/organisms/live-deck';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { NextUpCard } from '@/components/organisms/next-up-card';
@@ -296,23 +294,14 @@ const NEWS_STORIES: NewsArticleView[] = [
   STORY('n5', 'Deportivo - Valencia | Riazor quiere tener la fiesta en paz: previa, análisis, pronóstico y predicción', null, IMG('6a932fb775b3a'), 3),
   STORY('n6', 'Baena hace que se cumplan los sueños', null, null, 4, 'Atlético'),
 ];
-const NEWS_CHIPS = [{ id: 'all', label: 'All' }, { id: 'laliga', label: 'LaLiga' }];
-/** The reel screen's item mapping, in miniature (ADR 0129). */
-const reelCard = (a: NewsArticleView, saved = false) => ({
+/** The News screen's row mapping, in miniature (ADR 0130). */
+const newsRow = (a: NewsArticleView) => ({
   title: a.title,
   imageUrl: a.imageUrl,
+  topic: a.categories[0] ?? null,
   publisher: a.publisher.name,
   age: '2h',
-  saved,
-  hint: 'TAP TO READ',
-  saveLabel: 'Save story',
-  savedLabel: 'Saved',
-  shareLabel: 'Share',
-  topInset: 0,
-  bottomInset: 0,
   onPress: () => {},
-  onToggleSave: () => {},
-  onShare: () => {},
 });
 /** The Today screen's `story()` mapper, in miniature. */
 const cardStory = (a: NewsArticleView) => ({
@@ -543,62 +532,37 @@ export default function GalleryScreen() {
         />
       </Case>
 
-      <SectionHeader title="News reel" meta="full-screen snap cards (ADR 0129)" />
-      <Case label="a story with its photo — dim overlay, no scrim, glass chips">
-        <View style={styles.reelBox}>
-          <ReelCard {...reelCard(NEWS_STORIES[0])} height={600} />
-        </View>
+      <SectionHeader title="News front page" meta="lead card + flat rows (ADR 0130)" />
+      <Case label="the LEAD card — topic pill · publisher · age, headline, Tap to read ›">
+        <NewsLeadCard
+          topic="Sevilla"
+          publisher="MARCA"
+          age="3h"
+          title={NEWS_STORIES[1].title}
+          ctaLabel={copy.news.leadCta}
+          onPress={() => {}}
+        />
       </Case>
-      <Case label="NO picture — the designed typographic card, never a grey hole">
-        <View style={styles.reelBox}>
-          <ReelCard {...reelCard({ ...NEWS_STORIES[2], imageUrl: null })} height={600} />
-        </View>
+      <Case label="lead with NO topic — publisher leads the meta line">
+        <NewsLeadCard
+          topic={null}
+          publisher="MARCA"
+          age="1h"
+          title={NEWS_STORIES[0].title}
+          ctaLabel={copy.news.leadCta}
+          onPress={() => {}}
+        />
       </Case>
-      <Case label="a DEAD image URL — onError flips to the imageless branch live">
-        <View style={styles.reelBox}>
-          <ReelCard
-            {...reelCard({ ...NEWS_STORIES[1], imageUrl: 'https://invalid.example/gone.jpg' })}
-            height={600}
-          />
-        </View>
-      </Case>
-      <Case label="saved ON — lime plate, filled bookmark, onAccent ink">
-        <View style={styles.reelBox}>
-          <ReelCard {...reelCard(NEWS_STORIES[3], true)} height={600} />
-        </View>
-      </Case>
-      <Case label="the pinned crown — veil, back link, count, filter pill, saved door">
-        <View style={styles.reelCrownBox}>
-          <ReelCrown
-            backLabel="Board"
-            title="News"
-            count="7 STORIES"
-            filterLabel="All"
-            filterOpen={false}
-            savedLabel="Saved"
-            topInset={0}
-            onBack={() => {}}
-            onToggleFilter={() => {}}
-            onSaved={() => {}}
-          />
-        </View>
-      </Case>
-      <Case label="the league pull-down — chips, and the attribution's only home">
-        <View style={styles.reelPanelBox}>
-          <ReelFilterPanel
-            chips={NEWS_CHIPS}
-            activeChip="laliga"
-            onChip={() => {}}
-            onClose={() => {}}
-            eyebrow={copy.news.leagueFilter}
-            attribution={copy.news.attribution}
-            topInset={-Spacing.eight}
-          />
+      <Case label="rows — 2-line title, meta beneath, lime topic text; then no topic; then no picture">
+        <View style={styles.rows}>
+          <NewsRow {...newsRow(NEWS_STORIES[0])} />
+          <NewsRow {...newsRow(NEWS_STORIES[4])} />
+          <NewsRow {...newsRow(NEWS_STORIES[5])} />
         </View>
       </Case>
 
-      <SectionHeader title="Saved stories" meta="url-keyed snapshots (ADR 0129)" />
-      <Case label="a saved row — the 0092 card with the un-save control trailing">
+      <SectionHeader title="Saved stories" meta="url-keyed snapshots (ADR 0129/0130)" />
+      <Case label="a saved row — the story card with the un-save control trailing">
         <NewsRow
           title={NEWS_STORIES[0].title}
           imageUrl={NEWS_STORIES[0].imageUrl}
@@ -1184,26 +1148,12 @@ const styles = StyleSheet.create({
   },
   screen: { flex: 1, backgroundColor: Colors.dark.background },
   content: { padding: Spacing.five, paddingTop: Spacing.eight * 2, gap: Spacing.four },
-  // The reel previews: a card-shaped window onto components that ship
-  // full-screen. 600 is arbitrary but FIXED — the card fills whatever it gets.
-  reelBox: { height: 600, borderRadius: Radius.card, overflow: 'hidden' },
-  reelCrownBox: {
-    height: 260,
-    borderRadius: Radius.card,
-    overflow: 'hidden',
-    backgroundColor: Colors.dark.reelGround,
-  },
-  reelPanelBox: {
-    height: 420,
-    borderRadius: Radius.card,
-    overflow: 'hidden',
-    backgroundColor: Colors.dark.reelGround,
-  },
+  rows: { gap: Spacing.three },
   // The Saved screen's un-save control, in miniature (see `news-saved.tsx`).
   unsave: {
-    width: Size.reelAction,
-    height: Size.reelAction,
-    borderRadius: Size.reelAction / 2,
+    width: Size.newsAction,
+    height: Size.newsAction,
+    borderRadius: Size.newsAction / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.dark.savedFill,

@@ -137,10 +137,10 @@ export function newsAge(filedAt: string, now: Date): string {
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
-// ---------------------------------------------------------------- news reel (ADR 0129)
+// ------------------------------------------------------- news feed (ADR 0129/0130)
 
 /**
- * Pages off the reel's infinite query, flattened newest-first.
+ * Pages off the screen's infinite query, flattened newest-first.
  *
  * ⚠ Dedupe by `id`, FIRST occurrence wins — a page-one refetch after new
  * stories arrive shifts the keyset window, so the same article can straddle
@@ -161,15 +161,15 @@ export function mergeNewsPages(pages: readonly NewsFeedView[]): NewsArticleView[
 }
 
 /**
- * What the reel draws — every printable story, however old.
+ * What the News screen draws — every printable story, however old.
  *
  * ⚠ Deliberately NOT `selectNewsItems`: the 48h cutoff belongs to the widget
- * and the Today card, and the reel pages BACK in time — a cutoff would empty
+ * and the Today card, and this feed pages BACK in time — a cutoff would empty
  * every page after the first. The unprintable rules stay: no `url`, no
- * printable title, or no parseable `publishedAt` (no honest age) → no card.
+ * printable title, or no parseable `publishedAt` (no honest age) → no row.
  * No re-sort either — keyset pages arrive newest-first already.
  */
-export function selectReelItems(articles: readonly NewsArticleView[]): NewsArticleView[] {
+export function selectFeedItems(articles: readonly NewsArticleView[]): NewsArticleView[] {
   return articles.filter((article) => {
     if (!article.url || !plainText(article.title)) return false;
     return !Number.isNaN(Date.parse(article.publishedAt));

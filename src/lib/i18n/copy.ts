@@ -625,21 +625,15 @@ export interface Copy {
      * row (`· MARCA · 2 Sep, 06:22`) is assembled by the route.
      */
     byline: (name: string) => string;
-    /**
-     * The reel (ADR 0129). `reelRead` is `TAP TO READ` — Ed's device feedback
-     * (2026-09-06) replacing the handoff's `PULL UP TO READ`: the gesture is a
-     * tap, and the copy must not promise a pull. `leagueFilter` and it are
-     * eyebrows, stored upper as the dc handoff writes them. `savedStory`
-     * doubles as the toggled save button's a11y label.
-     */
-    reelRead: string;
-    leagueFilter: string;
+    /** The lead card's invitation (ADR 0130) — `Tap to read`, sentence case. */
+    leadCta: string;
+    /** The story sheet's save toggle (ADR 0130) and the saved state's label. */
     saveStory: string;
     savedStory: string;
     /** The Saved screen. */
     savedTitle: string;
     savedEmpty: string;
-    /** The reel's quiet end card — drawn only when `nextBefore` came back null. */
+    /** The list's quiet foot — drawn only when `nextBefore` came back null. */
     caughtUp: string;
   };
 }
@@ -1071,9 +1065,8 @@ export const esCopy: Copy = {
     cancel: 'Cancelar',
     gone: 'Esta noticia ya no está disponible.',
     byline: (name: string) => `Por ${name}`,
-    reelRead: 'TOCA PARA LEER',
-    leagueFilter: 'LIGA',
-    saveStory: 'Guardar noticia',
+    leadCta: 'Toca para leer',
+    saveStory: 'Guardar',
     savedStory: 'Guardada',
     savedTitle: 'Guardadas',
     savedEmpty: 'Las noticias que guardes aparecerán aquí.',
@@ -1500,9 +1493,8 @@ export const enCopy: Copy = {
     cancel: 'Cancel',
     gone: 'This story is no longer available.',
     byline: (name: string) => `By ${name}`,
-    reelRead: 'TAP TO READ',
-    leagueFilter: 'LEAGUE',
-    saveStory: 'Save story',
+    leadCta: 'Tap to read',
+    saveStory: 'Save',
     savedStory: 'Saved',
     savedTitle: 'Saved',
     savedEmpty: 'Stories you save appear here.',

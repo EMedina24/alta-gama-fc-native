@@ -1,12 +1,8 @@
 /**
- * One story on the News screen: a 64pt thumbnail, a three-line headline and
- * its attribution, on a GLASS CARD (ADR 0092).
- *
- * ⚠ A card again, reversing 0070's hairline row — but not 0064's card either.
- * 0070 dropped the chrome because thirty cards of EQUAL weight left nothing
- * leading; 0092 removes the thing they were competing with (the front page) and
- * makes every story one card of one weight, which is a list rather than a
- * hierarchy.
+ * One story row: a 64pt thumbnail, a TWO-line headline, then its attribution
+ * (`NewsMeta`) beneath, on a GLASS CARD — ADR 0092's card in ADR 0130's
+ * clothes (title first, meta below, per the front-page mock). Serves the News
+ * screen's rows below the lead AND the Saved screen.
  *
  * ⚠ The headline is a QUOTE in the publisher's language — clamped, never
  * trimmed or re-cased here. `numberOfLines` is the only cut it gets.
@@ -50,8 +46,8 @@ export function NewsRow({ title, imageUrl, topic, publisher, age, onPress, acces
       <NewsThumb src={imageUrl} size={Size.newsStoryThumb} />
       <View style={styles.body}>
         <Text
-          variant="callout"
-          numberOfLines={3}
+          variant="headline"
+          numberOfLines={2}
           accessibilityRole={accessory === undefined ? undefined : 'button'}
           onPress={accessory === undefined ? undefined : onPress}>
           {title}
