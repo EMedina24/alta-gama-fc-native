@@ -25,7 +25,42 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-06 (latest) — YOUR WEEK becomes a DAY SPINE and every tile
+> ⭐ **NEW 2026-09-07 (latest) — the board learns the followed clubs' OWN
+> schedules: Champions League, cups and segunda reach NEXT UP, LAST RESULT,
+> reminders and the widget ([0132](./decisions/0132-team-windows-feed-the-today-board.md)).**
+> Ed caught NEXT UP announcing Levante (09-13) while Barcelona's real next
+> match was UCL v Feyenoord (09-09): every board feed read
+> `GET /cronogol/fixtures`, which is league-scoped BY DESIGN — cups, UEFA
+> ties and segunda are structurally absent, so five tracked segunda clubs
+> never appeared at all. Now `useTeamWindows` fetches each followed club's
+> `GET /cronogol/teams/{slug}/fixtures` (−14d…+21d, ⚠ INCLUSIVE bounds —
+> trap 5), new pure `team-window.ts` converts to the neutral shape
+> (sentinels `leagueSlug:''`/`season:0`/`matchweek:null`; opponent a
+> slug-less `TeamRef`; ⚠ join by id+slug only, never name — 0022/0027
+> stand; `lastSyncedAt:null` → `[]`, trap 1; cup-DERBY halves
+> complementary-merge so both slugs resolve, trap 49), and every consumer
+> merges it UNDER the window rows (dedupe by id, window wins — pure-league
+> output byte-identical, harness assertion). ⚠⚠ `sliceWindow` on
+> `upcomingMine` is a BUG GUARD: the 14-day back-reach is full of past TBD
+> rows that would sail through the `kickoffTbd ||` predicate into the deck
+> as `--:--` cards. ⚠ These queries MAY refetch at kickoff (window starts
+> 14d back — the 0052/0078 vanishing trap cannot bite) and for a cup tie
+> that refetch is the ONLY status flip coming; `/cronogol/live` never
+> covers cups, so a kicked-off UCL match holds the crown as "kicked off"
+> honestly, and the `''` sentinel keeps the widget's Swift live gate false
+> (no rationed-poll spend — trap 34 untouched). Non-league cards name the
+> competition where `MD n` was (Ed's pick, verbatim `competitionName`);
+> events disclosure OFF for them (`matchEventsCapable`) until a post-UCL-MD1
+> probe of the events route. Widget: `roundLabel` pill drops for cups, slugs
+> `''`→null on the wire, NO snapshot bump; cup crest compositor probed 200.
+> **Verified on the simulator on live data** — the crown led with
+> `NEXT UP · UEFA CHAMPIONS LEAGUE` over the intact league LAST RESULT;
+> gallery gains the cup NEXT UP case and `?only=last`. ⚠ Pending: the
+> 09-09 kickoff sequence on real data, the events probe, and the long
+> competition name crowds its row (venue truncates; the short-form label is
+> the deferred design call — screenshots in the ADR).
+>
+> ⭐ **NEW 2026-09-06 — YOUR WEEK becomes a DAY SPINE and every tile
 > takes a TRAY SHELL** ([0127](./decisions/0127-medium-tile-day-spine.md) ·
 > [0128](./decisions/0128-widget-tiles-take-a-tray-shell.md), the whole of
 > `handoff_widget-redo/`). The medium tile drops 0086's hero+rail (and 0109's

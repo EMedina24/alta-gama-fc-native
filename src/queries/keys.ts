@@ -9,6 +9,16 @@
 export const keys = {
   teams: (leagueApiSlug?: string) => ['teams', leagueApiSlug ?? 'all'] as const,
   teamFixtures: (slug: string) => ['team-fixtures', slug] as const,
+  /**
+   * One followed club's cross-competition window (ADR 0132) — the Today
+   * board's cup/segunda feed.
+   *
+   * ⚠ NOT `teamFixtures` — that key is the club page's whole-season, no-params
+   * read of the same route; sharing the entry would hand one caller the
+   * other's window. Keyed to the DAY like `fixtureWindow`, so a re-render
+   * mints no new entry and a refetch re-reads bounds inside the `queryFn`.
+   */
+  teamWindow: (slug: string, fromDay: string) => ['team-window', slug, fromDay] as const,
   teamSquad: (slug: string) => ['team-squad', slug] as const,
   seasonJornadas: (leagueApiSlug: string, season: number) =>
     ['season-jornadas', leagueApiSlug, season] as const,

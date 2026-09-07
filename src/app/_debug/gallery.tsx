@@ -31,6 +31,7 @@ import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
 import { LiveDeck, type LiveDeckCard } from '@/components/organisms/live-deck';
 import { LivePlate } from '@/components/organisms/live-plate';
+import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpDeck } from '@/components/organisms/next-up-deck';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
@@ -442,7 +443,7 @@ export default function GalleryScreen() {
    * scroll and the shell cannot drive one (no `idb`, no Accessibility), so a
    * section deep in it is otherwise unreachable from a deep link + screenshot.
    */
-  // ⚠ `?only=next-deck` joined the list with ADR 0113.
+  // ⚠ `?only=next-deck` joined the list with ADR 0113; `?only=last` with 0132.
   const { only } = useLocalSearchParams<{ only?: string }>();
   const [on, setOn] = useState(true);
   // ⚠ `null` and derived, exactly as `MatchEvents` does it — the gallery must
@@ -470,6 +471,66 @@ export default function GalleryScreen() {
           />
         </Case>
       ))}
+      {/* ⚠ A CUP tie names its competition in the meta (ADR 0132). Real wire
+          values — Barcelona v Feyenoord, UCL jornada 1, real Barça hexes; the
+          opponent has no colours on file, so the wash leans one-sided. */}
+      <Case label="Barcelona v Feyenoord — CUP: competition beside NEXT UP; opponent uncoloured (ADR 0132)">
+        <NextUpCard
+          home={NEXT_SIDE('Barcelona', 'BAR')}
+          away={NEXT_SIDE('Feyenoord', 'FEY')}
+          kickoffUtc={SOON}
+          kickoffTbd={false}
+          meta={`${copy.today.nextUp} · UEFA Champions League`}
+          kickoffLabel="18:45"
+          dateLabel="WED 9 SEP"
+          zoneLabel={`CEST · ${copy.today.yourTime}`}
+          venue="Spotify Camp Nou"
+          wash={pairWash(WASH_TEAM('#0f39b8', '#bc161c'), WASH_TEAM(null, null))}
+          copy={copy.today}
+        />
+      </Case>
+    </>
+  );
+
+  /**
+   * LAST RESULT with and without a league behind it (ADR 0132). The league
+   * case is the REAL Valencia 0–5 Barcelona row (id, jornada and kickoff from
+   * production, 2026-09-06 — trap 48: samples copy the wire); the cup case is
+   * the same pair of clubs under a competition meta with the events
+   * disclosure GATED OFF, which is what `matchEventsCapable` answers for a
+   * cup row until the sweep is proven to reach one.
+   */
+  const lastResultCases = (
+    <>
+      <SectionHeader title="Last result" meta="matchday v competition meta (ADR 0132)" />
+      <Case label="league — MD meta, events disclosure present (the regression case)">
+        <LastResultCard
+          id="d7b3c0e0-2fe9-4015-9e00-f57e9e57244c"
+          homeTeam={{ slug: 'valencia', name: 'Valencia CF', shortName: 'VAL', logoUrl: null, logoUrls: null }}
+          awayTeam={{ slug: 'barcelona', name: 'FC Barcelona', shortName: 'BAR', logoUrl: null, logoUrls: null }}
+          home={LIVE_SIDE('Valencia', 'VAL', 0, true)}
+          away={LIVE_SIDE('Barcelona', 'BAR', 5, false)}
+          meta={`${copy.today.md(4)} · SUN 6 SEP`}
+          outcome={phrases.formLetters.W}
+          copy={copy.today}
+          events={copy.events}
+          matchEvents
+        />
+      </Case>
+      <Case label="cup — competition name where MD was; NO events chevron (ADR 0132)">
+        <LastResultCard
+          id="f90e8609-1ded-4a89-b8f0-68877c0ea1d5"
+          homeTeam={{ slug: 'barcelona', name: 'FC Barcelona', shortName: 'BAR', logoUrl: null, logoUrls: null }}
+          awayTeam={{ slug: '', name: 'Feyenoord', shortName: null, logoUrl: null, logoUrls: null }}
+          home={LIVE_SIDE('Barcelona', 'BAR', 3, false)}
+          away={LIVE_SIDE('Feyenoord', 'FEY', 1, true)}
+          meta="UEFA Champions League · WED 9 SEP"
+          outcome={phrases.formLetters.W}
+          copy={copy.today}
+          events={copy.events}
+          matchEvents={false}
+        />
+      </Case>
     </>
   );
 
@@ -886,6 +947,15 @@ export default function GalleryScreen() {
     );
   }
 
+  // ⚠ `?only=last` joined the list with ADR 0132.
+  if (only === 'last') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {lastResultCases}
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text variant="title">Molecules</Text>
@@ -1125,6 +1195,7 @@ export default function GalleryScreen() {
 
       {nextUp}
       {nextDeck}
+      {lastResultCases}
       {finishedToday}
       {news}
 

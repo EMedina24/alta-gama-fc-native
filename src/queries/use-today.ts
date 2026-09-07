@@ -29,9 +29,12 @@ import { recentBounds, todayBounds, upcomingBounds } from '@/lib/cronogol/fixtur
 import { keys } from './keys';
 import { STALE } from './stale';
 
-const UPCOMING_DAYS = 7;
+// ⚠ Exported for ADR 0132's slices: the merged team-window rows are cut to
+// EXACTLY these horizons at each consumer, which is what keeps pure-league
+// behavior byte-identical to the window routes alone.
+export const UPCOMING_DAYS = 7;
 /** Two weeks back covers an international break; nothing older is a "last result". */
-const RECENT_DAYS = 14;
+export const RECENT_DAYS = 14;
 
 /** Today's played matches, in the reader's own day. */
 export function useFinishedToday(zone: string) {

@@ -101,6 +101,33 @@ export function upcomingBounds(
 }
 
 /**
+ * `[local midnight backDays ago, local midnight aheadDays out]` — the one
+ * window `useTeamWindows` asks `/cronogol/teams/{slug}/fixtures` for (ADR
+ * 0132), sized to cover the recent band behind it and the widget band ahead.
+ *
+ * ⚠ On THAT route both bounds are **INCLUSIVE** — `gte`/`lte`, unlike this
+ * file's window route whose `to` is exclusive; the two differ on purpose (see
+ * `todayBounds`). The inclusive `to` at a midnight admits at most a fixture
+ * kicking off exactly on the boundary instant, and every consumer re-slices
+ * with `sliceWindow` anyway.
+ *
+ * ⚠ No 31-day cap here — `fixtureWindowMaxDays` guards `/cronogol/fixtures`
+ * only, so a 35-day club window is legal. Verified against the backend DTO.
+ */
+export function teamWindowBounds(
+  now: Date,
+  zone: string,
+  backDays: number,
+  aheadDays: number,
+): { from: string; to: string } {
+  const today = zonedDayKey(now.toISOString(), zone);
+  return {
+    from: zonedMidnight(addDays(today, -backDays), zone).toISOString(),
+    to: zonedMidnight(addDays(today, aheadDays), zone).toISOString(),
+  };
+}
+
+/**
  * `[local midnight n days ago, now]` — the band the Today board's LAST RESULT
  * card looks back over. Overlaps `todayBounds` on purpose: one query, and the
  * newest finished match is the newest finished match wherever it falls.

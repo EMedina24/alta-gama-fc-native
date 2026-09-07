@@ -8,10 +8,13 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
+import { upcomingBounds } from '@/lib/cronogol/fixture-window';
+import { mergeWindows, sliceWindow } from '@/lib/cronogol/team-window';
 import { formatKickoffTime, formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useNews } from '@/queries/use-news';
-import { useUpcoming, useWidgetWindow } from '@/queries/use-today';
+import { useTeamWindows } from '@/queries/use-team-windows';
+import { UPCOMING_DAYS, useUpcoming, useWidgetWindow } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
 import { useSession } from '@/store/session';
 import { useRouter } from 'expo-router';
@@ -38,6 +41,11 @@ export function usePushSync(): void {
   // ⚠ A SECOND, WIDER window (21 days). The widget must not go blank over an
   // international break — see `useWidgetWindow`.
   const widgetWindow = useWidgetWindow(zone);
+  // The followed clubs' own schedules — cups, European ties, segunda (ADR
+  // 0132). Without it the widget and the reminders skip a Champions League
+  // tie exactly as the Today board did. `combine`'s structural sharing keeps
+  // `rows`' identity stable, which the re-arm effect's deps below rely on.
+  const teamWindows = useTeamWindows(zone, prefs.followed);
   // The NEWS widget's feed (ADR 0061). Global, one request, `STALE.feed`.
   const news = useNews();
   const session = useSession();
@@ -125,10 +133,15 @@ export function usePushSync(): void {
     const sync = () => {
       const now = new Date();
 
+      // ⚠ Gated on `widgetWindow.data` ALONE, deliberately: a slow or failed
+      // team query must not blank the widget — its cup rows simply arrive on
+      // the next foreground. Unsliced, because `selectWidgetFixtures` already
+      // drops everything the 14-day-back reach could smuggle in (past beyond
+      // the hold, TBD, postponed) — ADR 0132.
       const snapshot =
         WIDGETS_AVAILABLE && widgetWindow.data
           ? buildSnapshot(
-              widgetWindow.data.fixtures,
+              mergeWindows(widgetWindow.data.fixtures, teamWindows.rows),
               prefs.followed,
               now,
               copy,
@@ -162,8 +175,17 @@ export function usePushSync(): void {
       if (activityFixtures) pinActivityCrests(activityFixtures);
 
       if (PUSH_AVAILABLE && prefs.alertReminder && upcoming.data) {
+        // ⚠ Team rows sliced to the SAME seven-day band `upcoming` asks for
+        // (ADR 0132): `selectReminders`' own horizon is 21 days and would
+        // otherwise arm cup reminders further out than league ones — an
+        // asymmetry nobody chose. A UCL fixture inside the band competes on
+        // fire time under the same 60-notification budget as everything else.
+        const { to: upcomingTo } = upcomingBounds(now, zone, UPCOMING_DAYS);
         const planned = selectReminders(
-          upcoming.data.fixtures,
+          mergeWindows(
+            upcoming.data.fixtures,
+            sliceWindow(teamWindows.rows, now.getTime(), Date.parse(upcomingTo)),
+          ),
           prefs.followed,
           prefs.reminderLeads,
           now,
@@ -213,6 +235,9 @@ export function usePushSync(): void {
   }, [
     upcoming.data,
     widgetWindow.data,
+    // ⚠ Identity-stable via `combine`'s structural sharing — a plain render or
+    // an `isRefetching` flip does NOT re-arm anything here; new DATA does.
+    teamWindows.rows,
     news.data,
     prefs.followed,
     prefs.alertReminder,

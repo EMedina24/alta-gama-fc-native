@@ -40,7 +40,8 @@ import {
   type BoardLive,
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
-import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
+import { upcomingBounds } from '@/lib/cronogol/fixture-window';
+import { matchEventsCapable, mergeWindows, sliceWindow } from '@/lib/cronogol/team-window';
 import {
   articleTopic,
   newsAge,
@@ -60,7 +61,8 @@ import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTeams } from '@/queries/use-teams';
 import { useLive } from '@/queries/use-live';
 import { useNews } from '@/queries/use-news';
-import { useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
+import { useTeamWindows } from '@/queries/use-team-windows';
+import { UPCOMING_DAYS, useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
 import { usePreferences, useZone } from '@/store/preferences';
 
 /** The six clubs offered in the follow card's grid. */
@@ -94,6 +96,15 @@ export default function TodayScreen() {
   const finished = useFinishedToday(zone);
   const upcoming = useUpcoming(zone);
   const recent = useRecent(zone);
+  /**
+   * The followed clubs' OWN schedules — cups, European ties, segunda (ADR
+   * 0132). The window routes above are league-scoped by design and can carry
+   * none of those, which is how a Champions League tie went missing from NEXT
+   * UP. Merged UNDER the window rows at every consumer below (dedupe by
+   * fixture id, window wins), so for pure-league data nothing changes.
+   */
+  const teamWindows = useTeamWindows(zone, followed);
+  const teamRows = teamWindows.rows;
   const teams = useTeams();
   // ⚠ The SAME query `PushSync` already holds for the widget — a cache read.
   const news = useNews();
@@ -190,21 +201,40 @@ export default function TodayScreen() {
         byId: liveById(live.data?.matches ?? [], now.getTime()),
         followed,
         teams: teams.data ?? [],
+        // ⚠ Team rows come LAST in both: the internal first-occurrence dedupes
+        // keep the window rows' full TeamRefs winning. In `held` they are what
+        // lets a kicked-off cup tie hold the crown (the windows cannot carry
+        // it); in `swept` they are what gives a sweep-flagged live cup match
+        // the tier-2 card with its age caption — the same treatment a club
+        // outside the live route's coverage gets today (ADR 0132).
         held: [
           ...(finished.data?.fixtures ?? []),
           ...(upcoming.data?.fixtures ?? []),
           ...(recent.data?.fixtures ?? []),
+          ...teamRows,
         ],
-        swept: [...(finished.data?.fixtures ?? []), ...(recent.data?.fixtures ?? [])],
+        swept: [
+          ...(finished.data?.fixtures ?? []),
+          ...(recent.data?.fixtures ?? []),
+          ...teamRows,
+        ],
         now: now.getTime(),
         seenLive,
       });
 
-  /** The most recent finished match of a followed club, with a score. */
+  /**
+   * The most recent finished match of a followed club, with a score.
+   *
+   * ⚠ Team rows join UNSLICED, on two constructions rather than a clock read
+   * (which would cost the memo): their back edge IS the recent band's edge —
+   * `TEAM_WINDOW_BACK_DAYS` is `RECENT_DAYS`, both local midnight — and their
+   * 21-day forward reach contributes nothing here because `lastResult` only
+   * reads `finished` rows with goals.
+   */
   const last = useMemo(() => {
     if (!hasClubs || !recent.data) return null;
-    return lastResult(recent.data.fixtures, followed);
-  }, [hasClubs, recent.data, followed]);
+    return lastResult(mergeWindows(recent.data.fixtures, teamRows), followed);
+  }, [hasClubs, recent.data, teamRows, followed]);
   const lastOutcome = last ? boardOutcome(last, followed) : null;
   const lastMatchday = last ? matchday(last.round) : null;
 
@@ -223,9 +253,25 @@ export default function TodayScreen() {
   const upcomingMine = (() => {
     if (!hasClubs || !upcoming.data) return [];
     const at = now.getTime();
-    return upcoming.data.fixtures.filter(
-      (f) => involvesFollowed(f, followed) && (f.kickoffTbd || Date.parse(f.kickoffUtc) > at),
+    // ⚠⚠ Team rows are SLICED to the upcoming band before merging, and the
+    // slice is a bug guard, not tidiness (ADR 0132): the team window reaches
+    // 14 days BACK, and a past TBD row would sail through the `kickoffTbd ||`
+    // half of the predicate below into the deck as a `--:--` card for a match
+    // long over. It also keeps NEXT UP's horizon at the same seven days —
+    // extending it is a separate decision nobody has made.
+    const { from: upFrom, to: upTo } = upcomingBounds(now, zone, UPCOMING_DAYS);
+    const merged = mergeWindows(
+      upcoming.data.fixtures,
+      sliceWindow(teamRows, Date.parse(upFrom), Date.parse(upTo)),
     );
+    return merged
+      .filter(
+        (f) => involvesFollowed(f, followed) && (f.kickoffTbd || Date.parse(f.kickoffUtc) > at),
+      )
+      // ⚠ A real sort, not trust in concatenation order: `deck[0]` must be the
+      // soonest kickoff whichever route served it. Stable, so pure-league data
+      // keeps the window route's exact order.
+      .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
   })();
 
   /**
@@ -379,8 +425,14 @@ export default function TodayScreen() {
     kickoffUtc: fixture.kickoffUtc,
     kickoffTbd: fixture.kickoffTbd,
     // ⚠ Its OWN label, not the section header's — the card sat directly
-    // above a section with the identical title.
-    meta: copy.today.nextUp,
+    // above a section with the identical title. A non-league match names its
+    // competition beside it (ADR 0132, Ed's call): the card's other furniture
+    // is league-shaped and "MD 1" would be ambiguous with a LaLiga jornada.
+    // `competitionName` is the provider's proper noun, rendered verbatim.
+    meta:
+      fixture.competition !== 'league' && fixture.competitionName
+        ? `${copy.today.nextUp} · ${fixture.competitionName}`
+        : copy.today.nextUp,
     kickoffLabel: fixture.kickoffTbd
       ? '--:--'
       : formatKickoffTime(fixture.kickoffUtc, zone, clock),
@@ -423,6 +475,10 @@ export default function TodayScreen() {
       void finished.refetch();
       void recent.refetch();
       void live.refetch();
+      // ⚠ Safe where `upcoming` is not (ADR 0132): this window starts 14 days
+      // back, so a refetch cannot drop the match that just kicked off — and
+      // for a cup tie it is the ONLY feed that will ever flip the status.
+      teamWindows.refetch();
     },
   });
 
@@ -479,8 +535,14 @@ export default function TodayScreen() {
         void upcoming.refetch();
         void recent.refetch();
         void live.refetch();
+        teamWindows.refetch();
       }}
-      refreshing={finished.isRefetching || upcoming.isRefetching || recent.isRefetching}>
+      refreshing={
+        finished.isRefetching ||
+        upcoming.isRefetching ||
+        recent.isRefetching ||
+        teamWindows.isRefetching
+      }>
       {/* LAST RESULT follows the crown's lead card (ADR 0095). Suppressed
           while any match is live: the result the reader wants is the one being
           played, and the finished one is a distraction under it. */}
@@ -494,8 +556,15 @@ export default function TodayScreen() {
           awayTeam={last.awayTeam}
           home={side(last.homeTeam, last.goalsHome, loses(last.goalsHome, last.goalsAway))}
           away={side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome))}
+          // ⚠ A non-league result names its competition where a league one
+          // says the matchday (ADR 0132) — "MD 1" for a Champions League
+          // jornada reads as LaLiga's.
           meta={[
-            lastMatchday !== null ? copy.today.md(lastMatchday) : null,
+            last.competition !== 'league'
+              ? last.competitionName
+              : lastMatchday !== null
+                ? copy.today.md(lastMatchday)
+                : null,
             formatFixtureDate(last.kickoffUtc, zone, phrases),
           ]
             .filter(Boolean)
@@ -505,8 +574,10 @@ export default function TodayScreen() {
           events={copy.events}
           // ⚠ The league's capability, off the fixture's own `leagueSlug` (the
           // API slug). A league that never publishes events loses the
-          // disclosure rather than opening it on copy that says "not yet".
-          matchEvents={findLeagueByApiSlug(last.leagueSlug)?.matchEvents !== false}
+          // disclosure rather than opening it on copy that says "not yet" —
+          // and so does a cup tie, until the events sweep is proven to reach
+          // one (`matchEventsCapable`, ADR 0132).
+          matchEvents={matchEventsCapable(last)}
         />
       ) : null}
 
@@ -581,7 +652,17 @@ export default function TodayScreen() {
                   key={fixture.id}
                   home={upcomingSide(fixture.homeTeam)}
                   away={upcomingSide(fixture.awayTeam)}
-                  meta={[md !== null ? copy.today.md(md) : null, location]
+                  // ⚠ A non-league row names its competition where a league
+                  // one says the matchday (ADR 0132) — same rule as the
+                  // last-result card, for the same ambiguity.
+                  meta={[
+                    fixture.competition !== 'league'
+                      ? fixture.competitionName
+                      : md !== null
+                        ? copy.today.md(md)
+                        : null,
+                    location,
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                   // ⚠ Today only. `formatRelativeDay` also names tomorrow, and

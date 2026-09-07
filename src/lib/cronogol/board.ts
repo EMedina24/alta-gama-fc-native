@@ -3,11 +3,15 @@
  * the last result, from the reader's followed clubs. Pure — no native import —
  * so the rules can be run in a plain-JS harness like `push.ts`.
  *
- * ⚠ Everything here reads `GET /cronogol/fixtures`, never the scoreboard. The
- * scoreboard is a world feed with no crosswalk to our clubs, so it cannot say
- * which match is *yours* — and fuzzy-matching names is forbidden (ADR 0022,
- * ADR 0027). A fixture row carries `homeTeam.slug`, which is the only honest
- * join to the follow list.
+ * ⚠ Everything here reads `GET /cronogol/fixtures` — merged, since ADR 0132,
+ * with the followed clubs' own `GET /cronogol/teams/{slug}/fixtures` windows
+ * (converted by `team-window.ts`), because the window route is league-scoped
+ * and can never carry a cup tie or a segunda club — and never the scoreboard.
+ * The scoreboard is a world feed with no crosswalk to our clubs, so it cannot
+ * say which match is *yours* — and fuzzy-matching names is forbidden (ADR
+ * 0022, ADR 0027). A fixture row carries `homeTeam.slug`, which is the only
+ * honest join to the follow list; the team-window merge joins by fixture id
+ * and slug too, never by name.
  *
  * ⚠ A `live` fixture is a snapshot from the last ~3h sweep, and its goals were
  * true then. Nothing here reads a clock or implies a minute.

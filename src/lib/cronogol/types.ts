@@ -374,6 +374,12 @@ export interface WindowFixtureView extends JornadaFixtureView {
  * Palmas, Leganés, Mallorca and Valladolid all play in segunda. A reader
  * following one of them sees an empty band with no error anywhere, which is why
  * no copy on top of this may claim to cover "every match".
+ *
+ * ⚠ The Today board, the reminders and the widget snapshot no longer inherit
+ * this limitation: since ADR 0132 they merge the followed clubs' own
+ * `GET /cronogol/teams/{slug}/fixtures` windows underneath (`team-window.ts`).
+ * FINISHED TODAY and the Matchdays/Table screens still read window and jornada
+ * routes alone, deliberately.
  */
 export interface FixtureWindowView {
   /** The resolved bounds after defaulting. ⚠ HALF-OPEN: `[from, to)`. */

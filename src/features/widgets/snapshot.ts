@@ -286,8 +286,11 @@ export function buildSnapshot(
       awayAbbr: fixture.awayTeam
         ? abbreviate(fixture.awayTeam.name, fixture.awayTeam.slug, fixture.awayTeam.shortName)
         : '',
-      homeSlug: fixture.homeTeam?.slug ?? null,
-      awaySlug: fixture.awayTeam?.slug ?? null,
+      // ⚠ `|| null`, not `?? null`: a team-window opponent wears the sentinel
+      // `slug: ''` (ADR 0132), and the wire should carry the `null` Swift's
+      // `involves` already understands, never a junk empty string.
+      homeSlug: fixture.homeTeam?.slug || null,
+      awaySlug: fixture.awayTeam?.slug || null,
       homeName: fixture.homeTeam ? widgetName(fixture.homeTeam.name) : '',
       awayName: fixture.awayTeam ? widgetName(fixture.awayTeam.name) : '',
       opponentName: row.opponent.name,
@@ -307,7 +310,11 @@ export function buildSnapshot(
       // ⚠ `copy.today.md` — the SAME matchday label the last-result card uses
       // (`J 4` / `MD 4`). The mock draws `J4` closed up; one source of truth for
       // the label is worth more than one space.
-      roundLabel: md !== null ? copy.today.md(md) : null,
+      // ⚠ Null for a non-league row (ADR 0132): "MD 1" on a Champions League
+      // tie reads as LaLiga's jornada, and the competition's full name does
+      // not fit a tile row — the pill is simply dropped.
+      roundLabel:
+        fixture.competition === 'league' && md !== null ? copy.today.md(md) : null,
       venue: fixture.venue,
       leagueSlug: fixture.leagueSlug,
     });
