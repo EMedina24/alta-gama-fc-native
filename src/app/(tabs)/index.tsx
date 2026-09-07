@@ -10,7 +10,7 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Crest, SkeletonRows, Text } from '@/components/atoms';
+import { Button, competitionMarkKind, Crest, SkeletonRows, Text } from '@/components/atoms';
 import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { LiveDeck } from '@/components/organisms/live-deck';
@@ -237,6 +237,9 @@ export default function TodayScreen() {
   }, [hasClubs, recent.data, teamRows, followed]);
   const lastOutcome = last ? boardOutcome(last, followed) : null;
   const lastMatchday = last ? matchday(last.round) : null;
+  /** The cup lockup for the LAST RESULT meta row (ADR 0133), when we hold one. */
+  const lastMark =
+    last && last.competition !== 'league' ? competitionMarkKind(last.competitionName) : null;
 
   /**
    * A followed club's fixture that has not kicked off yet.
@@ -426,11 +429,15 @@ export default function TodayScreen() {
     kickoffTbd: fixture.kickoffTbd,
     // ⚠ Its OWN label, not the section header's — the card sat directly
     // above a section with the identical title. A non-league match names its
-    // competition beside it (ADR 0132, Ed's call): the card's other furniture
-    // is league-shaped and "MD 1" would be ambiguous with a LaLiga jornada.
-    // `competitionName` is the provider's proper noun, rendered verbatim.
+    // competition beside it (ADR 0132, Ed's call) — as the LOCKUP where we
+    // hold one (ADR 0133: the spelled name truncated the venue), and the
+    // provider's proper noun verbatim where we do not, so a new competition
+    // degrades to text rather than to silence.
+    mark: fixture.competition !== 'league' ? competitionMarkKind(fixture.competitionName) : null,
     meta:
-      fixture.competition !== 'league' && fixture.competitionName
+      fixture.competition !== 'league' &&
+      fixture.competitionName &&
+      competitionMarkKind(fixture.competitionName) === null
         ? `${copy.today.nextUp} · ${fixture.competitionName}`
         : copy.today.nextUp,
     kickoffLabel: fixture.kickoffTbd
@@ -558,10 +565,14 @@ export default function TodayScreen() {
           away={side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome))}
           // ⚠ A non-league result names its competition where a league one
           // says the matchday (ADR 0132) — "MD 1" for a Champions League
-          // jornada reads as LaLiga's.
+          // jornada reads as LaLiga's. With a LOCKUP on file the card draws
+          // that instead and the meta carries the date alone (ADR 0133).
+          mark={lastMark}
           meta={[
             last.competition !== 'league'
-              ? last.competitionName
+              ? lastMark
+                ? null
+                : last.competitionName
               : lastMatchday !== null
                 ? copy.today.md(lastMatchday)
                 : null,

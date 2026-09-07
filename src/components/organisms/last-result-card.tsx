@@ -15,9 +15,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Pill, Text } from '@/components/atoms';
+import { CompetitionMark, Pill, Text, type CompetitionMarkKind } from '@/components/atoms';
 import { EventsDisclosure, ScoreLine, type ScoreSide } from '@/components/molecules';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import type { TeamRef } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
@@ -34,8 +34,14 @@ export interface LastResultCardProps {
   awayTeam: TeamRef | null;
   home: ScoreSide;
   away: ScoreSide;
-  /** "MD 3 · SAT 29 AUG" */
+  /** "MD 3 · SAT 29 AUG" — for a marked cup tie, the date alone (ADR 0133). */
   meta: string;
+  /**
+   * A competition lockup between the label and `meta` (ADR 0133), in the
+   * row's faint ink. The screen resolves it (`competitionMarkKind`); a
+   * competition without a mark keeps its name in `meta` instead.
+   */
+  mark?: CompetitionMarkKind | null;
   /** Already mapped through `phrases.formLetters` — never a raw `W`/`D`/`L`. */
   outcome: string | null;
   copy: { lastResult: string; noScore: string };
@@ -60,6 +66,7 @@ export function LastResultCard({
   home,
   away,
   meta,
+  mark = null,
   outcome,
   copy,
   events,
@@ -71,9 +78,26 @@ export function LastResultCard({
     <View style={styles.card}>
       <View style={styles.pad}>
         <View style={styles.headRow}>
-          <Text variant="eyebrowSm" color="textFaint">
-            {copy.lastResult} · {meta}
-          </Text>
+          {mark ? (
+            // The mark stands where the competition's name would have been
+            // spelled (ADR 0133), between the label and the date, with the
+            // separators the text form would have worn.
+            <View style={styles.metaRow}>
+              <Text variant="eyebrowSm" color="textFaint">
+                {copy.lastResult} ·
+              </Text>
+              {/* White like the club names — the mark keeps one voice on both
+                  cards (Ed's call, ADR 0133), even between faint texts. */}
+              <CompetitionMark kind={mark} height={Size.competitionMark} color="text" />
+              <Text variant="eyebrowSm" color="textFaint">
+                · {meta}
+              </Text>
+            </View>
+          ) : (
+            <Text variant="eyebrowSm" color="textFaint">
+              {copy.lastResult} · {meta}
+            </Text>
+          )}
           {outcome ? <Pill label={outcome} /> : null}
         </View>
         <ScoreLine home={home} away={away} noScoreLabel={copy.noScore} />
@@ -121,4 +145,6 @@ const styles = StyleSheet.create({
   },
   pad: { padding: Spacing.four, gap: Spacing.three },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  /** Label · mark · date, one breath apart (ADR 0133). */
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexShrink: 1 },
 });

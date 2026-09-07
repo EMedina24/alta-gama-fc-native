@@ -56,9 +56,23 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > **Verified on the simulator on live data** — the crown led with
 > `NEXT UP · UEFA CHAMPIONS LEAGUE` over the intact league LAST RESULT;
 > gallery gains the cup NEXT UP case and `?only=last`. ⚠ Pending: the
-> 09-09 kickoff sequence on real data, the events probe, and the long
-> competition name crowds its row (venue truncates; the short-form label is
-> the deferred design call — screenshots in the ADR).
+> 09-09 kickoff sequence on real data and the events probe.
+> **Same day, the crowding is CLOSED by [0133](./decisions/0133-ucl-lockup-replaces-the-spelled-name.md):**
+> the UCL LOCKUP (Ed's SVG) stands where the name was spelled — WHITE; on
+> NEXT UP it rides the KICKOFF ROW's empty right end at 44pt
+> (`Size.competitionMarkLg`), LAST RESULT keeps it in the meta row at 24
+> (Ed's placement, iterated across three screenshot rounds: head-row accent
+> → under the Vs → kickoff row, bigger) — BUNDLED as
+> `atoms/competition-mark.tsx` (mark.tsx's
+> "drawn, not loaded" rule; `logos/ucl-lockup.svg` the design source), NOT
+> backend-hosted: no wire field carries a competition asset and the master's
+> navy fill is invisible on dark grounds, where a drawn mark takes a theme
+> token. Keyed by EXACT wire string; markless cups (Copa del Rey…) keep the
+> spelled name — text is the fallback, never silence. VoiceOver keeps the
+> words via `accessibilityLabel`. ⚠ UPCOMING rows and the widget still spell
+> / drop it, deliberately — flagged to Ed. ⚠ SVG path grammar trap for any
+> future mark: `.378.756` is TWO numbers; a naive tokenizer merges them and
+> silently shifts every coordinate after.
 >
 > ⭐ **NEW 2026-09-06 — YOUR WEEK becomes a DAY SPINE and every tile
 > takes a TRAY SHELL** ([0127](./decisions/0127-medium-tile-day-spine.md) ·

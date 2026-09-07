@@ -471,21 +471,40 @@ export default function GalleryScreen() {
           />
         </Case>
       ))}
-      {/* ⚠ A CUP tie names its competition in the meta (ADR 0132). Real wire
-          values — Barcelona v Feyenoord, UCL jornada 1, real Barça hexes; the
-          opponent has no colours on file, so the wash leans one-sided. */}
-      <Case label="Barcelona v Feyenoord — CUP: competition beside NEXT UP; opponent uncoloured (ADR 0132)">
+      {/* ⚠ A CUP tie names its competition beside the label (ADR 0132) — as
+          the UCL LOCKUP where we hold one (ADR 0133). Real wire values —
+          Barcelona v Feyenoord, UCL jornada 1, real Barça hexes; the opponent
+          has no colours on file, so the wash leans one-sided. */}
+      <Case label="Barcelona v Feyenoord — CUP with a mark: the UCL lockup beside NEXT UP (ADR 0133)">
         <NextUpCard
           home={NEXT_SIDE('Barcelona', 'BAR')}
           away={NEXT_SIDE('Feyenoord', 'FEY')}
           kickoffUtc={SOON}
           kickoffTbd={false}
-          meta={`${copy.today.nextUp} · UEFA Champions League`}
+          meta={copy.today.nextUp}
+          mark="ucl"
           kickoffLabel="18:45"
           dateLabel="WED 9 SEP"
           zoneLabel={`CEST · ${copy.today.yourTime}`}
           venue="Spotify Camp Nou"
           wash={pairWash(WASH_TEAM('#0f39b8', '#bc161c'), WASH_TEAM(null, null))}
+          copy={copy.today}
+        />
+      </Case>
+      {/* ⚠ A cup WITHOUT a mark keeps the spelled-out name (ADR 0133's text
+          fallback) — a new competition degrades to text, never to silence. */}
+      <Case label="Barcelona v Athletic — CUP without a mark: the name stays spelled out">
+        <NextUpCard
+          home={NEXT_SIDE('Barcelona', 'BAR')}
+          away={NEXT_SIDE('Athletic Club', 'ATH')}
+          kickoffUtc={SOON}
+          kickoffTbd={false}
+          meta={`${copy.today.nextUp} · Copa del Rey`}
+          kickoffLabel="20:00"
+          dateLabel="SAT 5 SEP"
+          zoneLabel={`CEST · ${copy.today.yourTime}`}
+          venue="Spotify Camp Nou"
+          wash={pairWash(WASH_TEAM('#0f39b8', '#bc161c'), WASH_TEAM('#f21e27', '#ffffff'))}
           copy={copy.today}
         />
       </Case>
@@ -517,14 +536,15 @@ export default function GalleryScreen() {
           matchEvents
         />
       </Case>
-      <Case label="cup — competition name where MD was; NO events chevron (ADR 0132)">
+      <Case label="cup — the UCL lockup where MD was (ADR 0133); NO events chevron (ADR 0132)">
         <LastResultCard
           id="f90e8609-1ded-4a89-b8f0-68877c0ea1d5"
           homeTeam={{ slug: 'barcelona', name: 'FC Barcelona', shortName: 'BAR', logoUrl: null, logoUrls: null }}
           awayTeam={{ slug: '', name: 'Feyenoord', shortName: null, logoUrl: null, logoUrls: null }}
           home={LIVE_SIDE('Barcelona', 'BAR', 3, false)}
           away={LIVE_SIDE('Feyenoord', 'FEY', 1, true)}
-          meta="UEFA Champions League · WED 9 SEP"
+          meta="WED 9 SEP"
+          mark="ucl"
           outcome={phrases.formLetters.W}
           copy={copy.today}
           events={copy.events}

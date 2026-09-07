@@ -23,6 +23,12 @@ export { PitchGlyph, type PitchGlyphProps } from './pitch-glyph';
 export { SlotToken, type SlotTokenMode, type SlotTokenProps } from './slot-token';
 export { AlertGlyph, type AlertGlyphProps, type AlertKind } from './alert-glyph';
 export { Mark, MARK_RATIO, type MarkProps } from './mark';
+export {
+  CompetitionMark,
+  competitionMarkKind,
+  type CompetitionMarkKind,
+  type CompetitionMarkProps,
+} from './competition-mark';
 export { MeshGround } from './mesh-ground';
 export { SearchGlyph } from './search-glyph';
 export { GlobeGlyph } from './globe-glyph';

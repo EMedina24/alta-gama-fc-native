@@ -706,6 +706,20 @@ export const Size = {
    * is the accent ring that sits between the two.
    */
   crestNext: 64, versusBadge: 34,
+  /**
+   * A competition lockup in a card's meta row (ADR 0133) — the UCL starball
+   * with its wordmark, standing where 0132 §9 spelled the name out and
+   * crowded everything beside it. Taller than the eyebrow it sits with, on
+   * purpose: the wordmark inside the lockup is ~1/5 of its height, and any
+   * smaller reads as a smudge rather than a mark.
+   */
+  competitionMark: 24,
+  /**
+   * The NEXT UP card's lockup, riding the kickoff row's empty right end
+   * (ADR 0133, Ed's spot and "bigger") — scaled against the kickoff time's
+   * own height so the row grows nothing.
+   */
+  competitionMarkLg: 44,
   /** The crown's account disc — 42, up from 36 on Ed's call (ADR 0101). */
   tabIcon: 22, avatar: 42, sheetGrabber: 38,
   /**

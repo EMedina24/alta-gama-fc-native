@@ -22,7 +22,14 @@
 import { StyleSheet, View } from 'react-native';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 
-import { Crest, Text, VersusBadge, WashGradient } from '@/components/atoms';
+import {
+  CompetitionMark,
+  Crest,
+  Text,
+  VersusBadge,
+  WashGradient,
+  type CompetitionMarkKind,
+} from '@/components/atoms';
 import { Countdown, type ScoreSide } from '@/components/molecules';
 import { ClubWash2, Colors, DeckGround, Radius, Size, Spacing } from '@/constants/theme';
 import type { PairWash } from '@/lib/cronogol/club-wash';
@@ -37,6 +44,15 @@ export interface NextUpCardProps {
   kickoffTbd: boolean;
   /** The card's own label — `copy.today.nextUp`. */
   meta: string;
+  /**
+   * A competition lockup on the kickoff row's empty right end, in the ink's
+   * white (ADR 0133 — placement iterated twice on Ed's screenshots: head-row
+   * accent, then under the Vs, then here and bigger) — the mark for a cup
+   * tie whose name we hold artwork for. The screen resolves it
+   * (`competitionMarkKind`); a competition without a mark keeps its name IN
+   * `meta` instead, so this is never the only carrier.
+   */
+  mark?: CompetitionMarkKind | null;
   /** Already formatted in the reader's zone and clock. `--:--` when TBD. */
   kickoffLabel: string;
   /** "SAT 5 SEP" — the reader's own day. */
@@ -85,6 +101,7 @@ export function NextUpCard({
   kickoffUtc,
   kickoffTbd,
   meta,
+  mark = null,
   kickoffLabel,
   dateLabel,
   zoneLabel,
@@ -206,6 +223,12 @@ export function NextUpCard({
             {zoneLabel}
           </Text>
         </View>
+        {/* The competition's lockup on the row's empty right end, white and
+            sized against the kickoff time — Ed's spot (ADR 0133). The meta
+            block's `flex: 1` is what pushes it to the edge. */}
+        {mark ? (
+          <CompetitionMark kind={mark} height={Size.competitionMarkLg} color="text" />
+        ) : null}
       </View>
 
       <View style={styles.rule} />
