@@ -1,7 +1,7 @@
 # 0041 — App icon 1b: three opaque appearance masters, and a splash asset of its own
 
 - **Date:** 2026-08-26
-- **Status:** Accepted — icon bytes superseded by [0060](./0060-app-icon-1a-floodlight.md); the splash arrangement stands
+- **Status:** Accepted — icon bytes superseded by [0060](./0060-app-icon-1a-floodlight.md); the splash arrangement partially superseded by [0134](./0134-animated-splash-overlay.md) (the lockup PNG and `imageWidth` retire behind an animated JS overlay on a bare ground; the `preventAutoHideAsync` hold and its `.catch`es stand)
 - **Decided by:** Ed Medina
 
 ## Context

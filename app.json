@@ -40,14 +40,26 @@
     "plugins": [
       "expo-router",
       [
-        "expo-splash-screen",
+        "./plugins/with-splash-storyboard-fix",
         {
-          "backgroundColor": "#0a0b0c",
-          "image": "./assets/images/splash-lockup.png",
-          "imageWidth": 300
+          "backgroundColor": "#08090a"
         }
       ],
-      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#08090a"
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Archivo-Black.ttf",
+            "./assets/fonts/Archivo-ExtraBold.ttf"
+          ]
+        }
+      ],
       "expo-localization",
       "@bacons/apple-targets",
       [

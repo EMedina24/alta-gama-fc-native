@@ -34,14 +34,17 @@ export interface WashGradientProps {
    * `diagonal`: top-left → bottom-right. `vertical`: top → bottom.
    * `pair`: the 0087 two-club wash line — near-horizontal with a slight fall,
    * the mock's 100° drawn across a card-shaped box (`ClubWash2`).
+   * `splash`: the launch sheet's near-vertical line with a slight rightward
+   * lean, the handoff's 168° (ADR 0134) — `pair`'s treatment of a CSS angle.
    */
-  angle: 'diagonal' | 'vertical' | 'pair';
+  angle: 'diagonal' | 'vertical' | 'pair' | 'splash';
 }
 
 const VECTOR = {
   diagonal: { x1: '0', y1: '0', x2: '1', y2: '1' },
   vertical: { x1: '0', y1: '0', x2: '0', y2: '1' },
   pair: { x1: '0', y1: '0.42', x2: '1', y2: '0.58' },
+  splash: { x1: '0.396', y1: '0.011', x2: '0.604', y2: '0.989' },
 } as const;
 
 export function WashGradient({ stops, angle }: WashGradientProps) {

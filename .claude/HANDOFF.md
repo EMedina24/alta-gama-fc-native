@@ -1134,11 +1134,66 @@ documented at the code that handles them; this is the index.
     flag, because fast refresh resets the module without re-running whoever
     hydrates it.
 
+62. **⚠ `expo-splash-screen` with NO `image` generates a BROKEN storyboard.**
+    The plugin's no-image path (`removeImageFromSplashScreen`) prunes the
+    image view but (1) never applies `backgroundColor` to the storyboard —
+    the container keeps the bare template's `systemBackgroundColor`, which
+    renders **#000000** in this dark-mode app while the generated
+    `SplashScreenBackground.colorset` sits referenced by NOTHING; (2) misses
+    the image view's two centre constraints (it looks them up by sha1-derived
+    ids, the template's are literal ids), leaving them dangling; (3) misses
+    the `SplashScreenLogo` resource at index 0 (`existingImageIndex && …`, a
+    falsy-zero bug). ibtool compiles the dangling refs, so only the colour is
+    visible — `plugins/with-splash-storyboard-fix.js` repairs all three
+    (ADR 0134). ⚠ It must sit BEFORE `expo-splash-screen` in `app.json`'s
+    plugins array — the storyboard base-mod provider must be the last mod
+    added — and its `backgroundColor` prop must be kept equal to the splash
+    entry's (plugin props are invisible to sibling plugins, so the value is
+    passed twice, adjacently, on purpose). Verify after any prebuild: the
+    storyboard's `<color … name="SplashScreenBackground"/>` line.
+
+63. **⚠ Reanimated SKIPS `withTiming`/`withDelay` when the system Reduce
+    Motion switch is on** — the default `reduceMotion: ReduceMotion.System`
+    makes the value JUMP to its destination. An animation that IS the reduced
+    accommodation (the splash's hold + cross-fade — any fade you play
+    *because* RM is on) silently never plays: the splash overlay unmounted on
+    its first frame (seen on simulator, 2026-09-07). Pass
+    `ReduceMotion.Never` in those configs — on the `withDelay` wrapper too,
+    or the delay alone is skipped. `useReducedMotion()` still reports the
+    switch; it is the *animations* that self-disable.
+
+64. **⚠⚠ An `Animated.View` ancestor with opacity/transform KILLS the native
+    tab bar's liquid-glass rail.** The splash's board fade-up first shipped
+    as a wrapper around the root `Stack` (opacity 0→1, scale 1.035→1) — and
+    `NativeTabs`, mounting under that animated ancestor, came up CHROMELESS:
+    items floating bare on the content, no rail capsule, no blur — and it
+    never recovers, because the material attaches at mount. Ed caught it
+    ("the main nav dock/rail is missing", 2026-09-07); removing the wrapper
+    restored the rail on the next launch. The subtle tell that it's THIS and
+    not a styling change: the SELECTED item's plate still renders (it is
+    re-created on selection), only the rail is gone. Same family as the
+    Glide/lens findings: glass + RN transforms/opacity do not mix — animate
+    an overlay ABOVE the app, never the app's own subtree.
+
 ---
 
 ## Where things stand
 
 ### Done and verified
+- **The animated launch splash** ([0134](./decisions/0134-animated-splash-overlay.md)):
+  design's 2500ms cycle (`handoff_splashscreen/SPLASH.md`) as
+  `templates/splash-overlay.tsx` over a bare `#08090a` native ground — strike,
+  sweep (`mixBlendMode: overlay`, verified brightening the lime, `SWEEP_BLEND`
+  stays true), Archivo lockup with the live tracking animation, sheet collapse
+  into the crown, status-bar flip at the collapse. Frame-stepped from
+  `simctl recordVideo` on the iPhone 17 Pro sim; Reduce Motion variant
+  verified the same way (hold → cross-fade, dark bar from frame 1).
+  ⚠ Archivo 800/900 are the app's ONLY custom fonts, splash-only (0131
+  exception). ⚠ The Stack beneath the overlay is NOT animated — the first cut
+  wrapped it for the spec's board fade and the tab dock's glass rail died
+  (trap 64). ⚠ Iterate on `/_debug/splash` (Replay + RM buttons), never
+  through cold launches — and remember traps 31 (any `app.json` change) and
+  62–64 below.
 - **Starting XI portraits on the pitch and the rail** ([0072](./decisions/0072-xi-portraits-on-the-board.md)):
   number badge on the corner, number token for a null or failed photo.
   `/_debug/xi` breaks two portraits on purpose.

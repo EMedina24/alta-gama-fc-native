@@ -2,10 +2,12 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments, type NativeStackNavigationOptions } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SplashOverlay } from '@/components/templates/splash-overlay';
 import { Colors } from '@/constants/theme';
 import { AUTH_REQUIRED } from '@/features/auth/capability';
 import { usePushSync } from '@/features/push/use-push-sync';
@@ -22,7 +24,11 @@ import { hydrateStartingXi } from '@/store/starting-xi';
 // rejects harmlessly when the splash is already gone, which happens on every Fast
 // Refresh, and an unhandled rejection surfaces as a red box in dev.
 SplashScreen.preventAutoHideAsync().catch(() => {});
-SplashScreen.setOptions({ fade: true, duration: 250 });
+// ⚠ 120, not the old 250: the fade is now BLACK-OVER-BLACK — the bare native
+// `Splash.base` ground dissolving onto the overlay's identical first frame —
+// so it exists only to mask the first JS commit, and it must be fully gone
+// before the overlay's 190ms strike-in or it dims the strike (ADR 0134).
+SplashScreen.setOptions({ fade: true, duration: 120 });
 
 // ⚠ A deep link must land ON TOP of the tab shell, never instead of it. The
 // widgets' `altagamafc://club/{slug}` on a COLD launch is resolved by the
@@ -65,6 +71,22 @@ export default function RootLayout() {
   // keeps firing while the app is suspended, waking to spend requests nobody is
   // waiting on.
   useEffect(watchAppStateForRefresh, []);
+
+  // The animated splash (ADR 0134). The overlay mounts over the Stack in the
+  // same commit `hideAsync` fires in — its timeline's t = 0 — plays the 2500ms
+  // handoff cycle, and unmounts from its final timing's completion callback.
+  //
+  // ⚠ Component state, NOT module state (trap 61): Fast Refresh preserves
+  // `useState`, so a mid-session edit neither replays the splash over a live
+  // screen nor strands a blank overlay; a full reload replays it, correctly.
+  //
+  // ⚠ The Stack is NOT wrapped or animated (trap 64): an `Animated.View`
+  // ancestor with opacity/transform kills the native tab bar's liquid-glass
+  // rail as `NativeTabs` mounts under it — the dock came up chromeless. The
+  // Board's reveal is the overlay's own base-black dissolve.
+  const [splashDone, setSplashDone] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const markSplashDone = useCallback(() => setSplashDone(true), []);
 
   if (!ready) return null;
 
@@ -128,6 +150,11 @@ export default function RootLayout() {
           />
           <Stack.Screen name="(sheets)/xi-export" options={{ ...sheet, sheetAllowedDetents: [1] }} />
         </Stack>
+        {/* Rendered AFTER the Stack: topmost sibling (it eats every touch until
+            it leaves), and the last-mounted status bar entry, so its light bar
+            wins while it lives. It plays for EVERY cold launch — onboarding and
+            deep links included; the collapse reveals whatever is beneath. */}
+        {!splashDone && <SplashOverlay reduceMotion={reduceMotion} onDone={markSplashDone} />}
       </QueryClientProvider>
     </SafeAreaProvider>
     </GestureHandlerRootView>

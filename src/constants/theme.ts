@@ -534,6 +534,109 @@ export const DeckGround = [
   { offset: 1, color: '#132523', opacity: 1 },
 ] as const;
 
+/**
+ * The LAUNCH SPLASH (ADR 0134) — design's handoff in `handoff_splashscreen/`,
+ * transcribed value-for-value. `SPLASH.md` there is the source of truth; the
+ * reference HTML refines it (the 190ms strike rise, the soft sweep gradient,
+ * the base black dissolving under the collapse) and those refinements are
+ * carried here too.
+ *
+ * The TIMELINE (`t`) lives HERE, not on `Motion`, for `Deck.spring`'s reason:
+ * `Motion` is a vocabulary of reusable durations, and these sixteen numbers
+ * are one feature's choreography — no other animation may read them.
+ *
+ * ⚠ Gradients are `WashStop`s: translucency travels as `opacity`, never an
+ * `rgba()` stop colour (trap 42 — the glow WILL paint as an opaque lime disc
+ * otherwise).
+ *
+ * ⚠ `type` families are iOS POSTSCRIPT names, verified against the shipped
+ * TTFs' name tables — a wrong name silently renders SF Pro, not an error.
+ * Archivo 800/900 is the app's ONLY custom face, a splash-only exception to
+ * 0131's one-display-voice rule.
+ *
+ * Geometry rule: `mark.top` is a FRACTION of the window height (the mock's
+ * 318/852), so the lockup block anchors optically on an SE and a Pro Max
+ * alike — but `wordOffset`/`subOffset` are FIXED points below that anchor,
+ * so the lockup itself never stretches apart on a tall screen.
+ */
+export const Splash = {
+  /** The ground under everything — darker than `tabBar`, per the spec. */
+  base: '#08090a',
+  /** The lime sheet, the spec's 168° linear ramp. */
+  sheet: [
+    { offset: 0, color: '#d6f96a', opacity: 1 },
+    { offset: 0.36, color: '#c8f25a', opacity: 1 },
+    { offset: 1, color: '#9bd96b', opacity: 1 },
+  ],
+  /**
+   * The strike bloom behind the mark. The spec's 14pt blur has no cheap RN
+   * equivalent; the extra mid-stop (0.45 / 0.30) fakes the softened falloff
+   * (deviation recorded in 0134).
+   */
+  glowStops: [
+    { offset: 0, color: '#c8f25a', opacity: 0.55 },
+    { offset: 0.45, color: '#c8f25a', opacity: 0.3 },
+    { offset: 0.7, color: '#c8f25a', opacity: 0 },
+  ],
+  glowSize: 440,
+  /**
+   * The white sweep bar: 46% of the screen wide, skewed, travelling as
+   * factors of its own width. `coreOpacity` is the gradient's centre stop
+   * under `mix-blend-mode: overlay`; `fallbackOpacity` is the plain-sheen
+   * strength if the blend has to be abandoned (`SWEEP_BLEND` in the overlay).
+   */
+  sweep: {
+    color: '#ffffff',
+    widthFrac: 0.46,
+    skewDeg: -14,
+    /** Where the bar's bright core sits in its own gradient. */
+    coreAt: 0.52,
+    coreOpacity: 0.85,
+    fallbackOpacity: 0.28,
+    travelFrom: -1.5,
+    travelTo: 1.6,
+  },
+  /** 132×94 from the 42×30 viewBox, stroke 2.5 — the `Mark` atom renders it. */
+  mark: { width: 132, stroke: 2.5, top: 318 / 852 },
+  /** Wordmark / sub-line baselines, points below the mark's top anchor. */
+  wordOffset: 122,
+  subOffset: 168,
+  type: {
+    /** `ALTA GAMA FC` — tracking animates .2em → -.02em of 34pt. */
+    word: { family: 'Archivo-Black', size: 34, trackFrom: 6.8, trackTo: -0.68 },
+    /** `FIXTURE CLUB` — static .32em of 11pt. Ink is `onCrownDim` (0.62 vs the spec's .6 — reuse, 0134). */
+    sub: { family: 'Archivo-ExtraBold', size: 11, track: 3.52 },
+  },
+  /** Milliseconds from overlay mount. Names follow the spec's beats. */
+  t: {
+    strikeStart: 190,
+    strikeLand: 240,
+    dip: 300,
+    recover: 380,
+    glowEnd: 610,
+    sweepStart: 560,
+    sweepEnd: 1240,
+    limeOutStart: 1140,
+    lockupIn: 1140,
+    lockupLand: 1400,
+    subIn: 1220,
+    subLand: 1460,
+    out: 2050,
+    outEnd: 2300,
+    end: 2500,
+    /** The Reduce Motion variant's hold on the full-lime lockup frame. */
+    rmHold: 600,
+  },
+  /** The spec's cubic-beziers, as `Easing.bezier` tuples. */
+  ease: {
+    strike: [0.16, 0.9, 0.3, 1],
+    sweep: [0.5, 0, 0.2, 1],
+    sheet: [0.62, 0, 0.2, 1],
+    lockup: [0.22, 0.9, 0.2, 1],
+    baseOut: [0.4, 0, 0.2, 1],
+  },
+} as const;
+
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */
 export const Spacing = {
   half: 2, one: 4, two: 8, three: 12, four: 16, five: 20, six: 24, seven: 32, eight: 44,
