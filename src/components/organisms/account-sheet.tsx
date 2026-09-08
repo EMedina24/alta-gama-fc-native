@@ -54,7 +54,7 @@
  */
 import * as Clipboard from 'expo-clipboard';
 import { type ReactNode, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeInDown,
   LinearTransition,
@@ -108,6 +108,12 @@ export interface AccountSheetProps {
    * reader's clock; this organism only prints it.
    */
   alertsNote: string;
+  /**
+   * Present when the note is an INSTRUCTION rather than a report (ADR 0136):
+   * the no-permission line, whose tap spends the unspent prompt or opens
+   * Settings. The route decides which; this organism only makes it pressable.
+   */
+  onAlertsNotePress?: () => void;
   alerts: {
     reminder: boolean;
     moved: boolean;
@@ -208,6 +214,7 @@ export function AccountSheet({
   clock,
   zoneLabel,
   alertsNote,
+  onAlertsNotePress,
   alerts,
   feeds,
   onSetAlert,
@@ -343,10 +350,24 @@ export function AccountSheet({
             </Row>
           </Animated.View>
 
-          {/* ⚠ ADR 0079. Stays directly under the switches — see the header. */}
-          <Text variant="footnote" color="textFaint">
-            {alertsNote}
-          </Text>
+          {/* ⚠ ADR 0079. Stays directly under the switches — see the header.
+              Pressable only when the route sent a handler (the no-permission
+              instruction, ADR 0136); the three report lines stay plain text. */}
+          {onAlertsNotePress ? (
+            <Pressable
+              onPress={onAlertsNotePress}
+              accessibilityRole="button"
+              accessibilityLabel={alertsNote}
+              hitSlop={8}>
+              <Text variant="footnote" color="textFaint">
+                {alertsNote}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text variant="footnote" color="textFaint">
+              {alertsNote}
+            </Text>
+          )}
         </View>
       </Rise>
 

@@ -83,19 +83,49 @@ export async function requestPushPermission(): Promise<PermissionOutcome> {
  * talks to APNs directly with its own p8 key and validates a 64-hex string; an
  * Expo push token is a different thing entirely and is a 400 there.
  *
- * ⚠ Returns null rather than throwing on a simulator or without permission — the
- * caller treats "no token" as "nothing to register", which is the truth.
+ * ⚠⚠ **NOT gated on notification permission, since ADR 0136.** iOS issues the
+ * APNs device token regardless of the banner permission — the permission gates
+ * what a push may SHOW, not whether the device can register. The old
+ * `getPermissionsAsync().granted` check here silently killed the ENTIRE
+ * registration for a reader who tapped "Not now": the push-to-start token never
+ * left the phone, so the Live Activity — which needs no banner permission at
+ * all — could never start. That was the shipped "card never appears / never
+ * updates" report. Banner honesty is the account sheet's job now
+ * (`use-push-permission`), not this function's.
+ *
+ * ⚠ Returns null rather than throwing on a simulator — the caller treats
+ * "no token" as "nothing to register", which is the truth.
  */
 export async function getDeviceToken(): Promise<string | null> {
   if (!Device.isDevice) return null;
   try {
-    const { granted } = await Notifications.getPermissionsAsync();
-    if (!granted) return null;
     const token = await Notifications.getDevicePushTokenAsync();
     return typeof token.data === 'string' ? token.data : null;
   } catch {
     // No entitlement, no network at registration time, or a simulator.
     return null;
+  }
+}
+
+export type PermissionState = 'granted' | 'undetermined' | 'denied';
+
+/**
+ * Where the banner permission stands, for the truthful footnote and the
+ * prompt-or-Settings routing (ADR 0136).
+ *
+ * ⚠ Distinct from `requestPushPermission` — this never prompts. `undetermined`
+ * means the one system prompt is still unspent; `denied` means it was spent (or
+ * revoked in Settings) and only Settings can turn it back on.
+ */
+export async function getPermissionState(): Promise<PermissionState> {
+  try {
+    const existing = await Notifications.getPermissionsAsync();
+    if (existing.granted) return 'granted';
+    return existing.canAskAgain ? 'undetermined' : 'denied';
+  } catch {
+    // No notification infrastructure at all — treat as unspent; a later
+    // request answers `unavailable` and nothing is lost.
+    return 'undetermined';
   }
 }
 

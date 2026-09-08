@@ -6,7 +6,9 @@ import { Linking } from 'react-native';
 import { AccountSheet, type AccountFeed } from '@/components/organisms/account-sheet';
 import { AUTH_AVAILABLE } from '@/features/auth/capability';
 import { useIdentityInitials } from '@/features/auth/use-identity';
+import { requestPushPermission } from '@/features/push/capability';
 import { disablePushForDevice } from '@/features/push/sync';
+import { usePushPermission } from '@/features/push/use-push-permission';
 import { deleteAccount, NotSignedInError } from '@/lib/cronogol/account';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import { clubFeedUrl } from '@/lib/cronogol/feed';
@@ -47,12 +49,58 @@ export default function AccountSheetRoute() {
    * — the time is the reader's own, in their chosen format, like every kickoff.
    */
   const syncStatus = usePushSyncStatus();
-  const alertsNote =
-    syncStatus.at === null
+
+  /**
+   * ⚠⚠ **The no-permission line OUTRANKS the sync report (ADR 0136).** The
+   * registration lands without the banner permission now, so "saved · 14:32"
+   * can be true while iOS will never show a banner — and green switches over a
+   * reassuring line was exactly the shipped dishonesty. Banner switches only:
+   * the goals switch's Live Activity needs no permission and stays truthful.
+   * `'unknown'` (the first async beat) renders the ordinary report — never
+   * flash the warning at readers who granted.
+   */
+  const permission = usePushPermission();
+  const bannerAlertsOn = prefs.alertReminder || prefs.alertMoved || prefs.alertPostponed;
+  const permissionMissing =
+    bannerAlertsOn && (permission === 'undetermined' || permission === 'denied');
+
+  const alertsNote = permissionMissing
+    ? copy.sheets.alertsNoPermission
+    : syncStatus.at === null
       ? copy.sheets.alertsPendingNote
       : syncStatus.ok
         ? copy.sheets.alertsSynced(formatKickoffTime(syncStatus.at, zone, prefs.clock))
         : copy.sheets.alertsSyncFailed;
+
+  /**
+   * The note's tap: the unspent prompt, or Settings once it was spent
+   * (`requestPushPermission` itself routes a denied state to "no re-prompt", so
+   * the split here is which affordance is honest, not which API to call). The
+   * permission hook re-checks on foreground, which covers both round trips.
+   */
+  const onAlertsNotePress = permissionMissing
+    ? () => {
+        if (permission === 'undetermined') void requestPushPermission();
+        else void Linking.openSettings();
+      }
+    : undefined;
+
+  /**
+   * ⚠ Flipping a BANNER switch on while the one system prompt is unspent asks
+   * right there — this is the "real prompt later" the onboarding primer's
+   * `Not now` deliberately left room for (ADR 0024; completed by 0136). A fresh
+   * denial mirrors onboarding's honesty rule and turns the switch back off. An
+   * already-denied state does not ask (iOS would not re-prompt) — the note
+   * above is the Settings doorway. `alertGoals` never prompts: cards deliver
+   * without the permission (Ed's call, 0136).
+   */
+  const handleSetAlert: typeof setAlert = (key, value) => {
+    setAlert(key, value);
+    if (!value || key === 'alertGoals' || permission !== 'undetermined') return;
+    void requestPushPermission().then((outcome) => {
+      if (outcome === 'denied') setAlert(key, false);
+    });
+  };
 
   /**
    * ⚠ Derived from the local follow list, not `GET /cronogol/me/feeds` — even
@@ -87,6 +135,7 @@ export default function AccountSheetRoute() {
       clock={prefs.clock}
       zoneLabel={zoneLabel(zone, locale)}
       alertsNote={alertsNote}
+      onAlertsNotePress={onAlertsNotePress}
       alerts={{
         reminder: prefs.alertReminder,
         moved: prefs.alertMoved,
@@ -95,7 +144,7 @@ export default function AccountSheetRoute() {
         leads: prefs.reminderLeads,
       }}
       feeds={feeds}
-      onSetAlert={setAlert}
+      onSetAlert={handleSetAlert}
       onSetReminderLead={setReminderLead}
       onSetLanguage={setLanguage}
       onSetClock={setClock}

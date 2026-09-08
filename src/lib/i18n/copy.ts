@@ -250,6 +250,15 @@ export interface Copy {
     alertsSynced: (time: string) => string;
     /** The last attempt did not land. It retries on the next change or launch. */
     alertsSyncFailed: string;
+    /**
+     * Banner switches are on but iOS notification permission is not granted
+     * (ADR 0136). Outranks the three notes above — a "saved" line under
+     * switches whose banners can never show is the dishonesty ADR 0079 exists
+     * to prevent. Rendered as a pressable: the unspent prompt, or Settings.
+     * ⚠ Banners only — the goals switch's Live Activity needs no permission
+     * and stays truthful without it.
+     */
+    alertsNoPermission: string;
   };
   today: {
     title: string;
@@ -812,6 +821,8 @@ export const esCopy: Copy = {
     alertsSynced: (time: string) => `Ajustes de avisos guardados · ${time}`,
     alertsSyncFailed:
       'No se pudieron guardar los ajustes de avisos. Se reintentará al cambiar algo o al volver a abrir la app.',
+    alertsNoPermission:
+      'Las notificaciones están desactivadas para esta app, así que estos avisos no pueden mostrarse. Toca aquí para activarlas.',
   },
 
   today: {
@@ -1243,6 +1254,8 @@ export const enCopy: Copy = {
     alertsSynced: (time: string) => `Alert settings saved · ${time}`,
     alertsSyncFailed:
       'Alert settings could not be saved. They will be retried the next time something changes or the app opens.',
+    alertsNoPermission:
+      'Notifications are off for this app, so these alerts cannot show. Tap here to turn them on.',
   },
 
   today: {

@@ -22,9 +22,16 @@ sections) and wins on any disagreement.
 `PUT https://crono-gol.com/cronogol/push/device` — an **idempotent wholesale
 replace** keyed on the APNs token. Call it:
 
-1. after the user grants notification permission (which the onboarding asks
-   **after** the alert primer, never on cold launch — handoff §3.7);
-2. on every app launch (tokens rotate on restore/reinstall);
+1. ~~after the user grants notification permission~~ — **decoupled by
+   [0136](./decisions/0136-registration-outlives-the-permission-gate.md)
+   (2026-09-08): registration does NOT wait for the permission.** iOS issues
+   the APNs token regardless, and the old gate silently kept a "Not now"
+   reader's push-to-start token off the server, so their Live Activity — which
+   needs no banner permission — could never start. The prompt is still asked
+   **after** the alert primer, never on cold launch (handoff §3.7), and now
+   also from the account sheet's banner switches;
+2. on every app launch (tokens rotate on restore/reinstall), and on every
+   foreground while no registration has ever landed;
 3. on every follow/unfollow and every alert-switch change (send the full
    current state each time — there is no PATCH).
 

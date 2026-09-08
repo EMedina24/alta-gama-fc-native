@@ -22,6 +22,12 @@ import WidgetKit
 /// `AsyncImage` (no network in this process), and loads `Image("goal-glyph")`
 /// from an asset catalog no target has. The geometry and colour are its; the
 /// mechanisms are this repo's.
+///
+/// ⚠ **The card's pieces are `internal`, not `private`, and that is load-bearing
+/// for the layout gate.** `scripts/activity-harness.swift` compiles this exact
+/// file into a measurement jig and renders the card across every real device
+/// width (ADR 0135) — a `private` here is a piece the gate cannot see. Inside
+/// the extension binary the two spellings are identical.
 @available(iOS 18.0, *)
 struct MatchActivity: Widget {
   var body: some WidgetConfiguration {
@@ -95,7 +101,7 @@ struct MatchActivity: Widget {
 /// is why `LiveMatchState` documents absent-is-not-zero — reading the score to
 /// decide the layout draws every pre-match card as a goalless draw.
 @available(iOS 18.0, *)
-private struct LockScreenCard: View {
+struct LockScreenCard: View {
   let attributes: MatchAttributes
   let state: MatchAttributes.ContentState
 
@@ -118,6 +124,11 @@ private struct LockScreenCard: View {
     .padding(EdgeInsets(top: 13, leading: 16, bottom: 15, trailing: 16))
     .frame(maxWidth: .infinity)
     .background(floodlights)
+    // ⚠ Every font on this card is a fixed `.system(size:)`, which Dynamic Type
+    // does not scale — today this cap costs nothing. It is here so that any
+    // future system-styled text (or an OS that starts scaling activity text)
+    // cannot grow a card measured to 7pt of spare (ADR 0135).
+    .dynamicTypeSize(...DynamicTypeSize.large)
   }
 
   /// Two unequal lime radials from the top corners over a deep green pool, with
@@ -215,39 +226,69 @@ private struct LockScreenCard: View {
 
   // MARK: the fixture row
 
+  /// ⚠⚠ **A `GeometryReader`, because the row must know how wide the card
+  /// actually is (ADR 0135).** The fixed cost of crests, gaps and padding does
+  /// not shrink with a Display-Zoomed screen; below `Geometry.compactBelow` the
+  /// row switches to the compact tier rather than handing the loss to the two
+  /// flexible abbreviation columns. A reader is the one width probe an ARCHIVED
+  /// activity render honours — `@State` written from a measurement never
+  /// re-renders there. It is greedy, so the height is pinned from the same font
+  /// metrics the row draws with (`Geometry.fixtureHeight`); the compact tier is
+  /// shorter and centres inside the regular pin, keeping the card's height
+  /// identical across tiers.
   private var fixture: some View {
-    HStack(spacing: 10) {
-      crest("home", attributes.homeAbbr)
-      side(
-        abbr: attributes.homeAbbr,
-        tag: attributes.homeTag,
-        record: attributes.homeRecord,
-        pts: attributes.homePts,
-        dimmed: false
-      )
-      centre
-      side(
-        abbr: attributes.awayAbbr,
-        tag: attributes.awayTag,
-        record: attributes.awayRecord,
-        pts: attributes.awayPts,
-        // ⚠ The away ABBREVIATION dims only while live, matching the away score
-        // beside it. Before kick-off neither side is behind.
-        dimmed: isLive
-      )
-      crest("away", attributes.awayAbbr)
+    GeometryReader { geo in
+      let m = Geometry.metrics(for: geo.size.width)
+      HStack(spacing: m.gap) {
+        crest("home", attributes.homeAbbr, m)
+        side(
+          abbr: attributes.homeAbbr,
+          tag: attributes.homeTag,
+          record: attributes.homeRecord,
+          pts: attributes.homePts,
+          dimmed: false,
+          metrics: m
+        )
+        centre(m)
+        side(
+          abbr: attributes.awayAbbr,
+          tag: attributes.awayTag,
+          record: attributes.awayRecord,
+          pts: attributes.awayPts,
+          // ⚠ The away ABBREVIATION dims only while live, matching the away score
+          // beside it. Before kick-off neither side is behind.
+          dimmed: isLive,
+          metrics: m
+        )
+        crest("away", attributes.awayAbbr, m)
+      }
+      .frame(width: geo.size.width, height: geo.size.height)
     }
+    .frame(height: Geometry.fixtureHeight(metaLines: metaLines))
+  }
+
+  /// What is actually drawn under the abbreviations, for the row's height pin.
+  /// The taller side wins — the server can null one club's record and not the
+  /// other's.
+  private var metaLines: Int {
+    if isLive {
+      return (attributes.homeTag != nil || attributes.awayTag != nil) ? 1 : 0
+    }
+    let record = attributes.homeRecord != nil || attributes.awayRecord != nil
+    let pts = attributes.ptsLabel != nil
+      && (attributes.homePts != nil || attributes.awayPts != nil)
+    return (record ? 1 : 0) + (record && pts ? 1 : 0)
   }
 
   /// ⚠ `showsAbbr: false` — this row already prints the abbreviation at 30pt,
   /// and the fallback tile printing it too is the `ATH ATH` doubling logged in
   /// HANDOFF item 5.
-  private func crest(_ slot: String, _ abbr: String) -> some View {
+  private func crest(_ slot: String, _ abbr: String, _ m: Geometry.Metrics) -> some View {
     CrestView(
       fixtureId: attributes.fixtureId,
       slot: slot,
       abbr: abbr,
-      size: Geometry.crest,
+      size: m.crest,
       showsAbbr: false
     )
   }
@@ -261,21 +302,34 @@ private struct LockScreenCard: View {
     tag: String?,
     record: String?,
     pts: Int?,
-    dimmed: Bool
+    dimmed: Bool,
+    metrics m: Geometry.Metrics
   ) -> some View {
     VStack(spacing: 4) {
       Text(abbr)
-        .font(.system(size: 30, weight: .heavy))
-        .kerning(-0.6)
+        .font(.system(size: m.abbr, weight: .heavy))
+        .kerning(Geometry.abbrKern)
         .foregroundStyle(dimmed ? Tok.ink78 : Tok.ink)
         .lineLimit(1)
-        .minimumScaleFactor(0.8)
+        // ⚠ 0.5, from 0085's 0.8 — measured, not chosen (ADR 0135). At 351pt of
+        // Display-Zoomed card a two-digit score leaves each column 35pt against
+        // a 69pt ideal; 0.8 rescued nothing and the code truncated to `R…`. A
+        // small club code is merely small — a truncated one is wrong.
+        .minimumScaleFactor(Geometry.abbrFloor)
+        .allowsTightening(true)
+        // ⚠ The bleed for the kern's painted overdraw — see `Geometry.abbrKern`.
+        .padding(.horizontal, Geometry.kernBleed)
 
       if isLive {
         if let tag {
           Text(tag)
             .font(.system(size: 11.5, weight: .medium))
             .foregroundStyle(Tok.ink60)
+            // ⚠ Without the line limit, `VISITA` WRAPS in a compressed column —
+            // measured at 180.5pt of card against the 160 cap (ADR 0135), and
+            // what falls off the bottom is the clock bar.
+            .lineLimit(1)
+            .minimumScaleFactor(Geometry.metaFloor)
         }
       } else if let record {
         // ⚠ Absent rather than `0-0-0` when the standings view cannot answer —
@@ -284,11 +338,15 @@ private struct LockScreenCard: View {
           .font(.system(size: 11.5, weight: .medium))
           .monospacedDigit()
           .foregroundStyle(Tok.ink60)
+          .lineLimit(1)
+          .minimumScaleFactor(Geometry.metaFloor)
         if let pts, let label = attributes.ptsLabel {
           Text("\(pts) \(label)")
             .font(.system(size: 11.5, weight: .medium))
             .monospacedDigit()
             .foregroundStyle(Tok.ink60)
+            .lineLimit(1)
+            .minimumScaleFactor(Geometry.metaFloor)
         }
       }
     }
@@ -296,16 +354,25 @@ private struct LockScreenCard: View {
   }
 
   /// The score, or the mark over the kickoff time.
-  @ViewBuilder private var centre: some View {
+  ///
+  /// ⚠⚠ **`fixedSize` + `layoutPriority(1)`, and both are load-bearing (ADR
+  /// 0135).** The centre is all counts and clocks, and a compressed count clips
+  /// mid-glyph — the shipped "digits cut in half" bug was exactly this cluster
+  /// giving way first because it was the one primary text with no guard. Now it
+  /// never gives; the floored abbreviation columns absorb the loss, which is
+  /// what they are for.
+  @ViewBuilder private func centre(_ m: Geometry.Metrics) -> some View {
     if isLive {
-      HStack(spacing: 11) {
-        ScoreDigit(goals: state.homeGoals, dim: false)
-        Rectangle().fill(Tok.ink32).frame(width: 9, height: 1.5)
+      HStack(spacing: m.clusterGap) {
+        ScoreDigit(goals: state.homeGoals, dim: false, size: m.score)
+        Rectangle().fill(Tok.ink32).frame(width: m.divider, height: 1.5)
         // ⚠ The away digit at 58%. Unlike ADR 0044's `Score` atom this is NOT
         // "dim the loser" — it is a fixed side treatment, so the card reads the
         // same whoever is ahead.
-        ScoreDigit(goals: state.awayGoals, dim: true)
+        ScoreDigit(goals: state.awayGoals, dim: true, size: m.score)
       }
+      .fixedSize()
+      .layoutPriority(1)
     } else {
       VStack(spacing: 7) {
         // ⚠ `Mark`, the SwiftUI transcription — there is no asset catalog to
@@ -316,12 +383,18 @@ private struct LockScreenCard: View {
         // pre-formatted string. A clock time is the one thing on this card the
         // reader's own settings should decide — 15:30 against 3:30 PM — and it
         // is the one string that needs no language to be right.
+        //
+        // ⚠ No kern. It carried -0.4 until ADR 0135: negative kerning
+        // under-reports layout width against painted advance, and on a clock
+        // the clipped trailing digit is a wrong time.
         Text(attributes.kickoffUtc, style: .time)
           .font(.system(size: 21, weight: .semibold))
-          .kerning(-0.4)
           .monospacedDigit()
           .foregroundStyle(Tok.ink)
+          .lineLimit(1)
       }
+      .fixedSize()
+      .layoutPriority(1)
     }
   }
 
@@ -362,18 +435,104 @@ private struct LockScreenCard: View {
 /// these two gaps each lost 2pt, which lands the live card at 152.5pt with 7pt
 /// to spare. Pre-match measures 121pt and was never at risk.
 ///
-/// ⚠ **`crest` is NOT what gives.** The obvious trim — 46 → 40 — saves exactly
-/// nothing: the crest never binds the fixture row's height, because the
-/// abbreviation-and-tag column beside it is 53.5pt. Shrinking it costs design
-/// fidelity for no height at all, which is precisely the kind of thing measuring
-/// first is for.
+/// ⚠ **`crest` is NOT what gives** — *for height*. The obvious trim — 46 → 40 —
+/// saves exactly nothing there: the crest never binds the fixture row's height,
+/// because the abbreviation-and-tag column beside it is 53.5pt. Width is a
+/// different story, which is what the compact tier below is for.
+///
+/// ⚠⚠ **The card has a WIDTH story too, and it is measured, not guessed (ADR
+/// 0135).** ADR 0085's harness rendered one width — 369pt, a standard mid-size
+/// phone. A Display-Zoomed phone narrows the card to 351pt (mainstream) or
+/// 296pt (mini/SE class), and the fixture row's fixed cost does not narrow with
+/// it — the loss lands entirely on the two flexible abbreviation columns, which
+/// is the shipped `R…` / clipped-digit bug. `scripts/activity-harness.swift`
+/// renders every one of those widths and is the gate for any change here.
 @available(iOS 18.0, *)
-private enum Geometry {
+enum Geometry {
   static let crest: CGFloat = 46
   /// ⚠ 10, not the design's 12 — see above.
   static let stack: CGFloat = 10
   /// ⚠ 9, not the design's 11 — see above.
   static let bandTop: CGFloat = 9
+
+  // ---------------------------------------- width resilience (ADR 0135) --
+
+  /// One tier of the fixture row's sizes. Two exist; `metrics(for:)` picks.
+  struct Metrics {
+    let crest: CGFloat
+    /// The fixture row's gap — four of them across the row.
+    let gap: CGFloat
+    let abbr: CGFloat
+    let score: CGFloat
+    /// The score cluster's inner gap — two of them around the divider.
+    let clusterGap: CGFloat
+    let divider: CGFloat
+  }
+
+  /// The ADR 0085 sizes, untouched.
+  static let regular = Metrics(
+    crest: 46, gap: 10, abbr: 30, score: 34, clusterGap: 11, divider: 9)
+
+  /// The narrow-card tier: everything fixed gives a step so the abbreviations
+  /// keep readable scale. Chosen by measurement — at 296pt of card the regular
+  /// tier leaves each abbreviation column 4.5pt (ADR 0135's table).
+  static let compact = Metrics(
+    crest: 36, gap: 8, abbr: 26, score: 30, clusterGap: 8, divider: 7)
+
+  /// The tier threshold, in CONTENT width — the fixture row measures itself
+  /// inside the card's 32pt of horizontal padding. 320 content-pt ≈ a 352pt
+  /// card: every Display-Zoomed phone drops below it, every standard one stays
+  /// above. At the boundary the two tiers render the TYPICAL card (one-digit
+  /// score) at near-identical effective sizes, so there is no visible cliff.
+  static let compactBelow: CGFloat = 320
+
+  static func metrics(for contentWidth: CGFloat) -> Metrics {
+    contentWidth < compactBelow ? compact : regular
+  }
+
+  /// The abbreviation's kern, and the 1pt of bleed that pays for it. ⚠ Negative
+  /// kerning under-reports a `Text`'s layout width against its painted advance
+  /// — the trailing glyph draws past the frame and is clipped. The bleed padding
+  /// absorbs exactly that overdraw. Counts and clocks carry NO kern at all (ADR
+  /// 0135's rule: negative kerning never rides on a count or a clock).
+  static let abbrKern: CGFloat = -0.6
+  static let kernBleed: CGFloat = 1
+
+  /// How far `minimumScaleFactor` may take each text.
+  ///
+  /// ⚠⚠ **These are never-truncate VALVES, not targets.** SwiftUI scales only as
+  /// far as the width shortage demands, so on every real card the text draws far
+  /// above its floor — the harness asserts ≥0.75 effective scale on typical
+  /// content at every real device width. The floor only opens fully in the
+  /// measured corner (a 296pt zoomed-mini card carrying a two-digit score), and
+  /// there a small club code is merely small where a truncated one (`R…`) is
+  /// wrong. The harness reads these, so the gate and the card cannot drift.
+  static let abbrFloor: CGFloat = 0.4
+  static let metaFloor: CGFloat = 0.6
+  static let islandFloor: CGFloat = 0.7
+
+  // ⚠⚠ The fixture row sits in a `GeometryReader` (the only way an archived
+  // Live Activity can read its own width — `@State`-driven measurement never
+  // re-renders in that context), and a `GeometryReader` is greedy: without a
+  // pinned height it swallows the card. The pin is DERIVED, not hand-measured:
+  // the same UIFont metrics the row's own type resolves to, so a font-size
+  // change here moves the pin with it. Always the REGULAR tier's type — the
+  // compact row is shorter and simply centres, which keeps the card's height
+  // identical across tiers.
+
+  static func lineHeight(_ size: CGFloat, _ weight: UIFont.Weight) -> CGFloat {
+    UIFont.systemFont(ofSize: size, weight: weight).lineHeight.rounded(.up)
+  }
+
+  /// The abbreviation-and-meta column's height, from real font metrics.
+  /// `metaLines` is what the card is actually drawing under the abbreviation:
+  /// 1 for the live tag, up to 2 pre-match (record + points), 0 when the server
+  /// nulled them.
+  static func fixtureHeight(metaLines: Int) -> CGFloat {
+    let column = lineHeight(regular.abbr, .heavy)
+      + CGFloat(metaLines) * (4 + lineHeight(11.5, .medium))
+    return max(regular.crest, column)
+  }
 }
 
 // MARK: - Pieces
@@ -384,7 +543,7 @@ private enum Geometry {
 /// the other. Everything else on this card changes when a push arrives and not
 /// otherwise, which is the entire budget rule.
 @available(iOS 18.0, *)
-private struct LiveDot: View {
+struct LiveDot: View {
   @State private var dim = false
 
   var body: some View {
@@ -409,7 +568,7 @@ private struct LiveDot: View {
 /// the difference between `SAN MAMÉS · J4` and `SAN MAMÉS ·` on a fixture whose
 /// matchweek the ingest never wrote.
 @available(iOS 18.0, *)
-private struct Separated: View {
+struct Separated: View {
   let segments: [String?]
 
   var body: some View {
@@ -430,17 +589,24 @@ private struct Separated: View {
 }
 
 /// One side's goals. ⚠ `–` for "not reported", never 0.
+///
+/// ⚠ No kern. It carried -1 until ADR 0135: negative kerning under-reports a
+/// `Text`'s layout width against its painted advance, and this was the view
+/// whose trailing glyph shipped clipped in half. Between two digits of a score
+/// the tightening was invisible anyway.
 @available(iOS 18.0, *)
-private struct ScoreDigit: View {
+struct ScoreDigit: View {
   let goals: Int?
   let dim: Bool
+  /// From the fixture row's tier — `Geometry.regular.score` or the compact step.
+  let size: CGFloat
 
   var body: some View {
     Text(goals.map(String.init) ?? "–")
-      .font(.system(size: 34, weight: .bold))
-      .kerning(-1)
+      .font(.system(size: size, weight: .bold))
       .monospacedDigit()
       .foregroundStyle(dim ? Tok.ink58 : Tok.ink)
+      .lineLimit(1)
   }
 }
 
@@ -460,7 +626,7 @@ private struct ScoreDigit: View {
 /// ⚠ The server names the first scorer and counts the rest; this view never
 /// slices. See `ACTIVITY_SCORER_LIMIT`.
 @available(iOS 18.0, *)
-private struct ScorerColumn: View {
+struct ScorerColumn: View {
   let scorers: [MatchAttributes.Scorer]
   let more: Int?
   let cards: MatchAttributes.Discipline?
@@ -537,7 +703,7 @@ private struct ScorerColumn: View {
 /// own goal, already marked; the minute arrived in football notation. See
 /// `MatchAttributes.Scorer` for why the widget cannot do either itself.
 @available(iOS 18.0, *)
-private struct ScorerLabel: View {
+struct ScorerLabel: View {
   let scorer: MatchAttributes.Scorer
   let trailing: Bool
 
@@ -562,7 +728,7 @@ private struct ScorerLabel: View {
 
 /// Yellow in amber, a red in coral, count-first on the away side.
 @available(iOS 18.0, *)
-private struct DisciplinePills: View {
+struct DisciplinePills: View {
   let cards: MatchAttributes.Discipline
   let trailing: Bool
 
@@ -611,7 +777,7 @@ private struct DisciplinePills: View {
 /// claim that play is happening. The bar then freezes rather than disappearing —
 /// a card whose foot vanishes at the break looks broken.
 @available(iOS 18.0, *)
-private struct ClockBar: View {
+struct ClockBar: View {
   let state: MatchAttributes.ContentState
 
   var body: some View {
@@ -646,7 +812,7 @@ private struct ClockBar: View {
 /// treatment and unlike the app's `Score` atom (ADR 0044). The island is glanced
 /// at from a metre away and no dim tier survives that.
 @available(iOS 18.0, *)
-private struct IslandSide: View {
+struct IslandSide: View {
   let fixtureId: String
   let slot: String
   let abbr: String
@@ -665,16 +831,23 @@ private struct IslandSide: View {
       Text(abbr)
         .font(Tok.micro(12))
         .foregroundStyle(Tok.ink78)
+        .lineLimit(1)
+        .minimumScaleFactor(Geometry.metaFloor)
+      // ⚠ The count wins over the abbreviation — the same rule the scorer band
+      // records: a scaled club code is merely smaller, a clipped count is wrong.
       Text(goals.map(String.init) ?? "–")
         .font(Tok.numerals(20, .bold))
         .foregroundStyle(Tok.ink)
+        .lineLimit(1)
+        .layoutPriority(1)
     }
+    .dynamicTypeSize(...DynamicTypeSize.large)
   }
 }
 
 /// `1–0`, for the two Dynamic Island slots that have room for nothing else.
 @available(iOS 18.0, *)
-private struct ScoreLine: View {
+struct ScoreLine: View {
   let state: MatchAttributes.ContentState
   let size: CGFloat
 
@@ -682,6 +855,12 @@ private struct ScoreLine: View {
     Text("\(state.homeGoals.map(String.init) ?? "–")–\(state.awayGoals.map(String.init) ?? "–")")
       .font(Tok.numerals(size, .bold))
       .foregroundStyle(Tok.ink)
+      // ⚠ Scaled, deliberately NOT `fixedSize` (ADR 0135): in compactTrailing
+      // and minimal an overflowing score clips at the sensor housing — hardware,
+      // which no layout priority argues with. A whole smaller score stays right.
+      .lineLimit(1)
+      .minimumScaleFactor(Geometry.islandFloor)
+      .dynamicTypeSize(...DynamicTypeSize.large)
   }
 }
 
@@ -692,7 +871,7 @@ private struct ScoreLine: View {
 /// timer anchored to actual kickoff counts the half-time break and is wrong for
 /// the whole second half. See `MatchAttributes.ContentState.clockFrom`.
 @available(iOS 18.0, *)
-private struct Clock: View {
+struct Clock: View {
   let state: MatchAttributes.ContentState
   let size: CGFloat
 
@@ -711,6 +890,8 @@ private struct Clock: View {
       }
     }
     .monospacedDigit()
+    .lineLimit(1)
+    .dynamicTypeSize(...DynamicTypeSize.large)
   }
 }
 
@@ -722,19 +903,24 @@ private struct Clock: View {
 /// ⚠ ADR 0085 replaced this on the Lock Screen with the scorer columns. It is
 /// kept for the Dynamic Island's bottom region, which is one line tall.
 @available(iOS 18.0, *)
-private struct MomentLine: View {
+struct MomentLine: View {
   let moment: MatchAttributes.Moment
 
   var body: some View {
     HStack(spacing: 6) {
+      // ⚠ A count — it never gives (ADR 0135, the scorer band's rule).
       Text(moment.minuteLabel)
         .font(Tok.numerals(11, .bold))
         .foregroundStyle(tint)
+        .fixedSize()
       if let player = moment.player, !player.isEmpty {
+        // ⚠ The name is the first thing to give — a truncated name is merely
+        // shorter where a truncated minute or consequence is wrong.
         Text(player)
           .font(Tok.micro(11))
           .foregroundStyle(Tok.ink78)
           .lineLimit(1)
+          .layoutPriority(-1)
       }
       if let consequence = moment.consequenceLabel {
         Text(consequence)
@@ -743,6 +929,7 @@ private struct MomentLine: View {
           .lineLimit(1)
       }
     }
+    .dynamicTypeSize(...DynamicTypeSize.large)
   }
 
   /// ⚠ Red only for a sending-off. Accent for a goal, and NEVER for full time —

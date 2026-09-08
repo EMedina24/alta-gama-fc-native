@@ -51,6 +51,17 @@ export function usePushSyncStatus(): PushSyncStatus {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+/**
+ * The current verdict, outside React — the foreground re-sync's read (ADR 0136).
+ *
+ * ⚠ May answer `NEVER` in the first moments after a cold launch while the
+ * hydrate is in flight; the caller treats that as "nothing known", which only
+ * delays a retry to the next foreground — never causes a wrong one.
+ */
+export function readPushSyncStatus(): PushSyncStatus {
+  return snapshot;
+}
+
 /** Record a verdict. `unchanged` is not a verdict and must not call this. */
 export function setPushSyncStatus(ok: boolean): void {
   snapshot = { at: new Date().toISOString(), ok };

@@ -25,7 +25,39 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-07 (latest) — the board learns the followed clubs' OWN
+> ⭐ **NEW 2026-09-08 (latest) — a user's broken lock-screen card exposed BOTH
+> halves of the Live Activity pipeline, and both are fixed
+> ([0135](./decisions/0135-broadcast-card-width-resilience.md),
+> [0136](./decisions/0136-registration-outlives-the-permission-gate.md)).**
+> The screenshot showed the team code truncated to `R…` and the score digits
+> clipped in half on a **Display-Zoomed** phone — 0085 measured the card at
+> ONE width (369pt) and the fixture row's fixed chrome doesn't narrow with
+> the card. `scripts/activity-harness.swift` (NEW, committed — 0085's jig was
+> scratch and thrown away) compiles the real `MatchActivity.swift`, renders
+> 290–420pt under `simctl spawn`, and **reproduced the report before the fix**
+> (worst-case content only fit at 392pt+; 180.5pt of card against the 160
+> cap). Now: guards on every text (the unguarded `ScoreDigit` giving way
+> first WAS the clipped-digit bug), no negative kerning on counts or clocks,
+> and a compact `Geometry.Metrics` tier below 320 content-pt via
+> `GeometryReader` — the report's 351pt class went from truncating to 1.00
+> scale. **The harness is the standing gate for any card change.** The same
+> user "delayed Allow Notifications", which exposed the second half:
+> `getDeviceToken()`'s permission check killed the WHOLE registration, so the
+> push-to-start token never left the phone and the card could never start —
+> while the account sheet said "saved". The gate is DELETED (iOS mints both
+> tokens regardless; 0136 has the accepted costs), the stale-closure
+> wholesale-PUT bug in `use-push-sync` is fixed with refs, a never-landed
+> registration retries on foreground (a Settings grant no longer waits for a
+> cold launch), the sheet's footnote turns truthful-and-pressable
+> (`usePushPermission` + `alertsNoPermission`), and banner switches spend the
+> one system prompt from the account sheet (0024's reserved "later").
+> ⚠ Pending on hardware: `getDevicePushTokenAsync()` resolving with
+> permission undetermined (0136's one empirical assumption), the
+> fresh-install permission flows, and a Display-Zoom render via
+> `probe-apns.mjs` (⚠ build with `yarn build:preview`, NEVER bare
+> `eas build` — 0083 strips the Broadcast capability silently).
+>
+> ⭐ **2026-09-07 — the board learns the followed clubs' OWN
 > schedules: Champions League, cups and segunda reach NEXT UP, LAST RESULT,
 > reminders and the widget ([0132](./decisions/0132-team-windows-feed-the-today-board.md)).**
 > Ed caught NEXT UP announcing Levante (09-13) while Barcelona's real next

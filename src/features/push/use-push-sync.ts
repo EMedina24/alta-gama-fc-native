@@ -5,7 +5,7 @@
  * preferences, and this decides whether there is anywhere to send them. That is
  * what keeps `PUSH_AVAILABLE` out of every component (ADR 0023).
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import { upcomingBounds } from '@/lib/cronogol/fixture-window';
@@ -28,6 +28,8 @@ import { registerNotificationCategories } from './categories';
 import { warmLongLookCrests } from './crest-cache';
 import { applyReminders, selectReminders } from './reminders';
 import { initialRoute, onNotificationTap } from './routing';
+import { readLastRegistration } from '@/store/registration';
+import { readPushSyncStatus } from '@/store/push-sync-status';
 import { schedulePushSync, syncPushRegistration } from './sync';
 import { PUSH_AVAILABLE, WIDGETS_AVAILABLE, onPushToStartToken } from './capability';
 
@@ -50,6 +52,24 @@ export function usePushSync(): void {
   const news = useNews();
   const session = useSession();
 
+  // ⚠⚠ **The latest-value refs, and they are a BUG FIX, not a style choice
+  // (ADR 0136).** The token and sign-in effects below deliberately do not
+  // re-subscribe on every preference change — but before these refs they
+  // CLOSED OVER `prefs`, so a push-to-start token landing after the reader
+  // flipped a switch re-registered the stale snapshot. The PUT is a wholesale
+  // replace and the backend nulls `push_to_start_token` on any body without
+  // `activityToken`, so that one stale send could wipe the very token the
+  // effect exists to deliver.
+  const prefsRef = useRef(prefs);
+  const localeRef = useRef(locale);
+  // ⚠ In an effect, not during render (the react-hooks/refs rule). The commit
+  // that changed a preference also schedules its own sync below, so nothing
+  // reads the refs inside the assignment gap.
+  useEffect(() => {
+    prefsRef.current = prefs;
+    localeRef.current = locale;
+  }, [prefs, locale]);
+
   // Cold launch: tokens rotate on restore and reinstall, so always re-assert.
   useEffect(() => {
     void syncPushRegistration(prefs, locale);
@@ -70,7 +90,7 @@ export function usePushSync(): void {
   // 20/min budget for nothing.
   useEffect(() => {
     if (!session) return;
-    schedulePushSync(prefs, locale);
+    schedulePushSync(prefsRef.current, localeRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.userId]);
 
@@ -84,10 +104,42 @@ export function usePushSync(): void {
   // ⚠ Debounced through the same path as everything else: the token can land in
   // the same tick as the cold-launch registration above, and the route is 20/min.
   // `registrationChanged` makes the redundant one free.
+  // ⚠ Subscribed ONCE, reading the refs — see their block above. The old shape
+  // re-subscribed on `[locale]` and closed over `prefs`, which is the stale
+  // wholesale-PUT bug the refs exist to close.
   useEffect(() => {
-    return onPushToStartToken(() => schedulePushSync(prefs, locale));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+    return onPushToStartToken(() => schedulePushSync(prefsRef.current, localeRef.current));
+  }, []);
+
+  // A registration that has never landed retries on every foreground (ADR 0136).
+  //
+  // ⚠ This is what picks up a permission granted LATER in iOS Settings — before
+  // it, the only triggers were cold launch, a preference change, a sign-in and a
+  // token rotation, so a reader who deferred the prompt and then enabled the app
+  // in Settings stayed unregistered until their next cold launch, silently.
+  //
+  // ⚠ A SECOND `AppState` listener, deliberately, despite the "one listener"
+  // rule on the re-arm effect below: that rule guards against double RE-ARMS —
+  // two subscriptions running the same widget/reminder writes. This one shares
+  // nothing with it, and folding it in would put a network retry inside an
+  // effect keyed on five queries' data. Cheap by construction: it consults two
+  // local reads, and `registrationChanged` makes a redundant sync free against
+  // the route's 20/min budget.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      void (async () => {
+        const status = readPushSyncStatus();
+        if (status.ok === false) {
+          schedulePushSync(prefsRef.current, localeRef.current);
+          return;
+        }
+        const last = await readLastRegistration();
+        if (!last) schedulePushSync(prefsRef.current, localeRef.current);
+      })();
+    });
+    return () => subscription.remove();
+  }, []);
 
   // Categories — the long-look card and the action button both key off these.
   // ⚠ Re-runs on a language change: iOS caches a category by identifier, so a
