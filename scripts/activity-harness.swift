@@ -135,6 +135,23 @@ enum Harness {
     homeCards: nil, awayCards: nil
   )
 
+  /// The BREAK — the stopped-clock branch that has never rendered in
+  /// production. `phaseOf` could not return `half_time` until backend decision
+  /// 0057, so `clockFromEpoch: nil` only ever meant full time here, and
+  /// `ClockBar` held FULL. Check the foot bar: it must sit at the half, not at
+  /// the end, and the eyebrow must print `DES` where the clock was.
+  static let halfTime = MatchAttributes.ContentState(
+    homeGoals: 1, awayGoals: 0,
+    phase: "half_time",
+    minuteLabel: "DES",
+    clockFromEpoch: nil,
+    lastMoment: nil,
+    homeScorers: [.init(name: "Mbappé", minuteLabel: "14'")],
+    awayScorers: nil,
+    homeMoreGoals: nil, awayMoreGoals: nil,
+    homeCards: .init(yellow: 1, red: 0), awayCards: nil
+  )
+
   static let preMatch = MatchAttributes.ContentState(
     homeGoals: nil, awayGoals: nil,
     phase: "scheduled",
@@ -232,7 +249,10 @@ enum Harness {
     // 1 · Height, at every width in the sweep, all states.
     var heightFirsts: [String: String] = [:]
     for width in sweep {
-      for (name, state) in [("live", liveWorst), ("sparse", liveSparse), ("pre", preMatch)] {
+      for (name, state) in [
+        ("live", liveWorst), ("sparse", liveSparse), ("pre", preMatch),
+        ("halftime", halfTime),
+      ] {
         let height = size(of: card(state), width: width).height
         if height > lockScreenCap, heightFirsts[name] == nil {
           heightFirsts[name] = String(format:
@@ -296,6 +316,7 @@ enum Harness {
       png(card(liveTypical), width: width, to: out.appendingPathComponent("card-typical-w\(Int(width)).png"))
       png(card(liveSparse), width: width, to: out.appendingPathComponent("card-sparse-w\(Int(width)).png"))
       png(card(preMatch), width: width, to: out.appendingPathComponent("card-pre-w\(Int(width)).png"))
+      png(card(halfTime), width: width, to: out.appendingPathComponent("card-halftime-w\(Int(width)).png"))
     }
 
     // 6 · The island pieces, intrinsic — eyeball only (see the header).

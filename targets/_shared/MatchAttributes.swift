@@ -42,15 +42,22 @@ struct MatchAttributes: ActivityAttributes {
     var homeGoals: Int?
     var awayGoals: Int?
 
-    /// `scheduled` · `first_half` · `half_time` · `second_half` · `finished`.
+    /// `scheduled` · `first_half` · `half_time` · `second_half` · `extra_time` ·
+    /// `penalties` · `finished`.
     ///
     /// ⚠ A `String` rather than an enum, deliberately: a phase the backend grows
     /// later must degrade to "draw the score without a phase pill", never to a
-    /// decode failure that discards the score with it.
+    /// decode failure that discards the score with it. `extra_time` and
+    /// `penalties` arrived exactly that way (backend decision 0057) and cost
+    /// this file nothing.
+    ///
+    /// ⚠ `half_time` was declared here long before it could occur: the backend
+    /// derived the phase from a minute that folds stoppage, so it could never
+    /// be produced. `ClockBar` is the one place that reads this value.
     var phase: String
 
-    /// The minute to PRINT when the running clock cannot be drawn — `HT`, `FT`,
-    /// or a fallback where the feed has a minute but `clockFrom` is nil.
+    /// The minute to PRINT when the running clock cannot be drawn — `HT`, `PEN`,
+    /// `FT`, or a fallback where the feed has a minute but `clockFrom` is nil.
     ///
     /// ⚠⚠ **In play this is nil and the clock is drawn, not pushed.** Pushing a
     /// per-minute update is the way to exhaust Apple's update budget inside one
@@ -66,7 +73,7 @@ struct MatchAttributes: ActivityAttributes {
     /// so elapsed-since-anchor always equals the minute the feed reported and the
     /// card counts on correctly between pushes.
     ///
-    /// ⚠ Nil at half time, full time and before kick-off: a running clock is a
+    /// ⚠ Nil at half time, during penalties, at full time and before kick-off: a running clock is a
     /// claim that play is happening. `minuteLabel` carries the text in those
     /// states.
     ///

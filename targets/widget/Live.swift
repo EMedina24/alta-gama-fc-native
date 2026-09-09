@@ -45,9 +45,17 @@ enum LiveFetch {
     let matches: [RouteMatch]
   }
 
-  /// ⚠ `?league=laliga` — the API slug, never our `la-liga` (the same trap
-  /// `queries/keys.ts` documents). Any OTHER parameter is a 400.
-  private static let url = URL(string: "https://crono-gol.com/cronogol/live?league=laliga")!
+  /// ⚠⚠ **NO `?league=` filter, and that is the point.** The route was
+  /// LaLiga-only when this was written, so pinning the slug cost nothing; it
+  /// stopped being true when the Premier League joined, and a hardcoded filter
+  /// then silently CAPS the widget's own coverage — no PL match, and no cup or
+  /// European tie of a PL club, ever reached the home screen. Filed by decision
+  /// 0139 and closed by 0140.
+  ///
+  /// ⚠ Coverage follows whichever provider is syncing, so the unfiltered route
+  /// is the whole of what is being played. Any parameter other than `league`
+  /// is a 400 — do not add one speculatively.
+  private static let url = URL(string: "https://crono-gol.com/cronogol/live")!
 
   /// Nil on any failure — offline, timeout, non-200, undecodable. The caller
   /// keeps whatever `live.json` already holds; a failed poll must never blank

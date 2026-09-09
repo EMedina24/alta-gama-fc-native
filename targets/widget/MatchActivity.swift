@@ -773,12 +773,26 @@ struct DisciplinePills: View {
 /// countdown. Pushing a per-minute fraction instead is precisely how Apple's
 /// update budget is exhausted inside one half.
 ///
-/// ⚠ At half time and full time `clockFrom` is nil, because a running clock is a
-/// claim that play is happening. The bar then freezes rather than disappearing —
-/// a card whose foot vanishes at the break looks broken.
+/// ⚠ At half time, during penalties and at full time `clockFrom` is nil, because
+/// a running clock is a claim that play is happening. The bar then holds a
+/// STATIC fraction rather than disappearing — a card whose foot vanishes at the
+/// break looks broken.
+///
+/// ⚠⚠ **The break holds at the half, not at full.** Full is right for the
+/// whistle and was the only stopped case that could occur before backend
+/// decision 0057: `phaseOf` could never return `half_time`, so the clock ran
+/// straight through the interval and this branch never saw it. Once the break
+/// publishes, a full bar would jump the foot from ~50% to 100% and back down at
+/// the restart — the bar reading further through the match than the match is.
 @available(iOS 18.0, *)
 struct ClockBar: View {
   let state: MatchAttributes.ContentState
+
+  /// Where a stopped bar sits. ⚠ Only the break is mid-match; every other
+  /// stopped state is at or past the end.
+  private var stoppedFraction: CGFloat {
+    state.phase == "half_time" ? 0.5 : 1
+  }
 
   var body: some View {
     Group {
@@ -794,10 +808,18 @@ struct ClockBar: View {
         .progressViewStyle(.linear)
         .tint(Tok.accent)
       } else {
-        // ⚠ Full, not empty. The clock stops at half time and at the whistle,
-        // and both are further through the match than any running bar — an
-        // emptied bar at full time would read as "not started".
-        Capsule().fill(Tok.accent)
+        // ⚠ A fraction, never empty. An emptied bar at full time would read as
+        // "not started" — the failure the full bar was chosen to avoid, and
+        // the reason the default here stays 1.
+        //
+        // ⚠ `GeometryReader` rather than `ProgressView(value:)`: the bar is
+        // 3pt tall inside a `Capsule` mask, and the system style adds its own
+        // track and insets that fight the mask at that height.
+        GeometryReader { geo in
+          Capsule()
+            .fill(Tok.accent)
+            .frame(width: geo.size.width * stoppedFraction)
+        }
       }
     }
     .frame(height: 3)
