@@ -25,7 +25,61 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-08 (latest) — a user's broken lock-screen card exposed BOTH
+> ⭐ **NEW 2026-09-09 (latest) — a UCL night exposed FOUR bugs across both
+> repos, and only one of them was app-side
+> ([0139](./decisions/0139-live-crests-fall-back-to-the-fixture-row.md) here,
+> `senpai-backend` decision 0056 there).** Ed reported a Live Activity for
+> **Napoli v Arsenal** frozen on its pre-match layout all match (`0-0-0`,
+> `0 PTS`, kickoff time, never ended) and a **missing crest** on two
+> in-progress cards. His hypothesis — "because no LaLiga team is playing" —
+> was wrong in an instructive way: the card started **because** Arsenal is a
+> tracked PL club, and the backend's live window has never been
+> competition-scoped. **All four causes were caught live in production at
+> 20:45Z while the matches were still being played**, which is why the
+> diagnosis needed no re-probing:
+> ```
+> f3e96945  liverpool-fc v atletico-madrid    83'  2-1  13 events, both sides
+> bd1a4cc8  liverpool    v atletico-de-madrid 85'  2-1   6 events, ONE-SIDED  ← same match
+> 67cc1959  napoli-459   v arsenal            83'  0-1   6 events, ONE-SIDED
+> ```
+> **App-side (0139):** the live route names each side with the **syncing
+> provider's own `teams` row**, and the backend keeps one per provider with
+> only ONE of each pair `tracked` — `liverpool` vs `liverpool-fc`, `napoli`
+> vs `napoli-459`, `atletico-madrid` vs `atletico-de-madrid`. Our catalogue
+> (`GET /cronogol/teams`) serves tracked rows only, so `teamRefFromLive`'s
+> slug join missed whichever side wore the untracked slug — predicting both
+> screenshots exactly. **The artwork was never missing**: it is mirrored, and
+> already arrives as `opponentLogoUrl` on the fixture row — which
+> `boardLives` was DISCARDING, because tier 0 dedupes by id with the route
+> winning. `teamRefFromLive` now takes a `fallback` fed **per side by
+> POSITION** on one fixture id (never by slug — that is exactly what cannot
+> work — and never by name, 0022/0027 stand), consulted only on a catalogue
+> miss so pure-league output is byte-identical. No new request. ⚠ Both
+> matches ended before it compiled: **harness-verified, visually unseen.**
+> **Backend (0056), for context:** the card had **no kickoff push at all**
+> (the alert vocabulary is goal/red/full-time, so EVERY card — LaLiga's too —
+> held its pre-match layout until the first goal); the PL events adapter was
+> pinned to the PL roster, so a foreign opponent's events were dropped
+> wholesale and its goals could alert nothing; the 150-minute live window is
+> too short for extra time; and `league_standings` answers a cup fixture with
+> a populated row of ZEROS, which is where `0-0-0` came from.
+> **Also true now: `/cronogol/live` is NOT LaLiga-only** — coverage follows
+> the syncing provider with no competition filter, so a PL club's cup and
+> European ties are live too. Six stale assertions corrected
+> ([LIVE-SCORES.md](./LIVE-SCORES.md), `types.ts` ×2, `client.ts`, `live.ts`,
+> `live-plate.tsx`) ⚠ **without weakening trap 8** — the minute/stalled/cadence
+> trio is untouched. ⚠ The account sheet's "LaLiga only" alert copy is left
+> alone deliberately (the backend handoff reserves it for Ed).
+> ⚠⚠ **NEW TRAP, filed not fixed: one match can arrive as TWO fixtures.**
+> `f3e96945` and `bd1a4cc8` above are the same Liverpool v Atlético, one per
+> syncing provider. A reader following clubs on **both** sides sees it
+> **twice** in the live deck — everything here dedupes by fixture id and these
+> have two. The fix is backend row-merging (a documented merge hazard there);
+> **do not paper over it by matching on names.**
+> ⚠ The widget's Swift live gate stays `leagueSlug == "laliga"` — cup ties are
+> still kept out of the rationed poll on purpose (0132/0084, trap 34).
+>
+> ⭐ **NEW 2026-09-08 — a user's broken lock-screen card exposed BOTH
 > halves of the Live Activity pipeline, and both are fixed
 > ([0135](./decisions/0135-broadcast-card-width-resilience.md),
 > [0136](./decisions/0136-registration-outlives-the-permission-gate.md)).**
@@ -1206,6 +1260,22 @@ documented at the code that handles them; this is the index.
     re-created on selection), only the rail is gone. Same family as the
     Glide/lens findings: glass + RN transforms/opacity do not mix — animate
     an overlay ABOVE the app, never the app's own subtree.
+
+65. **⚠⚠ A `WashGradient` does NOT repaint when its box GROWS.**
+    `react-native-svg` resolves `<Rect width="100%" height="100%">` against the
+    viewport the `Svg` FIRST laid out at and never re-resolves it. Expanding
+    the live deck's events panel left the plate's baked `DeckGround` stopping
+    dead at the COLLAPSED height, and below that line the only paint was
+    `plateDark` at 80% — a dimmer, not a wall — so the waiting card ghosted
+    straight through the goal rows (Ed's screenshot, two matches in play,
+    2026-09-09). Fixed in the atom (ADR 0138): a wrapping `View`'s `onLayout`
+    measures the box and the `Rect` takes explicit numbers. ⚠ `Svg`'s OWN
+    `onLayout` does not fire on that resize — it was tried first and the ramp
+    stayed short. ⚠ The gallery could not have caught it: `?only=live-deck`
+    renders the panel already open, where the first layout is the final one.
+    Any card that changes height needs an opaque FLOOR under a gradient
+    ground as well — a stacked layer must be opaque in the repaint frame too
+    (trap 59).
 
 ---
 

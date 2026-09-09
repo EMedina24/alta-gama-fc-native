@@ -8,8 +8,9 @@
  * (ADR 0048, 0078). `isLive` and `awaitingUpdate` say which:
  *
  * - **LIVE** — `GET /cronogol/live`, re-read every ~30s, joined to this fixture
- *   by our own id. It carries a real `minute`, so the plate prints one. LaLiga
- *   only.
+ *   by our own id. It carries a real `minute`, so the plate prints one. Covers
+ *   whatever the backend's live adapters sync — LaLiga and the Premier League,
+ *   the latter's cup and European ties included (ADR 0139), never every league.
  * - **SWEEP** — `GET /cronogol/fixtures`, whose `status: "live"` was true at a
  *   sweep up to three hours ago: no minute, `FeedAge`, and a note saying the
  *   score is as of the last check.
@@ -140,9 +141,17 @@ export function LivePlate({
     <View style={[styles.plate, surface === 'opaque' ? styles.plateOpaque : null]}>
       {/* The deck's opaque ground (ADR 0126): the crown, baked (`DeckGround`),
           under the plate's own translucent paint — the composite the glass
-          plate produces live, produced once, so waiting layers ghost nothing. */}
+          plate produces live, produced once, so waiting layers ghost nothing.
+
+          ⚠⚠ The FLOOR under the ramp is what makes "opaque" true (ADR 0138).
+          This plate is the one card in the app that GROWS after its first
+          layout — the events panel — and the gradient is the only layer that
+          cannot be trusted to grow with it. `bodyTint` is 80% paint, so
+          without a solid floor the panel showed the waiting card straight
+          through the timeline. ⚠ The floor is `DeckGround`'s own last stop:
+          the ramp lands on exactly that colour, so the two never seam. */}
       {surface === 'opaque' ? (
-        <View pointerEvents="none" style={styles.body}>
+        <View pointerEvents="none" style={[styles.body, styles.bodyFloor]}>
           <WashGradient angle="vertical" stops={DeckGround} />
           <View style={[styles.body, styles.bodyTint]} />
         </View>
@@ -211,6 +220,8 @@ const styles = StyleSheet.create({
   /** The deck variant (ADR 0126): the ground moves into `body`'s layers. */
   plateOpaque: { backgroundColor: 'transparent' },
   body: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  /** See the ground above — `NextUpCard`'s `bodyOpaque` floor, for 0138's reason. */
+  bodyFloor: { backgroundColor: DeckGround[DeckGround.length - 1].color },
   bodyTint: { backgroundColor: Colors.dark.plateDark },
   plateTop: {
     position: 'absolute',

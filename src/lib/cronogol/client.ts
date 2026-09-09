@@ -358,8 +358,10 @@ export type GetLiveParams = {
  * matched by name. Liveness is honest here and only here; nothing about this
  * changes what `scores.ts` suppresses.
  *
- * ⚠ **LaLiga only today**, and `{ matches: [] }` is the NORMAL answer — most of
- * the time nothing is being played. Never an error, never a 404.
+ * ⚠ **Coverage follows the SYNCING PROVIDER, not the league** (ADR 0139):
+ * LaLiga and the Premier League today, the latter's cup and European ties
+ * included. `{ matches: [] }` is the NORMAL answer — most of the time nothing
+ * is being played. Never an error, never a 404.
  *
  * ⚠ Any query parameter beyond `league` is a **400**, not a no-op — which is
  * what `toQuery`'s drop-undefined filter is protecting here as well.

@@ -4,6 +4,9 @@
  * corners — `overflow: 'hidden'`, or the fill squares them off; `match-board`'s
  * `flush` style documents that exact fault.
  *
+ * ⚠⚠ **It fills a parent that GROWS too, and only because the box is measured**
+ * — see `useBox` (ADR 0138). A percentage `Rect` does not.
+ *
  * `react-native-svg`, not `expo-linear-gradient`: the same call ADR 0062 made
  * for the Serie A band, for the same reason — no native rebuild.
  *
@@ -12,9 +15,36 @@
  * gradient; two of these on one screen (the next-up card and, later, a club
  * header) would resolve `url(#…)` to whichever mounted first.
  */
-import { useId } from 'react';
-import { StyleSheet } from 'react-native';
+import { useId, useState } from 'react';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
+
+/**
+ * The painted box, MEASURED — and it is not a tidy-up.
+ *
+ * ⚠⚠ `react-native-svg` resolves a `100%` `Rect` against the viewport the
+ * `Svg` FIRST laid out at and never repaints it when the box GROWS: the live
+ * deck's plate expanded into its events panel and the baked ground stopped
+ * dead at the collapsed height, leaving the waiting card ghosting through the
+ * timeline (ADR 0138). Layout itself is correct — only the fill is stale — so
+ * feeding `onLayout`'s own numbers back as explicit dimensions is what forces
+ * the repaint.
+ *
+ * ⚠ `null` until the first layout, where the percentage is the honest answer:
+ * the first paint is exactly what it always was, with no measure-then-flash.
+ */
+function useBox(): [{ w: number; h: number } | null, (event: LayoutChangeEvent) => void] {
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  return [
+    box,
+    ({ nativeEvent: { layout } }: LayoutChangeEvent) =>
+      setBox((prev) =>
+        prev !== null && prev.w === layout.width && prev.h === layout.height
+          ? prev
+          : { w: layout.width, h: layout.height },
+      ),
+  ];
+}
 
 export interface WashStop {
   /** 0–1 */
@@ -52,22 +82,25 @@ export function WashGradient({ stops, angle }: WashGradientProps) {
   // on every renderer, so the colons are stripped.
   const id = `wash-${useId().replace(/:/g, '')}`;
   const v = VECTOR[angle];
+  const [box, onLayout] = useBox();
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
-      <Defs>
-        <LinearGradient id={id} x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2}>
-          {stops.map((s) => (
-            <Stop
-              key={`${s.offset}-${s.color}`}
-              offset={s.offset}
-              stopColor={s.color}
-              stopOpacity={s.opacity ?? 1}
-            />
-          ))}
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill={`url(#${id})`} />
-    </Svg>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={onLayout}>
+      <Svg style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
+        <Defs>
+          <LinearGradient id={id} x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2}>
+            {stops.map((s) => (
+              <Stop
+                key={`${s.offset}-${s.color}`}
+                offset={s.offset}
+                stopColor={s.color}
+                stopOpacity={s.opacity ?? 1}
+              />
+            ))}
+          </LinearGradient>
+        </Defs>
+        <Rect width={box?.w ?? '100%'} height={box?.h ?? '100%'} fill={`url(#${id})`} />
+      </Svg>
+    </View>
   );
 }
 
@@ -101,26 +134,29 @@ export interface WashRadialProps {
 export function WashRadial({ stops, cx = 0.5, cy = 0.5, r = 0.5, rx, ry }: WashRadialProps) {
   // As above: `useId` yields `:r1:`, and a colon is not legal in a `url()` ref.
   const id = `radial-${useId().replace(/:/g, '')}`;
+  const [box, onLayout] = useBox();
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
-      <Defs>
-        <RadialGradient
-          id={id}
-          cx={`${cx * 100}%`}
-          cy={`${cy * 100}%`}
-          rx={`${(rx ?? r) * 100}%`}
-          ry={`${(ry ?? r) * 100}%`}>
-          {stops.map((s) => (
-            <Stop
-              key={`${s.offset}-${s.color}`}
-              offset={s.offset}
-              stopColor={s.color}
-              stopOpacity={s.opacity ?? 1}
-            />
-          ))}
-        </RadialGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill={`url(#${id})`} />
-    </Svg>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={onLayout}>
+      <Svg style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
+        <Defs>
+          <RadialGradient
+            id={id}
+            cx={`${cx * 100}%`}
+            cy={`${cy * 100}%`}
+            rx={`${(rx ?? r) * 100}%`}
+            ry={`${(ry ?? r) * 100}%`}>
+            {stops.map((s) => (
+              <Stop
+                key={`${s.offset}-${s.color}`}
+                offset={s.offset}
+                stopColor={s.color}
+                stopOpacity={s.opacity ?? 1}
+              />
+            ))}
+          </RadialGradient>
+        </Defs>
+        <Rect width={box?.w ?? '100%'} height={box?.h ?? '100%'} fill={`url(#${id})`} />
+      </Svg>
+    </View>
   );
 }

@@ -143,34 +143,61 @@ export function routeLive(
  * A live row's side as the `TeamRef` the card and the events panel expect.
  *
  * The route sends `slug`, `name` and `shortName`; the crests come from the
- * club catalogue (`useTeams()`, 24h) keyed by the same slug. ⚠ A club the
- * catalogue does not hold gets `null` crests, which `crestSrc` already turns
- * into the monogram fallback — never a broken image, never a throw.
+ * club catalogue (`useTeams()`, 24h) keyed by the same slug — the richer
+ * source, since it carries the whole `logoUrls` variant set.
+ *
+ * ⚠⚠ **`fallback` is the CROSS-PROVIDER case, and it is not an edge one**
+ * (ADR 0139). `GET /cronogol/teams` serves TRACKED clubs only, while the live
+ * route names each side with the SYNCING PROVIDER's own team row — and a club
+ * met through another provider's sync has a second, untracked row under a
+ * different slug. Verified in production 2026-09-09: one Liverpool v Atlético
+ * tie arrived as `liverpool-fc` v `atletico-madrid` and its twin as `liverpool`
+ * v `atletico-de-madrid`, with only one slug of each pair in the catalogue —
+ * so whichever side wore the untracked slug lost its crest and drew the
+ * monogram, on a club whose artwork we hold and already serve elsewhere.
+ *
+ * The fixture row carries that artwork (`opponentLogoUrl` → `opponentRef`), so
+ * the caller hands its matching side in. ⚠ The catalogue still WINS when it
+ * answers: for pure-league data every slug is tracked, nothing falls back, and
+ * the output is byte-identical to what it was before this parameter existed.
+ *
+ * ⚠ Both absent is still `null` crests, which `crestSrc` turns into the
+ * monogram — never a broken image, never a throw.
  */
 export function teamRefFromLive(
   ref: LiveTeamRef,
   teams: readonly TeamView[],
+  fallback?: TeamRef | null,
 ): TeamRef {
   const club = teams.find((team) => team.slug === ref.slug);
   return {
     slug: ref.slug,
     name: ref.name,
     shortName: ref.shortName,
-    logoUrl: club?.logoUrl ?? null,
-    logoUrls: club?.logoUrls ?? null,
+    logoUrl: club?.logoUrl ?? fallback?.logoUrl ?? null,
+    logoUrls: club?.logoUrls ?? fallback?.logoUrls ?? null,
   };
 }
 
-/** Tier 0's `BoardLive`: the card's fixture half, built from the live row. */
+/**
+ * Tier 0's `BoardLive`: the card's fixture half, built from the live row.
+ *
+ * ⚠ `fixture` is the SAME fixture from a window, when the screen holds one —
+ * read for its crests alone (see `teamRefFromLive`). The sides align by
+ * POSITION, which is sound because it is one fixture id: home is home. Never
+ * by name, and never by slug — the whole reason it is needed is that the two
+ * rows disagree about the slug (ADR 0022/0027 stand untouched).
+ */
 export function boardFromRoute(
   match: LiveMatchView,
   teams: readonly TeamView[],
+  fixture?: WindowFixtureView | null,
 ): BoardLive {
   return {
     fixture: {
       id: match.fixtureId,
-      homeTeam: teamRefFromLive(match.home, teams),
-      awayTeam: teamRefFromLive(match.away, teams),
+      homeTeam: teamRefFromLive(match.home, teams, fixture?.homeTeam),
+      awayTeam: teamRefFromLive(match.away, teams, fixture?.awayTeam),
       kickoffUtc: match.kickoffUtc,
       goalsHome: match.score.home,
       goalsAway: match.score.away,
@@ -275,9 +302,10 @@ export function boardFromKickoff(fixture: WindowFixtureView): BoardLive {
  * the stale one already said, which is the opposite of the point.
  *
  * ⚠ **Tier 2 is not dead code and must not be removed as a simplification.**
- * The route is LaLiga-only. A followed Premier League, Serie A, Bundesliga or
- * Segunda club has no tier-1 row and never will today — it gets exactly the card
- * it gets now, with the caption that states its age. Since ADR 0126 it gets it
+ * The route covers only what the backend's live adapters sync — LaLiga and the
+ * Premier League (ADR 0139). A followed Serie A, Bundesliga or Segunda club has
+ * no tier-1 row and never will today — it gets exactly the card it gets now,
+ * with the caption that states its age. Since ADR 0126 it gets it
  * even while a LaLiga match is live: the union stacks, it no longer cascades.
  *
  * ⚠ First occurrence of a fixture id wins — the caller concatenates windows
@@ -355,7 +383,20 @@ export function boardLives(args: {
 }): BoardLive[] {
   const { byId, followed, teams, held, swept, now, seenLive } = args;
 
-  const route = routeLive(byId, followed).map((match) => boardFromRoute(match, teams));
+  // ⚠ Crests only, keyed by fixture id (ADR 0139). Tier 0 deliberately reads
+  // the route ALONE — the whole point of ADR 0066 — so this must never gate
+  // whether a card appears; a match the windows have not got is still tier 0's
+  // to show, just with whatever crests the catalogue can give it. First
+  // occurrence wins: `held` is every window concatenated, `swept` its result
+  // tiers, and the two overlap.
+  const crestSource = new Map<string, WindowFixtureView>();
+  for (const fixture of [...held, ...swept]) {
+    if (!crestSource.has(fixture.id)) crestSource.set(fixture.id, fixture);
+  }
+
+  const route = routeLive(byId, followed).map((match) =>
+    boardFromRoute(match, teams, crestSource.get(match.fixtureId)),
+  );
   const routeIds = new Set(route.map((board) => board.fixture.id));
 
   const kicked = kickedOff(held, followed, now, seenLive)

@@ -20,7 +20,7 @@
  */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -30,26 +30,57 @@ const repo = fileURLToPath(new URL('..', import.meta.url));
 const out = mkdtempSync(join(tmpdir(), 'agfc-team-window-harness-'));
 
 try {
-  execFileSync(
-    'npx',
-    [
-      'tsc',
-      // The repo tsconfig targets the app bundle; this emit is scratch-only.
-      '--ignoreConfig',
-      join(repo, 'src/lib/cronogol/leagues.ts'),
-      join(repo, 'src/lib/cronogol/team-window.ts'),
-      join(repo, 'src/lib/cronogol/events.ts'),
-      '--outDir', out,
-      '--module', 'commonjs',
-      '--target', 'es2022',
-      '--skipLibCheck',
-    ],
-    { cwd: repo, stdio: 'inherit' },
+  // ⚠ A scratch tsconfig rather than files-on-the-command-line: `live.ts`
+  // reaches `board.ts` → `jornada.ts`, which imports `@/lib/format`, and the
+  // `paths` alias cannot be passed as a CLI flag. `rootDir` is `src/` so the
+  // emitted tree mirrors the repo's and the alias hook below can be one rule.
+  // ⚠ tsc follows the imports itself — listing the four entry points emits
+  // every module they reach.
+  const tsconfig = join(out, 'tsconfig.harness.json');
+  writeFileSync(
+    tsconfig,
+    JSON.stringify({
+      compilerOptions: {
+        outDir: out,
+        rootDir: join(repo, 'src'),
+        module: 'commonjs',
+        target: 'es2022',
+        moduleResolution: 'node10',
+        // node10 + `paths` is what mirrors Metro's own resolution; both are
+        // deprecation-warned in TS 6 and neither has a replacement that keeps
+        // a CommonJS emit, which `require` below needs.
+        ignoreDeprecations: '6.0',
+        skipLibCheck: true,
+        paths: { '@/*': [join(repo, 'src/*')] },
+      },
+      files: [
+        join(repo, 'src/lib/cronogol/leagues.ts'),
+        join(repo, 'src/lib/cronogol/team-window.ts'),
+        join(repo, 'src/lib/cronogol/events.ts'),
+        join(repo, 'src/lib/cronogol/live.ts'),
+      ],
+    }),
   );
+  execFileSync('npx', ['tsc', '--project', tsconfig], { cwd: repo, stdio: 'inherit' });
 
+  // ⚠⚠ **tsc does not rewrite `@/…` in its OUTPUT** — the emitted `require`
+  // keeps the literal specifier, so without this hook `live.js` dies on
+  // `board` → `jornada` → `@/lib/format` at load time. One rule, `@/x` → the
+  // emitted `x`, which is exactly what `rootDir: src` bought.
   const require = createRequire(import.meta.url);
-  const { matchEventsCapable } = require(join(out, 'team-window.js'));
-  const { eventSide } = require(join(out, 'events.js'));
+  const Module = require('node:module');
+  const resolve = Module._resolveFilename;
+  Module._resolveFilename = function (request, ...rest) {
+    if (typeof request === 'string' && request.startsWith('@/')) {
+      return resolve.call(this, join(out, request.slice(2)), ...rest);
+    }
+    return resolve.call(this, request, ...rest);
+  };
+
+  const lib = (name) => require(join(out, 'lib/cronogol', name));
+  const { matchEventsCapable } = lib('team-window.js');
+  const { eventSide } = lib('events.js');
+  const { teamRefFromLive, boardFromRoute } = lib('live.js');
 
   // ── matchEventsCapable ────────────────────────────────────────────────────
   // League branch: byte-for-byte the pre-0137 semantics (ADR 0132 §10).
@@ -122,6 +153,57 @@ try {
   assert.equal(eventSide(payload.events[2], HOME, null), null,
     'a null side never wins by elimination');
   console.log('eventSide: 9 assertions pass');
+
+  // ── teamRefFromLive / boardFromRoute — the cross-provider crest fallback ───
+  // The REAL production shape, 2026-09-09 20:45Z: the live route named this tie
+  // `napoli-459` v `arsenal` (the premier-league sync's own team rows), while
+  // `GET /cronogol/teams` serves only the tracked `napoli` and `arsenal`.
+  const CATALOGUE = [
+    { slug: 'arsenal', logoUrl: 'arsenal.png', logoUrls: { xsmall: 'arsenal-xs.png' } },
+    { slug: 'napoli', logoUrl: 'napoli-tracked.png', logoUrls: { xsmall: 'napoli-tracked-xs.png' } },
+  ];
+  const liveRef = (slug, name) => ({ slug, name, shortName: null });
+  const NAPOLI_FIXTURE_REF = {
+    slug: '', name: 'Napoli', shortName: null,
+    logoUrl: 'napoli-459.png', logoUrls: { xsmall: 'napoli-459-xs.png' },
+  };
+
+  // Catalogue MISS + the fixture row has artwork → the fixture's crest is used.
+  const eliminated = teamRefFromLive(liveRef('napoli-459', 'Napoli'), CATALOGUE, NAPOLI_FIXTURE_REF);
+  assert.equal(eliminated.logoUrl, 'napoli-459.png',
+    'untracked provider slug falls back to the fixture row crest');
+  assert.deepEqual(eliminated.logoUrls, { xsmall: 'napoli-459-xs.png' },
+    'the whole variant set travels, not just the single url');
+  assert.equal(eliminated.slug, 'napoli-459',
+    'the LIVE slug is kept — the fallback lends artwork, never identity');
+
+  // Catalogue HIT → unchanged, and the catalogue outranks the fixture row.
+  assert.equal(
+    teamRefFromLive(liveRef('arsenal', 'Arsenal'), CATALOGUE, NAPOLI_FIXTURE_REF).logoUrl,
+    'arsenal.png', 'a tracked slug still wins from the catalogue');
+
+  // Neither → null, the monogram path, exactly as before.
+  assert.equal(teamRefFromLive(liveRef('nobody-123', 'Nobody'), CATALOGUE, null).logoUrl, null,
+    'no catalogue and no fixture row stays null (the monogram)');
+  assert.equal(teamRefFromLive(liveRef('nobody-123', 'Nobody'), CATALOGUE).logoUrl, null,
+    'the fallback argument is optional — pre-0138 call shape unchanged');
+
+  // Side alignment is by POSITION on one fixture id, never by slug.
+  const board = boardFromRoute(
+    {
+      fixtureId: '67cc1959', kickoffUtc: '2026-09-09T19:00:00+00:00', status: 'live',
+      home: liveRef('napoli-459', 'Napoli'), away: liveRef('arsenal', 'Arsenal'),
+      score: { home: 0, away: 1 },
+    },
+    CATALOGUE,
+    { id: '67cc1959', homeTeam: NAPOLI_FIXTURE_REF, awayTeam: null },
+  );
+  assert.equal(board.fixture.homeTeam.logoUrl, 'napoli-459.png',
+    'the fixture row home side lends to the live home side');
+  assert.equal(board.fixture.awayTeam.logoUrl, 'arsenal.png',
+    'a null side on the fixture row costs nothing — the catalogue still answers');
+  assert.equal(board.source, 'route', 'still a tier-0 board');
+  console.log('teamRefFromLive/boardFromRoute: 9 assertions pass');
 
   console.log('team-window harness: ALL PASS');
 } finally {

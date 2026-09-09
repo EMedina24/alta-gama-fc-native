@@ -31,7 +31,7 @@ only there.
 | Refresh | every ~4h | every ~30s, during matches only |
 | Joins to a fixture | ❌ never (opta-keyed) | ✅ `fixtureId` + team slugs |
 | Minute of play | ❌ | ✅ |
-| Coverage | every competition the source carries | **LaLiga only** |
+| Coverage | every competition the source carries | **per SYNCING PROVIDER** — LaLiga + Premier League, cups and European ties of those clubs included |
 | Liveness trustworthy | **no — keep suppressing** | yes |
 
 ⚠ **Do not merge the two into one "scores" concept.** They have different
@@ -138,9 +138,30 @@ the app already uses.
 
 - ⚠⚠ **An empty `matches` array is the NORMAL answer.** Most of the time nothing
   is being played. Ordinary empty state, never an error.
-- ⚠⚠ **LaLiga only.** A Premier League, Serie A, Bundesliga or Segunda match
-  returns nothing here. **Keep the existing non-live rendering as the fallback**
-  — do not replace it with something that assumes live data will arrive.
+- ⚠⚠ **Coverage is PER SYNCING PROVIDER, not per league** (re-verified against
+  production 2026-09-09, ADR 0139 — this bullet said "LaLiga only" until then).
+  The backend polls a fixture when the provider that synced it has a live
+  adapter, and applies **no competition filter**: today that is `laliga` and
+  `premier-league`, so a Premier League club's **cup and European ties are served
+  live too**. A Serie A, Bundesliga or Segunda match still returns nothing.
+  **Keep the existing non-live rendering as the fallback** — do not replace it
+  with something that assumes live data will arrive.
+- ⚠⚠ **One match can arrive as TWO rows.** When both clubs are tracked through
+  different providers, each provider syncs its own fixture — two ids, two sets of
+  team slugs, one real match (seen 2026-09-09: Liverpool v Atlético as
+  `f3e96945` *and* `bd1a4cc8`). Anything that dedupes by fixture id will show it
+  twice. Backend row-merging is the real fix and is filed there, not here.
+- ⚠⚠ **The team slugs are the SYNCING PROVIDER's, and may not be the catalogue's.**
+  `GET /cronogol/teams` serves tracked clubs only; a club met through another
+  provider's sync has a second, untracked row under a different slug
+  (`liverpool-fc` beside `liverpool`, `napoli-459` beside `napoli`). A crest
+  lookup keyed on the live row's slug alone therefore MISSES for one side of a
+  cross-provider tie — see `teamRefFromLive`, which falls back to the fixture
+  row's own artwork.
+- ⚠ **A live row's `events` array can be ONE-SIDED.** On Premier-League-synced
+  cup ties the foreign side's events were dropped upstream for want of player
+  names (fixed backend-side 2026-09-09, `decisions/0056`). Never infer a score
+  from the timeline's contents; the `score` field is the score.
 - ⚠ **`minute` is null unless `status === 'live'`.** Null before kickoff, null
   once finished. Render nothing — never `0'`.
 - ⚠ **`minute` INCLUDES stoppage time.** `94` means "90+4". There is no split

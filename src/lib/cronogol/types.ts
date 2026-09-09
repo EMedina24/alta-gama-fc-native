@@ -758,7 +758,13 @@ export interface LiveMatchView {
    * ⚠ **These VANISH at full time**, with the row itself. The durable
    * `/cronogol/fixtures/{id}/events` is the record from then on.
    *
-   * ⚠ **LaLiga only**, like everything else on this route.
+   * ⚠ Carried only for the competitions this route covers (ADR 0139), like
+   * everything else on it.
+   *
+   * ⚠⚠ **A one-sided timeline is a REAL shape, not a parse failure.** Seen in
+   * production 2026-09-09 on Premier-League-synced cup ties, whose foreign
+   * opponent resolved to no player names at all and whose events were dropped
+   * upstream. Never infer a score from this array's contents.
    */
   events: LiveMatchEventView[];
 }
@@ -769,9 +775,18 @@ export interface LiveMatchView {
  * ⚠⚠ **An empty `matches` array is the NORMAL answer.** Most of the time
  * nothing is being played. It is an ordinary empty state, never an error.
  *
- * ⚠⚠ **LaLiga only today.** A Premier League, Serie A, Bundesliga or Segunda
- * match returns nothing here — a coverage gap, not a bug. The existing non-live
- * rendering stays the fallback rather than being replaced.
+ * ⚠⚠ **Coverage is PER SYNCING PROVIDER, not per league** (verified against
+ * production 2026-09-09; ADR 0139). The backend polls a fixture when its own
+ * provider has a live adapter, with no competition filter — today `laliga` and
+ * `premier-league`, so a Premier League club's CUP and EUROPEAN ties are served
+ * live too. Serie A, Bundesliga and the Portuguese feed still return nothing —
+ * a coverage gap, not a bug — and the existing non-live rendering stays the
+ * fallback rather than being replaced.
+ *
+ * ⚠ A match can therefore arrive here as TWO rows with two fixture ids, one per
+ * provider that syncs it, when both clubs are tracked through different sources
+ * (seen: Liverpool v Atlético as `f3e96945` and `bd1a4cc8`). Their team slugs
+ * differ too — see `LiveTeamRef`.
  *
  * ⚠⚠ **Rows DISAPPEAR when the match ends.** This route serves in-play matches
  * only; the final score arrives on `/cronogol/fixtures` (within ~3h) and
