@@ -195,24 +195,44 @@ export function sliceWindow(
 }
 
 /**
+ * The non-league competitions whose finished-match timelines are VERIFIED on
+ * the route the card calls (`GET /cronogol/fixtures/{id}/events`), keyed on
+ * the EXACT wire `competitionName` — a cup row's `leagueSlug` is the `''`
+ * sentinel, so the name is the only key the wire offers. The same string
+ * `competitionMarkKind` keys on, but deliberately a SEPARATE fact: having
+ * artwork and having a verified timeline are different claims, and the Copa
+ * del Rey will get a mark before it gets a proven events feed.
+ *
+ * UEFA Champions League — verified against production 2026-09-09
+ * (`handoff_ucl-events/EVIDENCE.md`): the live session's full-time hand-off
+ * wrote the timeline for all 3 of 3 finished ties involving a followed club,
+ * every event carrying a `teamSlug`.
+ */
+const EVENTS_VERIFIED_COMPETITIONS = new Set(["UEFA Champions League"]);
+
+/**
  * Whether the events disclosure may open for this fixture (ADR 0132, absorbing
- * the raw gate the last-result card carried).
+ * the raw gate the last-result card carried; the non-league branch opened for
+ * the UCL by ADR 0137).
  *
- * League rows keep today's exact semantics: the league's own capability flag,
- * and an UNKNOWN league stays enabled — that is what a segunda row (league
- * competition, sentinel slug) inherits, matching how the card treated an
- * unrecognised `leagueSlug` before this function existed.
+ * League rows keep the original exact semantics: the league's own capability
+ * flag, and an UNKNOWN league stays enabled — that is what a segunda row
+ * (league competition, sentinel slug) inherits, matching how the card treated
+ * an unrecognised `leagueSlug` before this function existed.
  *
- * ⚠ A NON-league row is gated OFF for now: whether the backend's finished-only
- * events sweep reaches cup fixtures is unverifiable until the first Champions
- * League matchday completes (probe recorded in ADR 0132 — and before flipping
- * this, confirm the events payload's side attribution survives a slug-less
- * opponent). An always-dead disclosure is the failure ADR 0105 exists to
- * prevent; "not published yet" copy forever is that failure in different words.
+ * A NON-league row opens only for the allowlist above. Its timelines come from
+ * the live session's full-time hand-off, not the league-only finished-match
+ * sweep — so a UCL result's events land within minutes of full time, and a tie
+ * whose live session missed full time has none, ever (the panel's "not
+ * published yet" copy is honest there). ⚠ Other cups travel the same hand-off
+ * path in theory but none has been observed; an always-dead disclosure is the
+ * failure ADR 0105 exists to prevent, so they stay closed until one is seen.
  */
 export function matchEventsCapable(
-  fixture: Pick<WindowFixtureView, "leagueSlug" | "competition">,
+  fixture: Pick<WindowFixtureView, "leagueSlug" | "competition" | "competitionName">,
 ): boolean {
-  if (fixture.competition !== "league") return false;
+  if (fixture.competition !== "league") {
+    return EVENTS_VERIFIED_COMPETITIONS.has(fixture.competitionName ?? "");
+  }
   return findLeagueByApiSlug(fixture.leagueSlug)?.matchEvents !== false;
 }

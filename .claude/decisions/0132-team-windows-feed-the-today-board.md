@@ -108,6 +108,17 @@ routes at every board consumer.** No backend change.
     `GET /cronogol/fixtures/f90e8609-…/events` — if a timeline comes back,
     confirm the payload's side attribution survives a slug-less opponent,
     then flip the cup branch and amend here.
+    **AMENDED 2026-09-09 — the probe ran and the branch is flipped
+    ([0137](./0137-ucl-timelines-open-on-last-result.md)).** Production
+    served the full 16-event timeline for Real Madrid 2–1 Inter on the
+    club-centric route (written by the live session's full-time hand-off,
+    3 of 3 finished UCL ties covered — `handoff_ucl-events/EVIDENCE.md`), so
+    the non-league branch now opens for competitions on an exact-wire-name
+    allowlist (`'UEFA Champions League'` only). The side-attribution check
+    failed in the direction the follow-up feared: the PAYLOAD survives a
+    slug-less opponent, the app's `eventSide` comparison did not — 0137 adds
+    the elimination rule in the same change. League branch untouched,
+    harness-asserted. Other cups stay closed (0105).
 11. **Phase B (same change):** `use-push-sync` merges the rows into
     `buildSnapshot` (gated on `widgetWindow.data` ALONE — a slow team query
     must not blank the widget; `selectWidgetFixtures` already drops what the
@@ -162,5 +173,6 @@ byte-identical (harness assertion 10).
   and the cup LAST RESULT meta wraps to two lines against the W pill. The
   short-form label decision should read these two screenshots.
 - ⚠ Pending: the 2026-09-09 kickoff sequence on real data (countdown →
-  kicked-off hold → sweep flip via the team refetch), and the §10 events
-  probe.
+  kicked-off hold → sweep flip via the team refetch), ~~and the §10 events
+  probe~~ — the probe ran 2026-09-09 and closed via
+  [0137](./0137-ucl-timelines-open-on-last-result.md).

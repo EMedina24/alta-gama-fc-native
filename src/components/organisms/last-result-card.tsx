@@ -18,7 +18,7 @@ import { StyleSheet, View } from 'react-native';
 import { CompetitionMark, Pill, Text, type CompetitionMarkKind } from '@/components/atoms';
 import { EventsDisclosure, ScoreLine, type ScoreSide } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
-import type { TeamRef } from '@/lib/cronogol/types';
+import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
 
@@ -57,6 +57,22 @@ export interface LastResultCardProps {
    * state and keeps its chevron.
    */
   matchEvents?: boolean;
+  /**
+   * A timeline handed in instead of fetched — the `_debug` gallery's seam,
+   * mirroring `LivePlate.suppliedEvents`: given events, the panel renders them
+   * and issues no request off this card's fixture id. The live screen never
+   * sets it; `undefined` is the real path.
+   */
+  suppliedEvents?: readonly TimelineEventView[];
+  /**
+   * The events panel, CONTROLLED (the ADR 0126 pattern, borrowed for the
+   * gallery so an expanded card can be reached by deep link + screenshot,
+   * tap-free). Absent, the card keeps its own state and is exactly what it
+   * always was. Both or neither: a controlled `eventsOpen` without
+   * `onToggleEvents` would be a chevron that ignores the finger.
+   */
+  eventsOpen?: boolean;
+  onToggleEvents?: () => void;
 }
 
 export function LastResultCard({
@@ -71,8 +87,13 @@ export function LastResultCard({
   copy,
   events,
   matchEvents = true,
+  suppliedEvents,
+  eventsOpen,
+  onToggleEvents,
 }: LastResultCardProps) {
-  const [showEvents, setShowEvents] = useState(false);
+  const [ownOpen, setOwnOpen] = useState(false);
+  const showEvents = eventsOpen ?? ownOpen;
+  const toggleEvents = onToggleEvents ?? (() => setOwnOpen((open) => !open));
 
   return (
     <View style={styles.card}>
@@ -106,7 +127,7 @@ export function LastResultCard({
       {matchEvents ? (
         <EventsDisclosure
           open={showEvents}
-          onToggle={() => setShowEvents((open) => !open)}
+          onToggle={toggleEvents}
           copy={events}
         />
       ) : null}
@@ -116,6 +137,7 @@ export function LastResultCard({
           fixtureId={id}
           home={homeTeam}
           away={awayTeam}
+          supplied={suppliedEvents}
           copy={events}
           // ⚠ The footer row above already reads `MATCH EVENTS`. Left on, the
           // panel printed its own eyebrow directly beneath it — the same words

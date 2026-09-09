@@ -1,0 +1,263 @@
+{
+    "fixtureId": "0d457708-8ed5-406a-8d3f-c5686cfb887d",
+    "events": [
+        {
+            "id": "cc67e1a9-a352-4f21-894f-aeb0da871ef0",
+            "type": "goal",
+            "subtype": "normal",
+            "minute": 14,
+            "minuteExtra": null,
+            "period": "FirstHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "Mbapp\u00e9",
+                "slug": "kylian-mbappe-lottin"
+            },
+            "related": {
+                "name": "Brahim",
+                "slug": "brahim"
+            }
+        },
+        {
+            "id": "5f20dbe1-bbbd-4fa6-aa3c-b6b8b32300ba",
+            "type": "goal",
+            "subtype": "normal",
+            "minute": 23,
+            "minuteExtra": null,
+            "period": "FirstHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "Valverde",
+                "slug": "valverde-1"
+            },
+            "related": null
+        },
+        {
+            "id": "7b88e6b1-06d8-4085-a723-2a3d279e2f84",
+            "type": "card",
+            "subtype": "yellow",
+            "minute": 39,
+            "minuteExtra": null,
+            "period": "FirstHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Hakan \u00c7alhanoglu",
+                "slug": null
+            },
+            "related": null
+        },
+        {
+            "id": "23427a3b-e013-4a2a-89fe-340f75791ee0",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 46,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "John Stones",
+                "slug": null
+            },
+            "related": {
+                "name": "Benjamin Pavard",
+                "slug": null
+            }
+        },
+        {
+            "id": "a6360007-0a9b-4a70-a2c1-e1a91906c288",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 60,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Petar Sucic",
+                "slug": null
+            },
+            "related": {
+                "name": "Nicol\u00f2 Barella",
+                "slug": null
+            }
+        },
+        {
+            "id": "47b7523f-c5ca-48e5-8208-60265f3290bd",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 60,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Ange-Yoan Bonny",
+                "slug": null
+            },
+            "related": {
+                "name": "Marcus Thuram",
+                "slug": null
+            }
+        },
+        {
+            "id": "dc9c823c-533f-492e-b25c-bf9dee949a92",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 60,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Piotr Zielinski",
+                "slug": null
+            },
+            "related": {
+                "name": "Hakan \u00c7alhanoglu",
+                "slug": null
+            }
+        },
+        {
+            "id": "3085027e-c5de-4407-8f3b-dfea5e1dc24a",
+            "type": "goal",
+            "subtype": "normal",
+            "minute": 77,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Carlos Augusto",
+                "slug": null
+            },
+            "related": {
+                "name": "Lautaro Mart\u00ednez",
+                "slug": null
+            }
+        },
+        {
+            "id": "f0f8223a-129e-48e9-aec1-ebe071fe9751",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 79,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "Tchouameni",
+                "slug": "aurelien-tchouameni"
+            },
+            "related": {
+                "name": "Trent",
+                "slug": "trent-alexander-arnold"
+            }
+        },
+        {
+            "id": "ce0f36f9-19c5-48f5-937b-c676ebf47ff4",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 79,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "Yan Diomande",
+                "slug": "yan-diomande"
+            },
+            "related": {
+                "name": "Brahim",
+                "slug": "brahim"
+            }
+        },
+        {
+            "id": "aa36db1d-a7e7-455e-b754-0cd3c15f3a13",
+            "type": "card",
+            "subtype": "yellow",
+            "minute": 79,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "Huijsen",
+                "slug": "dean-huijsen"
+            },
+            "related": null
+        },
+        {
+            "id": "878ba694-1336-44bb-8bca-cc6bad5f0aa8",
+            "type": "card",
+            "subtype": "yellow",
+            "minute": 79,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Lautaro Mart\u00ednez",
+                "slug": null
+            },
+            "related": null
+        },
+        {
+            "id": "ca1ba305-2be0-4196-9266-d1386c292d22",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 83,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Henrikh Mkhitaryan",
+                "slug": null
+            },
+            "related": {
+                "name": "Carlos Augusto",
+                "slug": null
+            }
+        },
+        {
+            "id": "8ec69663-69d1-4562-878c-7dafc119a81e",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 87,
+            "minuteExtra": null,
+            "period": "SecondHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "\u00c1. Carreras",
+                "slug": "alvaro-fernandez-1"
+            },
+            "related": {
+                "name": "Vini Jr.",
+                "slug": "vini-jr"
+            }
+        },
+        {
+            "id": "358a5a90-98b5-4857-ac00-0109907e9ff2",
+            "type": "substitution",
+            "subtype": "tactical",
+            "minute": 90,
+            "minuteExtra": 3,
+            "period": "SecondHalf",
+            "teamSlug": "real-madrid",
+            "player": {
+                "name": "C. Esp\u00ed",
+                "slug": "carlos-espi"
+            },
+            "related": {
+                "name": "Mbapp\u00e9",
+                "slug": "kylian-mbappe-lottin"
+            }
+        },
+        {
+            "id": "8aaae8c0-c9f8-4876-8ff1-ea144c2b6a87",
+            "type": "card",
+            "subtype": "yellow",
+            "minute": 90,
+            "minuteExtra": 4,
+            "period": "SecondHalf",
+            "teamSlug": "inter-inter",
+            "player": {
+                "name": "Yann Bisseck",
+                "slug": null
+            },
+            "related": null
+        }
+    ],
+    "count": 16
+}

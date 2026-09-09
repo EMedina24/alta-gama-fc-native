@@ -1433,6 +1433,15 @@ documented at the code that handles them; this is the index.
 
 0. **Front-end gaps** — see the section below. The Today board's lead states
    are now wired (0027); loading skeletons are the next most visible.
+0a. ~~🐛 **LAST RESULT shows no MATCH EVENTS for a Champions League result**~~ — DONE
+   2026-09-09 same day, [0137](./decisions/0137-ucl-timelines-open-on-last-result.md).
+   (Ed's report: Real Madrid 2–1 Inter; the backend serves the 16-event timeline on the route
+   the card already calls.) The gate took an exact-wire-name allowlist and `eventSide` the
+   elimination rule for the slug-less opponent (opening the gate alone would have drawn Inter's
+   nine rows crest-less); harness CHECKED IN at `scripts/team-window-harness.mjs` over the real
+   captured payload. Plan and evidence: [`handoff_ucl-events/PLAN.md`](../handoff_ucl-events/PLAN.md).
+   ⚠ Live simulator pass pending — a Real Madrid follower's card holds this result until their
+   next one lands.
 1. ~~**Widgets**~~ — DONE 2026-08-27, [0047](./decisions/0047-widgets.md).
    Both home-screen sizes, the Lock Screen accessories, and a per-club picker.
    Verified on the simulator; see "Done and verified" above for what was and was

@@ -197,6 +197,18 @@ export function eventsInGroup(
  * ⚠ `teamSlug` is typed nullable and legitimately is null: a VAR decision can
  * belong to neither side, and a club can have no crosswalk row for the event's
  * provider. `null` back means **render the row with no crest** — never guess.
+ *
+ * ⚠ ELIMINATION, for the team-window shape (ADR 0137): `opponentRef()` builds
+ * the opponent side with `slug: ''` — the deliberate non-key — while a
+ * verified cup timeline (UCL) names real club slugs on every event, so the
+ * comparison above can only ever match ONE side and the opponent's whole half
+ * of the match would render as "neither side". When the event names a club,
+ * that name did not match the one side holding a real slug, and the OTHER side
+ * exists but holds none (`''` counts as absent — the sentinel's meaning, and
+ * `TeamRef.slug` is typed `string`, so `!slug` is exactly that test), the
+ * event can only belong to the slug-less side. A VAR row (`teamSlug: null`)
+ * still answers null above; a fixture with two real slugs never reaches the
+ * rule; two slug-less sides stay null — never guess between two unknowns.
  */
 export function eventSide(
   event: TimelineEventView,
@@ -206,6 +218,10 @@ export function eventSide(
   if (event.teamSlug === null) return null;
   if (home && event.teamSlug === home.slug) return 'home';
   if (away && event.teamSlug === away.slug) return 'away';
+  if (home && away) {
+    if (home.slug && !away.slug) return 'away';
+    if (away.slug && !home.slug) return 'home';
+  }
   return null;
 }
 

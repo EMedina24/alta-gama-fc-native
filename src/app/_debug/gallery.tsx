@@ -167,6 +167,51 @@ const LIVE_SIDE = (name: string, abbr: string, goals: number | null, muted: bool
 });
 
 /**
+ * REAL Madrid 2–1 Inter — UCL jornada 1, 2026-09-08, the first cup timeline the
+ * card ever opens (ADR 0137). A SUBSET of the 16-event production payload
+ * captured in `scripts/fixtures/ucl-rm-inter-events.json` (trap 48: the sample
+ * copies the wire; the checked-in harness asserts over all 16). What the case
+ * shows is the elimination rule: the away ref below is `opponentRef()`'s exact
+ * slug-less output, so every `inter-inter` row crests the AWAY column by
+ * elimination — and Carlos Augusto (77') keeps his crest with no player link,
+ * exactly as a foreign player arrives (`player.slug: null`).
+ */
+const UCL_HOME: TeamRef = {
+  slug: 'real-madrid', name: 'Real Madrid', shortName: 'RMA', logoUrl: null, logoUrls: null,
+};
+const UCL_AWAY: TeamRef = {
+  slug: '', name: 'Inter', shortName: null, logoUrl: null, logoUrls: null,
+};
+const UCL_EVENTS: MatchEventView[] = [
+  { id: 'cc67e1a9-a352-4f21-894f-aeb0da871ef0', type: 'goal', subtype: 'normal', minute: 14,
+    minuteExtra: null, period: 'FirstHalf', teamSlug: 'real-madrid',
+    player: { name: 'Mbappé', slug: 'kylian-mbappe-lottin' }, related: { name: 'Brahim', slug: 'brahim' } },
+  { id: '5f20dbe1-bbbd-4fa6-aa3c-b6b8b32300ba', type: 'goal', subtype: 'normal', minute: 23,
+    minuteExtra: null, period: 'FirstHalf', teamSlug: 'real-madrid',
+    player: { name: 'Valverde', slug: 'valverde-1' }, related: null },
+  { id: '7b88e6b1-06d8-4085-a723-2a3d279e2f84', type: 'card', subtype: 'yellow', minute: 39,
+    minuteExtra: null, period: 'FirstHalf', teamSlug: 'inter-inter',
+    player: { name: 'Hakan Çalhanoglu', slug: null }, related: null },
+  { id: '23427a3b-e013-4a2a-89fe-340f75791ee0', type: 'substitution', subtype: 'tactical', minute: 46,
+    minuteExtra: null, period: 'SecondHalf', teamSlug: 'inter-inter',
+    player: { name: 'John Stones', slug: null }, related: { name: 'Benjamin Pavard', slug: null } },
+  // ⚠ The foreign scorer: crest by elimination, NO player link.
+  { id: '3085027e-c5de-4407-8f3b-dfea5e1dc24a', type: 'goal', subtype: 'normal', minute: 77,
+    minuteExtra: null, period: 'SecondHalf', teamSlug: 'inter-inter',
+    player: { name: 'Carlos Augusto', slug: null }, related: { name: 'Lautaro Martínez', slug: null } },
+  { id: 'aa36db1d-a7e7-455e-b754-0cd3c15f3a13', type: 'card', subtype: 'yellow', minute: 79,
+    minuteExtra: null, period: 'SecondHalf', teamSlug: 'real-madrid',
+    player: { name: 'Huijsen', slug: 'dean-huijsen' }, related: null },
+  { id: '8ec69663-69d1-4562-878c-7dafc119a81e', type: 'substitution', subtype: 'tactical', minute: 87,
+    minuteExtra: null, period: 'SecondHalf', teamSlug: 'real-madrid',
+    player: { name: 'Á. Carreras', slug: 'alvaro-fernandez-1' }, related: { name: 'Vini Jr.', slug: 'vini-jr' } },
+  // ⚠ A real 90+4 — this provider DOES populate `minuteExtra` for the UCL.
+  { id: '8aaae8c0-c9f8-4876-8ff1-ea144c2b6a87', type: 'card', subtype: 'yellow', minute: 90,
+    minuteExtra: 4, period: 'SecondHalf', teamSlug: 'inter-inter',
+    player: { name: 'Yann Bisseck', slug: null }, related: null },
+];
+
+/**
  * The next-up card's four wash states (ADR 0068), on REAL club hexes copied
  * from `/cronogol/teams` on 2026-08-29 — the point is the awkward ones.
  *
@@ -450,6 +495,9 @@ export default function GalleryScreen() {
   // exercise the real behaviour, not a simplified stand-in of it.
   const [picked, setPicked] = useState<EventGroup | null>(null);
   const evGroup = picked !== null && EV_COUNTS[picked] > 0 ? picked : initialGroup(EV_COUNTS);
+  // ⚠ Open by default — the expanded UCL panel is what `?only=last` exists to
+  // screenshot, and a tap cannot be scripted here. The chevron still works.
+  const [uclOpen, setUclOpen] = useState(true);
 
   const nextUp = (
     <>
@@ -514,10 +562,13 @@ export default function GalleryScreen() {
   /**
    * LAST RESULT with and without a league behind it (ADR 0132). The league
    * case is the REAL Valencia 0–5 Barcelona row (id, jornada and kickoff from
-   * production, 2026-09-06 — trap 48: samples copy the wire); the cup case is
-   * the same pair of clubs under a competition meta with the events
-   * disclosure GATED OFF, which is what `matchEventsCapable` answers for a
-   * cup row until the sweep is proven to reach one.
+   * production, 2026-09-06 — trap 48: samples copy the wire). The UCL case is
+   * the REAL Real Madrid 2–1 Inter row with its chevron OPEN (ADR 0137) over
+   * `suppliedEvents` — a real id would refetch on every visit — showing the
+   * elimination rule cresting the slug-less away column. The Copa case keeps
+   * the still-closed branch on screen: no chevron (unverified competition),
+   * the spelled name (ADR 0133's text fallback), so the UCL flip never reads
+   * as "cups are open now".
    */
   const lastResultCases = (
     <>
@@ -536,15 +587,35 @@ export default function GalleryScreen() {
           matchEvents
         />
       </Case>
-      <Case label="cup — the UCL lockup where MD was (ADR 0133); NO events chevron (ADR 0132)">
+      <Case label="cup — UCL: events chevron OPEN (ADR 0137); Inter's rows crest the away column by elimination">
         <LastResultCard
-          id="f90e8609-1ded-4a89-b8f0-68877c0ea1d5"
-          homeTeam={{ slug: 'barcelona', name: 'FC Barcelona', shortName: 'BAR', logoUrl: null, logoUrls: null }}
-          awayTeam={{ slug: '', name: 'Feyenoord', shortName: null, logoUrl: null, logoUrls: null }}
-          home={LIVE_SIDE('Barcelona', 'BAR', 3, false)}
-          away={LIVE_SIDE('Feyenoord', 'FEY', 1, true)}
-          meta="WED 9 SEP"
+          id="0d457708-8ed5-406a-8d3f-c5686cfb887d"
+          homeTeam={UCL_HOME}
+          awayTeam={UCL_AWAY}
+          home={LIVE_SIDE('Real Madrid', 'RMA', 2, false)}
+          away={LIVE_SIDE('Inter', 'INT', 1, true)}
+          meta="TUE 8 SEP"
           mark="ucl"
+          outcome={phrases.formLetters.W}
+          copy={copy.today}
+          events={copy.events}
+          matchEvents
+          suppliedEvents={UCL_EVENTS}
+          eventsOpen={uclOpen}
+          onToggleEvents={() => setUclOpen((open) => !open)}
+        />
+      </Case>
+      {/* ⚠ A cup the allowlist has never verified keeps NO chevron (ADR 0105
+          via 0137) and, markless, spells its name (ADR 0133). `matchEvents`
+          false means no fetch, so the id is a stand-in. */}
+      <Case label="cup — Copa del Rey: name spelled out, NO events chevron (unverified, ADR 0137)">
+        <LastResultCard
+          id="gallery-copa"
+          homeTeam={{ slug: 'barcelona', name: 'FC Barcelona', shortName: 'BAR', logoUrl: null, logoUrls: null }}
+          awayTeam={{ slug: '', name: 'Athletic Club', shortName: null, logoUrl: null, logoUrls: null }}
+          home={LIVE_SIDE('Barcelona', 'BAR', 2, false)}
+          away={LIVE_SIDE('Athletic Club', 'ATH', 0, true)}
+          meta="Copa del Rey · SAT 5 SEP"
           outcome={phrases.formLetters.W}
           copy={copy.today}
           events={copy.events}
