@@ -171,10 +171,20 @@ Bayern gained a 2025 Champions League block, so the harness guard now asserts
   a merged timeline being passed to `goalsByMatchweek`.** The harness therefore
   asserts the *wrong answer* it returns for Barcelona's real merged array, so the
   trap stays proven rather than described.
-- ⚠ `seasonTotals[].yellows` is typed `number | null` but can never be null for a
-  player — `PlayerSeasonStatsView.yellows` is non-nullable, so the all-or-null
-  merge always finds two numbers. Mirrored as nullable anyway; narrowing later is
-  non-breaking. **The club side is genuinely nullable.**
+- ⚠ `seasonTotals[].yellows` shipped as `number | null` but could never be null
+  for a player — `PlayerSeasonStatsView.yellows` is non-nullable, so the
+  all-or-null merge always found two numbers. Reported upstream and **narrowed to
+  `number` on 2026-09-10** (`senpai-backend` decision `0058`, "Amended"); mirrored
+  here. **The club side is genuinely nullable** and stays so. ⚠ Narrowing removed
+  a dead branch, not a hazard: below the floor these still answer `0`, which is
+  why this screen reads discipline from the league block regardless.
+- ⚠ **The merged `scoringRun` matchweek pair was a backend contract gap too, and
+  this app found it.** `senpai-backend` §120.15 argued the matchweek-namespace
+  rule to drop `goalsByMatchweek`, then served a `scoringRun` whose
+  `fromMatchweek`/`toMatchweek` come from different competitions. Both are
+  non-null and look usable, so nothing in the payload signals it — the "MD2 → MD1"
+  caption below is that gap surfacing here. Documented upstream on 2026-09-10; the
+  kickoffs were always served and are always safe.
 - ⚠ `RunStrip`'s `seasonLength` is the LEAGUE's round count and the merged season
   is longer. It is a floor, not a total — the strip sizes on
   `max(cells.length, seasonLength)`, so it expands rather than overflowing.

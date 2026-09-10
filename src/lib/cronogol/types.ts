@@ -1448,14 +1448,21 @@ export interface PlayerSeasonTotalsView {
   penaltyConversion: number | null;
   ownGoals: number;
   /**
-   * ⚠ Typed nullable to match the wire, but it can never actually BE null for a
-   * player: `PlayerSeasonStatsView.yellows` is non-nullable, so the all-or-null
-   * merge always finds two numbers. Handle the null anyway — a backend
-   * follow-up may narrow it, and narrowing is non-breaking for readers.
+   * ⚠⚠ NON-nullable, unlike `TeamSeasonTotalsView`'s cards and unlike every other
+   * merged event field — narrowed on the backend 2026-09-10 after this app
+   * reported it (`senpai-backend` decision `0058`, "Amended"). A player ROW's
+   * cards are non-nullable on the wire, so the all-or-null merge can only ever
+   * find numbers. Do not widen it back to match the club block.
+   *
+   * ⚠⚠ **A number here is NOT a trustworthy number.** Below the coverage floor
+   * these still answer `0`, which is "we did not look" wearing the costume of
+   * "it did not happen" — the hazard ADR 0148 gates against. Gate on
+   * `coverage.sufficient`, never on nullability. This screen sidesteps it
+   * entirely by reading discipline from the LEAGUE block (ADR 0149).
    */
-  yellows: number | null;
-  secondYellows: number | null;
-  reds: number | null;
+  yellows: number;
+  secondYellows: number;
+  reds: number;
   braces: number;
   hatTricks: number;
   hatTrickFixtures: StatsMergedMomentView[] | null;

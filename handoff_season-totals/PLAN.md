@@ -214,11 +214,15 @@ row to `.claude/decisions/README.md`.
 
 ## Two things to know that are not app bugs
 
-**1 · `seasonTotals[].yellows` is typed `number | null` but can never be null for a player.**
-`PlayerSeasonStatsView.yellows` is non-nullable on the wire, so the backend's all-or-null merge
-always finds two numbers. I over-widened it when I wrote the type. Narrowing `number | null` →
-`number` later is non-breaking for readers, so **mirror it as nullable for now** and handle the null;
-a backend follow-up can tighten it. (The club side is genuinely nullable — that one is real.)
+**1 · ~~`seasonTotals[].yellows` is typed `number | null`~~ — ⚠ SUPERSEDED, it was narrowed.**
+`PlayerSeasonStatsView.yellows` is non-nullable on the wire, so the all-or-null merge always found two
+numbers. Reported upstream and **narrowed to `number` on 2026-09-10** (`senpai-backend` decision
+`0058`, "Amended"), after four players' production payloads were checked. **Mirror it as `number`** —
+this note's original "mirror it as nullable for now" is the opposite of current. (The club side is
+genuinely nullable — that one is real and unchanged.)
+
+⚠ Narrowing removed a dead branch, not a hazard: below the coverage floor these still answer `0`, so
+gate them on `coverage.sufficient` rather than on nullability.
 
 **2 · A merged block's `coverage.sufficient` is an AND, not a ratio.** Valverde's merged 2026 block
 reads `ratio: 1` with `sufficient: false` — 5 of 5 fixtures counted, a perfect ratio, still refused,

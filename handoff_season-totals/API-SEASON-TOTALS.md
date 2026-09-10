@@ -72,9 +72,10 @@ export interface PlayerSeasonTotalsView {
   /** ⚠ Recomputed from merged counts, never an average of the ratios. */
   penaltyConversion: number | null;
   ownGoals: number;
-  yellows: number | null;
-  secondYellows: number | null;
-  reds: number | null;
+  /** ⚠ Narrowed to non-nullable 2026-09-10 — a player row's cards never are. */
+  yellows: number;
+  secondYellows: number;
+  reds: number;
   braces: number;
   hatTricks: number;
   hatTrickFixtures: StatsMergedMomentView[] | null;
@@ -201,9 +202,10 @@ fixtures counted, a perfect ratio, still refused, because the Champions League h
 and under the absolute floor of 3. This is the state until roughly late October. The raw counters
 (`goals`, `assists`, `yellows`) are served regardless; everything derived is null.
 
-⚠ `yellows` is typed `number | null` but is `0` here and can never actually be null for a player —
-`PlayerSeasonStatsView.yellows` is non-nullable on the wire, so the merge always finds two numbers.
-Mirror it as nullable anyway; narrowing later is non-breaking.
+⚠ `yellows` reads `0` here and can never be null for a player — `PlayerSeasonStatsView.yellows` is
+non-nullable on the wire, so the merge always finds two numbers. It shipped as `number | null` and was
+**narrowed to `number` on 2026-09-10** after this was written; mirror it as `number`.
+⚠⚠ The `0` is still not a trustworthy zero — `coverage.sufficient` is `false` on this very block.
 
 ---
 
