@@ -182,6 +182,8 @@ match we swept badly is still a real scoreline. `sum(timeline[].gf) === goalsFor
 
       "coverage": { "fixturesCounted": 36, "fixturesTotal": 38,
                     "ratio": 0.9474, "sufficient": true }
+      // ⚠ fixturesTotal is his CLUB's fixtures for the season, not his
+      //   appearances — there are no lineup events, so appearances are unknowable.
     }
   ],
   "overall": {                  // ⚠ null when no season has enough coverage
@@ -225,9 +227,15 @@ Two independent reasons a field is null:
 | `serie-a` | ⛔ none | ✅ full | events carry a name string and no stable person id — two players sharing a name would merge |
 | `bundesliga` | ⛔ none | ⚠ **scorelines only** | every event-derived field null; a known upstream defect, not a blip |
 
-**(b) The season is too thinly swept.** `coverage.sufficient === false` ⇒ **every event-derived
-field in that block is null, together.** They are nulled as a group on purpose: a real card count
-beside a null comeback count invites the reader to assume the null is a zero.
+**(b) The season is too thinly swept.** `coverage.sufficient === false` ⇒ the **derived** fields in
+that block are null, together — bands, the matchweek series, the named moments, penalty conversion.
+They are nulled as a group on purpose: a real card count beside a null comeback count invites the
+reader to assume the null is a zero.
+
+⚠⚠ **The raw counters are served either way** — `goals`, `assists`, the cards. They can only ever be
+too LOW (a missing event subtracts one, it never invents one), so they publish with `coverage` beside
+them. Read `sufficient` before telling a user a number is complete; never read it as "there is no
+number to show".
 
 ⚠ **`timeline`, `scoringRun`, and the whole scoreline block are NEVER null**, whatever `coverage`
 says — they need no events. For the Bundesliga the goals chart is the *only* chart that works, so a
@@ -333,3 +341,44 @@ leagues wait for the `0 */3` sweep.
 **So the end-to-end lag from final whistle to updated stats is ~25 minutes at best and ~3½–4 hours
 at worst.** Do not present these numbers as live, and do not put a "just now" timestamp on them.
 The live match card is a different surface with a different contract.
+
+
+---
+
+## 10. ⚠⚠ Added 2026-09-10 — the bug this section exists to prevent
+
+A card rendered **Federico Valverde · 0 GOALS** the week after he scored against Inter. The API was
+right; the card was wrong, and the mistake is one any client will make once.
+
+**A player has ONE ROW PER COMPETITION, per season.** Valverde's payload that day held three:
+
+| competition | season | goals | assists |
+| --- | --- | --- | --- |
+| `champions-league` | 2026 | **1** | 0 |
+| `laliga` | 2026 | 0 | 1 |
+| `champions-league` | 2025 | 3 | 4 |
+
+The card had picked `seasons[n]` and labelled it as though it were the player's totals. It was
+showing the LaLiga row — genuinely 0 goals — while the goal everyone was looking for sat in the
+Champions League row directly above it.
+
+**So a player card must do one of two things, and say which:**
+
+- **Name the competition** it is showing, and give the user a way to switch; or
+- **Aggregate across competitions** for that season, and label the number as an all-competitions
+  total.
+
+⚠ There is no "all competitions" row on the wire and there will not be one — competitions have
+different event coverage (see §5), so the backend will not silently add a Serie A season to a LaLiga
+one. If the app aggregates, it owns that decision and should exclude competitions whose
+`coverage.sufficient` is false rather than mixing.
+
+⚠ `overall` **is** cross-competition and cross-season — it is a career total, not a season total. Do
+not use it for a season card.
+
+### The other half of the same report
+
+The career line read **3 goals** while the season rows added to 4. That was a backend bug, fixed the
+same day: `overall` had excluded thinly-covered seasons while the season rows still published their
+counters. It now sums every season, so the rows and the total always reconcile, and
+`seasonsCounted` / `seasonsTotal` carries the caveat instead.
