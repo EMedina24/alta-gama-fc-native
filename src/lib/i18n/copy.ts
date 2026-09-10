@@ -498,6 +498,97 @@ export interface Copy {
     done: string;
   };
   /**
+   * The Season stats screen (ADR 0141) — the club page's second action row and
+   * the child screen behind it.
+   *
+   * ⚠⚠ **Nothing in this block may say "appearances", "apps", "minutes" or
+   * "per 90".** No source publishes lineup events, so every denominator on that
+   * screen is CLUB FIXTURES; a label claiming otherwise is wrong and makes
+   * whoever reads it wrong too.
+   *
+   * ⚠⚠ **And nothing here may date the numbers.** They are rebuilt by a
+   * three-hourly cron chain, so the lag from a final whistle is ~25 minutes at
+   * best and ~4 hours at worst. No "just now", no "updated", no timestamp — the
+   * live match card is a different surface with a different contract.
+   *
+   * ⚠ `streak` NAMES THE CLUB on purpose. The streak counts consecutive club
+   * matches, not appearances, so a benched match breaks ours and not a
+   * broadcaster's; rendered as a bare number it will sometimes read lower than
+   * every other source and look like a bug.
+   *
+   * ⚠ `noEvents` is the one line that explains an absent half of the screen —
+   * the Bundesliga has no trustworthy events at all, and a thinly-swept season
+   * loses the same fields together. Without it a club page looks broken rather
+   * than honest, which is why there is no version of this screen without it.
+   */
+  stats: {
+    /** The club-page row. */
+    rowTitle: string;
+    rowBody: string;
+    /** The child screen. */
+    title: string;
+    /** "LALIGA 2026/27 · 38 PARTIDOS" — uppercased HERE, not at the call site. */
+    eyebrow: (league: string, season: string, matches: string) => string;
+    club: string;
+    players: string;
+    /** Club view. */
+    goalsScored: string;
+    perMatch: (value: string) => string;
+    biggestWin: string;
+    versus: (opponent: string) => string;
+    cleanSheets: string;
+    failedToScore: string;
+    outOf: (total: number) => string;
+    scoringRun: string;
+    runValue: string;
+    runWindow: (from: string, to: string) => string;
+    goalsPerMatchweek: string;
+    home: string;
+    away: string;
+    conceded: string;
+    lateGoals: string;
+    concededLate: string;
+    afterSeventyFive: string;
+    comebacks: string;
+    comebackNote: (wins: number) => string;
+    discipline: string;
+    /** Players view. */
+    goals: string;
+    assists: string;
+    involvements: string;
+    change: string;
+    choosePlayer: string;
+    penaltySplit: string;
+    openPlay: string;
+    fromTheSpot: string;
+    nonPen: string;
+    conversion: string;
+    conversionOf: (scored: number, taken: number) => string;
+    goalTiming: string;
+    inStoppageTime: string;
+    firstHalf: string;
+    secondHalf: string;
+    byMatchweek: string;
+    braces: string;
+    bracesNote: string;
+    hatTricks: string;
+    longestRun: string;
+    /** ⚠ Names the club — see the block note above. */
+    streak: (club: string) => string;
+    superSub: string;
+    superSubNote: string;
+    quickestBooking: string;
+    minute: (n: number) => string;
+    /** States. */
+    empty: string;
+    error: string;
+    retry: string;
+    /** ⚠ The line that explains an absent event half. Not optional. */
+    noEvents: (counted: number, total: number) => string;
+    footnote: string;
+    playerFootnote: string;
+  };
+  /**
    * The player sheet.
    *
    * ⚠ `positionNames` is SINGULAR and is NOT `club.bandLabels` — the list groups
@@ -972,6 +1063,70 @@ export const esCopy: Copy = {
     done: 'Hecho',
   },
 
+  stats: {
+    rowTitle: 'Estadísticas',
+    rowBody: 'Goles, rachas, minutos y disciplina — club y jugadores.',
+    title: 'La temporada en cifras',
+    eyebrow: (league, season, matches) =>
+      [league, season, matches].filter(Boolean).join(' · ').toUpperCase(),
+    club: 'Club',
+    players: 'Jugadores',
+    goalsScored: 'Goles marcados',
+    perMatch: (value) => `${value} por partido`,
+    biggestWin: 'Mayor victoria',
+    versus: (opponent) => `a ${opponent}`,
+    cleanSheets: 'Porterías a cero',
+    failedToScore: 'Sin marcar',
+    outOf: (total) => `/ ${total}`,
+    scoringRun: 'Racha marcando',
+    runValue: 'partidos seguidos marcando',
+    runWindow: (from, to) => `${from} → ${to}`,
+    goalsPerMatchweek: 'Goles por jornada',
+    home: 'Casa',
+    away: 'Fuera',
+    conceded: 'Encajados · por minuto',
+    lateGoals: 'Goles tardíos',
+    concededLate: 'Encajados tarde',
+    afterSeventyFive: "después del 75'",
+    comebacks: 'Remontadas',
+    comebackNote: (wins) =>
+      wins === 1 ? 'puntos desde atrás · 1 victoria' : `puntos desde atrás · ${wins} victorias`,
+    discipline: 'Disciplina',
+    goals: 'Goles',
+    assists: 'Asistencias',
+    involvements: 'Participaciones',
+    change: 'Cambiar',
+    choosePlayer: 'Elegir jugador',
+    penaltySplit: 'Reparto de penaltis',
+    openPlay: 'Juego abierto',
+    fromTheSpot: 'De penalti',
+    nonPen: 'SIN PENALTI',
+    conversion: 'Acierto',
+    conversionOf: (scored, taken) => `${scored}/${taken}`,
+    goalTiming: 'Minuto del gol',
+    inStoppageTime: 'en el descuento',
+    firstHalf: '1.ª parte',
+    secondHalf: '2.ª parte',
+    byMatchweek: 'Goles por jornada',
+    braces: 'Dobletes',
+    bracesNote: 'dos en un partido',
+    hatTricks: 'Tripletes',
+    longestRun: 'Mejor racha',
+    streak: (club) => `partidos seguidos del ${club} marcando`,
+    superSub: 'Desde el banco',
+    superSubNote: 'goles tras salir del banquillo',
+    quickestBooking: 'Amonestación más rápida',
+    minute: (n) => `${n}'`,
+    empty: 'Todavía no hay estadísticas de esta temporada.',
+    error: 'No hemos podido cargar las estadísticas.',
+    retry: 'Reintentar',
+    noEvents: (counted, total) =>
+      `Faltan los datos de jugada de esta competición, así que no hay minutos, tarjetas ni remontadas. Los goles y los resultados sí están completos (${counted} de ${total} partidos revisados).`,
+    footnote:
+      'Los datos de resultados se calculan sobre las actas oficiales. Las identidades de los jugadores están verificadas en LaLiga y Segunda.',
+    playerFootnote:
+      'Los tramos usan el minuto del gol tal y como lo publica la liga. Los goles del descuento cuentan en el último tramo. No hay partidos jugados ni minutos: las rachas cuentan partidos del club.',
+  },
   player: {
     done: 'Listo',
     age: 'Edad',
@@ -1405,6 +1560,70 @@ export const enCopy: Copy = {
     done: 'Done',
   },
 
+  stats: {
+    rowTitle: 'Season stats',
+    rowBody: 'Goals, runs, timings and discipline — club and players.',
+    title: 'Season in numbers',
+    eyebrow: (league, season, matches) =>
+      [league, season, matches].filter(Boolean).join(' · ').toUpperCase(),
+    club: 'Club',
+    players: 'Players',
+    goalsScored: 'Goals scored',
+    perMatch: (value) => `${value} per match`,
+    biggestWin: 'Biggest win',
+    versus: (opponent) => `v ${opponent}`,
+    cleanSheets: 'Clean sheets',
+    failedToScore: 'Failed to score',
+    outOf: (total) => `/ ${total}`,
+    scoringRun: 'Scoring run',
+    runValue: 'straight matches scored in',
+    runWindow: (from, to) => `${from} → ${to}`,
+    goalsPerMatchweek: 'Goals per matchweek',
+    home: 'Home',
+    away: 'Away',
+    conceded: 'Conceded · by minute',
+    lateGoals: 'Late goals',
+    concededLate: 'Conceded late',
+    afterSeventyFive: "after 75'",
+    comebacks: 'Comebacks',
+    comebackNote: (wins) =>
+      wins === 1 ? 'points won from behind · 1 win' : `points won from behind · ${wins} wins`,
+    discipline: 'Discipline',
+    goals: 'Goals',
+    assists: 'Assists',
+    involvements: 'Involvements',
+    change: 'Change',
+    choosePlayer: 'Choose a player',
+    penaltySplit: 'Penalty split',
+    openPlay: 'Open play',
+    fromTheSpot: 'From the spot',
+    nonPen: 'NON-PEN',
+    conversion: 'Conversion',
+    conversionOf: (scored, taken) => `${scored}/${taken}`,
+    goalTiming: 'Goal timing',
+    inStoppageTime: 'in stoppage time',
+    firstHalf: '1st half',
+    secondHalf: '2nd half',
+    byMatchweek: 'Goals by matchweek',
+    braces: 'Braces',
+    bracesNote: 'two in a match',
+    hatTricks: 'Hat-tricks',
+    longestRun: 'Longest run',
+    streak: (club) => `straight ${club} matches scoring`,
+    superSub: 'Super-sub',
+    superSubNote: 'goals after coming on',
+    quickestBooking: 'Quickest booking',
+    minute: (n) => `${n}'`,
+    empty: 'No stats for this season yet.',
+    error: "We couldn't load the stats.",
+    retry: 'Try again',
+    noEvents: (counted, total) =>
+      `We hold no play-by-play for this competition, so there are no minutes, cards or comebacks here. Goals and results are complete (${counted} of ${total} matches reconciled).`,
+    footnote:
+      'Scoreline-based stats are computed from official results. Player identities are verified for LaLiga and Segunda.',
+    playerFootnote:
+      "Timing bands use the minute of the goal as recorded by the league. Stoppage-time goals count in the final band. There are no appearances or minutes: runs count club matches.",
+  },
   player: {
     done: 'Done',
     age: 'Age',

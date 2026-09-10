@@ -994,10 +994,11 @@ export interface SquadNationality {
  * substituted value cannot be told apart from a real one by anyone reading the
  * page.
  *
- * ⚠⚠ **There are no player statistics and none are coming.** No appearances,
- * goals, assists, minutes or cards, from any provider, at any price point the
- * backend holds — getting them is a new paid contract, not a new field. Do not
- * build a column against this type expecting one.
+ * ⚠ **Season statistics exist since 2026-09-09, but NOT on this type** — they
+ * are a separate route, `GET /cronogol/players/{slug}/stats`, joined on `slug`
+ * below (`PlayerStatsView`, ADR 0146, superseding this type's former "none are
+ * coming"). Still absent everywhere and permanently: appearances, minutes and
+ * anything per-90, because no source publishes lineup events.
  *
  * ⚠⚠ **This carries personal data about named living people, and squads
  * register 16- and 17-year-olds** — so `dateOfBirth` and `placeOfBirth` are
@@ -1018,6 +1019,21 @@ export interface SquadPlayerView {
    * would break every August, which is why it is not this.)
    */
   id: string;
+  /**
+   * Our `players.slug` — the ONLY key `GET /cronogol/players/{slug}/stats`
+   * takes. Added to this view 2026-09-09 for exactly that: the squad used to
+   * publish the provider id and no slug, so there was no way from a squad row
+   * to a stats URL.
+   *
+   * ⚠⚠ **NULL FOR EVERY PREMIER LEAGUE PLAYER** — all 49 of Arsenal's, and
+   * every leaderboard row too (verified 2026-09-10). So a squad row is a link
+   * to season stats only where the slug is actually there, whatever a
+   * per-league coverage table says about the stats themselves.
+   *
+   * ⚠ Not unique and not a key — display shorthand across ~39,000 people, two
+   * of whom can share one. Identify a person by `id`; use this to build a URL.
+   */
+  slug: string | null;
   /** ⚠ Nullable, and a null shirt sorts LAST rather than as zero. */
   shirt: number | null;
   /** The full registered name — often the legal one, and long. */
@@ -1237,4 +1253,354 @@ export interface FixtureEventsView {
    */
   events: MatchEventView[];
   count: number;
+}
+
+/* ── Season stats ────────────────────────────────────────────────────────────
+ *
+ * `GET /cronogol/teams/{slug}/stats`, `GET /cronogol/players/{slug}/stats` and
+ * `GET /cronogol/stats/leaders`, live since 2026-09-09 (backend §120, decision
+ * `0058`). Copied verbatim from `CRONOGOL-API.md`'s TypeScript block — the
+ * `⚠` comments are the contract, not decoration.
+ *
+ * ⚠⚠ **A null is never a zero.** Every nullable field below means "we do not
+ * know", and the two reasons are independent: the competition holds no
+ * trustworthy events, or the season is too thinly swept. Rendering one as `0`
+ * is the single most damaging thing this app can do with these routes.
+ *
+ * ⚠ All three are `Cache-Control: public, max-age=300` over rows a sweep
+ * rebuilds every three hours. Nothing here is live and nothing here triggers a
+ * fetch — see `STALE.stats`.
+ */
+
+/**
+ * How much of a season actually reconciled.
+ *
+ * ⚠⚠ **When `sufficient` is false, EVERY event-derived field in the same block
+ * is null, together.** They are nulled as a group on purpose: a real card count
+ * beside a null comeback count invites the reader to assume the null is a zero.
+ *
+ * ⚠ `fixturesCounted` and `fixturesTotal` are CLUB FIXTURES, not appearances —
+ * there are no lineup events at any source. A label saying "apps" is wrong.
+ */
+export interface StatsCoverageView {
+  /** Club fixtures whose stored timeline reconciled to the stored scoreline. */
+  fixturesCounted: number;
+  /** Club fixtures played, whether we hold their events or not. */
+  fixturesTotal: number;
+  ratio: number;
+  /** ⚠ When false, EVERY event-derived field in the same block is null. */
+  sufficient: boolean;
+}
+
+/**
+ * Goals bucketed by minute band — `1-15`, `16-30`, `31-45`, `46-60`, `61-75`,
+ * `76-90`, `90+`.
+ *
+ * ⚠⚠ **This sums to ≤ the goal total, never to it.** A goal with no recorded
+ * minute counts in `goals`/`goalsFor` and is dropped from the bands, so any
+ * share computed over it must use the BANDED total as its denominator. See
+ * `bandTotal` in `./stats`.
+ *
+ * ⚠ Keys are wire strings and the set is not guaranteed complete — a band with
+ * no goals may be absent or present as `0`. Read by key with a fallback, never
+ * by position.
+ */
+export type GoalBandsView = Record<string, number>;
+
+/** A single named fixture — a hat-trick, a booking. */
+export interface StatsMomentView {
+  fixtureId: string;
+  /** ⚠ null when the opposing club has no slug. Rare, but real. */
+  opponent: { slug: string; name: string } | null;
+  /** ⚠ null for cups and Champions League knockouts. */
+  matchweek: number | null;
+  kickoffUtc: string;
+  /** Present on a hat-trick. */
+  goals?: number;
+  /** Present on a booking. */
+  minute?: number;
+  /** `yellow` | `second-yellow` | `red`. Present on a booking. */
+  card?: string;
+}
+
+/** One competition-season of a player's record. */
+export interface PlayerSeasonStatsView {
+  /** ⚠ The STARTING year: 2026 means 2026/27. */
+  season: number;
+  /** ⚠ An API competition slug (`laliga`), not our `League.slug`. */
+  competition: string;
+  teams: { slug: string; name: string }[];
+  /** ⚠ Own goals are NOT counted here. */
+  goals: number;
+  assists: number;
+  /** ⚠ Served, not computed — do not re-add goals and assists. */
+  goalInvolvements: number;
+  penaltyGoals: number;
+  /** ⚠ null on premier-league and serie-a: a miss is not observable there. */
+  penaltiesMissed: number | null;
+  /** 0–1, not a percentage. ⚠ null wherever `penaltiesMissed` is. */
+  penaltyConversion: number | null;
+  ownGoals: number;
+  yellows: number;
+  secondYellows: number;
+  reds: number;
+  braces: number;
+  hatTricks: number;
+  /**
+   * One entry per hat-trick, always the same length as `hatTricks`.
+   *
+   * ⚠ A four-goal game is ONE entry. ⚠ Event-derived: `null` below the
+   * coverage floor, `[]` when there genuinely were none.
+   */
+  hatTrickFixtures: StatsMomentView[] | null;
+  /**
+   * The earliest minute the player was carded all season.
+   *
+   * ⚠ Cards with no recorded minute are excluded, so this is the earliest
+   * PLACEABLE booking. ⚠⚠ `null` below the coverage floor AND `null` for a
+   * player never booked — the two are NOT distinguishable here, so read
+   * `coverage.sufficient` before telling anyone he was never booked.
+   */
+  quickestBooking: StatsMomentView | null;
+  superSubGoals: number;
+  /**
+   * ⚠⚠ Consecutive CLUB MATCHES with a goal — **not appearances**. A benched
+   * match breaks ours and not a broadcaster's, so render it with the club
+   * named ("scored in 6 straight Barcelona matches") rather than as a bare
+   * number that will sometimes read lower than every other source.
+   */
+  longestScoringStreak: number;
+  /** ⚠ null once the season goes stale — a 2024 season has no current streak. */
+  currentScoringStreak: number | null;
+  goalsByBand: GoalBandsView | null;
+  /**
+   * ⚠ Sparse, and only over fixtures that carry a matchweek, so it does NOT
+   * sum to `goals`. ⚠ `null`, never `{}`.
+   */
+  goalsByMatchweek: Record<string, number> | null;
+  coverage: StatsCoverageView;
+}
+
+/** A player's career total across the seasons that cleared the floor. */
+export interface PlayerOverallStatsView {
+  goals: number;
+  assists: number;
+  goalInvolvements: number;
+  penaltyGoals: number;
+  ownGoals: number;
+  yellows: number;
+  secondYellows: number;
+  reds: number;
+  braces: number;
+  hatTricks: number;
+  superSubGoals: number;
+  /** ⚠ MAX across seasons, never a sum. */
+  longestScoringStreak: number;
+  seasonsCounted: number;
+  seasonsTotal: number;
+}
+
+/**
+ * `GET /cronogol/players/{slug}/stats`.
+ *
+ * ⚠ A known player with no stats is a `200` with `seasons: []` and
+ * `overall: null` — a quiet season is not a missing person. `404` is an
+ * unknown slug.
+ *
+ * ⚠⚠ `409` means the slug is AMBIGUOUS: `players.slug` is display shorthand
+ * with no uniqueness guarantee across ~39,000 people, and the body carries
+ * `candidates`. Rare, real, and the backend will not guess.
+ */
+export interface PlayerStatsView {
+  /** ⚠⚠ THE stable key. `slug` is neither unique nor permanent. */
+  playerId: string;
+  /** ⚠ Nullable AND not unique — a link target, never a key. */
+  slug: string | null;
+  name: string;
+  seasons: PlayerSeasonStatsView[];
+  /** ⚠ null when no season has enough coverage. */
+  overall: PlayerOverallStatsView | null;
+}
+
+/** A club's home or away half-season. Scoreline-derived, so never null. */
+export interface TeamVenueSplitView {
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  cleanSheets: number;
+}
+
+/** A club's biggest win or defeat. */
+export interface TeamResultRefView {
+  /**
+   * ⚠ A `fixtures` id — or a `ucl_fixtures` id when the season's `competition`
+   * is `champions-league`. The value does not say which; the competition does.
+   */
+  fixtureId: string;
+  /** ⚠ null when the opposing club has no slug. Rare, but real. */
+  opponent: { slug: string; name: string } | null;
+  /** ⚠ null for cups and Champions League knockouts. */
+  matchweek: number | null;
+  goalsFor: number;
+  goalsAgainst: number;
+  kickoffUtc: string;
+}
+
+/**
+ * One finished fixture in a club's season, in KICKOFF order.
+ *
+ * ⚠⚠ **Kickoff order is the axis; `mw` is a LABEL.** Matchweeks sort by
+ * number, which is not chronological — a postponement really does put
+ * matchweek 2 before matchweek 1, and Barcelona's live 2026 timeline reads
+ * `2, 1, 3, 4` today. Plot on the array index, never on `mw`.
+ *
+ * ⚠ `mw` is null for every Champions League knockout round, which is why `ko`
+ * is on every entry: it is the only label a cup chart can fall back on.
+ *
+ * ⚠ Built over EVERY finished fixture, not only the ones whose events
+ * reconciled — a badly swept match is still a real scoreline. So
+ * `sum(timeline[].gf) === goalsFor`, exactly, always. Prefer it over
+ * `goalsForByBand` wherever either would do.
+ */
+export interface StatsTimelineEntryView {
+  id: string;
+  /** ⚠ null for cups and Champions League knockouts. */
+  mw: number | null;
+  /** Kickoff, ISO — the label to fall back on where `mw` is null. */
+  ko: string;
+  home: boolean;
+  gf: number;
+  ga: number;
+}
+
+/** The club's longest run of matches scored in. */
+export interface ScoringRunView {
+  /** Always equals the club's `longestScoringRun`. */
+  length: number;
+  /**
+   * ⚠ Indices INTO `timeline`, so highlighting the run inside the squares
+   * strip needs no matching logic — slice on these.
+   */
+  startIndex: number;
+  endIndex: number;
+  /** ⚠ null on a cup run — render the kickoffs instead of "MD9 → MD29". */
+  fromMatchweek: number | null;
+  toMatchweek: number | null;
+  fromKickoffUtc: string;
+  toKickoffUtc: string;
+}
+
+/** One competition-season of a club's record. */
+export interface TeamSeasonStatsView {
+  /** ⚠ The STARTING year: 2026 means 2026/27. */
+  season: number;
+  /** ⚠ An API competition slug (`laliga`), not our `League.slug`. */
+  competition: string;
+
+  /* Scoreline-derived — ALWAYS numbers, for EVERY competition including the
+   * Bundesliga, because they need no event data at all. */
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  cleanSheets: number;
+  failedToScore: number;
+  longestScoringRun: number;
+  longestUnbeatenRun: number;
+  longestWinningRun: number;
+  biggestWin: TeamResultRefView | null;
+  biggestDefeat: TeamResultRefView | null;
+  home: TeamVenueSplitView;
+  away: TeamVenueSplitView;
+  /**
+   * ⚠⚠ Scoreline-derived, so ALWAYS present — every competition, including the
+   * Bundesliga, where it is the only chart that works. Never null; an empty
+   * array means no finished fixtures, not missing data.
+   */
+  timeline: StatsTimelineEntryView[];
+  /** ⚠ null only when the club never scored. Also scoreline-derived. */
+  scoringRun: ScoringRunView | null;
+
+  /* Event-derived — ⚠⚠ null where coverage is absent. NEVER 0. */
+  comebackWins: number | null;
+  comebackPoints: number | null;
+  yellows: number | null;
+  secondYellows: number | null;
+  reds: number | null;
+  goalsForByBand: GoalBandsView | null;
+  goalsAgainstByBand: GoalBandsView | null;
+  coverage: StatsCoverageView;
+}
+
+/**
+ * `GET /cronogol/teams/{slug}/stats`. `404` on an unknown club slug, like
+ * `teams/{slug}/squad`.
+ *
+ * ⚠⚠ **`seasons` carries one block per competition-season, not one per
+ * season.** Barcelona answers with 2026 champions-league, 2026 laliga AND 2025
+ * champions-league today. Pick a block with `pickSeason` in `./stats`; reading
+ * `seasons[0]` renders a cup record under a league heading.
+ *
+ * ⚠ **No `played`, `won`, `drawn`, `lost` or `points`** — they live in
+ * `GET /cronogol/standings` and a copy here could only drift out of step with
+ * the league table. `coverage.fixturesTotal` *is* played. The venue splits do
+ * carry W/D/L, because a home/away split is a fact the standings do not serve.
+ */
+export interface TeamStatsView {
+  team: { slug: string; name: string };
+  seasons: TeamSeasonStatsView[];
+}
+
+/**
+ * ⚠ Valor de protocolo — no traducir. Anything else is a `400`.
+ */
+export type StatsMetric =
+  | "goals"
+  | "assists"
+  | "goal-involvements"
+  | "pen-goals"
+  | "yellows"
+  | "reds"
+  | "hat-tricks"
+  | "scoring-streak";
+
+export interface StatsLeaderView {
+  rank: number;
+  playerId: string;
+  /**
+   * ⚠⚠ **NULL FOR EVERY PREMIER LEAGUE PLAYER** (verified 2026-09-10, top of
+   * the goal chart down). Without it there is no `/cronogol/players/{slug}`
+   * URL to build, so a leaderboard row is not always a link.
+   */
+  slug: string | null;
+  name: string;
+  teams: { slug: string; name: string }[];
+  value: number;
+  coverage: StatsCoverageView;
+}
+
+/**
+ * `GET /cronogol/stats/leaders?league=&season=&metric=&limit=`.
+ *
+ * ⚠⚠ `league` is REQUIRED — omitting it is a `400`, not a merged table, and
+ * there is no cross-competition mode: assist rates differ per provider and
+ * Serie A has no player identity, so a merged ranking would rank the provider
+ * rather than the footballer.
+ *
+ * ⚠ An UNKNOWN league slug is `200` with `leaders: []`, not a 404 — it narrows
+ * a collection. Contrast the two routes above, where the slug *names* the
+ * resource and a miss is a 404.
+ *
+ * ⚠ Rows below the coverage floor are excluded from the ranking entirely
+ * rather than listed with a null value.
+ */
+export interface StatsLeadersView {
+  competition: string;
+  /** Echoed, so a client that omitted it knows what it got. */
+  season: number;
+  metric: string;
+  /** ⚠ Ranked within ONE competition. There is no cross-league mode. */
+  leaders: StatsLeaderView[];
 }

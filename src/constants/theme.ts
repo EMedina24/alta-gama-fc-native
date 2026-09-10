@@ -194,6 +194,30 @@ const dark = {
   cardYellow: '#f2c14e',
   cardRed: '#ff5c47',
 
+  // Season stats charts (ADR 0141/0142). These are drawn ink, not surfaces —
+  // they exist because a chart needs a SECOND series colour and a track, and
+  // the palette had neither.
+  //
+  // ⚠ `chartSeriesAlt` is the teal that already sits inside `CrownGrad`'s
+  // middle stop, promoted to a named token because a gradient stop is not a
+  // colour you may reach for. It carries "the other one" wherever a chart has
+  // exactly two series — away goals against home, penalties against open play,
+  // the first half against the second — and it must never mean a STATUS.
+  //
+  // ⚠ These are APP-ONLY and must NOT be copied into
+  // `targets/_shared/Tokens.swift`. That file is a hand-maintained duplicate
+  // of this one (trap 15), and no widget draws a chart; adding them there
+  // creates drift to "fix" later with nothing on the other side.
+  chartSeriesAlt: '#2f8f78',
+  /** The unfilled remainder of a ring, a meter, a bar. */
+  chartTrack: 'rgba(255,255,255,0.08)',
+  /** Axis rules behind a chart — lighter than any `hairline`, on purpose. */
+  chartGrid: 'rgba(255,255,255,0.06)',
+  /** Bars that are present but not the point — the non-final conceded bands. */
+  chartMuted: 'rgba(255,255,255,0.22)',
+  /** Accent at a rank below first — the runners-up in a sorted bar series. */
+  accentDim: 'rgba(200,242,90,0.38)',
+
   // Qualification bands (per-league CONFIG, never position arithmetic)
   bandUcl: '#c8f25a',
   bandUel: '#6fc9ff',
@@ -789,6 +813,25 @@ export const Type = {
    * mock's drawn ~28: a quote two lines deep on a glass card over the hero.
    */
   leadHeadline: { fontSize: 28, fontWeight: '700', letterSpacing: -0.9 },
+  /**
+   * The Season stats numerals (ADR 0141) — three sizes, one voice.
+   *
+   * ⚠ **Always drawn `tabular`.** Every one of these counts up from 0 on
+   * entry, so the glyphs change width mid-animation unless the digits are
+   * fixed-width; and a column of season totals that shifts as it settles reads
+   * as a rendering fault rather than a flourish.
+   *
+   * ⚠ **`statHero` needs `adjustsFontSizeToFit` wherever its box is fixed**
+   * (trap 33). A count-up passes through every width below its final value and
+   * `102` at 44pt is much wider than `9` — the same shape as the 30pt minute
+   * column that truncated `45+2′` and that only the simulator caught.
+   *
+   * ⚠ These are VALUES, not titles. Screen titles stay in ADR 0131's three
+   * display sizes at weight 300; nothing here may be used for one.
+   */
+  statHero: { fontSize: 44, fontWeight: '700', letterSpacing: -2 },
+  statLg: { fontSize: 34, fontWeight: '700', letterSpacing: -1.2 },
+  statMd: { fontSize: 30, fontWeight: '700', letterSpacing: -1 },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -881,6 +924,14 @@ export const Size = {
    * it, never stretched to it.
    */
   playerThumb: 34, playerPhotoW: 104, playerPhotoH: 116,
+  /** The Season stats player card's portrait disc (ADR 0141). */
+  playerPhotoHero: 62,
+  /**
+   * The measure a Season stats footnote wraps at (ADR 0141) — the design's
+   * 44ch, in points at 11.5pt. Narrower than the card it sits under, on
+   * purpose: a footnote running the full 520pt cap reads as body copy.
+   */
+  footnoteWidth: 300,
   /**
    * Onboarding's league PILLS — artwork PLUS the league's name, in a horizontal
    * row (ADR 0076, replacing 0056's 2-up chip grid).
@@ -1109,6 +1160,37 @@ export const Motion = {
   stagger: 45,
   /** One lap of the signed-out avatar's attention ring (ADR 0101). Tuned from 2800 — Ed wanted it calmer. */
   orbit: 4600,
+} as const;
+
+/**
+ * The Season stats screen's own choreography (ADR 0141/0142) — the numbers
+ * counting up and the charts drawing in.
+ *
+ * ⚠ **A feature group, not an extension of `Motion`.** `Motion`'s contract is
+ * the app's shared vocabulary of short durations; a 1500 ms count-up is not a
+ * control settling and putting it there would invite it onto a chip. Same
+ * split `Deck.spring`, `Glide.spring` and `Splash.t` already make.
+ *
+ * ⚠ **The card entrances deliberately do NOT read from here.** They use
+ * `Motion.enter` / `Motion.stagger` like every other staggered section in the
+ * app, against the design's 700 ms rise and 80 ms step: `stagger`'s own note
+ * says past ~50 ms a step, blocks read as a queue the reader waits through —
+ * and the Club view has seven of them where the account sheet has five.
+ *
+ * ⚠⚠ **Reduce Motion is handled by NOT handling it.** Reanimated skips
+ * `withTiming` outright when the system switch is on and the value jumps to its
+ * target (trap 63), which for a count-up and a draw-in IS the accommodation:
+ * every number lands final and every chart lands drawn. That is why nothing
+ * here passes `ReduceMotion.Never` — the opposite of what trap 63 asks for when
+ * the animation *is* the accommodation.
+ */
+export const SeasonStats = {
+  /** The count-up, from 0 to the season's number. */
+  count: 1500,
+  /** A chart's own draw-in: bars grow, rings sweep, the line extends. */
+  draw: 800,
+  /** Between neighbouring bars inside ONE chart — not between cards. */
+  barStagger: 22,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

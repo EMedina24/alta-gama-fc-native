@@ -1277,6 +1277,35 @@ documented at the code that handles them; this is the index.
     ground as well — a stacked layer must be opaque in the repaint frame too
     (trap 59).
 
+66. **⚠⚠ A screen's default row is a claim, and `list[0]` is usually the wrong
+    one.** Season stats' Players tab opened on the first squad row that could
+    address the stats route. Barcelona's squad begins with a goalkeeper, who
+    answers `seasons: []` — correctly, permanently, because he has not scored
+    or been booked — so the tab opened on an EMPTY STATE for the club with the
+    most complete data in the app, on the very first tap (caught in the
+    simulator, 2026-09-10). Fixed by resolving the club's top scorer from
+    `/cronogol/stats/leaders` (ADR 0141). ⚠ The lesson generalises past this
+    screen: an index-zero default is a silent editorial choice, and the first
+    row of a squad, a fixture list or a league table is ordered by something
+    that is almost never "the one worth opening on". ⚠ And the empty state it
+    lands in must still be able to CHANGE the selection — a dead-end empty
+    state turns a wrong default into a trapped reader.
+
+67. **⚠ A chart sized to what has been PLAYED reads as a finished season.**
+    The scoring-run strip and the matchweek bars sized their grid to
+    `timeline.length`. In September that is two matches, so a Bundesliga club
+    drew two full-width slabs that read as progress bars, and a four-match
+    LaLiga club drew four half-card bars — both saying "this is the whole
+    season" about a season four weeks old. They now size to `roundCount(league)`
+    and fill from the left (ADR 0141). ⚠ Cousin of trap 56, from the other end:
+    that one is a fixed width given a flex share and hidden by SHORT test data;
+    this one is a flex share that only looks wrong ON short data. **Draw the cap
+    AND the floor before believing a chart** — `/_debug/stats` renders 2, 4 and
+    42 matches for exactly that. ⚠ The cumulative line needed the same
+    correction in a different shape: it starts at the ORIGIN, because two equal
+    cumulative values both sit on the top edge and the area fill becomes a solid
+    slab.
+
 ---
 
 ## Where things stand
@@ -1983,13 +2012,25 @@ Done 2026-08-30 in the onboarding redesign ([0076](./decisions/0076-onboarding-f
   inferred. `/_debug/gallery` proves the rendering, not the feed. **This is the
   first thing to watch on the next matchday.**
   [LIVE-SCORES.md](./LIVE-SCORES.md) §2 (shape) and §5 (wiring).
-- ⛔⛔ **Player STATISTICS do not exist, and match events are NOT them.** Squads
-  carry identity only — name, position, photo, age — never appearances, season
-  goals, minutes or xG. No source has them at any price point yet found, so this
-  is a purchase, not a backlog item. §98 will let a live match say *who scored*;
-  it will never say *how many they have scored this season*. Per the backend's
-  own decision log this is "the claim most likely to be lost in retelling"
-  (`senpai-backend/.claude/decisions/0030`).
+- ~~⛔⛔ **Player STATISTICS do not exist**~~ — **season TOTALS do now**, and
+  this entry was the single most load-bearing stale claim in this file. Three
+  routes shipped on the backend 2026-09-09 (§120, its decision `0058`):
+  `/cronogol/players/{slug}/stats`, `/cronogol/teams/{slug}/stats`,
+  `/cronogol/stats/leaders`. They are live and populated. The Season stats
+  screen is built on them
+  ([0141](./decisions/0141-season-stats-reads-one-block.md),
+  [0146](./decisions/0146-season-stats-supersedes-no-player-endpoint.md)).
+  ⚠ **What has NOT changed, and will not:** appearances, minutes and per-90
+  anything, because no source publishes lineup events — a player who played 90
+  quiet minutes wrote no row. **Every denominator on that screen is CLUB
+  FIXTURES**; a label saying "apps" is wrong and so is whoever reads it. Shots,
+  xG, possession, passes, saves, duels and ratings are still unstored and still
+  a purchase. That boundary is what makes *"86% of his shots are on target"*
+  impossible and *"86% of his penalties have gone in"* possible. ⚠ And the
+  totals are NOT live: three crons chained by clock only, so a whistle reaches
+  them in ~25 min at best and ~4 h at worst — trap 8's rule applies, and nothing
+  may snapshot one into a widget or a share image, because a backfill revises
+  old totals retroactively.
 - ~~**Serie A has no mark**~~ — **it does now.** `GET /cronogol/leagues` serves
   Serie A a `primary` **SVG**, portrait (~0.64:1) with a gradient, verified
   2026-08-31 ([0082](./decisions/0082-clubs-screen-rail-redesign.md)). LaLiga

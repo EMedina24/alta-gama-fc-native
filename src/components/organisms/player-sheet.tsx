@@ -1,10 +1,17 @@
 /**
  * One player: portrait, identity, and the six fields the league publishes.
  *
- * ⚠⚠ **There are no player statistics and none are coming** — no appearances,
- * goals, assists, minutes or cards, from any provider, at any price point the
- * backend holds. Getting them is a new paid contract, not a new field. Do not
- * add a slot here "for later".
+ * ⚠ **Season statistics exist since 2026-09-09 and are NOT this sheet's** (ADR
+ * 0146). They are their own routes and their own screen — Season stats, off the
+ * club page — because they are a different question, a different cadence (a
+ * 3-hourly rebuild, ~25 min to ~4 h behind a whistle) and a different key: that
+ * screen addresses a player by `slug`, this sheet by the stable person `id`.
+ * Do not add a totals slot here; link, if anything.
+ *
+ * ⚠⚠ **Appearances, minutes and per-90 anything are still absent, permanently.**
+ * No source publishes lineup events, so a player who played 90 quiet minutes
+ * wrote no row. Nor are shots, xG, possession or ratings stored. Those are a
+ * paid contract, not a new field.
  *
  * ⚠ **A null renders an EMPTY CELL that keeps its label and its place in the
  * grid** — never `—`, never `0`, never "Unknown". A substituted value cannot be

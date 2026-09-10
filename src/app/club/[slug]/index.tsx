@@ -18,8 +18,8 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BAND_COLOR, MeshGround, SkeletonRows, Text } from '@/components/atoms';
-import { ClubNextCard, ClubStatsStrip, StartingXiRow } from '@/components/molecules';
+import { BAND_COLOR, BarsGlyph, MeshGround, SkeletonRows, Text } from '@/components/atoms';
+import { ActionRow, ClubNextCard, ClubStatsStrip, StartingXiRow } from '@/components/molecules';
 import { ClubActions } from '@/components/organisms/club-actions';
 import { ClubHero } from '@/components/organisms/club-hero';
 import { SeasonSpine } from '@/components/organisms/season-spine';
@@ -36,11 +36,13 @@ import {
   primaryCompetition,
 } from '@/lib/cronogol/derive';
 import { formatFixtureDate, formatKickoffTime } from '@/lib/format';
-import { bandsApply, zoneFor } from '@/lib/cronogol/standings';
-import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
+import { bandsApply, leagueOfClub, zoneFor } from '@/lib/cronogol/standings';
+import { SEASON, findLeagueByApiSlug } from '@/lib/cronogol/leagues';
+import { pickTeamSeason } from '@/lib/cronogol/stats';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubFixtures, useClubSquad } from '@/queries/use-club';
 import { useStandings } from '@/queries/use-standings';
+import { useTeamStats } from '@/queries/use-stats';
 import { useTeams } from '@/queries/use-teams';
 import { usePreferences, useZone } from '@/store/preferences';
 
@@ -63,6 +65,13 @@ export default function ClubScreen() {
   const squad = useClubSquad(slug);
   const standings = useStandings();
   const teams = useTeams();
+  /**
+   * ⚠ Fetched HERE, not only on the stats screen, because the row below must be
+   * able to say whether there is anything behind it — the same contract
+   * `StartingXiRow` has with the squad. It doubles as the child screen's
+   * prefetch, and at `STALE.stats` (30 min) it costs one request per half hour.
+   */
+  const teamStats = useTeamStats(slug);
 
   const data = fixtures.data;
   const subscribed = followed.includes(slug);
@@ -89,6 +98,20 @@ export default function ClubScreen() {
     const zone = zoneFor(hit.row.rank, hit.league);
     return { row: hit.row, rankColor: zone ? BAND_COLOR[zone] : null };
   }, [standings.data, slug]);
+
+  /**
+   * Whether Season stats has anything to show for this club — the one block
+   * that screen renders (ADR 0141), resolved here so the row can be honest.
+   */
+  const seasonStats = useMemo(
+    () =>
+      pickTeamSeason(
+        teamStats.data,
+        leagueOfClub(standings.data?.tables, slug),
+        SEASON,
+      ),
+    [teamStats.data, standings.data, slug],
+  );
 
   /**
    * The next fixture, as the spine already resolves it — the first
@@ -264,6 +287,21 @@ export default function ClubScreen() {
                   : copy.club.squadEmpty
               }
               onPress={() => router.push({ pathname: '/club/[slug]/starting-xi', params: { slug } })}
+            />
+
+            {/* ⚠ Directly under Starting XI and in the same shell (ADR 0141) —
+                both are club actions, not squad details. Enabled off a usable
+                BLOCK rather than off the league: a club can be in a tracked
+                league and still have nothing swept, and the row explains that
+                rather than disappearing. */}
+            <ActionRow
+              enabled={seasonStats !== null}
+              title={copy.stats.rowTitle}
+              body={seasonStats !== null ? copy.stats.rowBody : copy.stats.empty}
+              glyph={(color, size) => <BarsGlyph size={size} color={color} />}
+              onPress={() =>
+                router.push({ pathname: '/club/[slug]/season-stats', params: { slug } })
+              }
             />
 
             <View style={styles.segmented}>

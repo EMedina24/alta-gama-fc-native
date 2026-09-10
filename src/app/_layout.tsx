@@ -138,6 +138,14 @@ export default function RootLayout() {
             name="(sheets)/player"
             options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
           />
+          {/* The Season stats player picker (ADR 0141). A full detent, not
+              `fitToContents`: it is a whole squad — 29 rows for Barcelona, 49
+              for Arsenal — and a sheet sized to its contents would be the
+              screen with a hairline of ground above it. */}
+          <Stack.Screen
+            name="(sheets)/stats-player"
+            options={{ ...sheet, sheetAllowedDetents: [1] }}
+          />
           {/* The Starting XI builder's three sheets (ADR 0065). Export gets a
               tall detent because it holds a text field and a card preview. */}
           <Stack.Screen

@@ -26,10 +26,14 @@ import type {
   LiveView,
   NewsFeedView,
   NewsLeagueView,
+  PlayerStatsView,
   ScoreboardDayView,
   StandingsView,
+  StatsLeadersView,
+  StatsMetric,
   TeamFixturesView,
   TeamSquadView,
+  TeamStatsView,
   TeamView,
 } from './types';
 
@@ -170,11 +174,13 @@ export async function findTeamFixtures(
 }
 
 /**
- * Identity fields only — shirt, name, position group. There are no SEASON
- * statistics and never will be — no appearances, no goal totals, no minutes.
+ * Identity fields only — shirt, name, position group, and the `slug` that
+ * addresses `getPlayerStats`. No appearances, no minutes, no per-90: no source
+ * publishes lineup events, so that part is permanent.
  *
- * ⚠ That is a statement about this route, not about the app. Per-match events
- * are a different surface entirely: see `getFixtureEvents` below (ADR 0045).
+ * ⚠ Season totals are NOT here and are no longer absent from the app — they
+ * are their own route (`getPlayerStats`, ADR 0146). Per-match events are a
+ * third surface again: `getFixtureEvents` below (ADR 0045).
  *
  * ⚠ A tracked club with no registered squad answers `200 { players: [] }`, which
  * is a different state from the `null` a 404 produces. Both need copy.
@@ -395,6 +401,85 @@ export async function getFixtureEvents(
     `/cronogol/fixtures/${encodeURIComponent(fixtureId)}/events`,
     toQuery({}),
   );
+}
+
+// ---------------------------------------------------------------- season stats
+
+/**
+ * A club's season record — scorelines for every competition, events where we
+ * hold them (backend §120, ADR 0141).
+ *
+ * ⚠⚠ **`seasons` is one block per COMPETITION-season, not per season.**
+ * Barcelona answers 2026 champions-league, 2026 laliga and 2025
+ * champions-league in one payload. Choose with `pickSeason` in `./stats`;
+ * `seasons[0]` is whatever the sweep wrote first.
+ *
+ * ⚠ Nothing here is live. The rows are rebuilt by a cron chain 25 minutes
+ * behind the fixtures sweep, so the lag from final whistle is ~25 minutes at
+ * best and ~4 hours at worst. Do not put a "just now" on these numbers.
+ *
+ * ⚠ `null` on a 404 (unknown club slug), like `getTeamSquad`. A club we know
+ * with nothing swept yet is a `200` with `seasons: []` — a different state,
+ * and the screen's own empty copy.
+ */
+export async function getTeamStats(slug: string): Promise<TeamStatsView | null> {
+  return getOrNull<TeamStatsView>(
+    `/cronogol/teams/${encodeURIComponent(slug)}/stats`,
+    toQuery({}),
+  );
+}
+
+/**
+ * One player's season record.
+ *
+ * ⚠⚠ **The `slug` is the only key this route takes, and it is NULL for every
+ * Premier League player** (verified 2026-09-10 — all 49 of Arsenal's squad, and
+ * every row of the PL goal chart). No slug, no URL: the caller must check
+ * before building one, whatever `CRONOGOL-API.md`'s coverage table says about
+ * the stats themselves.
+ *
+ * ⚠ A known player with a quiet season is a `200` with `seasons: []` and
+ * `overall: null`, NOT a 404 — an empty state, never an error.
+ *
+ * ⚠⚠ A `409` means the slug is ambiguous across two real people and carries
+ * `candidates`. It is rare, and it is deliberately NOT narrowed here: `409`
+ * throws a `CronogolApiError` like any other non-404, because a screen that
+ * silently picked one of two footballers would be worse than one that failed.
+ */
+export async function getPlayerStats(
+  slug: string,
+): Promise<PlayerStatsView | null> {
+  return getOrNull<PlayerStatsView>(
+    `/cronogol/players/${encodeURIComponent(slug)}/stats`,
+    toQuery({}),
+  );
+}
+
+export type GetStatsLeadersParams = {
+  /**
+   * ⚠⚠ REQUIRED — omitting it is a `400`, not a merged table. There is no
+   * cross-competition mode and there will not be one.
+   *
+   * ⚠ Takes the API slug (`laliga`), never our `League.slug` (`la-liga`). An
+   * unknown one is a `200` with `leaders: []`, not a 404.
+   */
+  league: string;
+  season?: number;
+  metric: StatsMetric;
+  /** 1–100, capped server-side. */
+  limit?: number;
+};
+
+/**
+ * A competition's leaderboard for one metric.
+ *
+ * ⚠ Rows below the coverage floor are excluded from the ranking entirely
+ * rather than listed with a null value, so a short list is a real answer.
+ */
+export async function getStatsLeaders(
+  params: GetStatsLeadersParams,
+): Promise<StatsLeadersView> {
+  return get<StatsLeadersView>('/cronogol/stats/leaders', toQuery(params));
 }
 
 // ---------------------------------------------------------------- news

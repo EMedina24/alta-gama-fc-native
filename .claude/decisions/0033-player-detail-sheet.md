@@ -1,7 +1,7 @@
 # 0033 — Tapping a squad row opens a player sheet, read from the squad payload
 
 - **Date:** 2026-08-25
-- **Status:** Accepted
+- **Status:** Superseded by 0146 (its "no player endpoint" premise only — the sheet itself stands)
 - **Decided by:** Ed
 
 ## Context

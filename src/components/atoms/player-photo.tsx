@@ -37,28 +37,36 @@ import { Colors, Radius, Size } from '@/constants/theme';
 export interface PlayerPhotoProps {
   /** `null` renders the silhouette immediately, with no image request. */
   src?: string | null;
-  /** `row` is a circle at `Size.playerThumb`; `card` is the sheet's portrait well. */
-  variant: 'row' | 'card';
+  /**
+   * `row` is a circle at `Size.playerThumb`; `card` is the sheet's portrait
+   * well; `hero` is the Season stats player card's larger circle (ADR 0141).
+   *
+   * ⚠ `hero` is a SIZE of `row`, not a third treatment: it crops centre-top
+   * through the same circle, because the fit rule above is about the source's
+   * aspect ratio and that does not change with the frame.
+   */
+  variant: 'row' | 'card' | 'hero';
 }
 
 export function PlayerPhoto({ src, variant }: PlayerPhotoProps) {
   const [failed, setFailed] = useState(false);
-  const row = variant === 'row';
+  const round = variant === 'row' || variant === 'hero';
+  const disc = variant === 'hero' ? Size.playerPhotoHero : Size.playerThumb;
 
-  const frame = row
-    ? { width: Size.playerThumb, height: Size.playerThumb, borderRadius: Radius.pill }
+  const frame = round
+    ? { width: disc, height: disc, borderRadius: Radius.pill }
     : { width: Size.playerPhotoW, height: Size.playerPhotoH, borderRadius: Radius.tile };
 
   return (
-    <View style={[styles.well, frame]}>
+    <View style={[styles.well, frame, variant === 'hero' && styles.heroRing]}>
       {!src || failed ? (
-        <Silhouette row={row} />
+        <Silhouette box={round ? disc : Size.playerPhotoW} round={round} />
       ) : (
         <Image
           source={{ uri: src }}
           style={styles.fill}
-          contentFit={row ? 'cover' : 'contain'}
-          contentPosition={row ? 'top center' : 'bottom center'}
+          contentFit={round ? 'cover' : 'contain'}
+          contentPosition={round ? 'top center' : 'bottom center'}
           transition={120}
           onError={() => setFailed(true)}
           // The player's name carries the label; the portrait is decorative (SPEC).
@@ -70,16 +78,15 @@ export function PlayerPhoto({ src, variant }: PlayerPhotoProps) {
 }
 
 /**
- * Head over shoulders, sized off the well so one shape serves both variants.
+ * Head over shoulders, sized off the well so one shape serves every variant.
  *
  * ⚠ The torso is a wide, tall rounded rectangle pushed BELOW the frame — only its
  * rounded top is meant to be visible, and `overflow: 'hidden'` on the well is
  * what crops the rest.
  */
-function Silhouette({ row }: { row: boolean }) {
-  const box = row ? Size.playerThumb : Size.playerPhotoW;
-  const head = box * (row ? 0.36 : 0.3);
-  const torso = box * (row ? 0.72 : 0.75);
+function Silhouette({ box, round }: { box: number; round: boolean }) {
+  const head = box * (round ? 0.36 : 0.3);
+  const torso = box * (round ? 0.72 : 0.75);
 
   return (
     <View style={styles.glyph} pointerEvents="none">
@@ -108,6 +115,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // The design's 1.5pt ring, on the hero disc only — it sits on a club-tinted
+  // ground where an unringed circle floats.
+  heroRing: { borderWidth: 1.5, borderColor: Colors.dark.glassLine },
   fill: { width: '100%', height: '100%' },
   glyph: { alignItems: 'center', justifyContent: 'flex-end', width: '100%', height: '100%' },
   mark: { backgroundColor: Colors.dark.glyph },

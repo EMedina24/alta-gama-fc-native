@@ -36,3 +36,8 @@ export { PersonGlyph, type PersonGlyphProps } from './person-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';
 export { GoogleMark } from './google-mark';
 export { BookmarkGlyph, type BookmarkGlyphProps } from './bookmark-glyph';
+export { AnimatedNumber, type AnimatedNumberProps } from './animated-number';
+export { BarsGlyph, type BarsGlyphProps } from './bars-glyph';
+export { MeterBar, type MeterBarProps } from './meter-bar';
+export { RingGauge, type RingGaugeProps, type RingSegment } from './ring-gauge';
+export { SparkArea, sparkY, type SparkAreaProps } from './spark-area';

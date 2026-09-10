@@ -65,6 +65,28 @@ export interface League {
    */
   matchEvents: boolean;
   /**
+   * Whether `GET /cronogol/players/{slug}/stats` can be reached for this
+   * league's players at all — the gate on the Season stats screen's Players
+   * segment (ADR 0144).
+   *
+   * ⚠⚠ **This is a CAPABILITY, hand-copied from `CRONOGOL-API.md`, and it can
+   * never be inferred from a response.** An unsupported league answers `200`
+   * with an empty collection, not a 404 (trap 55), so a segment gated on the
+   * payload renders a convincing skeleton of nothing — which is exactly how
+   * trap 32 happened. Same reasoning as `matchEvents` directly above.
+   *
+   * ⚠⚠ **True for LaLiga alone, and the Premier League is the surprise.** The
+   * API's coverage table lists the Premier League as supported, and its stats
+   * genuinely are computed — but every PL player's `slug` is `null` on the
+   * wire, in squad rows and leaderboard rows alike (verified 2026-09-10: all
+   * 49 of Arsenal's squad, and the whole top of the PL goal chart). The slug
+   * is the only key the route takes, so with none there is no URL to build.
+   * Serie A and the Bundesliga have no player stats at all — Serie A's events
+   * carry a name string and no stable person id, and the Bundesliga writes no
+   * events. Puerto Rico has neither events nor stats.
+   */
+  playerStats: boolean;
+  /**
    * True for a season named by ONE calendar year (Puerto Rico's `2026`),
    * false for the European cross-year form (`2026/27`). Feeds
    * `leagueSeasonLabel`; nothing else may branch on it.
@@ -109,6 +131,7 @@ export const LEAGUES: readonly League[] = [
     live: true,
     rounds: true,
     matchEvents: true,
+    playerStats: true,
     calendarYearSeason: false,
     hasHalves: true,
     zone: 'Europe/Madrid',
@@ -128,6 +151,7 @@ export const LEAGUES: readonly League[] = [
     live: true,
     rounds: true,
     matchEvents: true,
+    playerStats: false,
     calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/London',
@@ -149,6 +173,7 @@ export const LEAGUES: readonly League[] = [
     live: true,
     rounds: true,
     matchEvents: true,
+    playerStats: false,
     calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/Berlin',
@@ -171,6 +196,7 @@ export const LEAGUES: readonly League[] = [
     live: true,
     rounds: true,
     matchEvents: true,
+    playerStats: false,
     calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/Rome',
@@ -217,6 +243,7 @@ export const LEAGUES: readonly League[] = [
     live: true,
     rounds: false,
     matchEvents: false,
+    playerStats: false,
     calendarYearSeason: true,
     hasHalves: false,
     zone: 'America/Puerto_Rico',

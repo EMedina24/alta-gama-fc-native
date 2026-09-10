@@ -20,6 +20,31 @@ export const keys = {
    */
   teamWindow: (slug: string, fromDay: string) => ['team-window', slug, fromDay] as const,
   teamSquad: (slug: string) => ['team-squad', slug] as const,
+  /**
+   * A club's season record (ADR 0141). Keyed on the CLUB slug alone: one
+   * request carries every competition-season the sweep holds, and the screen
+   * picks its block out of the payload with `pickTeamSeason`.
+   */
+  teamStats: (slug: string) => ['team-stats', slug] as const,
+  /**
+   * One player's season record.
+   *
+   * ⚠ Keyed on the SLUG, because the slug is the only thing the route takes —
+   * even though `playerId` is the stable identity. Two people can share a slug
+   * (the route answers `409`), so this key is an address, not an identity;
+   * never join a cache entry here to a squad row by it.
+   */
+  playerStats: (slug: string) => ['player-stats', slug] as const,
+  /**
+   * A competition's leaderboard for one metric (ADR 0141).
+   *
+   * ⚠ Keyed on the LEAGUE, not on a club, deliberately: the route ranks a whole
+   * competition, so every club page in LaLiga shares one cache entry rather
+   * than firing twenty identical requests to each pick its own top scorer out
+   * of the same list.
+   */
+  statsLeaders: (leagueApiSlug: string, metric: string) =>
+    ['stats-leaders', leagueApiSlug, metric] as const,
   seasonJornadas: (leagueApiSlug: string, season: number) =>
     ['season-jornadas', leagueApiSlug, season] as const,
   jornada: (leagueApiSlug: string, season: number, matchweek: number) =>

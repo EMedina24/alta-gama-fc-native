@@ -1,8 +1,10 @@
 /**
  * The squad, grouped by position band.
  *
- * ⚠ **Identity fields only** — shirt, name, position. There are no statistics on
- * this endpoint and never will be.
+ * ⚠ **Identity fields only** — shirt, name, position, and the `slug` that
+ * addresses the season-stats route. No totals on THIS endpoint; they are their
+ * own routes and their own screen (ADR 0146). Appearances and minutes are
+ * absent everywhere and permanently — no source publishes lineup events.
  *
  * ⚠ Empty bands are DROPPED. "Goalkeepers 0" is a claim about the club rather
  * than about our coverage.
