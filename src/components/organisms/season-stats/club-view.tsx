@@ -1,6 +1,22 @@
 /**
  * The Club half of Season stats (ADR 0141): a season's shape in six cards.
  *
+ * ⚠⚠ **TWO BLOCKS, INTERLEAVED — and the club merges much further than the
+ * player does (ADR 0149).** `totals` is one season across every competition;
+ * `season` is the club's own league. The club side gets a real merged,
+ * kickoff-ordered `timeline`, so the goals headline, the cumulative line, the run
+ * strip and the venue splits all merge correctly — the runs are RECOMPUTED over
+ * that timeline, not summed and not maxed. A player has no merged timeline, which
+ * is why `player-view` keeps far more on the per-competition block.
+ *
+ * ⚠⚠ **What still cannot merge here: GOALS PER MATCHWEEK.** Matchweek numbers are
+ * per-competition namespaces, so grouping the merged timeline by `mw` folds two
+ * unrelated nights into one bar — Barcelona's merged 2026 timeline carries LaLiga
+ * matchday 1 and Champions League matchday 1 as separate fixtures both labelled
+ * `mw: 1`. That chart stays on `season` and says so. The same fact makes `mw` an
+ * unusable AXIS LABEL on the merged cumulative line, which is why `axisLabels`
+ * below falls back to positions when it is fed a merged array.
+ *
  * ⚠⚠ **The cards split into two halves that fail independently, and the split
  * is the whole design of this file.** Goals, the rings, the run and the
  * matchweek bars are SCORELINE-derived — always present, every competition,
@@ -33,8 +49,13 @@ import {
   scoredStrip,
 } from '@/lib/cronogol/stats';
 import type { Copy } from '@/lib/i18n/copy';
-import type { StatsTimelineEntryView, TeamSeasonStatsView } from '@/lib/cronogol/types';
+import type {
+  StatsTimelineEntryView,
+  TeamSeasonStatsView,
+  TeamSeasonTotalsView,
+} from '@/lib/cronogol/types';
 import { CoverageNote } from './coverage-note';
+import { AllCompetitions, ScopeOnly } from './scope-line';
 import { Rise } from './rise';
 
 /** The design's chart heights. */
@@ -45,9 +66,36 @@ const RING = 104;
 const RING_STROKE = (RING * (1 - 0.78)) / 2;
 
 export interface ClubViewProps {
+  /**
+   * The PER-COMPETITION block — the club's own league. Source of the matchweek
+   * bars and the whole event-derived half (bands, comebacks, discipline).
+   *
+   * ⚠ Not the goals headline, the cumulative line, the run strip or the venue
+   * splits — those read `totals`, which merges them correctly.
+   */
   season: TeamSeasonStatsView;
+  /**
+   * The ALL-COMPETITIONS block for the same season (ADR 0149).
+   *
+   * ⚠⚠ Real Madrid's merged 2026 `goalsFor` is 12 against its LaLiga block's 10,
+   * and Barcelona's is 22 against 17. ⚠ Nullable: a payload captured before
+   * `senpai-backend` §120.15 (2026-09-10) has no `seasonTotals`, and the cards
+   * then fall back to the per-competition block — pre-0149 behaviour.
+   */
+  totals: TeamSeasonTotalsView | null;
   copy: Copy['stats'];
   progress: SharedValue<number>;
+  /**
+   * How to NAME the competition the PER-COMPETITION cards are. ⚠ `League.name`
+   * (`LaLiga`), not `copy.competitionNames` — 0148 fed those into "partidos
+   * seguidos de …" and their Spanish articles read wrong there.
+   */
+  competitionName: string;
+  /**
+   * The competitions the merged figures count and the per-competition cards leave
+   * out — `chartsExclude(totals, league)`. ⚠ Empty outside Europe.
+   */
+  chartsExcluded?: readonly string[];
   /** How a kickoff is written, for a cup run with no matchweeks. */
   formatDate: (iso: string) => string;
   /**
@@ -65,13 +113,27 @@ export interface ClubViewProps {
 
 export function ClubView({
   season,
+  totals,
   copy,
   progress,
+  competitionName,
+  chartsExcluded = [],
   formatDate,
   seasonLength = null,
 }: ClubViewProps) {
   const events = hasEvents(season.coverage);
-  const played = season.coverage.fixturesTotal;
+  /**
+   * Every scoreline-derived card. ⚠ `totals` where we have it — see the prop.
+   *
+   * ⚠⚠ It is safe to read the merged block for ALL of these because they are
+   * scoreline-derived: a merged block's `coverage.sufficient` gates only its
+   * event-derived half, and the scorelines are complete either way. The
+   * event-derived cards below keep reading `season`.
+   */
+  const totalsOrSeason = totals ?? season;
+  /** ⚠ The merged run genuinely spans competitions; the label must not name one. */
+  const mergedRun = totals !== null && totals.competitions.length > 1;
+  const played = totalsOrSeason.coverage.fixturesTotal;
   /**
    * ⚠ A leading `0` — the season before a ball is kicked.
    *
@@ -81,14 +143,41 @@ export function ClubView({
    * quantity means: cumulative goals begin at nothing. The last value still
    * equals `goalsFor` exactly, which is the property the chart is read for.
    */
-  const cumulative = [0, ...cumulativeGoals(season.timeline)];
+  const cumulative = [0, ...cumulativeGoals(totalsOrSeason.timeline)];
+  /**
+   * ⚠⚠ **`season`, NEVER `totalsOrSeason` — this is the one chart on the club
+   * side that cannot merge, ever.** Matchweek numbers are per-competition
+   * namespaces: Barcelona's merged 2026 timeline holds LaLiga matchday 1 and
+   * Champions League matchday 1 as separate fixtures both carrying `mw: 1`, and
+   * `goalsByMatchweek` would answer ONE matchday-1 bar with both nights' goals
+   * added together. TypeScript cannot catch the mistake —
+   * `StatsMergedTimelineEntryView` extends the per-competition entry, so a merged
+   * array is assignable — so the harness asserts the wrong answer instead.
+   */
   const matchweeks = goalsByMatchweek(season.timeline);
-  const strip = scoredStrip(season.timeline, season.scoringRun);
-  const rate = perMatch(season.goalsFor, season.coverage);
-  const run = runLabel(season.scoringRun);
+  /**
+   * ⚠ Both halves from the SAME block: `scoringRun.startIndex`/`endIndex` address
+   * the timeline they were computed over, so pairing a merged run with a
+   * per-competition array (or the reverse) highlights the wrong matches.
+   */
+  const strip = scoredStrip(totalsOrSeason.timeline, totalsOrSeason.scoringRun);
+  const rate = perMatch(totalsOrSeason.goalsFor, totalsOrSeason.coverage);
+  /**
+   * ⚠ `mergedRun` forces the DATE caption: the two ends of a merged run sit in
+   * different matchweek namespaces, and "MD2 → MD1" reads as a run that travels
+   * backwards through the season. See `runLabel`.
+   */
+  const run = runLabel(totalsOrSeason.scoringRun, mergedRun);
   const late = lateShare(season.goalsForByBand);
   const concededLate = lateShare(season.goalsAgainstByBand);
   const againstBands = bandSeries(season.goalsAgainstByBand);
+
+  /**
+   * ⚠ Named where the block is one competition, bare where it merges more. Read
+   * twice — the label and the strip's accessibility label — so it is derived once
+   * rather than letting the two disagree.
+   */
+  const runLabelText = mergedRun ? copy.runValueAll : copy.runValue(competitionName);
 
   const runWindow =
     run === null
@@ -104,31 +193,41 @@ export function ClubView({
         <StatCard label={copy.goalsScored}>
           <View style={styles.headline}>
             <View style={styles.headlineLeft}>
-              <AnimatedNumber value={season.goalsFor} progress={progress} color="accent" />
+              <AnimatedNumber
+                value={totalsOrSeason.goalsFor}
+                progress={progress}
+                color="accent"
+              />
               {rate !== null ? (
                 <Text variant="caption" color="textDim">
                   {copy.perMatch(rate.toFixed(1))}
                 </Text>
               ) : null}
+              {/* ⚠ Beside the big number, not in the footnote: it says what this
+                  total counts, and the eyebrow above the card says `LALIGA` —
+                  which, unmarked, now misdescribes it. */}
+              {totals ? (
+                <AllCompetitions competitions={totals.competitions} copy={copy} />
+              ) : null}
             </View>
-            {season.biggestWin ? (
+            {totalsOrSeason.biggestWin ? (
               <View style={styles.headlineRight}>
                 <Text variant="eyebrowSm" color="textFaint">
                   {copy.biggestWin}
                 </Text>
                 <Text variant="title3" color="text" tabular>
-                  {`${season.biggestWin.goalsFor}–${season.biggestWin.goalsAgainst}`}
+                  {`${totalsOrSeason.biggestWin.goalsFor}–${totalsOrSeason.biggestWin.goalsAgainst}`}
                 </Text>
                 <Text variant="micro" color="textMuted" numberOfLines={1}>
                   {[
                     // ⚠ `opponent` is nullable and `matchweek` is null for cups
                     // — the meta line drops the part it does not have rather
                     // than printing "v null · MDnull".
-                    season.biggestWin.opponent
-                      ? copy.versus(season.biggestWin.opponent.name)
+                    totalsOrSeason.biggestWin.opponent
+                      ? copy.versus(totalsOrSeason.biggestWin.opponent.name)
                       : null,
-                    season.biggestWin.matchweek !== null
-                      ? `MD${season.biggestWin.matchweek}`
+                    totalsOrSeason.biggestWin.matchweek !== null
+                      ? `MD${totalsOrSeason.biggestWin.matchweek}`
                       : null,
                   ]
                     .filter(Boolean)
@@ -141,7 +240,7 @@ export function ClubView({
             values={cumulative}
             height={AREA_H}
             ticks={axisTicks(cumulative[cumulative.length - 1] ?? 0)}
-            xLabels={axisLabels(season.timeline)}
+            xLabels={axisLabels(totalsOrSeason.timeline)}
           />
         </StatCard>
       </Rise>
@@ -158,11 +257,11 @@ export function ClubView({
                   thickness={RING_STROKE}
                   rounded
                   segments={[
-                    { share: played > 0 ? season.cleanSheets / played : 0,
+                    { share: played > 0 ? totalsOrSeason.cleanSheets / played : 0,
                       color: Colors.dark.accent },
                   ]}>
                   <RingCentre
-                    value={season.cleanSheets}
+                    value={totalsOrSeason.cleanSheets}
                     total={played}
                     copy={copy}
                     progress={progress}
@@ -179,11 +278,11 @@ export function ClubView({
                   thickness={RING_STROKE}
                   rounded
                   segments={[
-                    { share: played > 0 ? season.failedToScore / played : 0,
+                    { share: played > 0 ? totalsOrSeason.failedToScore / played : 0,
                       color: Colors.dark.danger },
                   ]}>
                   <RingCentre
-                    value={season.failedToScore}
+                    value={totalsOrSeason.failedToScore}
                     total={played}
                     copy={copy}
                     progress={progress}
@@ -195,28 +294,48 @@ export function ClubView({
         </View>
       </Rise>
 
-      {/* 3 · The scoring run, and the strip it sits inside. */}
+      {/* 3 · The scoring run, and the strip it sits inside.
+          ⚠⚠ The merged run is RECOMPUTED over the merged timeline — a genuine
+          all-competitions run — so its label must NOT name a competition.
+          Calling it "straight LaLiga matches" would understate what the number
+          counts, which is 0148's over-claim in reverse. Where the merged block
+          holds ONE competition it IS that competition's run, and the label names
+          it as before. ⚠ The player's streak is the opposite case: a MAX across
+          competitions, so it stays per-competition and stays named. */}
       <Rise step={2}>
         <StatCard label={copy.scoringRun} meta={runWindow}>
           <View style={styles.runHead}>
             <AnimatedNumber
-              value={season.longestScoringRun}
+              value={totalsOrSeason.longestScoringRun}
               progress={progress}
               color="accent"
             />
             <Text variant="bodyStrong" color="text" style={styles.runLabel}>
-              {copy.runValue}
+              {runLabelText}
             </Text>
           </View>
+          {/* ⚠ `seasonLength` is the LEAGUE's round count and the merged season is
+              longer than it (38 league rounds plus a European campaign). It is a
+              FLOOR, not a total — `RunStrip` sizes on
+              `max(cells.length, seasonLength)`, so a merged season that outgrows
+              it expands rather than overflowing. Understated in September, exact
+              by the time it matters. */}
           <RunStrip
             cells={strip}
             seasonLength={seasonLength}
-            accessibilityLabel={`${season.longestScoringRun} ${copy.runValue}`}
+            accessibilityLabel={`${totalsOrSeason.longestScoringRun} ${runLabelText}`}
           />
         </StatCard>
       </Rise>
 
-      {/* 4 · Goals per matchweek, and the venue split under it. */}
+      {/* 4 · Goals per matchweek, and the venue split under it.
+          ⚠⚠ **This whole card stays on the PER-COMPETITION block, splits
+          included, and that is deliberate (ADR 0149).** The bars cannot merge at
+          all — two competitions' matchday 1s would fold into one column. The
+          venue splits *could*, and the merged block serves them, but a card that
+          mixed a LaLiga chart with all-competitions splits could not be labelled:
+          one scope line under it would be a lie about half its contents. Scope is
+          a property of a CARD here, not of a number. */}
       <Rise step={3}>
         <StatCard
           label={copy.goalsPerMatchweek}
@@ -256,6 +375,11 @@ export function ClubView({
               total={season.goalsFor}
             />
           </View>
+          <ScopeOnly
+            competitionName={competitionName}
+            excluded={chartsExcluded}
+            copy={copy}
+          />
         </StatCard>
       </Rise>
 
@@ -323,11 +447,20 @@ export function ClubView({
                     ) : null}
                   </View>
                 </View>
+                <ScopeOnly
+                  competitionName={competitionName}
+                  excluded={chartsExcluded}
+                  copy={copy}
+                />
               </StatCard>
             </Rise>
           ) : null}
 
-          {/* 6 · Comebacks and discipline. */}
+          {/* 6 · Comebacks and discipline.
+              ⚠ Event-derived, so per-competition: every merged event field is
+              refused while any contributing competition sits below the coverage
+              floor, which for a club in Europe is until roughly late October. The
+              league block has a real swept answer; the scope line names it. */}
           <Rise step={5}>
             <View style={styles.pair}>
               {season.comebackPoints !== null && season.comebackWins !== null ? (
@@ -367,6 +500,11 @@ export function ClubView({
                 </View>
               ) : null}
             </View>
+          <ScopeOnly
+            competitionName={competitionName}
+            excluded={chartsExcluded}
+            copy={copy}
+          />
           </Rise>
         </>
       )}
@@ -406,22 +544,38 @@ function axisTicks(max: number): number[] {
  * matchweek (a Champions League knockout) shows its position instead of an
  * invented one.
  *
+ * ⚠⚠ **On a MERGED timeline a matchweek is not a label at all, so it stops using
+ * them (ADR 0149).** Matchweek numbers are per-competition namespaces:
+ * Barcelona's merged 2026 timeline reads `mw [2, 1, 3, 4, 1]`, where the first
+ * `1` is LaLiga matchday 1 and the last is Champions League matchday 1. Printing
+ * "MD1" twice on one axis for two different nights is the same class of error as
+ * the `0 GOALS` that started all of this — a label the reader can disprove. So
+ * when the array spans more than one competition, every label falls back to its
+ * POSITION, which is the axis the line is actually plotted on.
+ *
  * ⚠ The line starts at the origin, so it has `timeline.length + 1` points and
  * fixture `j` sits at `(j + 1) / length`. Placing labels at `i / (count - 1)`
  * instead — evenly across the axis — put each one a slot to the left of the
  * point it named, and duplicated a label whenever two slots rounded together.
  */
 function axisLabels(
-  timeline: readonly StatsTimelineEntryView[],
+  timeline: readonly (StatsTimelineEntryView & { competition?: string })[],
 ): { label: string; at: number }[] {
   const n = timeline.length;
   if (n < 2) return [];
+  /**
+   * ⚠ Read off the ENTRIES, not passed in as a flag: a merged array is
+   * structurally assignable to the per-competition one, so the only reliable
+   * signal that this is a merge is the `competition` the merged entries carry.
+   */
+  const competitions = new Set(timeline.map((entry) => entry.competition ?? ''));
+  const namespaced = competitions.size > 1;
   const count = Math.min(5, n);
   return Array.from({ length: count }, (_, i) => {
     const j = Math.round((i * (n - 1)) / (count - 1));
     const entry = timeline[j];
     return {
-      label: entry.mw != null ? `MD${entry.mw}` : `${j + 1}`,
+      label: !namespaced && entry.mw != null ? `MD${entry.mw}` : `${j + 1}`,
       at: (j + 1) / n,
     };
   });

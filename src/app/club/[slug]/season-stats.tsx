@@ -11,12 +11,26 @@
  * chip, because the design's header starts at the top of the screen and a
  * transparent nav bar still reserves its 44pt band (ADR 0091).
  *
- * ⚠⚠ **`seasons[]` holds one block per COMPETITION-season and this screen shows
- * exactly one: the club's own league, this season** (ADR 0141). Barcelona
- * answers 2026 champions-league, 2026 laliga and 2025 champions-league in one
- * payload, so `seasons[0]` would render a cup record under a league heading.
- * The league comes from the standings — `leagueOfClub` is the only thing that
- * knows it, since no `TeamView` carries one.
+ * ⚠⚠ **TWO blocks go down to each view, and which figure comes from which is the
+ * screen's central rule** (ADR 0141 as amended by 0149).
+ *
+ * `seasons[]` holds one block per COMPETITION-season and this screen still picks
+ * exactly one of them — the club's own league, this season. Barcelona answers
+ * 2026 champions-league, 2026 laliga and 2025 champions-league in one payload, so
+ * `seasons[0]` would render a cup record under a league heading. The league comes
+ * from the standings — `leagueOfClub` is the only thing that knows it, since no
+ * `TeamView` carries one.
+ *
+ * `seasonTotals[]` holds one block per SEASON, merged across every competition,
+ * and the HEADLINE FIGURES read that one. It is why Valverde no longer shows
+ * `0 GOALS` two days after scoring in the Champions League. ⚠ It takes no league
+ * argument — a merged block is not per-competition.
+ *
+ * ⚠⚠ The charts do NOT move to the merged block and mostly cannot: matchweek
+ * numbers are per-competition namespaces, and every merged event-derived field is
+ * refused while any one contributing competition sits below the coverage floor.
+ * Each view labels its per-competition cards with `ScopeOnly`; the eyebrow below
+ * still names the LEAGUE, which is what those cards are.
  *
  * ⚠⚠ **Nothing here may be presented as live.** These rows are rebuilt by a
  * three-hourly cron chain: the lag from a final whistle is ~25 minutes at best
@@ -56,7 +70,14 @@ import { tameClubColor } from '@/lib/cronogol/club-wash';
 import { abbreviate, crestSrc } from '@/lib/cronogol/derive';
 import { SEASON, leagueSeasonLabel, roundCount } from '@/lib/cronogol/leagues';
 import { leagueOfClub } from '@/lib/cronogol/standings';
-import { pickPlayerSeason, pickTeamSeason, statsSlug } from '@/lib/cronogol/stats';
+import {
+  chartsExclude,
+  pickPlayerSeason,
+  pickPlayerTotals,
+  pickTeamSeason,
+  pickTeamTotals,
+  statsSlug,
+} from '@/lib/cronogol/stats';
 import { formatFixtureDate } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubFixtures, useClubSquad } from '@/queries/use-club';
@@ -109,6 +130,32 @@ export default function SeasonStatsScreen() {
     [teamStats.data, league],
   );
 
+  /**
+   * The ALL-COMPETITIONS block for the same season — what the headline figures
+   * read (ADR 0149).
+   *
+   * ⚠ No `league` argument: `seasonTotals` is keyed by season alone, because a
+   * merged block is not per-competition. Both are picked, side by side, and feed
+   * different halves of each view — see the organisms' docblocks.
+   */
+  const clubTotals = useMemo(
+    () => pickTeamTotals(teamStats.data, SEASON),
+    [teamStats.data],
+  );
+
+  /**
+   * The competitions the merged figures count and the per-competition cards leave
+   * out — the input to every scope line (ADR 0149).
+   *
+   * ⚠ `[]` outside Europe, and then no scope line is drawn anywhere: a
+   * single-competition merged block IS the league block, so there is no
+   * discrepancy to disclaim. Free — it reads a payload already in hand.
+   */
+  const clubScope = useMemo(
+    () => chartsExclude(clubTotals, league),
+    [clubTotals, league],
+  );
+
   const players = useMemo(
     () => (squad.data?.players ?? []).filter((p) => statsSlug(p, league) !== null),
     [squad.data, league],
@@ -155,6 +202,14 @@ export default function SeasonStatsScreen() {
   const playerSeason = useMemo(
     () => pickPlayerSeason(playerStats.data, league, SEASON),
     [playerStats.data, league],
+  );
+  const playerTotals = useMemo(
+    () => pickPlayerTotals(playerStats.data, SEASON),
+    [playerStats.data],
+  );
+  const playerScope = useMemo(
+    () => chartsExclude(playerTotals, league),
+    [playerTotals, league],
   );
 
   /** The view switch only exists where there is a second view to switch to. */
@@ -261,8 +316,11 @@ export default function SeasonStatsScreen() {
         ) : mode === 'club' || !canShowPlayers ? (
           <ClubView
             season={season}
+            totals={clubTotals}
             copy={stats}
             progress={progress}
+            competitionName={league?.name ?? ''}
+            chartsExcluded={clubScope}
             formatDate={(iso) => formatFixtureDate(iso, zone, phrases)}
             // ⚠ `roundCount`, never the standings payload's `matchesTotal` —
             // that is 380, a count of the league's MATCHES, on a different
@@ -301,7 +359,9 @@ export default function SeasonStatsScreen() {
             name={playerStats.data?.name ?? selected.name}
             squad={selected}
             season={playerSeason}
-            clubName={clubName}
+            totals={playerTotals}
+            competitionName={league?.name ?? ''}
+            chartsExcluded={playerScope}
             positionLabel={copy.player.positionNames[selected.position]}
             copy={stats}
             progress={progress}

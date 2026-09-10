@@ -1,6 +1,20 @@
 /**
  * The Players half of Season stats (ADR 0141): one player's season.
  *
+ * ⚠⚠ **TWO BLOCKS, and which one a number comes from is the whole design of this
+ * file (ADR 0149).** The three headline figures read `totals` — one season merged
+ * across every competition. Everything below reads `season` — the club's own
+ * league. That split is not a style choice: a merged block has no
+ * `goalsByMatchweek` and never will, and its banded, penalty and card fields are
+ * refused while any contributing competition sits below the coverage floor, which
+ * is every club in Europe until roughly late October. So the figures merge, the
+ * charts cannot, and `ScopeOnly` says which under each one.
+ *
+ * ⚠⚠ **The `scored` gate keys off `season`, never off the headline.** Pointing it
+ * at the merged goals re-opens all six goal-derived panels over league data in
+ * which the player did not score — the exact failure 0148 item 2 removed. It is
+ * flagged again at the line itself.
+ *
  * ⚠⚠ **There is no "Assisted by" card and there is no endpoint behind one**
  * (ADR 0145). The mock's partnership chart is the one panel in the handoff with
  * nothing serving it: scorer–assister pairs are not a grain the backend builds,
@@ -43,8 +57,13 @@ import {
   openPlayGoals,
 } from '@/lib/cronogol/stats';
 import type { Copy } from '@/lib/i18n/copy';
-import type { PlayerSeasonStatsView, SquadPlayerView } from '@/lib/cronogol/types';
+import type {
+  PlayerSeasonStatsView,
+  PlayerSeasonTotalsView,
+  SquadPlayerView,
+} from '@/lib/cronogol/types';
 import { CoverageNote } from './coverage-note';
+import { AllCompetitions, ScopeOnly } from './scope-line';
 import { Rise } from './rise';
 
 const RING = 118;
@@ -56,9 +75,44 @@ export interface PlayerViewProps {
   name: string;
   /** The squad row, for the portrait and the `#9 · FORWARD` line. Nullable. */
   squad: SquadPlayerView | null;
+  /**
+   * The PER-COMPETITION block — the club's own league — and the source of every
+   * CHART below (ADR 0141, kept by 0149).
+   *
+   * ⚠⚠ **Not the headline figures.** Those read `totals`. The charts cannot: a
+   * merged block has no `goalsByMatchweek` at all, and its `goalsByBand` and
+   * `penaltyConversion` are null while any contributing competition sits below
+   * the coverage floor — which is every club in Europe until roughly late
+   * October.
+   */
   season: PlayerSeasonStatsView;
-  /** The club whose matches the streak counts — see `copy.stats.streak`. */
-  clubName: string;
+  /**
+   * The ALL-COMPETITIONS block for the same season — the source of the three
+   * headline figures (ADR 0149).
+   *
+   * ⚠⚠ **This is the fix.** Valverde reads `1 GOAL` here where `season` reads
+   * `0`, which is the screen Ed reported from TestFlight.
+   *
+   * ⚠ Nullable: a payload captured before `senpai-backend` §120.15 shipped
+   * (2026-09-10) carries no `seasonTotals`, and the figures then fall back to the
+   * per-competition block — the pre-0149 behaviour, which is wrong but not
+   * broken. Never fall back silently in the other direction.
+   */
+  totals: PlayerSeasonTotalsView | null;
+  /**
+   * The competition whose matches the streak counts — see `copy.stats.streak`.
+   * ⚠ NOT the club: the run is scoped to one competition-season on the backend.
+   * ⚠ And NOT retired by 0149 — a player's merged streak is a MAX across
+   * competitions and therefore a lower bound, so the per-competition one is the
+   * only honest number and it must keep naming its competition.
+   */
+  competitionName: string;
+  /**
+   * The competitions the FIGURES count and the CHARTS leave out —
+   * `chartsExclude(totals, league)`. ⚠ Empty outside Europe, and then no scope
+   * line is drawn anywhere.
+   */
+  chartsExcluded?: readonly string[];
   positionLabel: string | null;
   copy: Copy['stats'];
   progress: SharedValue<number>;
@@ -70,7 +124,9 @@ export function PlayerView({
   name,
   squad,
   season,
-  clubName,
+  totals,
+  competitionName,
+  chartsExcluded = [],
   positionLabel,
   copy,
   progress,
@@ -78,6 +134,29 @@ export function PlayerView({
   onChangePlayer,
 }: PlayerViewProps) {
   const events = hasEvents(season.coverage);
+  /**
+   * The three headline figures. ⚠ `totals` where we have it, the league block
+   * where we do not — see the prop's note. Nothing else on the screen reads it.
+   */
+  const figures = totals ?? season;
+  /**
+   * ⚠ The gate on every GOAL-SHAPED CHART.
+   *
+   * A player with no goals still has a real, informative `0` on the card above
+   * — a zero is information (`event-tabs`' rule) — but three charts DERIVED
+   * from that zero are the same fact three more times, drawn as empty rings
+   * and flat stubs that read as a rendering fault. Counts stay; charts of
+   * nothing do not.
+   *
+   * ⚠⚠ **`season`, NEVER `figures` — this line is a trap and it has a name.**
+   * The gate must key off the block that FEEDS the charts, not off the headline.
+   * Point it at the merged goals and Valverde flips from `0` to `1`, which opens
+   * all six panels over LaLiga data in which he did not score: an empty penalty
+   * ring reading `0 NON-PEN`, seven flat timing stubs, four zeroed tiles —
+   * exactly the failure ADR 0148 item 2 was written to remove, restored by the
+   * change meant to build on it.
+   */
+  const scored = season.goals > 0;
   const openPlay = openPlayGoals(season);
   const bands = bandSeries(season.goalsByBand);
   const halves = halfSplit(season.goalsByBand);
@@ -115,28 +194,42 @@ export function PlayerView({
               </View>
               <ChangeChip label={copy.change} onPress={onChangePlayer} />
             </View>
+            {/* ⚠⚠ `figures`, the MERGED block — the one thing on this screen
+                that counts every competition (ADR 0149). Valverde reads 1 here
+                and his LaLiga block reads 0. Everything below reads `season`. */}
             <View style={styles.triple}>
               <Figure
-                value={season.goals}
+                value={figures.goals}
                 label={copy.goals}
                 color="accent"
                 progress={progress}
               />
-              <Figure value={season.assists} label={copy.assists} progress={progress} divider />
+              <Figure value={figures.assists} label={copy.assists} progress={progress} divider />
               <Figure
-                value={season.goalInvolvements}
+                value={figures.goalInvolvements}
                 label={copy.involvements}
                 progress={progress}
                 divider
               />
             </View>
+            {/* ⚠ Under the numbers, not under the card: it says what THESE
+                numbers count, and the eyebrow four rows up says `LALIGA` —
+                which, unmarked, now misdescribes them. */}
+            {totals ? (
+              <AllCompetitions competitions={totals.competitions} copy={copy} />
+            ) : null}
           </View>
         </Tray>
       </Rise>
 
       {/* 2 · The penalty split. Penalty GOALS are always known; the conversion
           rate is not — it is null on the Premier League and Serie A, where a
-          miss is not observable at all. */}
+          miss is not observable at all.
+          ⚠ Not drawn at zero goals: an empty ring reading `0 NON-PEN` beside
+          `Open play 0 / From the spot 0` restates "he has not scored" in chart
+          form, and an empty doughnut reads as broken rather than as none. The
+          card above already said 0. See `scored` below. */}
+      {scored ? (
       <Rise step={1}>
         <StatCard label={copy.penaltySplit}>
           <View style={styles.penRow}>
@@ -190,8 +283,16 @@ export function PlayerView({
               ) : null}
             </View>
           </View>
+          {/* ⚠ The ring totals the LEAGUE block's goals, so it does not add up to
+              the headline above it once the merge counts a European goal. */}
+              <ScopeOnly
+                competitionName={competitionName}
+                excluded={chartsExcluded}
+                copy={copy}
+              />
         </StatCard>
       </Rise>
+      ) : null}
 
       {!events ? (
         <Rise step={2}>
@@ -201,8 +302,11 @@ export function PlayerView({
         </Rise>
       ) : (
         <>
-          {/* 3 · Goal timing, and the half split under it. */}
-          {bands ? (
+          {/* 3 · Goal timing, and the half split under it.
+              ⚠ Gated on `scored` as well as on the bands: a scorer with no
+              banded minutes and a player with no goals both produce seven flat
+              stubs, and only the first is worth a card. */}
+          {bands && scored ? (
             <Rise step={2}>
               <StatCard
                 label={copy.goalTiming}
@@ -271,6 +375,13 @@ export function PlayerView({
                     </View>
                   </View>
                 ) : null}
+                {/* ⚠ The bands sum to the LEAGUE block's banded goals — below the
+                    headline by however many were scored elsewhere. */}
+              <ScopeOnly
+                competitionName={competitionName}
+                excluded={chartsExcluded}
+                copy={copy}
+              />
               </StatCard>
             </Rise>
           ) : null}
@@ -287,11 +398,30 @@ export function PlayerView({
                     .map(({ mw, goals }) => ({ value: goals, label: `${mw}` }))}
                   height={TIMING_H}
                 />
+                {/* ⚠⚠ This card can NEVER merge: matchweek numbers are
+                    per-competition namespaces, so `{"5": 2}` merged with
+                    `{"5": 1}` would invent a matchday of three goals.
+                    `PlayerSeasonTotalsView` has no `goalsByMatchweek` at all and
+                    none is coming — the scope line is permanent here, not a
+                    stopgap until coverage improves. */}
+              <ScopeOnly
+                competitionName={competitionName}
+                excluded={chartsExcluded}
+                copy={copy}
+              />
               </StatCard>
             </Rise>
           ) : null}
 
-          {/* 5 · The four moment tiles. */}
+          {/* 5 · The four moment tiles.
+              ⚠ Every one of these is DERIVED from goals — braces, hat-tricks,
+              the scoring run and super-sub goals are all necessarily 0 when
+              `goals` is 0 — so at zero they carry no information the card at
+              the top has not already given, four more times. Discipline below
+              is NOT gated: a player can be booked without scoring, so its zero
+              is a fact of its own. */}
+          {scored ? (
+          <>
           <Rise step={4}>
             <View style={styles.pair}>
               <View style={styles.half}>
@@ -326,12 +456,13 @@ export function PlayerView({
                     progress={progress}
                     variant="statMd"
                   />
-                  {/* ⚠ Names the club: this counts club MATCHES, not
-                      appearances, so a benched match breaks it and a bare
-                      number would sometimes read lower than every broadcaster's
-                      and look like a bug. */}
+                  {/* ⚠ Names the COMPETITION (ADR 0148). It counts the club's
+                      matches IN THIS COMPETITION, so a European night sits
+                      outside it entirely — "straight Real Madrid matches" was
+                      the same over-claim the goals figure made. The
+                      not-appearances point is the footnote's. */}
                   <Text variant="micro" color="textDim">
-                    {copy.streak(clubName)}
+                    {copy.streak(competitionName)}
                   </Text>
                 </StatCard>
               </View>
@@ -349,6 +480,8 @@ export function PlayerView({
               </View>
             </View>
           </Rise>
+          </>
+          ) : null}
 
           {/* 6 · Discipline, and the quickest booking beside it. */}
           <Rise step={6}>
@@ -391,6 +524,20 @@ export function PlayerView({
                   </View>
                 ) : null}
               </View>
+              {/* ⚠⚠ Discipline stays on the LEAGUE block, deliberately, against
+                  the handoff plan's "read it from `seasonTotals`". The merged
+                  card counts are event-derived, so honouring the merged
+                  `coverage.sufficient` — an AND across contributors — would hide
+                  this card outright for every club in Europe until the Champions
+                  League clears the floor in late October. The league block has a
+                  real, swept answer; labelling it is the smaller compromise than
+                  withholding it. ⚠ Not gated on `scored`: a player can be booked
+                  without scoring, so its zero is a fact of its own (ADR 0148). */}
+              <ScopeOnly
+                competitionName={competitionName}
+                excluded={chartsExcluded}
+                copy={copy}
+              />
             </StatCard>
           </Rise>
         </>
@@ -398,7 +545,11 @@ export function PlayerView({
 
       <Rise step={7}>
         <Text variant="micro" color="textFaint" style={styles.footnote}>
-          {copy.playerFootnote}
+          {/* ⚠ The timing sentence only when the timing card drew — a footnote
+              explaining an absent card is a small lie about what is on screen. */}
+          {[events && scored ? copy.timingFootnote : null, copy.playerFootnote]
+            .filter(Boolean)
+            .join(' ')}
         </Text>
       </Rise>
     </>

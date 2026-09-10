@@ -21,11 +21,13 @@ import type { League } from './leagues';
 import type {
   GoalBandsView,
   PlayerSeasonStatsView,
+  PlayerSeasonTotalsView,
   PlayerStatsView,
   ScoringRunView,
   StatsCoverageView,
   StatsTimelineEntryView,
   TeamSeasonStatsView,
+  TeamSeasonTotalsView,
   TeamStatsView,
 } from './types';
 
@@ -97,6 +99,72 @@ export function pickPlayerSeason(
   );
 }
 
+/* ── The MERGED block: one season, every competition ─────────────────────── */
+
+/**
+ * The all-competitions block for one season — what the HEADLINE FIGURES read
+ * (ADR 0149).
+ *
+ * ⚠⚠ **No `league` argument, and that is the point.** `pickTeamSeason` above
+ * needs one because `seasons` is keyed by competition-season; `seasonTotals` is
+ * keyed by season alone, because a merged block is not per-competition. Asking
+ * for "the merged laliga block" is a category error.
+ *
+ * ⚠ This does NOT retire `pickTeamSeason`. The two are picked side by side and
+ * feed different halves of the screen: the figures come from here, the CHARTS
+ * stay on the per-competition block, because most of them cannot merge —
+ * matchweeks collide, and every event-derived merged field is refused while any
+ * one contributing competition sits below the coverage floor.
+ *
+ * `null` is a real answer: a payload captured before §120.15 shipped
+ * (2026-09-10) has no `seasonTotals` at all, and a season the sweep has not
+ * reached has no row.
+ */
+export function pickTeamTotals(
+  stats: TeamStatsView | null | undefined,
+  season: number,
+): TeamSeasonTotalsView | null {
+  if (!stats) return null;
+  return (stats.seasonTotals ?? []).find((block) => block.season === season) ?? null;
+}
+
+/** The player half of `pickTeamTotals`. ⚠ Season only, for the same reason. */
+export function pickPlayerTotals(
+  stats: PlayerStatsView | null | undefined,
+  season: number,
+): PlayerSeasonTotalsView | null {
+  if (!stats) return null;
+  return (stats.seasonTotals ?? []).find((block) => block.season === season) ?? null;
+}
+
+/**
+ * The competitions the FIGURES count and the CHARTS leave out.
+ *
+ * ⚠⚠ **This is ADR 0148's line, inverted (ADR 0149).** 0148 had the numbers name
+ * what they left out, because the screen showed one competition's block and
+ * Valverde read `0 GOALS` two days after scoring in the Champions League. The
+ * merged block closed that: the figures now count everything, so they leave
+ * nothing to name. What is still per-competition is the CHARTS — and an
+ * unlabelled league-only chart under an all-competitions headline is the same
+ * class of error pointing the other way, which is why this function survived
+ * rather than being deleted with the line it used to feed.
+ *
+ * ⚠ Returns `[]` when the merged block holds ONE competition, which is the
+ * common case outside Europe: Bayern's merged block IS its Bundesliga block, so
+ * there is nothing to disclaim and no line to draw. Also `[]` when the league is
+ * unresolved or the payload predates the merge — silence, never a guess.
+ *
+ * ⚠ These are API competition SLUGS. A caller that cannot name one must render
+ * nothing rather than leak `champions-league` to a reader (0148's rule, still).
+ */
+export function chartsExclude(
+  totals: { competitions: readonly string[] } | null | undefined,
+  league: League | undefined,
+): string[] {
+  if (!totals || !league) return [];
+  return totals.competitions.filter((slug) => slug !== league.apiSlug);
+}
+
 /* ── The timeline: one array, three charts ───────────────────────────────── */
 
 /**
@@ -141,6 +209,19 @@ export interface MatchweekGoals {
  *
  * Ordered by matchweek NUMBER, because this chart's axis genuinely is the
  * matchweek; the chronology lives in `cumulativeGoals` and `scoredStrip`.
+ *
+ * ⚠⚠ **NEVER pass a MERGED timeline (ADR 0149).** Matchweek numbers are
+ * per-competition NAMESPACES, so grouping a merged array by `mw` folds two
+ * unrelated nights into one bar. Barcelona's merged 2026 timeline reads
+ * `mw [2, 1, 3, 4, 1]` today — LaLiga matchday 1 and Champions League matchday 1
+ * — and this function would answer a single matchday-1 bar of both clubs' goals
+ * added together. TypeScript cannot stop it: `StatsMergedTimelineEntryView`
+ * extends the per-competition entry, so a merged array is assignable here. The
+ * guard is the harness, which asserts the wrong answer this returns for the
+ * merged array so the trap stays proven rather than merely described.
+ *
+ * ⚠ This is the same reason `PlayerSeasonTotalsView` has no `goalsByMatchweek`
+ * at all — the backend declined to invent one and so does this.
  */
 export function goalsByMatchweek(
   timeline: readonly StatsTimelineEntryView[],
@@ -286,9 +367,25 @@ export type RunLabel =
   | { kind: 'matchweeks'; from: number; to: number }
   | { kind: 'dates'; fromKickoffUtc: string; toKickoffUtc: string };
 
-export function runLabel(run: ScoringRunView | null): RunLabel | null {
+/**
+ * @param namespaced Whether the run spans MORE THAN ONE competition — true for a
+ * merged block holding several (ADR 0149).
+ *
+ * ⚠⚠ **A merged run must never be captioned with matchweeks, and this was caught
+ * on a device rather than in review.** Barcelona's merged run spans LaLiga
+ * matchday 2 through Champions League matchday 1, and the honest-looking template
+ * rendered it **"MD2 → MD1"** — a run that appears to travel backwards through the
+ * season. Matchweek numbers are per-competition namespaces, so the two ends are
+ * not on one scale and no arrow between them means anything. Kickoffs are, so a
+ * namespaced run captions with DATES — the same fallback a cup run already takes,
+ * for the same underlying reason.
+ */
+export function runLabel(
+  run: ScoringRunView | null,
+  namespaced = false,
+): RunLabel | null {
   if (!run) return null;
-  if (run.fromMatchweek !== null && run.toMatchweek !== null) {
+  if (!namespaced && run.fromMatchweek !== null && run.toMatchweek !== null) {
     return { kind: 'matchweeks', from: run.fromMatchweek, to: run.toMatchweek };
   }
   return {

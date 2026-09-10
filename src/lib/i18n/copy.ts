@@ -540,7 +540,29 @@ export interface Copy {
     failedToScore: string;
     outOf: (total: number) => string;
     scoringRun: string;
-    runValue: string;
+    /**
+     * ⚠ Takes the COMPETITION, for a run read off a PER-COMPETITION block: the
+     * backend computes those from fixtures already filtered to one
+     * competition-season, so such a run is a run of LEAGUE matches and a
+     * European tie in the middle neither extends nor breaks it (ADR 0148).
+     *
+     * ⚠ Used only where the merged block holds ONE competition — there, the
+     * merged run IS that competition's run. Otherwise `runValueAll` (ADR 0149).
+     */
+    runValue: (competition: string) => string;
+    /**
+     * The same label with NO competition named, for the club's MERGED run.
+     *
+     * ⚠⚠ Naming a competition here would be the over-claim 0148 removed, in
+     * reverse: `TeamSeasonTotalsView.longestScoringRun` is RECOMPUTED over the
+     * merged, kickoff-ordered timeline, so it genuinely spans competitions and
+     * "straight LaLiga matches" would understate what the number counts.
+     *
+     * ⚠ There is deliberately no player equivalent — a player's merged streak is
+     * a MAX and therefore a lower bound, so the player view keeps reading the
+     * per-competition block and keeps naming it.
+     */
+    runValueAll: string;
     runWindow: (from: string, to: string) => string;
     goalsPerMatchweek: string;
     home: string;
@@ -573,12 +595,68 @@ export interface Copy {
     bracesNote: string;
     hatTricks: string;
     longestRun: string;
-    /** ⚠ Names the club — see the block note above. */
-    streak: (club: string) => string;
+    /**
+     * ⚠⚠ Names the COMPETITION, not the club (ADR 0148, correcting 0146).
+     * "Straight Real Madrid matches" is the same over-claim the goals figure
+     * made: the streak counts the club's matches IN THIS COMPETITION, so a
+     * Champions League night sits outside it entirely. The not-appearances
+     * point 0146 wanted the club name for is carried by `playerFootnote`,
+     * which is now always on screen.
+     */
+    streak: (competition: string) => string;
     superSub: string;
     superSubNote: string;
     quickestBooking: string;
     minute: (n: number) => string;
+    /**
+     * The marker on the HEADLINE FIGURES saying they count everything
+     * (ADR 0149) — "All competitions: LaLiga, Champions League".
+     *
+     * ⚠⚠ **It is not decoration; without it the screen re-commits 0148's error
+     * in reverse.** The eyebrow four rows up reads `LALIGA · 2026/27`, and the
+     * figures under it now count the Champions League too — so an unmarked
+     * headline is a number the eyebrow actively misdescribes.
+     *
+     * ⚠ `list` is null when any contributing competition has no display name:
+     * the marker then states the scope without naming it, because a raw
+     * `champions-league` slug must never reach a reader (0148's rule, kept).
+     *
+     * ⚠ Rendered ONLY where the merged block holds more than one competition.
+     * Bayern's merged block IS its Bundesliga block, and "all competitions" over
+     * a single competition is noise.
+     */
+    allCompetitions: (list: string | null) => string;
+    /**
+     * The scope line under a chart that is still PER-COMPETITION (ADR 0149) —
+     * "LaLiga matches only".
+     *
+     * ⚠⚠ This is 0148's line inverted. There, the NUMBERS named what they left
+     * out; the merge closed that. What is still one competition is the CHARTS —
+     * matchweeks collide across competitions and every merged event field is
+     * refused below the coverage floor — and an unlabelled league-only chart
+     * under an all-competitions headline is the same class of error pointing the
+     * other way.
+     *
+     * ⚠ Under the thing it qualifies, never in the footnote: a reader who has
+     * scrolled past a chart has already drawn their conclusion.
+     */
+    scopeOnly: (competition: string) => string;
+    /**
+     * BARE display names for competitions, keyed by API slug — "Champions
+     * League", not "la Champions".
+     *
+     * ⚠ A lookup keyed by a protocol value, like `player.positionNames`: the key
+     * is the wire's, the value is ours. It exists because `champions-league` is
+     * NOT in `LEAGUES` and so has no `League.name` to read.
+     *
+     * ⚠⚠ **Bare, with no article** (changed in ADR 0149). 0148's values carried
+     * Spanish articles because they were built for one sentence, "+1 gol en la
+     * Champions". Every 0149 context is a LIST or a scope label instead, where an
+     * article reads wrong — so the article moved into the sentences that need it.
+     *
+     * ⚠ A slug with no entry renders NOTHING rather than the slug.
+     */
+    competitionNames: Record<string, string>;
     /** States. */
     empty: string;
     error: string;
@@ -586,7 +664,14 @@ export interface Copy {
     /** ⚠ The line that explains an absent event half. Not optional. */
     noEvents: (counted: number, total: number) => string;
     footnote: string;
+    /**
+     * ⚠ Split in two (ADR 0148) because half of it explains a card that is not
+     * always drawn: the timing sentence follows the timing chart, which a
+     * goalless player does not get. A footnote explaining an absent card is a
+     * small lie about what is on screen.
+     */
     playerFootnote: string;
+    timingFootnote: string;
   };
   /**
    * The player sheet.
@@ -1079,7 +1164,8 @@ export const esCopy: Copy = {
     failedToScore: 'Sin marcar',
     outOf: (total) => `/ ${total}`,
     scoringRun: 'Racha marcando',
-    runValue: 'partidos seguidos marcando',
+    runValue: (competition) => `partidos seguidos de ${competition} marcando`,
+    runValueAll: 'partidos seguidos marcando',
     runWindow: (from, to) => `${from} → ${to}`,
     goalsPerMatchweek: 'Goles por jornada',
     home: 'Casa',
@@ -1112,11 +1198,22 @@ export const esCopy: Copy = {
     bracesNote: 'dos en un partido',
     hatTricks: 'Tripletes',
     longestRun: 'Mejor racha',
-    streak: (club) => `partidos seguidos del ${club} marcando`,
+    streak: (competition) => `partidos seguidos de ${competition} marcando`,
     superSub: 'Desde el banco',
     superSubNote: 'goles tras salir del banquillo',
     quickestBooking: 'Amonestación más rápida',
     minute: (n) => `${n}'`,
+    allCompetitions: (list) =>
+      list === null ? 'Todas las competiciones' : `Todas las competiciones: ${list}`,
+    scopeOnly: (competition) => `Solo partidos de ${competition}`,
+    competitionNames: {
+      'champions-league': 'Champions',
+      laliga: 'LaLiga',
+      segunda: 'LaLiga Hypermotion',
+      'premier-league': 'Premier League',
+      'serie-a': 'Serie A',
+      bundesliga: 'Bundesliga',
+    },
     empty: 'Todavía no hay estadísticas de esta temporada.',
     error: 'No hemos podido cargar las estadísticas.',
     retry: 'Reintentar',
@@ -1125,7 +1222,9 @@ export const esCopy: Copy = {
     footnote:
       'Los datos de resultados se calculan sobre las actas oficiales. Las identidades de los jugadores están verificadas en LaLiga y Segunda.',
     playerFootnote:
-      'Los tramos usan el minuto del gol tal y como lo publica la liga. Los goles del descuento cuentan en el último tramo. No hay partidos jugados ni minutos: las rachas cuentan partidos del club.',
+      'No hay partidos jugados ni minutos: las rachas cuentan partidos del club.',
+    timingFootnote:
+      'Los tramos usan el minuto del gol tal y como lo publica la liga. Los goles del descuento cuentan en el último tramo.',
   },
   player: {
     done: 'Listo',
@@ -1576,7 +1675,8 @@ export const enCopy: Copy = {
     failedToScore: 'Failed to score',
     outOf: (total) => `/ ${total}`,
     scoringRun: 'Scoring run',
-    runValue: 'straight matches scored in',
+    runValue: (competition) => `straight ${competition} matches scored in`,
+    runValueAll: 'straight matches scored in',
     runWindow: (from, to) => `${from} → ${to}`,
     goalsPerMatchweek: 'Goals per matchweek',
     home: 'Home',
@@ -1609,11 +1709,22 @@ export const enCopy: Copy = {
     bracesNote: 'two in a match',
     hatTricks: 'Hat-tricks',
     longestRun: 'Longest run',
-    streak: (club) => `straight ${club} matches scoring`,
+    streak: (competition) => `straight ${competition} matches scoring`,
     superSub: 'Super-sub',
     superSubNote: 'goals after coming on',
     quickestBooking: 'Quickest booking',
     minute: (n) => `${n}'`,
+    allCompetitions: (list) =>
+      list === null ? 'All competitions' : `All competitions: ${list}`,
+    scopeOnly: (competition) => `${competition} matches only`,
+    competitionNames: {
+      'champions-league': 'Champions League',
+      laliga: 'LaLiga',
+      segunda: 'LaLiga Hypermotion',
+      'premier-league': 'Premier League',
+      'serie-a': 'Serie A',
+      bundesliga: 'Bundesliga',
+    },
     empty: 'No stats for this season yet.',
     error: "We couldn't load the stats.",
     retry: 'Try again',
@@ -1622,7 +1733,9 @@ export const enCopy: Copy = {
     footnote:
       'Scoreline-based stats are computed from official results. Player identities are verified for LaLiga and Segunda.',
     playerFootnote:
-      "Timing bands use the minute of the goal as recorded by the league. Stoppage-time goals count in the final band. There are no appearances or minutes: runs count club matches.",
+      'There are no appearances or minutes: runs count club matches.',
+    timingFootnote:
+      'Timing bands use the minute of the goal as recorded by the league. Stoppage-time goals count in the final band.',
   },
   player: {
     done: 'Done',

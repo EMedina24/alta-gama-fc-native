@@ -1305,6 +1305,26 @@ documented at the code that handles them; this is the index.
     correction in a different shape: it starts at the ORIGIN, because two equal
     cumulative values both sit on the top edge and the area fill becomes a solid
     slab.
+68. **⚠⚠ A MERGED timeline is structurally assignable to a per-competition
+    one, so TypeScript cannot stop you grouping it by matchweek.**
+    `StatsMergedTimelineEntryView extends StatsTimelineEntryView`, so every
+    timeline helper accepts a merged array silently. Matchweek numbers are
+    per-competition NAMESPACES: Barcelona's merged 2026 timeline really holds
+    LaLiga matchday 1 and Champions League matchday 1 as two fixtures both
+    reading `mw: 1`, so `goalsByMatchweek` answers ONE matchday-1 bar with both
+    nights added together, and `axisLabels` prints "MD1" twice for two different
+    evenings (ADR 0149). The club's matchweek card therefore stays on the
+    per-competition block permanently, and `axisLabels` falls back to POSITIONS
+    when it detects more than one competition in the array. ⚠ Because the
+    compiler is no help, **the harness asserts the WRONG ANSWER** the merged
+    array produces — a described trap is a trap nobody re-derives.
+    ⚠ Same root, caught only ON DEVICE: the merged scoring run spans LaLiga
+    matchday 2 to Champions League matchday 1 and captioned itself
+    **"MD2 → MD1"** — a run that appears to travel backwards through the season.
+    Both ends carried real matchweeks, so nothing in the DATA said "fall back";
+    only the namespace clash did. `runLabel` now takes `namespaced` and captions
+    with kickoffs instead. **Screenshot the merged case — the numbers were right
+    in every unit test.**
 
 ---
 
@@ -2020,6 +2040,17 @@ Done 2026-08-30 in the onboarding redesign ([0076](./decisions/0076-onboarding-f
   screen is built on them
   ([0141](./decisions/0141-season-stats-reads-one-block.md),
   [0146](./decisions/0146-season-stats-supersedes-no-player-endpoint.md)).
+  ⚠ **Both stats routes gained a second array on 2026-09-10** (§120.15):
+  `seasonTotals`, one block per SEASON merged across every competition, beside
+  the per-competition `seasons`. It is what the screen's HEADLINE FIGURES read —
+  Valverde reads `1 GOAL` rather than `0`, Real Madrid `12` rather than `10`. The
+  CHARTS still read `seasons` and mostly must
+  ([0149](./decisions/0149-the-figures-merge-the-charts-do-not.md)): a merged
+  block has no `goalsByMatchweek` at all, and its every event-derived field is
+  refused while any one contributing competition sits below the coverage floor —
+  which for a club in Europe is until roughly late October. ⚠⚠ A merged block's
+  `coverage.sufficient` is an **AND across contributors, not a ratio**: it reads
+  `false` at `ratio: 1`. Never recompute it.
   ⚠ **What has NOT changed, and will not:** appearances, minutes and per-90
   anything, because no source publishes lineup events — a player who played 90
   quiet minutes wrote no row. **Every denominator on that screen is CLUB

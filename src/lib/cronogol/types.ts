@@ -1323,6 +1323,19 @@ export interface StatsMomentView {
   card?: string;
 }
 
+/**
+ * A named fixture on a MERGED block.
+ *
+ * ⚠⚠ `competition` is the only thing that says which table `fixtureId` lives
+ * in — `fixtures` or `ucl_fixtures`. On a `seasons[]` row the row's own
+ * `competition` disambiguates it; a merged block has no such row, so the value
+ * travels on the moment itself. It disambiguates `matchweek` too.
+ */
+export interface StatsMergedMomentView extends StatsMomentView {
+  /** ⚠ An API competition slug (`champions-league`). */
+  competition: string;
+}
+
 /** One competition-season of a player's record. */
 export interface PlayerSeasonStatsView {
   /** ⚠ The STARTING year: 2026 means 2026/27. */
@@ -1381,6 +1394,95 @@ export interface PlayerSeasonStatsView {
   coverage: StatsCoverageView;
 }
 
+/**
+ * ONE SEASON of a player's record, merged across every competition
+ * (`senpai-backend` §120.15, shipped 2026-09-10; ADR 0149).
+ *
+ * ⚠⚠ **This is the block the HEADLINE FIGURES read.** `seasons[]` is the
+ * per-competition drill-down and the charts' source; this is the answer to
+ * "what did he do this season". Valverde's 2026 merge is `goals: 1` where his
+ * `laliga` block is `goals: 0` — that gap is the whole reason it exists
+ * (ADR 0148).
+ *
+ * ⚠⚠ **An event-derived field is null unless EVERY contributing competition
+ * published a number.** The raw counters (`goals`, `assists`, the cards) are
+ * served either way and can only ever be too LOW, never invented.
+ *
+ * ⚠⚠ **`coverage.sufficient` is an AND across the contributing competitions,
+ * not a ratio.** Valverde's merged 2026 block reads `ratio: 1` with
+ * `sufficient: false` — five of five fixtures counted, a perfect ratio, still
+ * refused, because the Champions League half is one fixture and under the
+ * absolute floor of 3. Do NOT recompute it from `fixturesCounted /
+ * fixturesTotal`: that is the laundering the backend exists to refuse, and it
+ * would publish event numbers for a competition that declined to publish them.
+ * Expect `false` for every club in Europe until roughly late October.
+ */
+export interface PlayerSeasonTotalsView {
+  /** ⚠ The STARTING year: 2026 means 2026/27. */
+  season: number;
+  /**
+   * Every competition folded in, slug-ascending.
+   *
+   * ⚠ There is no `competition` field — this is not a season ROW. ⚠ A block of
+   * length 1 IS that competition's block, so a screen must not label it "all
+   * competitions": there is nothing else in it.
+   */
+  competitions: string[];
+  /** ⚠ Deduped by slug in competition order — NOT a chronology. */
+  teams: { slug: string; name: string }[];
+  /** ⚠ Own goals are NOT counted here. */
+  goals: number;
+  assists: number;
+  /** ⚠ Served, not computed — do not re-add goals and assists. */
+  goalInvolvements: number;
+  penaltyGoals: number;
+  penaltiesMissed: number | null;
+  /**
+   * 0–1, not a percentage.
+   *
+   * ⚠ Recomputed from the merged counts, never averaged from the per-competition
+   * ratios. ⚠ null unless EVERY competition can observe a miss — only the
+   * LaLiga family maps `missed-penalty`, so a merge including the Premier
+   * League or Serie A is null here by construction.
+   */
+  penaltyConversion: number | null;
+  ownGoals: number;
+  /**
+   * ⚠ Typed nullable to match the wire, but it can never actually BE null for a
+   * player: `PlayerSeasonStatsView.yellows` is non-nullable, so the all-or-null
+   * merge always finds two numbers. Handle the null anyway — a backend
+   * follow-up may narrow it, and narrowing is non-breaking for readers.
+   */
+  yellows: number | null;
+  secondYellows: number | null;
+  reds: number | null;
+  braces: number;
+  hatTricks: number;
+  hatTrickFixtures: StatsMergedMomentView[] | null;
+  quickestBooking: StatsMergedMomentView | null;
+  superSubGoals: number;
+  /**
+   * ⚠⚠ **A MAX across competitions, and therefore a LOWER BOUND — not a merged
+   * run.** A league goal followed by a European one is a true run of 2 that
+   * reads as 1, because matches from two competitions are never sequenced
+   * against each other for a player. It must NOT be printed as an
+   * all-competitions streak; render the per-competition one from `seasons[]`
+   * and name the competition (ADR 0148 item 3).
+   *
+   * ⚠ Contrast `TeamSeasonTotalsView.longestScoringRun`, which IS a real merged
+   * run — the club side has a merged timeline to recompute over and the player
+   * side does not.
+   */
+  longestScoringStreak: number;
+  goalsByBand: GoalBandsView | null;
+  coverage: StatsCoverageView;
+  /* ⚠⚠ There is deliberately NO `goalsByMatchweek` — matchweek numbers are
+   * per-competition NAMESPACES, so merging `{"5": 2}` with `{"5": 1}` would
+   * invent a matchweek in which he scored three goals. No merged form exists
+   * and none is coming; ADR 0145's chart reads `seasons[]` permanently.
+   * ⚠ And no `currentScoringStreak` — a MAX would overstate it. */
+}
+
 /** A player's career total across the seasons that cleared the floor. */
 export interface PlayerOverallStatsView {
   goals: number;
@@ -1418,6 +1520,13 @@ export interface PlayerStatsView {
   slug: string | null;
   name: string;
   seasons: PlayerSeasonStatsView[];
+  /**
+   * The same seasons merged across competitions, newest first (ADR 0149).
+   *
+   * ⚠ Always present; `[]` only when there are no stats at all. ⚠ One entry per
+   * SEASON here, against one per competition-season in `seasons`.
+   */
+  seasonTotals: PlayerSeasonTotalsView[];
   /** ⚠ null when no season has enough coverage. */
   overall: PlayerOverallStatsView | null;
 }
@@ -1449,6 +1558,16 @@ export interface TeamResultRefView {
   kickoffUtc: string;
 }
 
+/** A club's biggest win or defeat on a MERGED block. */
+export interface TeamMergedResultRefView extends TeamResultRefView {
+  /**
+   * ⚠⚠ The only thing that says which table `fixtureId` lives in, and the only
+   * thing that makes `matchweek` readable — "MD1" means two different nights
+   * once two competitions share a block.
+   */
+  competition: string;
+}
+
 /**
  * One finished fixture in a club's season, in KICKOFF order.
  *
@@ -1474,6 +1593,26 @@ export interface StatsTimelineEntryView {
   home: boolean;
   gf: number;
   ga: number;
+}
+
+/**
+ * One finished fixture on a club's MERGED season, in kickoff order.
+ *
+ * ⚠⚠ **Competitions are INTERLEAVED, not concatenated** — this is a real
+ * chronology across every competition the club played, which is why the club
+ * side can merge its cumulative line and run strip and the player side cannot.
+ * `home.played + away.played === timeline.length`, always.
+ *
+ * ⚠⚠ **`mw` stops being a usable LABEL here, not just a usable axis.**
+ * Barcelona's merged 2026 timeline reads `mw [2, 1, 3, 4, 1]` today: the first
+ * `1` is LaLiga matchday 1 and the last is Champions League matchday 1, two
+ * different nights printing the same "MD1". Group or label by `mw` on a merged
+ * timeline and the chart states something false — see `goalsByMatchweek` and
+ * `axisLabels`, both of which refuse to.
+ */
+export interface StatsMergedTimelineEntryView extends StatsTimelineEntryView {
+  /** ⚠ An API competition slug. Disambiguates `id` AND `mw`. */
+  competition: string;
 }
 
 /** The club's longest run of matches scored in. */
@@ -1535,6 +1674,71 @@ export interface TeamSeasonStatsView {
 }
 
 /**
+ * ONE SEASON of a club's record, merged across every competition it played
+ * (`senpai-backend` §120.15; ADR 0149).
+ *
+ * ⚠⚠ **The club side merges far further than the player side, and the asymmetry
+ * is the point:** `timeline` below is a real merged, kickoff-ordered chronology,
+ * so the runs and the venue splits are RECOMPUTED over it — not summed, not
+ * maxed. A player has no merged timeline, so a player's streak is only ever a
+ * lower bound. Real Madrid's merged 2026 `goalsFor` is 12 against its `laliga`
+ * block's 10.
+ *
+ * ⚠⚠ Same two rules as the player block: an event-derived field is null unless
+ * EVERY competition published a number, and `coverage.sufficient` is an AND
+ * across the contributors rather than a ratio. Never recompute it.
+ */
+export interface TeamSeasonTotalsView {
+  /** ⚠ The STARTING year: 2026 means 2026/27. */
+  season: number;
+  /**
+   * Every competition folded in, slug-ascending.
+   *
+   * ⚠ There is no `competition` field — this is not a season ROW. ⚠ A block of
+   * length 1 IS that competition's block: Bayern's merged 2026 block is its
+   * Bundesliga block, byte for byte, so nothing may label it "all competitions".
+   */
+  competitions: string[];
+
+  /* Scoreline-derived — always numbers, for every competition. */
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  cleanSheets: number;
+  failedToScore: number;
+  /**
+   * ⚠⚠ RECOMPUTED over the merged timeline — a genuine all-competitions run,
+   * unlike the player's `longestScoringStreak`. So its label must NOT name a
+   * competition when the block holds more than one.
+   */
+  longestScoringRun: number;
+  longestUnbeatenRun: number;
+  longestWinningRun: number;
+  biggestWin: TeamMergedResultRefView | null;
+  biggestDefeat: TeamMergedResultRefView | null;
+  home: TeamVenueSplitView;
+  away: TeamVenueSplitView;
+  /** ⚠ Kickoff-ordered and INTERLEAVED. Never null; `[]` means none finished. */
+  timeline: StatsMergedTimelineEntryView[];
+  /**
+   * ⚠⚠ `startIndex`/`endIndex` address the MERGED `timeline` above. Feeding
+   * them a per-competition array highlights the wrong matches.
+   */
+  scoringRun: ScoringRunView | null;
+
+  /* Event-derived — ⚠⚠ null unless EVERY merged competition published a number.
+   * Never 0. Expect null for a club in Europe until the UCL clears the floor. */
+  comebackWins: number | null;
+  comebackPoints: number | null;
+  yellows: number | null;
+  secondYellows: number | null;
+  reds: number | null;
+  goalsForByBand: GoalBandsView | null;
+  goalsAgainstByBand: GoalBandsView | null;
+  coverage: StatsCoverageView;
+}
+
+/**
  * `GET /cronogol/teams/{slug}/stats`. `404` on an unknown club slug, like
  * `teams/{slug}/squad`.
  *
@@ -1551,6 +1755,13 @@ export interface TeamSeasonStatsView {
 export interface TeamStatsView {
   team: { slug: string; name: string };
   seasons: TeamSeasonStatsView[];
+  /**
+   * The same seasons merged across competitions, newest first (ADR 0149).
+   *
+   * ⚠ Always present; `[]` only when there are no stats at all. ⚠ One entry per
+   * SEASON here, against one per competition-season in `seasons`.
+   */
+  seasonTotals: TeamSeasonTotalsView[];
 }
 
 /**
