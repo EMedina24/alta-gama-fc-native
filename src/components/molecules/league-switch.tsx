@@ -8,8 +8,11 @@
  *
  * ⚠ **The rail never scrolls** (ADR 0118). Every league shares the gutter
  * width as an equal flexed slot — the crown mark wears 0116's smaller first
- * cut so five slots still fit. A sixth league shrinks the slots further; the
- * mark tokens are the lever if that day comes.
+ * cut so five slots still fit. ⚠⚠ **That day came** (ADR 0153): the Champions
+ * League made the Table rail SIX, where a 375pt device gives each slot 53.83pt
+ * against a 54pt mark. The lever 0118 named is pulled — at
+ * `Size.leagueRailTightFrom` slots or more the crown mark drops to the tight
+ * cut. Chip HEIGHT never moves, so 0116's device-judged calibration stands.
  *
  * ⚠ **Artwork alone — no text label** (ADR 0031, which 0089 and 0117 keep).
  * The chips are a filter row, not a legend; the name still reaches VoiceOver
@@ -27,6 +30,17 @@
  * ⚠ Artwork comes from the API (`league.logoUrls`), not a bundled asset, so a
  * new league appears without an asset drop. Prefer `icon`, fall back to
  * `primary` — only LaLiga ships an icon-only cut today.
+ *
+ * ⚠ **A `mark` outranks a `logoUrl`** (ADR 0153): a drawn lockup is an
+ * editorial choice, a URL is whatever the wire happened to have. The Champions
+ * League has no wire artwork at all — `GET /cronogol/leagues` serves no row for
+ * it — so it is the first entry to take that branch.
+ *
+ * ⚠⚠ **Artwork is chosen in ONE place, `ChipArtwork`, used by the chip AND by
+ * the lens's magnifier.** They branched separately until 0153, which meant a
+ * slot the lens could not draw showed as a HOLE under a held finger. Same
+ * reasoning `BAND_COLOR`'s header gives for the colour map: two copies of one
+ * decision will disagree.
  */
 import { Image } from 'expo-image';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
@@ -43,7 +57,12 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { Text } from '@/components/atoms';
+import {
+  COMPETITION_MARK_RATIO,
+  CompetitionMark,
+  Text,
+  type CompetitionMarkKind,
+} from '@/components/atoms';
 import { Colors, Glide, Motion, Radius, Size } from '@/constants/theme';
 import { hapticToggle } from '@/lib/haptics';
 
@@ -52,6 +71,12 @@ export interface LeagueOption {
   name: string;
   /** `logoUrls.icon ?? logoUrls.primary ?? logoUrl`, resolved by the screen. */
   logoUrl: string | null;
+  /**
+   * A DRAWN mark, for a competition the API serves no artwork for (ADR
+   * 0133/0153). ⚠ Outranks `logoUrl` — see the header. Optional, so every
+   * existing call site is unchanged.
+   */
+  mark?: CompetitionMarkKind;
 }
 
 export interface LeagueSwitchProps {
@@ -72,13 +97,23 @@ interface ChipBox {
   width: number;
 }
 
-interface Slot extends ChipBox {
-  slug: string;
-  logoUrl: string | null;
-}
+/**
+ * ⚠ Carries `name` so a slot satisfies `LeagueOption` and can be handed
+ * straight to `ChipArtwork` — the lens and the chip then share one decision by
+ * construction rather than by agreement.
+ */
+interface Slot extends ChipBox, LeagueOption {}
 
 export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: LeagueSwitchProps) {
   const crown = tone === 'crown';
+  /**
+   * ⚠ The rail is static and every slot is an equal flex share, so the slot
+   * WIDTH is a function of how many there are. At six the 54pt crown mark is
+   * wider than its own slot on a 375pt device — see `Size.leagueChipMarkWCrownTight`
+   * for the arithmetic. Computed once here and passed down, so the chip and the
+   * lens can never disagree about which cut is drawn.
+   */
+  const tight = leagues.length >= Size.leagueRailTightFrom;
   const reduceMotion = useReducedMotion();
   // Slots are equal by flex, but the plate still follows measured boxes —
   // rounding and the text branch keep the truth in onLayout, not arithmetic.
@@ -136,7 +171,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
   const measured = leagues.map((league) => {
     const box = boxes[league.slug];
     return box
-      ? { slug: league.slug, x: box.x, width: box.width, logoUrl: league.logoUrl }
+      ? { ...league, x: box.x, width: box.width }
       : null;
   });
   const slots: Slot[] | null = measured.every(Boolean) ? (measured as Slot[]) : null;
@@ -252,6 +287,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
             material), so the selected mark stays crisp. */}
         <SelectionPlate
           crown={crown}
+          tight={tight}
           tx={tx}
           w={w}
           shown={shown}
@@ -266,6 +302,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
             league={league}
             selected={league.slug === active}
             crown={crown}
+            tight={tight}
             onPress={() => {
               select(league.slug);
               const box = boxes[league.slug];
@@ -292,6 +329,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
         {touching ? (
           <SelectionPlate
             crown={crown}
+            tight={tight}
             tx={tx}
             w={w}
             shown={shown}
@@ -317,6 +355,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
  */
 function SelectionPlate({
   crown,
+  tight,
   tx,
   w,
   shown,
@@ -326,6 +365,7 @@ function SelectionPlate({
   lens,
 }: {
   crown: boolean;
+  tight: boolean;
   tx: SharedValue<number>;
   w: SharedValue<number>;
   shown: SharedValue<number>;
@@ -359,14 +399,23 @@ function SelectionPlate({
   // so the bubble is a true viewport onto the rail: content point p renders
   // at p·MAG + T where T keeps the lens's centre looking at itself.
   const slotH2 = crown ? Size.leagueChipHCrown : Size.leagueChipH;
-  const markW = crown ? Size.leagueChipMarkWCrown : Size.leagueChipMarkW;
-  const markH = crown ? Size.leagueChipMarkHCrown : Size.leagueChipMarkH;
+  /**
+   * ⚠⚠ **The vertical translate is MARK-HEIGHT AGNOSTIC, and that is a fix.**
+   * It used to subtract `(markH * MAG) / 2` here, which centred every copy on
+   * the assumption that they all share one height — true while every mark was a
+   * landscape lockup at `markH`. A drawn competition lockup is taller (it is
+   * roughly square, `Size.leagueChipLockupHCrown`), so one shared offset
+   * mis-centres either it or all of its neighbours. The parent now translates to
+   * the viewport's centre alone and each copy carries its OWN `top` half-height
+   * — see `magnifiedBox`. ⚠ `tsc` cannot see this; only a finger held on the
+   * rail can.
+   */
   const magStyle = useAnimatedStyle(() => {
     const grow = lens ? lensScale.value : 1;
     return {
       transform: [
         { translateX: (w.value * grow) / 2 - Glide.magnify * (tx.value + w.value / 2) },
-        { translateY: (slotH2 * grow) / 2 - (markH * Glide.magnify) / 2 },
+        { translateY: (slotH2 * grow) / 2 },
       ],
     };
   });
@@ -392,24 +441,29 @@ function SelectionPlate({
           {slots ? (
             <View style={styles.lensViewport}>
               <Animated.View style={magStyle}>
-                {slots.map((slot) =>
-                  slot.logoUrl ? (
-                    <Image
+                {slots.map((slot) => {
+                  const box = magnifiedBox(slot, crown, tight);
+                  if (!box) return null;
+                  return (
+                    <View
                       key={slot.slug}
-                      source={{ uri: slot.logoUrl }}
                       style={{
                         position: 'absolute',
-                        left:
-                          Glide.magnify * (slot.x + slot.width / 2) -
-                          (markW * Glide.magnify) / 2,
-                        width: markW * Glide.magnify,
-                        height: markH * Glide.magnify,
-                      }}
-                      contentFit="contain"
-                      accessible={false}
-                    />
-                  ) : null,
-                )}
+                        left: Glide.magnify * (slot.x + slot.width / 2) - box.width / 2,
+                        top: -box.height / 2,
+                        width: box.width,
+                        height: box.height,
+                      }}>
+                      <ChipArtwork
+                        option={slot}
+                        width={box.width}
+                        height={box.height}
+                        selected={false}
+                        crown={crown}
+                      />
+                    </View>
+                  );
+                })}
               </Animated.View>
             </View>
           ) : null}
@@ -423,16 +477,119 @@ function SelectionPlate({
   );
 }
 
+/**
+ * The mark box a chip draws into, at rest.
+ *
+ * ⚠ Three cuts, not two. The crown row takes 0116's size (resized by 0118)
+ * until the rail reaches `Size.leagueRailTightFrom` slots, at which point the
+ * mark — not the chip — shrinks (ADR 0153). The ground row is untouched by any
+ * of it and keeps 0089's.
+ */
+function markBox(crown: boolean, tight: boolean): { width: number; height: number } {
+  if (!crown) return { width: Size.leagueChipMarkW, height: Size.leagueChipMarkH };
+  return tight
+    ? { width: Size.leagueChipMarkWCrownTight, height: Size.leagueChipMarkHCrownTight }
+    : { width: Size.leagueChipMarkWCrown, height: Size.leagueChipMarkHCrown };
+}
+
+/**
+ * A DRAWN lockup's box.
+ *
+ * ⚠ Sized by its own HEIGHT token and its measured ratio, never by the
+ * landscape mark box: the lockup is roughly square with a wordmark inside it,
+ * so at a landscape mark's 22pt height its words become the smudge
+ * `Size.competitionMark`'s comment warns about. The ground row has no
+ * competition today and reuses the in-app mark size rather than minting a token
+ * that nothing reads.
+ */
+function lockupBox(kind: CompetitionMarkKind, crown: boolean): { width: number; height: number } {
+  const height = crown ? Size.leagueChipLockupHCrown : Size.competitionMark;
+  return { width: height * COMPETITION_MARK_RATIO[kind], height };
+}
+
+/** The same boxes at magnifier scale, or null for a slot with no artwork. */
+function magnifiedBox(
+  option: LeagueOption,
+  crown: boolean,
+  tight: boolean,
+): { width: number; height: number } | null {
+  const box = option.mark
+    ? lockupBox(option.mark, crown)
+    : option.logoUrl
+      ? markBox(crown, tight)
+      : null;
+  return box
+    ? { width: box.width * Glide.magnify, height: box.height * Glide.magnify }
+    : null;
+}
+
+/**
+ * What a chip actually draws — the ONE artwork decision, used by the resting
+ * chip and by the lens's magnifier alike (ADR 0153).
+ *
+ * Precedence is `mark → logoUrl → text`. The text branch is the last resort for
+ * a league that arrives with no artwork at all (ADR 0031 keeps labels off the
+ * others); Puerto Rico is the only entry taking it today.
+ *
+ * ⚠ **The drawn mark inks `text`, not `accent`.** ADR 0123's "full colour at
+ * rest" means *not desaturated* — a drawn mark has no colour of its own, and
+ * white is the lockup's own ink on a dark ground, which is what ADR 0133 chose
+ * twice already on the cards. Do not "restore" it to lime.
+ *
+ * ⚠ `decorative` on every instance: the chip `Pressable` is a `tab` already
+ * carrying `accessibilityLabel={name}`, so an announcing child would say it
+ * twice.
+ */
+function ChipArtwork({
+  option,
+  width,
+  height,
+  selected,
+  crown,
+}: {
+  option: LeagueOption;
+  width: number;
+  height: number;
+  selected: boolean;
+  crown: boolean;
+}) {
+  if (option.mark) {
+    return <CompetitionMark kind={option.mark} height={height} color="text" decorative />;
+  }
+  if (option.logoUrl) {
+    // Full colour at rest (ADR 0123) — one Image, no grayscale layer, no SVG
+    // fork: both existed only to serve 0089's desaturation.
+    return (
+      <Image
+        source={{ uri: option.logoUrl }}
+        style={{ width, height }}
+        contentFit="contain"
+        accessible={false}
+      />
+    );
+  }
+  // The rail is ink on BOTH tones now, so idle text is light on both; the crown
+  // keeps its lit selected ink (recorded divergence: this branch swaps colour
+  // instantly, no crossfade).
+  return (
+    <Text variant="eyebrow" color={selected ? (crown ? 'crownChipInk' : 'text') : 'textFaint'}>
+      {option.name}
+    </Text>
+  );
+}
+
 function Chip({
   league,
   selected,
   crown,
+  tight,
   onPress,
   onBox,
 }: {
   league: LeagueOption;
   selected: boolean;
   crown: boolean;
+  tight: boolean;
   onPress: () => void;
   onBox: (box: ChipBox) => void;
 }) {
@@ -449,9 +606,10 @@ function Chip({
     opacity: IDLE_CHIP_OPACITY + (1 - IDLE_CHIP_OPACITY) * sel.value,
   }));
 
-  // The crown row wears the larger cut (ADR 0116, resized by 0118); the
-  // ground row keeps 0089's.
-  const markSize = crown ? styles.markCrown : styles.mark;
+  // The crown row wears the larger cut (ADR 0116, resized by 0118, tightened by
+  // 0153 at six slots); the ground row keeps 0089's. A drawn lockup sizes
+  // itself.
+  const box = league.mark ? lockupBox(league.mark, crown) : markBox(crown, tight);
 
   return (
     <Pressable
@@ -464,25 +622,13 @@ function Chip({
       accessibilityLabel={league.name}
       style={({ pressed }) => [styles.slot, pressed && styles.pressed]}>
       <Animated.View style={[styles.chip, crown && styles.chipCrown, chipFade]}>
-        {league.logoUrl ? (
-          // Full colour at rest (ADR 0123) — one Image, no grayscale layer,
-          // no SVG fork: both existed only to serve 0089's desaturation.
-          <Image
-            source={{ uri: league.logoUrl }}
-            style={markSize}
-            contentFit="contain"
-            accessible={false}
-          />
-        ) : (
-          // The rail is ink on BOTH tones now, so idle text is light on both;
-          // the crown keeps its lit selected ink (recorded divergence: this
-          // branch swaps colour instantly, no crossfade).
-          <Text
-            variant="eyebrow"
-            color={selected ? (crown ? 'crownChipInk' : 'text') : 'textFaint'}>
-            {league.name}
-          </Text>
-        )}
+        <ChipArtwork
+          option={league}
+          width={box.width}
+          height={box.height}
+          selected={selected}
+          crown={crown}
+        />
       </Animated.View>
     </Pressable>
   );
@@ -555,6 +701,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.accentRing,
     borderRadius: Radius.pill,
   },
-  mark: { width: Size.leagueChipMarkW, height: Size.leagueChipMarkH },
-  markCrown: { width: Size.leagueChipMarkWCrown, height: Size.leagueChipMarkHCrown },
+  // ⚠ The two mark styles are GONE (ADR 0153). There are three cuts now, plus a
+  // drawn lockup that sizes itself off its own ratio, so the box is computed in
+  // `markBox`/`lockupBox` and applied inline — a StyleSheet entry cannot take a
+  // runtime branch, and the magnifier needs the same numbers to position by.
 });

@@ -223,6 +223,26 @@ const dark = {
   bandUel: '#6fc9ff',
   bandConf: '#b79bff',
   bandRel: '#ff6b5e',
+  // The Champions League league phase (ADR 0151). POSITIONAL — the competition's
+  // own published format, 1-8 / 9-24 / 25-36 — not a qualification allocation.
+  //
+  // ⚠ `bandR16` is the same hex as `bandUcl` and is a DIFFERENT STATEMENT:
+  //     bandUcl = "this DOMESTIC rank qualifies for the Champions League"
+  //     bandR16 = "this club is through to the round of 16"
+  //   Same value today; recolouring one must not silently recolour the other.
+  //   The `moved`/`bandUel` pair above carries this exact trap already.
+  //
+  // ⚠ `bandPlayoff` and `bandOut` are the BACKEND POSTER'S hexes and are
+  //   deliberately NOT `bandConf`/`bandRel` (#b79bff / #ff6b5e). Reusing those
+  //   would have two surfaces of one product draw the same table in different
+  //   violets — the drift `.claude/ECOSYSTEM.md` exists to stop.
+  //
+  // ⚠ Do NOT port the poster's lighter `CORAL_INK #ff9b8f`. That exists because
+  //   the poster inks band LABELS in the band colour and coral fails contrast
+  //   there; our `Legend` inks labels `textFaint`, so the problem never arises.
+  bandR16: '#c8f25a',
+  bandPlayoff: '#d3c2ff',
+  bandOut: '#ff7a6b',
 
   // Form chips
   formWin: '#c8f25a',
@@ -1124,6 +1144,49 @@ export const Size = {
    */
   leagueChipMarkWCrown: 54,
   leagueChipMarkHCrown: 27,
+  /**
+   * The crown mark once the rail carries `leagueRailTightFrom` slots or more
+   * (ADR 0153). The Table screen reached six when the Champions League joined.
+   *
+   * ⚠ **The arithmetic, because 0118's own figure is wrong.** The rail is
+   * `min(width, MaxContentWidth) - 2*Spacing.five`, less `2*leagueRailPad`, split
+   * into equal flexed slots with no gap. On a 375pt device that is 323pt — so
+   * **64.6pt a slot at five** (0118 says "~61"), and **53.83 at six**. Against
+   * the 54pt mark above that is **-0.08pt of air**: the mark is wider than its
+   * slot, six lockups sit edge to edge, and the pill plate becomes a rounded
+   * square with artwork touching both rims. That is the "no longer fits its
+   * slot" condition 0118 named, and it pre-authorised this lever.
+   *
+   * Today's real budget at five chips is 5.3pt/side at 375. Applied to six:
+   * `53.83 - 2*5.3 = 43.2` → **44 x 22**, which leaves 4.9pt/side, within a
+   * tenth of a point of what five chips have now.
+   *
+   * ⚠ Equal to `leagueChipMarkW`/`leagueChipMarkH` (the 0089 GROUND cut) today,
+   * and held under separate names ON PURPOSE — the `moved`/`bandUel` precedent.
+   * Aliasing them would make a future crown resize silently resize the Clubs
+   * body row, which is a different device-judged decision.
+   */
+  leagueChipMarkWCrownTight: 44,
+  leagueChipMarkHCrownTight: 22,
+  /** Slot count at which the crown mark drops to the tight cut above. */
+  leagueRailTightFrom: 6,
+  /**
+   * A DRAWN competition lockup in a crown chip (ADR 0133/0153).
+   *
+   * ⚠ **Sized by the CHIP, not by the landscape mark box.** `CompetitionMark`
+   * is ~1.04:1, so at the 22pt tight mark HEIGHT it would render 23pt wide and
+   * its wordmark — roughly a fifth of the lockup's height — would be the smudge
+   * `Size.competitionMark`'s own comment warns about. At 34 it is 35.3pt wide,
+   * 9.2pt of air a side at 375, and the binding constraint becomes the 52pt
+   * chip height rather than the slot.
+   *
+   * ⚠ **A first cut, and device-judged like `leagueChipHCrown` before it** —
+   * 0116's simulator-approved 44 still read small on the phone. If the lockup
+   * reads dominant beside the landscape marks, the answer is to extract the
+   * STARBALL alone as a second `CompetitionMarkKind` and draw it at 22 — a real
+   * job, and 0133 records the SVG path-grammar trap waiting in it.
+   */
+  leagueChipLockupHCrown: 34,
   /**
    * The league rail's inset (ADR 0117): the solid ink capsule pads the chip
    * slots by this on every side, so the rail stands 2× this taller than its

@@ -838,7 +838,24 @@ export type StandingsTiebreaker =
   | "head-to-head-points"
   | "head-to-head-goal-difference"
   | "goal-difference"
-  | "goals-for";
+  | "goals-for"
+  /**
+   * ⚠ UEFA league-phase criteria. These appear ONLY on
+   * `UclStandingsView.tiebreakers` — no domestic table can emit them, and the
+   * Champions League emits no head-to-head at all. That is the RULE, not an
+   * omission: each club plays eight different opponents, so two tied clubs
+   * have usually never met.
+   *
+   * ⚠ The cup's list STOPS at `away-wins`. UEFA's next criteria are
+   * disciplinary points and club coefficient, neither of which the backend
+   * holds — so for clubs still level below `away-wins` our order can differ
+   * from uefa.com, which publishes a fully resolved table. `rank` stays
+   * contiguous regardless; the residual tie falls to a club-slug sort that is
+   * stable but arbitrary.
+   */
+  | "away-goals-for"
+  | "wins"
+  | "away-wins";
 
 /** ⚠ Valor de protocolo — no traducir. The chip's letter is written at render. */
 export type FormResult = "W" | "D" | "L";
@@ -949,13 +966,124 @@ export interface StandingsView {
    * narrows a collection rather than resolving one, so there is no 404 to
    * catch. And a league with no stored rows is ABSENT from this array, not
    * present and empty, so a tab strip built from it can lose a league on a bad
-   * sync. Ours is built from `LEAGUES`.
+   * sync. ⚠ Ours is built from THIS ARRAY, filtered through
+   * `findLeagueByApiSlug` — not from `LEAGUES`, which is what this line
+   * claimed until 2026-09-11. Corrected rather than deleted because the
+   * hazard it names is real: a league missing from a sync loses its tab.
    *
    * ⚠ Ordered by league slug ascending — stable and diffable, but not
    * editorial. Do not read tab priority out of it.
    */
   tables: StandingsTableView[];
 }
+
+/* ── Champions League standings ──────────────────────────────────────────────
+   `GET /cronogol/ucl/standings`, added 2026-09-11 (backend decision 0061,
+   `CRONOGOL-API.md` §"the Champions League league-phase table").
+
+   ⚠ **A SIBLING view, not a widened one.** `league_standings` filters
+   `league_id is not null and competition = 'league'` — the predicate that keeps
+   a European tie out of a domestic table — and the projected UCL rows carry
+   `league_id: null` on purpose. So `GET /cronogol/standings?league=champions-league`
+   answers `200 { tables: [] }`, which reads exactly like a coverage gap and is
+   not one. This route is the only read of that competition's table.
+
+   ⚠ **Render-path route, PROVISIONAL IN SHAPE.** The API doc reserves these
+   three `/cronogol/ucl/*` routes for the poster pipeline and says a Champions
+   League page is v2; `cronogol` honours that and calls none of them from a
+   page. This app's Table screen is the first product surface built on it
+   (ADR 0150) — the blast radius is deliberately `./competitions` and the one
+   screen branch, so a reshape lands in one place.                            */
+
+/**
+ * One Champions League league-phase row.
+ *
+ * ⚠ **There is no `form`, and the field is ABSENT rather than always-empty** —
+ * there is no cup form guide, so nothing has to guess what an empty array
+ * meant. That is why `StandingsTableRowView` below types it optional and never
+ * nullable.
+ *
+ * ⚠ `rank` is contiguous and off the wire. Never re-sort and never compare two
+ * rows: the ordering rule is `tiebreakers`, which here carries UEFA criteria no
+ * client-side `points, goalDifference` sort can reproduce.
+ */
+export interface UclStandingsRowView {
+  rank: number;
+  /**
+   * ⚠ **Half these clubs are not in `GET /cronogol/teams`** — 18 of the 36,
+   * measured 2026-09-11 (PSG, Oporto, Galatasaray, PSV, Feyenoord, Bodø/Glimt,
+   * Slavia Praha…). Their club route answers `200` with `lastSyncedAt: null`,
+   * which is trap 1, so nothing may link into a club page off this row without
+   * checking the catalogue first (ADR 0154).
+   *
+   * ⚠ `shortName` is the monogram fallback. Populated on all 36 today, but
+   * nullable and NOT unique.
+   */
+  team: TeamRef;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  /** 3-1-0. */
+  points: number;
+}
+
+/** `GET /cronogol/ucl/standings`. */
+export interface UclStandingsView {
+  /** Starting year: 2026/27 is 2026. Echoed from the request after defaulting. */
+  season: number;
+  /**
+   * The last COMPLETE matchday.
+   *
+   * ⚠⚠ **Derived on the server and rendered VERBATIM. Never recompute it** —
+   * a caption and a picture must not be able to name different rounds. There is
+   * no UCL matchweek index to walk, so `completedMatchweek` does not apply
+   * here, and `matchesPlayed / (clubs / 2)` is not a substitute (the payload
+   * does not even carry `matchesPlayed`).
+   *
+   * ⚠ **`null` is the COMMON case, not an edge.** The league phase runs Tuesday
+   * to Thursday, so a round is half-played on two nights in three. It degrades
+   * to the club count, which is trap 2's honest state.
+   */
+  matchday: number | null;
+  /**
+   * The entrant roster's size — **36 for a full field**.
+   *
+   * ⚠ A DIFFERENT statement from `StandingsTableView.clubs`. That one counts
+   * the clubs we hold a fixture for and under-reports when coverage is worst;
+   * this one comes from the stored `ucl_season_clubs` roster, so short means
+   * the roster sync is incomplete. Either way: **refuse to band anything
+   * shorter than 36** — the order below a missing club is wrong in a way that
+   * looks entirely normal. See `cupBandsApply` in `./competitions`.
+   */
+  clubs: number;
+  /** ⚠ A KICKOFF, not an ingest time — "as of when", never "how fresh". */
+  lastMatchUtc: string | null;
+  /** ⚠ Carries UEFA criteria and NO head-to-head. See `StandingsTiebreaker`. */
+  tiebreakers: StandingsTiebreaker[];
+  /**
+   * ⚠ **36 clubs on zero is a CORRECT answer**, not an empty state — that is
+   * the table between the July rollover and the first September kickoff. It is
+   * also unbandable, because ties there fall to a club-slug sort (trap 20).
+   */
+  rows: UclStandingsRowView[];
+}
+
+/**
+ * The row shape the standings ORGANISM draws — the intersection of a domestic
+ * row and a cup row (ADR 0152).
+ *
+ * ⚠ `form` is **optional, never nullable**. The cup route omits the field
+ * entirely and the API doc says it does so deliberately, "so nothing has to
+ * guess what an empty array meant" — the type says the same thing. A domestic
+ * row satisfies this by construction.
+ */
+export type StandingsTableRowView = Omit<StandingsRowView, "form"> & {
+  form?: readonly FormResult[];
+};
 
 /* ── Squads ──────────────────────────────────────────────────────────────────
  *

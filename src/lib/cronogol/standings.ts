@@ -179,6 +179,29 @@ export function completedMatchweek(
 }
 
 /**
+ * A band's rank span, as the legend prints it: `1–8`, `18–20`, `6`.
+ *
+ * ⚠ **A single-position band prints ONE number, not `6–6`.** Serie A's Europa
+ * places run 5–6 and the Conference place is 7 alone; printing the latter as a
+ * range reads as a rendering fault.
+ *
+ * ⚠ **An EN DASH, not a hyphen** — it is a numeric range, and the hyphen reads
+ * as a minus beside a tabular figure.
+ *
+ * ⚠ Takes the shape rather than the type, so it serves `League.zones` (domestic
+ * qualification) and `Competition.bands` (the Champions League league phase)
+ * from one implementation. They are different claims about different questions
+ * — see `competitions.ts` — but "positions N to M" formats identically.
+ *
+ * ⚠ **The legend reads its range from CONFIG, never from the copy string.**
+ * Carrying `1–8` inside a translated label would let the words and the rails
+ * drift apart the day a format changes, silently and in one language only.
+ */
+export function bandRangeLabel(band: { from: number; to: number }): string {
+  return band.from === band.to ? String(band.from) : `${band.from}\u2013${band.to}`;
+}
+
+/**
  * Goal difference as a table prints it: `+7`, `-3`, `0`.
  *
  * Zero is bare rather than `+0` — it is the one value that is neither, and a

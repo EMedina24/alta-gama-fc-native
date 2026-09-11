@@ -25,7 +25,97 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-09 (latest) — a UCL night exposed FOUR bugs across both
+> ⭐ **NEW 2026-09-11 (latest) — the Table screen carries a SIXTH tab: the
+> Champions League league phase**
+> ([0150](./decisions/0150-champions-league-is-a-competition-not-a-league.md)–[0154](./decisions/0154-open-club-link-is-gated-on-the-catalogue.md)).
+> The backend shipped `GET /cronogol/ucl/standings` the same day (its decision
+> 0061) and Ed asked for the tab. Verified live in production: `season 2026`,
+> `matchday 1`, `clubs 36`, 36 ranked rows.
+> **It is NOT a league** — `lib/cronogol/competitions.ts` is a new registry, and
+> `roundCount()` over 36 clubs would say **70** against a real 8, which is the
+> single crispest reason (0150). `order: 1.5` puts the chip second, after
+> LaLiga, deliberately fractional: `order` is a sort key, not an index.
+> ⚠⚠ **The bands are positional and trap 20 STILL HOLDS.** 1–8 / 9–24 / 25–36 is
+> the competition's own published format, not a coefficient allocation, so it
+> stays declarative config (`Competition.bands`) and nothing writes `rank <= 8`.
+> `cupBandsApply` takes **three** clauses and the API doc names ONE: on top of
+> `clubs === 36` it also checks `rows.length === 36` and **`lastMatchUtc !== null`**
+> — 36 clubs on zero is a *correct* table whose ties fall to a club-slug sort,
+> and banding it would put nine real clubs in "Eliminados" alphabetically. That
+> is the Sevilla/Valencia/Villarreal failure exactly, and the doc does not
+> mention it. `scripts/ucl-standings-harness.mjs` (NEW, 14 assertions over a
+> captured production payload at `scripts/fixtures/ucl-standings-2026.json`)
+> proves all four guard cases and that the caption's denominator is 8 and not 70.
+> ⚠ **No `form` on a cup row — absent, not empty.** `row.form` is optional now,
+> and the guard had to go at the **prop expression** in `standings-table.tsx`,
+> which is evaluated before `ExpandedRow` mounts and is where an unguarded
+> `row.form.length` red-screens first.
+> ⚠⚠ **18 of the 36 clubs are not in `GET /cronogol/teams`** — their club route
+> answers **200** with `lastSyncedAt: null`, which is trap 1. The expanded row's
+> "Open club" link is gated on `hasCompleteSchedule` over `useTeams()`, and
+> `undefined` resolves to **false** (0154). Ed's call; the row still expands,
+> because the stats are real for all 36.
+> ⚠ **The rail is SIX chips now and 0118's own slot figure was wrong** — five
+> slots are **64.6pt** on a 375pt device, not "~61". Six give 53.83 against a
+> 54pt mark, so the crown mark drops to a 44×22 tight cut at
+> `Size.leagueRailTightFrom`; **chip HEIGHT is untouched**, so 0116 stands
+> (0153). The UCL chip draws the bundled lockup — there is no wire artwork, and
+> `competitionMarkKind()` resolves it by exact wire string so the registry holds
+> no second copy. Two bugs `tsc` could not see were fixed with it: the lens drew
+> a **hole** where the mark was (one `ChipArtwork` now serves the chip and the
+> magnifier), and the magnifier's counter-translation assumed every mark shares
+> one height.
+> ⚠ `legend.tsx`'s duplicate `BAND_COLOR` map is **deleted** — a live violation
+> of `band-rail.tsx`'s own header that three new keys would have doubled.
+> **Verified on the iOS 26.5 simulator on live production data:** six chips with
+> LaLiga's bands intact, the UCL tab's `After MD 1 of 8 · 36 clubs`, bands
+> breaking exactly at 8/9 and 24/25, the three-band legend, the new honesty
+> footnote, an untracked club (Oporto) expanding with no form strip **and no
+> link**, a tracked one (Barcelona) expanding **with** it, and Matchdays (4
+> chips) / Clubs (5, ground tone) unchanged. Every crest resolved, WebP and SVG
+> included.
+> ⚠⚠ **What is NOT verified, and why:** the **375pt** class as a whole — no SE
+> or mini simulator is installed here, and 375 is exactly where the six-slot
+> chip arithmetic is tightest. (The LEGEND's 375pt fit *is* proven, by clamping
+> its track to that width — see 0155. The same trick does not work on the rail,
+> whose slots are flexed against the real screen.) The **chip tap**, the plate's
+> glide and the **lens magnifier** — this simulator is booted headless, so it
+> has no window for scripted CGEvents; the UCL states above were reached by
+> temporarily seeding the initial tab, and those edits are reverted. Also
+> unseen: VoiceOver (the `decorative` prop that stops the chip announcing
+> twice) and Reduce Motion.
+>
+> ⭐ **Same day — the legend LEADS the table now
+> ([0155](./decisions/0155-the-legend-leads-the-table.md)), amending 0151/0152.**
+> Ed: *"a bit more visible — maybe in a single row at the top."* Under a 36-row
+> cup table the key was arriving **thirty-six rows after the colour it
+> explains**. It now sits above the column head on a `recess` track, with the
+> RANGE in the band's own colour and the label at `textSecondary` (was
+> `textFaint` `#59626a`, which is why it read as barely there).
+> ⚠ **0151 forbade band-coloured labels on a contrast worry, and the reason does
+> not travel** — that constraint is the backend poster's BLUE field. Measured on
+> ours: the weakest band, coral `bandOut`, is **7.4:1** on near-black. No
+> lighter ink is minted, so 0151's "do not port `CORAL_INK`" still stands.
+> ⚠⚠ **The single row is a TYPE-SIZE decision and it was measured.** `caption`
+> (12.5) was the obvious reading of "more visible" and **Spanish wrapped** —
+> `Octavos`/`Play-off`/`Eliminados` is three characters longer than the English
+> set. It stays `micro`; every other lever was pulled instead. Proven by
+> **clamping the track to 335pt — a 375pt device's content width — on the 402pt
+> simulator**, which answers the layout question exactly without the device.
+> ⚠ The swatch stays **3pt, the row rail's exact width**: that match is the
+> whole mechanism linking key to row, so presence was bought elsewhere.
+> The range now comes from config (`bandRangeLabel`, `6` never `6–6`) and the
+> words from copy — `1–8` inside a translated string would drift from the rails
+> in one language only. **The domestic legend moves with it and gains its
+> ranges**, which it never showed before; LaLiga's four bands take two rows, by
+> `flexWrap`. Harness now 17 assertions.
+> ⚠ **This app is the first product surface built on `/cronogol/ucl/*`**, which
+> `CRONOGOL-API.md` calls *"render-path, provisional in shape"* and reserves for
+> v2; `cronogol` honours that and calls none of them from a page. Accepted
+> knowingly — the seam is `competitions.ts` — but **the backend's own doc should
+> be widened to say so, and that is Ed's call** in that repo.
+>
+> ⭐ **NEW 2026-09-09 — a UCL night exposed FOUR bugs across both
 > repos, and only one of them was app-side
 > ([0139](./decisions/0139-live-crests-fall-back-to-the-fixture-row.md) here,
 > `senpai-backend` decision 0056 there).** Ed reported a Live Activity for
@@ -551,7 +641,8 @@ src/
   features/push/        capability seam · sync · reminders · routing
 ```
 
-**Screens:** Today (board + FINISHED TODAY + follow card) · Matchdays · Table ·
+**Screens:** Today (board + FINISHED TODAY + follow card) · Matchdays · Table
+(five leagues **+ the Champions League league phase**, ADR 0150) ·
 Clubs · club page (season spine + squad). **Sheets:** alerts · calendar ·
 matchday calendar · account. **Onboarding:** welcome → club picker → alert primer ([0076](./decisions/0076-onboarding-floodlight-redesign.md)); at least one club is required, and the primer's `Not now` is the only skip ([0077](./decisions/0077-welcome-language-line-and-one-skip.md)).
 

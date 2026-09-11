@@ -16,6 +16,7 @@
  * `.claude/decisions/0042-brand-spelling-spaced-form-reinstated.md`.
  */
 
+import type { CupBandKind } from '@/lib/cronogol/competitions';
 import type { ZoneKind } from '@/lib/cronogol/leagues';
 
 export interface Copy {
@@ -769,7 +770,36 @@ export interface Copy {
     afterMatchday: (n: number, total: number) => string;
     clubCount: (n: number) => string;
     zoneLabels: Record<ZoneKind, string>;
+    /**
+     * The Champions League league-phase bands (ADR 0151).
+     *
+     * ⚠ Separate from `zoneLabels` because `CupBandKind` is a separate union
+     * answering a separate question — `zoneLabels.ucl` is "this domestic rank
+     * qualifies for the Champions League", `cupBandLabels.r16` is "this club is
+     * through".
+     *
+     * ⚠⚠ **The NAME only — never the rank range** (ADR 0155). The legend prints
+     * `1–8` from `Competition.bands` beside these words; carrying the numbers
+     * in a translated string would let the words and the rails drift apart the
+     * day a format changes, silently and in one language only.
+     *
+     * ⚠ Short on purpose, so the three fit ONE row in both languages: the full
+     * forms (`Octavos de final`, `Play-off de acceso`) do not, and the footnote
+     * carries the long explanation anyway. `Octavos` is the ordinary Spanish
+     * shorthand for the round of 16, not an abbreviation we invented.
+     */
+    cupBandLabels: Record<CupBandKind, string>;
     footnote: string;
+    /**
+     * ⚠ **The UCL tab's own footnote, and NOT `footnote` above** — that one's
+     * second clause ("the European and relegation places are our configuration")
+     * is simply false here: these bands are the competition's published format.
+     * Three claims, and the third is new to this app: our tiebreakers stop at
+     * away wins, so clubs still level below that can sit in a different order
+     * from uefa.com. That is quoting the payload's own `tiebreakers`, not
+     * apologising — and the ~3h lag sentence is trap 8's and is never dropped.
+     */
+    uclFootnote: string;
     empty: string;
     error: string;
     retry: string;
@@ -1308,9 +1338,16 @@ export const esCopy: Copy = {
       conf: 'Conference League',
       rel: 'Descenso',
     },
+    cupBandLabels: {
+      r16: 'Octavos',
+      playoff: 'Play-off',
+      out: 'Eliminados',
+    },
     /** ⚠ Names the ~3h lag AND that bands are config, per the handoff. */
     footnote:
       'La tabla se actualiza unas horas después del pitido final. Las plazas europeas y de descenso son configuración nuestra, no del proveedor.',
+    uclFootnote:
+      'La tabla se actualiza unas horas después del pitido final. Las franjas —octavos, play-off, eliminación— son el formato de la competición, no una valoración nuestra. Nuestros desempates llegan hasta las victorias a domicilio: por debajo de ahí no tenemos los criterios de la UEFA, así que dos clubes aún empatados pueden quedar en otro orden que en uefa.com.',
     empty: 'Todavía no hay clasificación para esta liga.',
     error: 'No se ha podido cargar la clasificación.',
     retry: 'Reintentar',
@@ -1811,6 +1848,11 @@ export const enCopy: Copy = {
     openClub: (name: string) => `Open ${name}`,
     afterMatchday: (n: number, total: number) => `After MD ${n} of ${total}`,
     clubCount: (n: number) => `${n} clubs`,
+    cupBandLabels: {
+      r16: 'Round of 16',
+      playoff: 'Play-off',
+      out: 'Out',
+    },
     zoneLabels: {
       ucl: 'Champions League',
       uel: 'Europa League',
@@ -1819,6 +1861,8 @@ export const enCopy: Copy = {
     },
     footnote:
       'The table settles a few hours after the final whistle. European and relegation places are our own configuration, not the provider’s.',
+    uclFootnote:
+      'The table settles a few hours after the final whistle. The bands — round of 16, play-off, out — are the competition’s own format, not a judgement of ours. Our tiebreakers stop at away wins: below that we do not hold UEFA’s criteria, so clubs still level can sit in a different order from uefa.com.',
     empty: 'No table for this league yet.',
     error: 'Could not load the table.',
     retry: 'Try again',

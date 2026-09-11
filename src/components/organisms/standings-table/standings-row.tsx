@@ -2,26 +2,29 @@
  * One standings row, and its in-place expansion.
  *
  * ⚠ **Never re-sort and never compare two rows.** `rank` is the wire's, and the
- * tiebreakers behind it differ per league — LaLiga breaks ties head-to-head
- * BEFORE goal difference, so a worse GD legitimately sits above a better one.
- * Re-deriving the order client-side produces a table that disagrees with itself.
+ * tiebreakers behind it differ per competition — LaLiga breaks ties
+ * head-to-head BEFORE goal difference, so a worse GD legitimately sits above a
+ * better one. Re-deriving the order client-side produces a table that disagrees
+ * with itself. ⚠ The Champions League league phase makes this sharper: its rule
+ * has no head-to-head at all (each club plays eight different opponents) and
+ * stops before UEFA's last two criteria, so our order can legitimately differ
+ * from uefa.com's — and a client-side sort would agree with neither.
  *
  * ⚠ A followed club takes the `rowActive` ground and an accent dot. It is NOT
  * pinned or reordered — its position is the fact the table exists to state.
  */
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { BandRail, Text } from '@/components/atoms';
+import { BandRail, Text, type BandKind } from '@/components/atoms';
 import { Colors, Size, Spacing } from '@/constants/theme';
-import type { ZoneKind } from '@/lib/cronogol/leagues';
-import type { StandingsRowView } from '@/lib/cronogol/types';
+import type { StandingsTableRowView } from '@/lib/cronogol/types';
 import { Crest } from '@/components/atoms';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 
 export interface StandingsRowProps {
-  row: StandingsRowView;
+  row: StandingsTableRowView;
   /** `null` when bands do not apply — the rail still renders, transparent. */
-  zone: ZoneKind | null;
+  zone: BandKind | null;
   followed: boolean;
   expanded: boolean;
   onPress: () => void;

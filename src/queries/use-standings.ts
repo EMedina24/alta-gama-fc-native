@@ -8,7 +8,7 @@
  */
 import { useQueries, useQuery } from '@tanstack/react-query';
 
-import { getSeasonJornadas, getStandings } from '@/lib/cronogol/client';
+import { getSeasonJornadas, getStandings, getUclStandings } from '@/lib/cronogol/client';
 import { ROUND_LEAGUES, SEASON, type League } from '@/lib/cronogol/leagues';
 import { keys } from './keys';
 import { STALE } from './stale';
@@ -19,6 +19,36 @@ export function useStandings() {
     // Omitting `league` returns EVERY published league in one request.
     queryFn: () => getStandings(),
     staleTime: STALE.feed,
+  });
+}
+
+/**
+ * The Champions League league-phase table.
+ *
+ * ⚠ **`STALE.feed`, and the justification `stale.ts` asks for:** the route's own
+ * header is `Cache-Control: public, max-age=300`, which the API doc states is
+ * deliberately matched to `GET /cronogol/standings` — already a `feed` query.
+ * `feed` is "everything that moves when a match is played", which is exactly
+ * this. `catalogue` would sit stale across a whole matchday; `live` would poll a
+ * five-minute-cached body twenty times a cycle, which that bucket forbids.
+ *
+ * ⚠ **`enabled` is the active-tab gate.** The Table screen has six tabs and only
+ * one of them is this; a reader who never opens it costs no request.
+ *
+ * ⚠ `SEASON` is sent explicitly rather than left to the server's default (the
+ * `useSeasonJornadas` pattern), so the cache key cannot straddle a server-side
+ * rollover.
+ *
+ * ⚠ **No matchweek-index companion.** The caption reads `matchday` verbatim off
+ * this payload, so this tab is ONE request — not the `1 + n` the domestic tabs
+ * pay for `completedMatchweek`.
+ */
+export function useUclStandings(enabled: boolean) {
+  return useQuery({
+    queryKey: keys.uclStandings(SEASON),
+    queryFn: () => getUclStandings({ season: SEASON }),
+    staleTime: STALE.feed,
+    enabled,
   });
 }
 

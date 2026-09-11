@@ -51,6 +51,16 @@ export const keys = {
     ['jornada', leagueApiSlug, season, matchweek] as const,
   standings: (leagueApiSlug?: string) => ['standings', leagueApiSlug ?? 'all'] as const,
   /**
+   * The Champions League table — keyed on SEASON, because the route takes no
+   * league and our `champions-league` slug is never sent to the wire.
+   *
+   * ⚠ A **separate prefix** from `standings`, deliberately: a broad
+   * `['standings']` invalidation must not evict a payload that came off a
+   * different route with a different shape (no `league`, no `form`, no
+   * `matchesPlayed`).
+   */
+  uclStandings: (season: number) => ['ucl-standings', season] as const,
+  /**
    * ⚠ Keyed on the USER ID, so signing out evicts the previous account rather
    * than serving its name to whoever signs in next.
    */

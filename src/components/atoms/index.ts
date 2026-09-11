@@ -1,5 +1,5 @@
 export { Avatar, type AvatarProps } from './avatar';
-export { BandRail, BAND_COLOR } from './band-rail';
+export { BandRail, BAND_COLOR, type BandKind } from './band-rail';
 export { Button, type ButtonTone } from './button';
 export { Check, type CheckProps } from './check';
 export { Chevron, type ChevronProps } from './chevron';
@@ -25,6 +25,7 @@ export { AlertGlyph, type AlertGlyphProps, type AlertKind } from './alert-glyph'
 export { Mark, MARK_RATIO, type MarkProps } from './mark';
 export {
   CompetitionMark,
+  COMPETITION_MARK_RATIO,
   competitionMarkKind,
   type CompetitionMarkKind,
   type CompetitionMarkProps,

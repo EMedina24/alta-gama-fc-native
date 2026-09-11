@@ -35,6 +35,7 @@ import type {
   TeamSquadView,
   TeamStatsView,
   TeamView,
+  UclStandingsView,
 } from './types';
 
 /**
@@ -310,6 +311,36 @@ export type GetStandingsParams = {
  */
 export async function getStandings(params: GetStandingsParams = {}): Promise<StandingsView> {
   return get<StandingsView>('/cronogol/standings', toQuery(params));
+}
+
+export type GetUclStandingsParams = {
+  /** Starting year: 2026/27 is `2026`. Optional; the response echoes what it resolved. */
+  season?: number;
+};
+
+/**
+ * The Champions League league-phase table.
+ *
+ * ⚠ **`season` is the ONLY param, and there is no `?matchweek=`.** Sending one
+ * is a **400**, not an ignore — trap 6: these DTOs carry `forbidNonWhitelisted`,
+ * and `toQuery`'s drop-undefined filter is what makes `{}` safe. The backend's
+ * reason for refusing it is better than "unsupported": a point-in-time cup
+ * table is unbuilt, and accepting the param would make a feature look served.
+ *
+ * ⚠ Unlike `getStandings`, this route **resolves** one competition rather than
+ * narrowing a collection — so there is no "200 with an empty array" mode to
+ * guard against. An absent table would be an outage, not a filter miss.
+ *
+ * ⚠ `Cache-Control: public, max-age=300`, documented as deliberately matching
+ * `GET /cronogol/standings` — which is why the hook shares its `STALE` bucket.
+ *
+ * ⚠ **Render-path route, provisional in shape** (ADR 0150). If it reshapes,
+ * this function and `./competitions` are the seam.
+ */
+export async function getUclStandings(
+  params: GetUclStandingsParams = {},
+): Promise<UclStandingsView> {
+  return get<UclStandingsView>('/cronogol/ucl/standings', toQuery(params));
 }
 
 // ---------------------------------------------------------------- scoreboard
