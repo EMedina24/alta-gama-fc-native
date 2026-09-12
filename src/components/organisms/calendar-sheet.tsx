@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button, Text } from '@/components/atoms';
+import { SegmentedControl } from '@/components/molecules';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { googleAddUrl, webcalUrl } from '@/lib/cronogol/feed';
 
@@ -28,6 +29,24 @@ export interface CalendarSheetProps {
   body: string;
   /** The `https://…​.ics` feed URL. */
   feedUrl: string;
+  /**
+   * An optional choice of WHAT to subscribe to, drawn above the body (ADR 0157).
+   *
+   * ⚠ Only the Champions League passes one, because it is the only competition
+   * with two feeds that are not interchangeable: a knockout tie carries no
+   * matchday, so the round feed cannot reach one and the season feed is the only
+   * path to them. A club or a domestic matchday has exactly one feed and passes
+   * nothing, which leaves this sheet byte-identical to before.
+   *
+   * ⚠ The control is `tone="quiet"`, never `accent`: this sheet already spends
+   * its one lime hero on the Google button (SPEC §2, ADR 0147).
+   */
+  scope?: {
+    options: readonly { value: string; label: string }[];
+    value: string;
+    onChange: (value: string) => void;
+    accessibilityLabel: string;
+  };
   copy: {
     google: string;
     apple: string;
@@ -39,13 +58,26 @@ export interface CalendarSheetProps {
   };
 }
 
-export function CalendarSheet({ title, body, feedUrl, copy }: CalendarSheetProps) {
+export function CalendarSheet({ title, body, feedUrl, scope, copy }: CalendarSheetProps) {
   const [copied, setCopied] = useState(false);
   const webcal = webcalUrl(feedUrl);
 
   return (
     <View style={styles.wrap}>
       <Text variant="title3">{title}</Text>
+
+      {/* ⚠ ABOVE the body, because the body describes whatever is selected —
+          a reader has to see what they are reading about before they read it. */}
+      {scope ? (
+        <SegmentedControl
+          options={scope.options}
+          value={scope.value}
+          onChange={scope.onChange}
+          tone="quiet"
+          accessibilityLabel={scope.accessibilityLabel}
+        />
+      ) : null}
+
       <Text variant="body" color="textDim">
         {body}
       </Text>

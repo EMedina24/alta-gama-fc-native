@@ -55,11 +55,21 @@ import {
 } from '@/lib/cronogol/events';
 import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
-import { useFixtureEvents } from '@/queries/use-fixture-events';
+import { useFixtureEvents, type FixtureEventsSource } from '@/queries/use-fixture-events';
 
 export interface MatchEventsProps {
   /** Our own fixture id — the `id` already on every fixture view. */
   fixtureId: string;
+  /**
+   * Which timeline route `fixtureId` belongs to (ADR 0156). Defaults to the
+   * domestic one, so every surface that predates the Champions League round
+   * list is unchanged.
+   *
+   * ⚠ The id and the source travel TOGETHER: a cup fixture's id 404s on the
+   * domestic route and vice versa. Pass `'ucl'` wherever the row came from
+   * `uclFixtureRow`.
+   */
+  source?: FixtureEventsSource;
   home: TeamRef | null;
   away: TeamRef | null;
   copy: Copy['events'];
@@ -103,6 +113,7 @@ export interface MatchEventsProps {
 
 export function MatchEvents({
   fixtureId,
+  source = 'league',
   home,
   away,
   copy,
@@ -112,7 +123,7 @@ export function MatchEvents({
 }: MatchEventsProps) {
   const held = supplied !== undefined;
   // ⚠ `null` disables the query outright — a supplied set must cost no request.
-  const query = useFixtureEvents(held ? null : fixtureId);
+  const query = useFixtureEvents(held ? null : fixtureId, source);
   const events = supplied ?? query.data?.events ?? [];
 
   /**

@@ -30,7 +30,13 @@
  * `./derive` and `./team-window`.
  */
 import type { ZoneKind } from "./leagues";
-import type { UclStandingsRowView, UclStandingsView } from "./types";
+import type {
+  JornadaFixtureView,
+  UclFixtureListItem,
+  UclRoundSummary,
+  UclStandingsRowView,
+  UclStandingsView,
+} from "./types";
 
 /**
  * Which league-phase band a rank falls in.
@@ -250,4 +256,83 @@ export function cupCaption(
   return view.matchday === null
     ? clubs
     : `${copy.afterMatchday(view.matchday, competition.matchdays)} · ${clubs}`;
+}
+
+/* ── The league phase as a MATCHDAY ──────────────────────────────────────────
+   `GET /cronogol/ucl/jornada/{season}/{n}` returns the competition's own shape.
+   The Matchdays screen draws `JornadaFixtureView` rows, so the conversion lives
+   here — pure, and beside the band rules it already owns (ADR 0156).          */
+
+/**
+ * One `UclFixtureListItem` as the neutral row the fixture list draws.
+ *
+ * The same move `./team-window` makes for a club's own schedule: convert at the
+ * edge, so every organism below keeps ONE row type and no component learns
+ * which competition it is drawing.
+ *
+ * ⚠⚠ **`id` is the COMPETITION'S id, never `fixture.fixtureId`.** They are
+ * different keys into different tables and neither works on the other's route
+ * (verified both directions, 2026-09-11). The twin is present on only 5 of 18
+ * matchday-1 fixtures, so routing anything through it serves a quarter of the
+ * competition; this id resolves for all of them. Whatever consumes the row must
+ * therefore ask the UCL events route — see `getUclFixtureEvents`.
+ *
+ * ⚠ `competition: 'cup'` and a `round` carried verbatim. The number is on the
+ * parent payload and is never parsed back out of the label — that string is the
+ * provider's display copy and is null on half the club-route rows.
+ *
+ * ⚠ `homeTeam`/`awayTeam` pass their NULLS through. A pre-draw knockout side is
+ * a real state on the shared type, and the list already renders a null side;
+ * substituting a placeholder name here would invent a club.
+ */
+export function uclFixtureRow(item: UclFixtureListItem): JornadaFixtureView {
+  const { fixture } = item;
+  return {
+    id: fixture.id,
+    homeTeam: item.home,
+    awayTeam: item.away,
+    competition: "cup",
+    competitionName: fixture.competitionName,
+    round: fixture.round,
+    kickoffUtc: fixture.kickoffUtc,
+    kickoffTbd: fixture.kickoffTbd,
+    venue: fixture.venue,
+    venueCity: fixture.venueCity,
+    status: fixture.status,
+    goalsHome: fixture.goalsHome,
+    goalsAway: fixture.goalsAway,
+  };
+}
+
+/**
+ * Has this round been played out?
+ *
+ * ⚠ **`finished === fixtures`, because there is no `complete` flag and that is
+ * deliberate.** On the domestic contract `complete` means COVERAGE — "we hold
+ * every match of this round" — and all 38 LaLiga matchweeks report it true in
+ * July with nobody having kicked a ball (trap 2's cousin). The cup route
+ * refuses to serve the ambiguous word and hands over both counts instead, so
+ * the question has to be asked explicitly. This one asks "has it been played".
+ */
+export function uclRoundPlayed(round: UclRoundSummary): boolean {
+  return round.fixtures > 0 && round.finished === round.fixtures;
+}
+
+/**
+ * The round a reader should land on: the first not yet played out, else the last.
+ *
+ * ⚠ **Walks in NUMBER order and stops at the first unplayed round**, rather than
+ * picking by clock the way `currentMatchweek` does. The league phase is a fixed
+ * eight-round ladder played strictly in order — there is no deferred-opener case
+ * to defend against (trap 2 is a domestic problem, born of LaLiga matchday 1
+ * finishing after matchday 2) — and `firstKickoffUtc` is PROVISIONAL while
+ * `kickoffsTbd > 0`, so the clock is the weaker signal here, not the stronger.
+ *
+ * Null for an empty index, which is the pre-season state.
+ */
+export function uclOpeningRound(rounds: readonly UclRoundSummary[]): number | null {
+  if (rounds.length === 0) return null;
+  const byNumber = [...rounds].sort((a, b) => a.matchday - b.matchday);
+  const next = byNumber.find((round) => !uclRoundPlayed(round));
+  return (next ?? byNumber[byNumber.length - 1]).matchday;
 }

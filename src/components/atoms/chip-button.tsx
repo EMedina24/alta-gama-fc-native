@@ -10,6 +10,11 @@
  * flush with the pill's right inner padding. It is this chip rather than a
  * second component because the two differ in geometry alone — same accent
  * rules, same hit target, same pressed state — and a near-duplicate would drift.
+ *
+ * ⚠ **A `pill` with NO `trailing` takes SYMMETRIC padding** (ADR 0157). The
+ * asymmetry above exists because the disc carries its own weight on the right;
+ * without one, the label sits visibly off-centre. Both pre-existing call sites
+ * pass a disc, so this branch changes nothing that shipped.
  */
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -63,6 +68,7 @@ export function ChipButton({
       style={({ pressed }) => [
         styles.chip,
         shape === 'pill' ? styles.pill : styles.control,
+        shape === 'pill' && !trailing && styles.pillBare,
         quiet && styles.quiet,
         active && styles.active,
         pressed && !disabled && (shape === 'pill' ? styles.pressedPill : styles.pressed),
@@ -100,6 +106,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     borderRadius: Radius.pill,
   },
+  /** A labelled pill with no disc — see the header. */
+  pillBare: { paddingLeft: Spacing.three, paddingRight: Spacing.three, gap: 0 },
   disc: {
     width: Size.followPillDisc,
     height: Size.followPillDisc,

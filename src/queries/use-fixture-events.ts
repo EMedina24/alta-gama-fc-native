@@ -23,14 +23,42 @@
  */
 import { useQuery } from '@tanstack/react-query';
 
-import { getFixtureEvents } from '@/lib/cronogol/client';
+import { getFixtureEvents, getUclFixtureEvents } from '@/lib/cronogol/client';
 import { keys } from './keys';
 import { STALE } from './stale';
 
-export function useFixtureEvents(fixtureId: string | null) {
+/**
+ * Which timeline route answers for this id (ADR 0156).
+ *
+ * ⚠⚠ **Not a preference — the two routes take DIFFERENT KEYS and neither
+ * tolerates the other's.** A `UclFixtureView.id` on the domestic route is a
+ * 404, and its `fixtureId` twin on the cup route is a 404. Verified both
+ * directions, 2026-09-11.
+ *
+ * ⚠ And the cup route is the one with coverage: only 5 of 18 matchday-1
+ * fixtures carry a `fixtureId` at all, so a timeline routed through the twin
+ * reaches about a quarter of the competition.
+ *
+ * `'league'` is the default, so every surface that predates this is unchanged.
+ */
+export type FixtureEventsSource = 'league' | 'ucl';
+
+export function useFixtureEvents(
+  fixtureId: string | null,
+  source: FixtureEventsSource = 'league',
+) {
   return useQuery({
-    queryKey: keys.fixtureEvents(fixtureId ?? ''),
-    queryFn: () => getFixtureEvents(fixtureId as string),
+    // ⚠ The source is part of the KEY. The two routes can hold different
+    // timelines for the same match — the cup one is the competition's own — and
+    // a shared key would serve whichever landed first.
+    queryKey:
+      source === 'ucl'
+        ? keys.uclFixtureEvents(fixtureId ?? '')
+        : keys.fixtureEvents(fixtureId ?? ''),
+    queryFn: () =>
+      source === 'ucl'
+        ? getUclFixtureEvents(fixtureId as string)
+        : getFixtureEvents(fixtureId as string),
     enabled: fixtureId !== null,
     staleTime: STALE.feed,
   });

@@ -36,6 +36,44 @@ export function jornadaFeedUrl(
 }
 
 /**
+ * The Champions League, whole competition (backend §125).
+ *
+ * ⚠⚠ **This is the ONLY feed that carries the knockout rounds.** A knockout tie
+ * has no matchday, so the round feed below structurally cannot reach one — that
+ * is why this exists at all, and the sheet copy has to say it. The league phase
+ * is in here too, so this is a superset of all eight rounds.
+ *
+ * ⚠⚠ **A subscriber who also follows a club in this competition sees that
+ * club's ties TWICE, and it is deliberate.** This feed keys
+ * `UID:ucl-fixture-{id}`, the club feed keys `UID:fixture-{id}`, because the
+ * club-side twin exists for only 40 of 144 fixtures and **can be attached
+ * late** — keying on it would mean a UID that changes under a live
+ * subscription, orphaning the event on every device for ever with no recall.
+ * ⚠ **Never try to dedupe across feeds client-side:** the calendar app owns
+ * that state and nothing here can reach it. Say it in the copy instead.
+ *
+ * ⚠ A season we hold nothing for **404s, and must** — an empty calendar DELETES
+ * every event from the subscriber's device, where a 404 leaves their copy alone
+ * and shows a refresh error.
+ */
+export function uclSeasonFeedUrl(season: number): string {
+  return `${FEED_ORIGIN}/cronogol/feed/ucl/${season}.ics`;
+}
+
+/**
+ * One Champions League league-phase round.
+ *
+ * ⚠ League phase only — see `uclSeasonFeedUrl` for why a knockout tie cannot
+ * appear here.
+ *
+ * ⚠ The matchday is validated 1-20 server-side (the column's own CHECK) and out
+ * of range is a **400**, unlike the JSON round route which answers an empty 200.
+ */
+export function uclJornadaFeedUrl(season: number, matchday: number): string {
+  return `${FEED_ORIGIN}/cronogol/feed/ucl/jornada/${season}/${matchday}.ics`;
+}
+
+/**
  * `https://…` → `webcal://…`.
  *
  * iOS hands a `webcal://` URL straight to Calendar's subscribe sheet, which is

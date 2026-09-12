@@ -61,6 +61,18 @@ export const keys = {
    */
   uclStandings: (season: number) => ['ucl-standings', season] as const,
   /**
+   * The Champions League season index and one of its rounds (§124).
+   *
+   * ⚠ Separate prefixes from `seasonJornadas`/`jornada` for the same reason
+   * `uclStandings` is separate from `standings`: a different route with a
+   * different shape, and no league slug to key on.
+   */
+  uclSeasonRounds: (season: number) => ['ucl-season-rounds', season] as const,
+  uclJornada: (season: number, matchday: number) =>
+    ['ucl-jornada', season, matchday] as const,
+  /** ⚠ The COMPETITION's fixture id, never the club-centric `fixtureId` twin. */
+  uclFixtureEvents: (uclFixtureId: string) => ['ucl-fixture-events', uclFixtureId] as const,
+  /**
    * ⚠ Keyed on the USER ID, so signing out evicts the previous account rather
    * than serving its name to whoever signs in next.
    */

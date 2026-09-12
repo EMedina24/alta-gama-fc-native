@@ -234,6 +234,26 @@ export interface Copy {
     calendarBody: string;
     jornadaTitle: (n: number) => string;
     jornadaBody: string;
+    /**
+     * The Champions League calendar sheet (ADR 0157) — TWO feeds, and they are
+     * not interchangeable.
+     *
+     * ⚠⚠ `uclSeasonBody` must keep both of its claims. A knockout tie carries no
+     * matchday, so the round feed cannot reach one and the season feed is the
+     * only path to them — that is the entire reason the choice exists. And a
+     * reader who also follows a club in the competition **will see that club's
+     * ties twice**, deliberately: the two feeds key different UIDs because the
+     * club-side twin exists for only 40 of 144 fixtures and can be attached
+     * late. Neither fact is guessable, and nothing client-side can fix the
+     * second — the calendar app owns that state.
+     */
+    uclScopeRound: string;
+    uclScopeSeason: string;
+    uclScopeLabel: string;
+    uclRoundTitle: (n: number) => string;
+    uclRoundBody: string;
+    uclSeasonTitle: string;
+    uclSeasonBody: string;
     google: string;
     apple: string;
     download: string;
@@ -737,6 +757,24 @@ export interface Copy {
     datesPending: string;
     /** The eyebrow over the 1…N strip. */
     stripLabel: string;
+    /**
+     * The calendar affordance on the strip's own label row (ADR 0157), which
+     * replaced the full-width `addAll` button.
+     *
+     * ⚠ Deliberately the club page's noun (`club.calendar`), so one word means
+     * one thing across the app — and deliberately NOT a count, because the row
+     * it sits on has no room for one and `addAll` already says it in the sheet.
+     */
+    calendar: string;
+    /**
+     * The eyebrow's third segment on the Champions League tab, where a domestic
+     * league says "first half" (ADR 0156).
+     *
+     * ⚠ It names the PHASE, because the competition has two and this screen only
+     * draws one: the eight-round league phase. The knockout stages are a
+     * different shape — two legs a tie, no matchday number — and are not built.
+     */
+    leaguePhase: string;
     /** Accessibility labels for the prev/next squares. */
     previous: string;
     next: string;
@@ -1014,6 +1052,15 @@ export const esCopy: Copy = {
     jornadaTitle: (n: number) => `Jornada ${n} en tu calendario`,
     jornadaBody:
       'El feed de una jornada es independiente de seguir a un club. Puedes tener los dos.',
+    uclScopeRound: 'Esta jornada',
+    uclScopeSeason: 'Toda la competición',
+    uclScopeLabel: 'Qué añadir al calendario',
+    uclRoundTitle: (n: number) => `Jornada ${n} de la Champions en tu calendario`,
+    uclRoundBody:
+      'Los 18 partidos de la jornada. Las eliminatorias no entran aquí: no tienen jornada, así que para esas hace falta el feed de toda la competición.',
+    uclSeasonTitle: 'La Champions entera en tu calendario',
+    uclSeasonBody:
+      'La fase de liga y las eliminatorias según se vayan sorteando — es el único feed que las incluye. Si además sigues a un club de la competición, sus partidos te aparecerán dos veces: son dos suscripciones distintas y tu app de calendario las trata por separado.',
     google: 'Google Calendar',
     apple: 'Apple Calendar',
     download: 'Descargar copia .ics',
@@ -1306,6 +1353,8 @@ export const esCopy: Copy = {
       'Los horarios de esta jornada aún no están confirmados. Las fechas son provisionales.',
     datesPending: 'Fechas por confirmar',
     stripLabel: 'Jornada',
+    calendar: 'Calendario',
+    leaguePhase: 'Fase de liga',
     previous: 'Jornada anterior',
     next: 'Jornada siguiente',
     missing: (n: number) => `Faltan ${n} partidos por publicar`,
@@ -1532,6 +1581,15 @@ export const enCopy: Copy = {
     jornadaTitle: (n: number) => `Matchday ${n} in your calendar`,
     jornadaBody:
       'A matchday feed is separate from following a club. You can have both.',
+    uclScopeRound: 'This round',
+    uclScopeSeason: 'Whole competition',
+    uclScopeLabel: 'What to add to your calendar',
+    uclRoundTitle: (n: number) => `Champions League matchday ${n} in your calendar`,
+    uclRoundBody:
+      'All 18 matches of the round. Knockout ties are not in here — they carry no matchday, so those need the whole-competition feed.',
+    uclSeasonTitle: 'The whole Champions League in your calendar',
+    uclSeasonBody:
+      'The league phase, and the knockout rounds as they are drawn — this is the only feed that has them. If you also follow a club in the competition, its ties will appear twice: they are two separate subscriptions and your calendar app keeps them apart.',
     google: 'Google Calendar',
     apple: 'Apple Calendar',
     download: 'Download .ics snapshot',
@@ -1823,6 +1881,8 @@ export const enCopy: Copy = {
       'Kickoff times for this matchday are not confirmed yet. The dates are provisional.',
     datesPending: 'Dates to be confirmed',
     stripLabel: 'Matchday',
+    calendar: 'Calendar',
+    leaguePhase: 'League phase',
     previous: 'Previous matchday',
     next: 'Next matchday',
     missing: (n: number) => `${n} matches not published yet`,

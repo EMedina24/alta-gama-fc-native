@@ -25,7 +25,127 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-11 (latest) — the Table screen carries a SIXTH tab: the
+> ⭐ **NEW 2026-09-11 (latest) — MATCHDAYS carries the Champions League league
+> phase ([0156](./decisions/0156-the-league-phase-is-a-matchday.md)).**
+> `senpai-backend` §124 shipped `GET /cronogol/ucl/jornada/{season}` and
+> `…/{season}/{matchday}` (plus a stage route), and they are the **only** honest
+> way to enumerate a round. Measured first: `jornada/champions-league` is a hard
+> 404, `GET /cronogol/fixtures` carries **zero** UEFA ties, and the per-club
+> route reaches **81 of 144** matches with **49 opponents unresolvable to a
+> slug** (`opponent` is a bare name string — resolving it is the name matching
+> 0022/0027 forbid), 14 matches under **two** fixture ids, and `round` present
+> on only half the rows as the display string `"Jornada 3"`.
+> `uclFixtureRow` converts each item to the neutral `JornadaFixtureView` — 0132's
+> convert-at-the-edge move — so the fixture list, day headers, score chips and
+> events disclosure are inherited rather than rebuilt.
+> ⚠⚠ **THE EVENTS ROUTE IS A DIFFERENT ROUTE ON A DIFFERENT ID.**
+> `UclFixtureView.id` 404s on `/cronogol/fixtures/{id}/events`; its `fixtureId`
+> twin 404s on `/cronogol/ucl/fixtures/{id}/events`. Both verified. And **only
+> 5 of 18** matchday-1 fixtures carry that twin, so routing timelines through
+> the club-side id serves a quarter of the competition. `useFixtureEvents` takes
+> a `FixtureEventsSource`, and **the source is part of the query key** — the two
+> routes can hold different timelines for one match.
+> ⚠ **Four domestic assumptions do not hold** and each has a replacement:
+> `totalMatchweeks` → the index's own `matchdays.length` (`roundCount()` says
+> **70** for 36 clubs against a real 8 — the league phase is Swiss);
+> `complete` → **`finished === fixtures`** (the cup route refuses the ambiguous
+> word, because domestically `complete` is COVERAGE and reads true for all 38
+> LaLiga matchweeks in July); `kickoffsConfirmed` → `kickoffsTbd === 0`;
+> `expectedCount` → nothing, so the "n matches missing" line is not drawn.
+> ⚠ The opener is picked by **ORDER**, not clock — the league phase is a fixed
+> ladder played in sequence, so trap 2 has nothing to bite, and kickoffs are
+> provisional while `kickoffsTbd > 0`. **One** effect seeds and clamps for both
+> competitions; two racing effects would let the loser win.
+> ⚠ ~~No calendar CTA on the cup tab~~ — **CLOSED the same day by
+> [0157](./decisions/0157-the-calendar-cta-becomes-a-pill.md)**: `senpai-backend`
+> §125 shipped `feed/ucl/{season}.ics` (144 VEVENTs) and
+> `feed/ucl/jornada/{season}/{n}.ics` (18 a round), both verified live.
+> ⚠⚠ **The full-width `Add all N matches` outline button is GONE on EVERY
+> league.** It was a second lime thing beside the strip's current-round pill —
+> a SPEC §2 conflict `matchday-pager.tsx`'s own header had already named — and
+> its wrapper `styles.addAll` had **always painted nothing** (`borderColor` with
+> no `borderWidth`; the ring was the Button's own tone). A `ChipButton
+> shape="pill"` now rides the empty `MATCHDAY` label row: no vertical cost, and
+> the round gains two visible fixtures.
+> ⚠ **The pill IS lime, and that reverses this session's first cut.** A neutral
+> `eyebrowSm` line read as a LABEL, not a button — Ed called it on sight. The
+> distinction the app draws is WEIGHT: solid lime is a marker ("you are here"),
+> a lime RING is an invitation to act, which is `ChipButton`'s own header rule.
+> SPEC §2 stands everywhere else. ⚠ `ChipButton` gained a `pillBare` branch —
+> a `pill` with no `trailing` takes symmetric padding; both older call sites
+> pass a disc, so nothing shipped moved.
+> ⚠ **One entry, two scopes in the sheet.** `CalendarSheet` takes an optional
+> `scope` (a `SegmentedControl`, `tone="quiet"` — the Google button is that
+> sheet's lime hero); absent it is byte-identical, so the club and jornada
+> routes are untouched. New route `(sheets)/calendar-ucl`, its own
+> `sheetAllowedDetents: [0.72]`.
+> ⚠⚠ **Two disclosures the copy must keep.** The season feed is the ONLY path to
+> KNOCKOUT ties (they carry no matchday). And a reader who also follows a club
+> in the competition sees that club's ties **TWICE**, deliberately — the feeds
+> key `UID:ucl-fixture-{id}` vs `UID:fixture-{id}`, because the club-side twin
+> exists for only 40 of 144 fixtures and **can be attached late**, and keying on
+> it would mean a UID that changes under a live subscription. **Never dedupe
+> client-side** — the calendar app owns that state.
+> ⚠ `googleAddUrl` here takes the **webcal** form already, unlike the web app's
+> same-named function; copy-pasting that one double-converts and reinstates a
+> shipped `cid` bug. Harnessed (now **30 assertions**).
+> **Verified on the simulator, EN and ES**: the pill on LaLiga and the cup, both
+> sheet scopes with the correct `webcal://` URL in each.
+>
+> ⚠⚠ **TWO BUGS found landing this, and they share a root — read this before
+> adding anything to a `LeagueSwitch`.** Ed: *"LaLiga is selected but the
+> matches are UCL."* `matchdays.tsx` passed **`active={league.slug}`**, and
+> `league` is a FALLBACK (`ROUND_LEAGUES[0]` whenever the cup is active, because
+> the hooks below need a `League` unconditionally). So the cup tab drew **LaLiga
+> as selected**, and `LeagueSwitch.select` early-returns on a tap whose slug
+> equals `active` — making the LaLiga chip **completely unpressable**. There was
+> no way back out of the Champions League. It is `active={leagueSlug}` now, and
+> **the rule lives on `LeagueSwitchProps.active`**, not at the call site: the
+> Clubs rail has the identical `find(...) ?? DEFAULT` shape and is safe only
+> because every chip there resolves today. ⚠ The Table screen had it right;
+> Matchdays inherited a line that was correct until `league` gained a fallback
+> under it.
+> **Second:** the round number carried ACROSS competitions, so returning from
+> the cup landed on a month-old LaLiga round. Crossing the domestic/cup boundary
+> now RE-SEEDS to that side's opener; switching within the domestic set still
+> CLAMPS, per SPEC §3.2 — that rule was written for ladders of comparable length
+> (38/34/42), and it is meaningless between an 8-round ladder and a 38-round one.
+> ⚠ Lint went DOWN by one: the `set-state-in-effect` error in `matchdays.tsx`
+> went with the rewrite, so the file carries one pre-existing error, not two.
+> **Baseline is now 5 errors + 1 warning, not 6 + 1.**
+>
+> ⚠ **THIRD bug, same screen, found by Ed off a screenshot: the matchday strip
+> scrolled to a HALF PILL.** `MatchdayStrip`'s auto-scroll subtracted
+> `Size.pill * 2` — two pill WIDTHS (68) where two whole slots are 84 — so every
+> offset landed 16pt inside a pill and the leading round was drawn sliced down
+> the middle. ⚠ **At every round and in every league**, not just the one he
+> screenshotted (LaLiga 6, where the `4` was halved); the error is constant, so
+> nothing ever looked aligned. The strip now scrolls `(current - 1 - LEAD) *
+> SLOT` where `SLOT = Size.pill + Spacing.two` — **the distance between two
+> pills' LEFT EDGES, which is the only multiple that lands on a boundary.**
+> The cup is provably unaffected: 8 pills fit without scrolling, so the offset
+> computes 0 either way.
+> ⚠ Manual FLICK still settles anywhere — `snapToInterval` would fix that too,
+> and is deliberately not added: it cannot be verified on a headless simulator,
+> and its failure mode is the last pill becoming hard to reach.
+> ⚠ **Knockout stages are deliberately NOT built.** `stages` is `[]` until the
+> February draw, a stage is two legs a tie with no matchday number, and
+> `winnerSlug` is the winner ON THE NIGHT — null on all six 2025 ties drawn in
+> normal time, the FINAL among them (`psg 1-1 arsenal`, penalties). **Never
+> build a bracket on it.** `UclStageSummary` is typed (the index serves it);
+> `UclStageView` and a client function are not.
+> **Verified on the simulator on live production data:** matchday 2 opening
+> (round 1 is played out), an 8-slot strip, `TUE 13 — WED 14 OCT 2026 · 18
+> MATCHES`, real crests and venues, no calendar CTA — and the events panel
+> opened on **PSG 6–1 S. Bratislava, a fixture with NO twin**, which the
+> domestic route could never have served. LaLiga pixel-unchanged beside it.
+> ⚠ Unverified: the chip tap and the strip/pager taps (headless simulator, no
+> window for CGEvents — states were reached by seeding, since reverted), and
+> Spanish on this screen.
+> Harness now **26 assertions**, over captured `ucl-season-rounds-2026.json` and
+> `ucl-jornada-2026-md1.json`.
+>
+> ⭐ **NEW 2026-09-11 — the Table screen carries a SIXTH tab: the
 > Champions League league phase**
 > ([0150](./decisions/0150-champions-league-is-a-competition-not-a-league.md)–[0154](./decisions/0154-open-club-link-is-gated-on-the-catalogue.md)).
 > The backend shipped `GET /cronogol/ucl/standings` the same day (its decision
@@ -641,8 +761,9 @@ src/
   features/push/        capability seam · sync · reminders · routing
 ```
 
-**Screens:** Today (board + FINISHED TODAY + follow card) · Matchdays · Table
-(five leagues **+ the Champions League league phase**, ADR 0150) ·
+**Screens:** Today (board + FINISHED TODAY + follow card) · Matchdays (four
+leagues **+ the Champions League league phase**, ADR 0156) · Table (five leagues
+**+ the Champions League**, ADR 0150) ·
 Clubs · club page (season spine + squad). **Sheets:** alerts · calendar ·
 matchday calendar · account. **Onboarding:** welcome → club picker → alert primer ([0076](./decisions/0076-onboarding-floodlight-redesign.md)); at least one club is required, and the primer's `Not now` is the only skip ([0077](./decisions/0077-welcome-language-line-and-one-skip.md)).
 

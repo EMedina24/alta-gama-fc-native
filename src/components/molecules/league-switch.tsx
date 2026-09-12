@@ -81,6 +81,19 @@ export interface LeagueOption {
 
 export interface LeagueSwitchProps {
   leagues: readonly LeagueOption[];
+  /**
+   * The selected slug.
+   *
+   * ⚠⚠ **Pass the STATE, never a slug read off a derived object.** A screen that
+   * resolves its selection into an entity with a fallback —
+   * `find(...) ?? CATALOGUE[0]` — hands this the FALLBACK's slug whenever the
+   * selection is not in that catalogue. Two things then go wrong at once: the
+   * wrong chip draws as selected, and `select` below early-returns on a tap
+   * matching `active`, so the chip the reader is trying to reach becomes
+   * **unpressable**. That shipped on Matchdays the day the Champions League
+   * joined the rail (ADR 0157) — the cup drew LaLiga as selected and there was
+   * no way back out of it.
+   */
   active: string;
   onSelect: (slug: string) => void;
   /** Which ground the row sits on. The default is the screen body. */
@@ -178,6 +191,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
 
   /** The selection change alone — the drag's snap already moved the plate. */
   const select = (slug: string) => {
+    // ⚠ The early return is why `active` must be the true selection — see the prop.
     if (slug === active) return;
     void hapticToggle();
     onSelect(slug);

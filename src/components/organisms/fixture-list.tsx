@@ -45,6 +45,7 @@ import type { Copy } from '@/lib/i18n/copy';
 import type { Phrases } from '@/lib/i18n/phrases';
 import type { ClockFormat } from '@/store/preferences';
 import { MatchEvents } from './match-events';
+import type { FixtureEventsSource } from '@/queries/use-fixture-events';
 
 export interface FixtureListProps {
   fixtures: readonly JornadaFixtureView[];
@@ -59,6 +60,15 @@ export interface FixtureListProps {
    */
   inProgressLabel: string;
   eventsCopy: Copy['events'];
+  /**
+   * Which timeline route these rows' ids belong to (ADR 0156). Defaults to the
+   * domestic one; the Champions League round passes `'ucl'`.
+   *
+   * ⚠ It is a property of the LIST, not of a row: every fixture in one round
+   * comes off one route, so a per-row flag would be three ways to say the same
+   * thing and one of them wrong.
+   */
+  eventsSource?: FixtureEventsSource;
 }
 
 /**
@@ -114,6 +124,7 @@ export function FixtureList({
   finishedLabel,
   inProgressLabel,
   eventsCopy,
+  eventsSource = 'league',
 }: FixtureListProps) {
   const groups = dayGroups(fixtures, zone);
   /** ⚠ One row open at a time — a single id, not a set (ADR 0045). */
@@ -225,6 +236,7 @@ export function FixtureList({
                 {expanded ? (
                   <MatchEvents
                     fixtureId={fixture.id}
+                    source={eventsSource}
                     home={fixture.homeTeam}
                     away={fixture.awayTeam}
                     copy={eventsCopy}

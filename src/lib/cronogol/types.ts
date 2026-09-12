@@ -1072,6 +1072,141 @@ export interface UclStandingsView {
   rows: UclStandingsRowView[];
 }
 
+/* ── Champions League fixture lists (§124) ───────────────────────────────────
+   `GET /cronogol/ucl/jornada/{season}`, `…/{season}/{matchday}` and
+   `…/ucl/stage/{season}/{stage}`, added 2026-09-11.
+
+   ⚠ **These are the ONLY way to enumerate a Champions League round.**
+   `GET /cronogol/fixtures` is league-scoped and carries no UEFA tie at all, and
+   the per-club route reaches roughly ten of the eighteen (measured 2026-09-11:
+   81 of 144 identifiable, 49 opponents unresolvable to a slug, 14 matches under
+   two ids). See ADR 0156.                                                     */
+
+/** ⚠ Valor de protocolo — no traducir. Competition order, NOT alphabetical. */
+export type UclStage =
+  | "league-phase"
+  | "playoff"
+  | "round-of-16"
+  | "quarter-final"
+  | "semi-final"
+  | "final";
+
+/** One Champions League match, competition-side. */
+export interface UclFixtureView {
+  /**
+   * ⚠⚠ **The key to `/cronogol/ucl/fixtures/{id}` and `…/{id}/events`, and NOT
+   * interchangeable with `fixtureId` below.** Passing this to the DOMESTIC
+   * `/cronogol/fixtures/{id}/events` is a 404 — verified 2026-09-11.
+   */
+  id: string;
+  season: number;
+  stage: UclStage;
+  /** 1-8 in the league phase, null in a knockout stage. */
+  matchday: number | null;
+  /** The provider's label, e.g. "Jornada 1". ⚠ Display only — never parsed. */
+  round: string | null;
+  /** Always `UEFA Champions League`. ⚠ The exact string `competitionMarkKind` keys on. */
+  competitionName: string;
+  kickoffUtc: string;
+  kickoffTbd: boolean;
+  status: FixtureStatus;
+  /** ⚠ Home-away, not for-against. A round has no perspective to flip. */
+  goalsHome: number | null;
+  goalsAway: number | null;
+  /**
+   * ⚠⚠ **The winner ON THE NIGHT. It does NOT say who progressed.** Measured
+   * across 2025's 45 knockout matches: null on exactly the 6 drawn on the
+   * night, the FINAL among them (`psg 1-1 arsenal`, decided on penalties).
+   * **Never build a bracket on this.** The migration's own column comment
+   * claims it is the penalties answer; the data disagrees.
+   */
+  winnerSlug: string | null;
+  venue: string | null;
+  venueCity: string | null;
+  /**
+   * The club-centric twin in `public.fixtures`, when a tracked club is involved.
+   *
+   * ⚠⚠ **Present on only 5 of 18 matchday-1 fixtures** (measured 2026-09-11), so
+   * anything routed through it serves barely a quarter of the competition. It is
+   * what a CLUB page holds; `id` above is what this competition holds. Use `id`.
+   */
+  fixtureId: string | null;
+}
+
+export interface UclFixtureListItem {
+  fixture: UclFixtureView;
+  /**
+   * ⚠ **Null is a PRE-DRAW PLACEHOLDER side, not a missing club** — a knockout
+   * row exists before its draw with both sides reading "por determinar".
+   * Unreachable in the league phase; the type is shared with the stage route.
+   */
+  home: TeamRef | null;
+  away: TeamRef | null;
+}
+
+/** One league-phase round on the season index. */
+export interface UclRoundSummary {
+  /** 1-8. */
+  matchday: number;
+  fixtures: number;
+  finished: number;
+  kickoffsTbd: number;
+  /** ⚠ PROVISIONAL while `kickoffsTbd > 0`. */
+  firstKickoffUtc: string | null;
+  lastKickoffUtc: string | null;
+}
+
+/** One knockout stage on the season index. */
+export interface UclStageSummary {
+  stage: Exclude<UclStage, "league-phase">;
+  fixtures: number;
+  finished: number;
+  kickoffsTbd: number;
+  firstKickoffUtc: string | null;
+  lastKickoffUtc: string | null;
+}
+
+/** `GET /cronogol/ucl/jornada/{season}` — the pager's nav. */
+export interface UclSeasonRoundsView {
+  season: number;
+  /**
+   * Ordered by NUMBER, which is not a time axis.
+   *
+   * ⚠ **There is no `totalMatchdays` and no `expectedCount`**, deliberately:
+   * the domestic `clubs / 2` and `2 * (clubs - 1)` describe a double round
+   * robin, and the league phase is SWISS — 36 clubs, 8 rounds, 18 matches each,
+   * every club meeting 8 of a possible 35. Count this array for the 8.
+   *
+   * ⚠ **And no `complete` boolean, deliberately.** On the domestic contract that
+   * word means COVERAGE — "we hold every match" — and all 38 LaLiga matchweeks
+   * report it true in July with nobody having kicked a ball. Compare `finished`
+   * against `fixtures` and decide which question you are asking.
+   */
+  matchdays: UclRoundSummary[];
+  /**
+   * ⚠⚠ **COMPETITION order — `playoff → round-of-16 → quarter-final →
+   * semi-final → final`. NEVER re-sort it.** `stage` is a string, so an
+   * alphabetical sort puts `final` first and `playoff` after `round-of-16`.
+   *
+   * ⚠ **`[]` until the February draw**, which is the normal state of the
+   * current season for most of the year and not a gap. 2025 carries five.
+   */
+  stages: UclStageSummary[];
+}
+
+/** `GET /cronogol/ucl/jornada/{season}/{matchday}`. */
+export interface UclJornadaView {
+  season: number;
+  matchday: number;
+  /**
+   * ⚠ **`0` is a `200`, never a 404** — this competition has no league slug to
+   * be unknown, so an empty round is an empty collection. ⚠ `matchday` is
+   * validated 1-20 (the column's own CHECK), not 1-8: a `9` returns empty.
+   */
+  count: number;
+  fixtures: UclFixtureListItem[];
+}
+
 /**
  * The row shape the standings ORGANISM draws — the intersection of a domestic
  * row and a cup row (ADR 0152).

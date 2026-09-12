@@ -28,13 +28,36 @@ export interface MatchdayStripProps {
   label: (n: number) => string;
 }
 
+/**
+ * One pill plus the gap after it — the distance between two pills' left edges.
+ *
+ * ⚠ **The SLOT, not the pill.** Scrolling by a multiple of this is what lands
+ * the strip on a pill boundary; scrolling by a multiple of `Size.pill` alone
+ * does not, and drifts further out of step with every round.
+ */
+const SLOT = Size.pill + Spacing.two;
+
+/** Whole rounds kept visible BEFORE the active one, so it has context on its left. */
+const LEAD = 2;
+
 export function MatchdayStrip({ total, current, played, onSelect, label }: MatchdayStripProps) {
   const scroller = useRef<ScrollView>(null);
 
-  // Keep the active round in view when it changes from the pager or a league switch.
+  /**
+   * Keep the active round in view when it changes from the pager or a league
+   * switch, **aligned to a pill edge**.
+   *
+   * ⚠ **It must land on a multiple of `SLOT`.** The first cut subtracted
+   * `Size.pill * 2` — two pill WIDTHS (68) where two whole slots are 84 — so
+   * every offset sat 16pt inside a pill and the leading round was drawn sliced
+   * down the middle, at every round and in every league. Ed caught it on
+   * LaLiga matchday 6, where the `4` showed as a half pill.
+   *
+   * ⚠ `Math.max(0, …)` covers the first `LEAD + 1` rounds, where there is
+   * nothing to lead with; the ScrollView clamps the other end itself.
+   */
   useEffect(() => {
-    const x = Math.max(0, (current - 1) * (Size.pill + Spacing.two) - Size.pill * 2);
-    scroller.current?.scrollTo({ x, animated: true });
+    scroller.current?.scrollTo({ x: Math.max(0, (current - 1 - LEAD) * SLOT), animated: true });
   }, [current]);
 
   return (

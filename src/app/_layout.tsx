@@ -126,6 +126,13 @@ export default function RootLayout() {
           <Stack.Screen name="(sheets)/alerts" options={sheet} />
           <Stack.Screen name="(sheets)/calendar" options={sheet} />
           <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />
+          {/* ⚠ Its own detent: this sheet is a scope control and a longer body
+              taller than the others, and at the shared 0.6 the feed URL box sits
+              under the fold. Overridden here rather than moving everyone's. */}
+          <Stack.Screen
+            name="(sheets)/calendar-ucl"
+            options={{ ...sheet, sheetAllowedDetents: [0.72] }}
+          />
           {/* The news link-out sheet (ADR 0064): one headline and three buttons. */}
           <Stack.Screen
             name="(sheets)/news-link"

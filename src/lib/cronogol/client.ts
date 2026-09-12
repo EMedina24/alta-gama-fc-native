@@ -35,6 +35,8 @@ import type {
   TeamSquadView,
   TeamStatsView,
   TeamView,
+  UclJornadaView,
+  UclSeasonRoundsView,
   UclStandingsView,
 } from './types';
 
@@ -430,6 +432,67 @@ export async function getFixtureEvents(
 ): Promise<FixtureEventsView | null> {
   return getOrNull<FixtureEventsView>(
     `/cronogol/fixtures/${encodeURIComponent(fixtureId)}/events`,
+    toQuery({}),
+  );
+}
+
+/**
+ * The same timeline for a Champions League match, off the competition's own id.
+ *
+ * ⚠⚠ **The two events routes are NOT interchangeable, and the id decides.**
+ * `UclFixtureView.id` on the DOMESTIC route is a 404; `UclFixtureView.fixtureId`
+ * on this one is a 404. Verified both ways, 2026-09-11.
+ *
+ * ⚠ **This route is the one that covers the competition.** Only 5 of 18
+ * matchday-1 fixtures carry a `fixtureId` at all, so routing a timeline through
+ * the club-centric twin serves barely a quarter of it; this one answered `200`
+ * for every fixture probed, twin or no twin.
+ *
+ * Same shape as `getFixtureEvents` minus its stored-row `id`, and the same
+ * fetch-on-expand rule: never pre-fetch a round.
+ */
+export async function getUclFixtureEvents(
+  uclFixtureId: string,
+): Promise<FixtureEventsView | null> {
+  return getOrNull<FixtureEventsView>(
+    `/cronogol/ucl/fixtures/${encodeURIComponent(uclFixtureId)}/events`,
+    toQuery({}),
+  );
+}
+
+// ------------------------------------------------- champions league fixtures
+
+/**
+ * The Champions League season index — the pager's nav (§124).
+ *
+ * ⚠ **The only way to enumerate a round.** `/cronogol/fixtures` is league-scoped
+ * and carries no UEFA tie; the per-club route reaches about ten of eighteen and
+ * cannot name the matchday (ADR 0156).
+ *
+ * ⚠ `Cache-Control: public, max-age=60` — fresher than the standings route's
+ * 300, and still not a live feed: trap 8's rule is untouched.
+ */
+export async function getUclSeasonRounds(season: number): Promise<UclSeasonRoundsView> {
+  return get<UclSeasonRoundsView>(
+    `/cronogol/ucl/jornada/${encodeURIComponent(String(season))}`,
+    toQuery({}),
+  );
+}
+
+/**
+ * One league-phase round, both sides named.
+ *
+ * ⚠ **`count: 0` is a `200`, never a 404** — this competition has no league slug
+ * to be unknown. And `matchday` is validated 1-20, not 1-8, so a 9 comes back
+ * empty rather than rejected: the pager must bound itself on the index's own
+ * `matchdays.length`.
+ */
+export async function getUclJornada(
+  season: number,
+  matchday: number,
+): Promise<UclJornadaView> {
+  return get<UclJornadaView>(
+    `/cronogol/ucl/jornada/${encodeURIComponent(String(season))}/${encodeURIComponent(String(matchday))}`,
     toQuery({}),
   );
 }

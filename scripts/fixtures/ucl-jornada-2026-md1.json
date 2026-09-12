@@ -1,0 +1,796 @@
+{
+    "season": 2026,
+    "matchday": 1,
+    "count": 18,
+    "fixtures": [
+        {
+            "fixture": {
+                "id": "ea47dee3-3442-4c04-b554-51ea6147f125",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-08T16:45:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 2,
+                "goalsAway": 3,
+                "winnerSlug": "aston-villa",
+                "venue": "Jan Breydel",
+                "venueCity": "Brugge",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "club-brujas",
+                "name": "Club Brujas",
+                "shortName": "BKV",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c282e7b7fb9b9093fbed09fb5ef9a6c72f2cfd925a51419a58e1d9ea8520632d.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/cdff34fa008cf320f96db4de32693b11a15712d786fafa2f7facf12ce75574fc.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/00eb23e6d35c0d7549aa308240f031be92face5a54cb7d97f8bc5802364b61c4.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/1c2fd495c3ec21734f2a9147bbf78d89a264e2dd43868e1c0daf5e77ca7e45b7.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6fc6dfbb3fd7486128c369825c1b424f4308a0563a77063f56fae647eb0da36c.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c282e7b7fb9b9093fbed09fb5ef9a6c72f2cfd925a51419a58e1d9ea8520632d.png"
+                }
+            },
+            "away": {
+                "slug": "aston-villa",
+                "name": "Aston Villa",
+                "shortName": "AVL",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/e6ae8a1f1581453d4be1b40bf7369eb2f428df00d86b96979f25b4a044139ae8.png",
+                "logoUrls": {
+                    "20": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0c7e0eed3a24056930b9967ef4776c1358df0d9cc39a4ddd1e7bff02d15a01a4.png",
+                    "25": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c116052618dc7ef1aa3c72628f70518be3d7132cdd0f4e22d5cf20ade652986a.png",
+                    "50": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/eb099dc4259eb4004e5060b05a7a0e005f3c7b047ed12f187fd7341316b4b299.png",
+                    "70": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5b699ae9f208966fb0fb5e2ca0250c93c15059b8e548e882ba3041f04235aab3.png",
+                    "100": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/e6ae8a1f1581453d4be1b40bf7369eb2f428df00d86b96979f25b4a044139ae8.png",
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7f3c149342283f285bceb557eb94c47a8e0f0cfc8b0e25cccf3c3478cd690d52.svg"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "f0919181-8acf-4986-b15b-d43f4dbcdf50",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-08T16:45:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 1,
+                "goalsAway": 0,
+                "winnerSlug": "aek-atenas",
+                "venue": "OPAP Arena",
+                "venueCity": "Nea Filadelfia",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "aek-atenas",
+                "name": "AEK Atenas",
+                "shortName": "AEK",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/520f52a57e904eaad50f25fe508eaac540bc4cac1f7d1e25ae33e0b2c37c68fd.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/2a6daee0699d660805dd50087473947543e0bac959f85db33889dd18777750b3.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/1b9807bd90006a83a058b637b47023fc4fcbe0b76782e91680a6e5fb2b091498.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/280ea1c66e79a415f5634aae5ca25e74da7b7e065a949d845ec033088ba6b7bc.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/73dc33016b49d85cf628870facad6b6be22eaddc49a29acd25b82a442ae880d5.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/520f52a57e904eaad50f25fe508eaac540bc4cac1f7d1e25ae33e0b2c37c68fd.png"
+                }
+            },
+            "away": {
+                "slug": "lask-lask",
+                "name": "LASK",
+                "shortName": "LSK",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ceb16f28d49b3da438b9f81a6f7a07d879428a387b3b18b733ca26a0158bc725.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/12ca33dc006fec2d67b80ba7a59f2f6c968ac9e9e88bee7ff93254df7b8d4b37.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/3c5e5a0fc65ce3c0412c95e5d8c3d65feb1655073e0897917ae898f5ce5ae71b.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/24d2b42864781e94f0f8859e9ec87192f930bac655b97a9b8129dcdd404b849e.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/649ce7e566a72a8c41c5fe3766d68c6679627c284d90b940ee5787de110c27e4.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ceb16f28d49b3da438b9f81a6f7a07d879428a387b3b18b733ca26a0158bc725.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "46c728c2-bd76-4188-8fa1-f5ef6482ddc2",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-08T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 3,
+                "goalsAway": 2,
+                "winnerSlug": "borussia-dortmund",
+                "venue": "Signal Iduna Park",
+                "venueCity": "Dortmund",
+                "fixtureId": "6fb6300d-8e01-4593-8ba4-530d58b892ad"
+            },
+            "home": {
+                "slug": "borussia-dortmund",
+                "name": "Borussia Dortmund",
+                "shortName": "BVB",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/29a0b1c5ffb1584cea00b76f0c80e64b4c8af2f207e88f6c21de0fb506673c31.svg",
+                "logoUrls": {
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/29a0b1c5ffb1584cea00b76f0c80e64b4c8af2f207e88f6c21de0fb506673c31.svg"
+                }
+            },
+            "away": {
+                "slug": "villarreal",
+                "name": "Villarreal CF",
+                "shortName": "VIL",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/dd4e531a6722f5526b8870d2f5febf3812e5a70fdc80740a39a4de2e424e1c63.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/95a76686f50878e7c43339907718ee82df6876c33f827c2f7f537b535561f67c.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d01050b4e3ea392f5552804c31e961929e05a0a9c2903680e55b96fbb9dc6847.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/a318ebc43fad014024495d0a284de4f19acfd7dac9edc3dfe6ed0199ff4ee7f6.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/689469b059b59c0021cad433bc2a0d8a07ad3ce46f67d08b794be9c2d762f265.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/dd4e531a6722f5526b8870d2f5febf3812e5a70fdc80740a39a4de2e424e1c63.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "7a508367-449b-41e2-b776-2b5d2a557f0c",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-08T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 0,
+                "goalsAway": 2,
+                "winnerSlug": "manchester-city",
+                "venue": "Est\u00e1dio do Drag\u00e3o",
+                "venueCity": "Porto",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "oporto",
+                "name": "Oporto",
+                "shortName": "OPO",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fec187061efcee7ca91ac49c588ab78250ea25e6968441e360478d6a0efe4789.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/48d3d6369b53bbb47457f7ba423f0c652bd35559a7da8c02c3e7c752c0eb176c.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/b97bca082b2228cdb323df85f702958776b042e84e34b49e4141f14b2a03b9aa.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f95992339238459e8a79dc9a984aea05906ce468784d4eac639546abc49063f4.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ca0509ade4594aae86f8c8f71aa45a5afcc859a0c4dcd401890e25f1d4568c3c.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fec187061efcee7ca91ac49c588ab78250ea25e6968441e360478d6a0efe4789.png"
+                }
+            },
+            "away": {
+                "slug": "manchester-city",
+                "name": "Manchester City",
+                "shortName": "MCI",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f3567b92ed4ab4002ff094414040e49c6b3c826c43e3496f4dabdf802ef52ccb.png",
+                "logoUrls": {
+                    "20": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/2c0c5ed614b7fecd114009fee4ce3deef619a4e841e5c2d6c892b37848ae1427.png",
+                    "25": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4384518b1abb7170ad84ef87a146c9efc1862533c703b0918d6330f6a4b4ae9d.png",
+                    "50": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/3258d7da54be0592cfd07a0b69cd2553d668797cc952d7a6ff2351c8a652493a.png",
+                    "70": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/1176483107a1efa17bbbb00cd893f54ee8212f136b66941e808ce7a465e6ec80.png",
+                    "100": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f3567b92ed4ab4002ff094414040e49c6b3c826c43e3496f4dabdf802ef52ccb.png",
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5992dc73d3a29ef6d1e028a1658207b0b77e5afe9221fd14add86b03e3f54c42.svg"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "b29c8704-915a-4230-b677-258fa2e97f79",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-08T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 2,
+                "goalsAway": 3,
+                "winnerSlug": "real-betis",
+                "venue": "Stade Pierre-Mauroy",
+                "venueCity": "Villeneuve-d'Ascq",
+                "fixtureId": "41b02ac4-9dfc-4933-9eb1-bb7ad8512489"
+            },
+            "home": {
+                "slug": "lille-olympique-sporting-club",
+                "name": "LOSC",
+                "shortName": "LIL",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/775808981e307e7fab276a7c7975d27445fbb02f51594e1be8f4cde2ba39820a.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/124f22ba6a616e4005073009c780280335f2dd87f239c1af3c4ce051f867819f.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f754f56e61acc35e38e972abb0ed4b86fc39aa87545c135bdcbc5768728b6662.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ec649913f15e502c170c8e683211b42cdb3391219475a07b3a12f972e58537f5.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ada3756252698e6f6a5f960254e483aa2d529e0416e76e01fc0769d1f1fc8c11.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/775808981e307e7fab276a7c7975d27445fbb02f51594e1be8f4cde2ba39820a.png"
+                }
+            },
+            "away": {
+                "slug": "real-betis",
+                "name": "Real Betis",
+                "shortName": "BET",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/031f7dd63003b4b12e1bfd5834b821e2fb76cbd1e6001e6a4529492111b9d921.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/96a27632122ac1aaa97bc6845958e434d0938443ef9507d8d0d3fe15a57c2a30.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/8378521a992a976818b45a9a682a25bd965776642cccf93606563cac00b2f4f6.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/cdb14a5a1ae34747c61410914d3f74a56220ed37414a9443754d838bb7b1ed2e.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5c8e85b0ab41348e478b525f4f540379599bfd1b3c62fa60d620c307344ccec8.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/031f7dd63003b4b12e1bfd5834b821e2fb76cbd1e6001e6a4529492111b9d921.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "cdc22efc-d1b2-49fe-8cad-0b075a10d960",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-08T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 2,
+                "goalsAway": 1,
+                "winnerSlug": "real-madrid",
+                "venue": "Bernab\u00e9u",
+                "venueCity": "Madrid",
+                "fixtureId": "0d457708-8ed5-406a-8d3f-c5686cfb887d"
+            },
+            "home": {
+                "slug": "real-madrid",
+                "name": "Real Madrid",
+                "shortName": "RMA",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4290c089c722beb802ae124d63c4287f1274f14fe093a0c39ecc3bc81e3bf858.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0d0bb8ed06ebfa28b27f17d220f4883f23ff0639c7b797522ee2f74f90f46831.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/eb71e338ba90bab3ba65a4cc2b730010759b41aa7f3b47f751a756633b0c3031.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/df7bf96a1528d2145774d03b59bb8541fcd48c0e68a09ab35684e063e7635041.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/50a6b5a013dc4d2675848e6978c6fc79339ba4fd0bdffc626673a92ecab597c9.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4290c089c722beb802ae124d63c4287f1274f14fe093a0c39ecc3bc81e3bf858.png"
+                }
+            },
+            "away": {
+                "slug": "inter",
+                "name": "Internazionale",
+                "shortName": "INT",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6686a0a8f78710875be2bd34be35262911f873e9dd93ad559c718423e813ec86.webp",
+                "logoUrls": {
+                    "teamLogo": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6686a0a8f78710875be2bd34be35262911f873e9dd93ad559c718423e813ec86.webp",
+                    "teamLogoLight": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6686a0a8f78710875be2bd34be35262911f873e9dd93ad559c718423e813ec86.webp"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "77ec1bdb-334e-4156-a9ac-ccd8a0d88bc1",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-09T16:45:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 3,
+                "goalsAway": 1,
+                "winnerSlug": "vfb-stuttgart",
+                "venue": "Mercedes-Benz Arena",
+                "venueCity": "Berlin",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "vfb-stuttgart",
+                "name": "VfB Stuttgart",
+                "shortName": "VFB",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9fc3aa34178ff4e1a3929d89c614091ceaff44d78c887c9dc729eb9eafd84103.svg",
+                "logoUrls": {
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9fc3aa34178ff4e1a3929d89c614091ceaff44d78c887c9dc729eb9eafd84103.svg"
+                }
+            },
+            "away": {
+                "slug": "viking-fk",
+                "name": "Viking FK",
+                "shortName": "VIK",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/97755f6693949b4b4666ae02f86fa956010e1390f1a05ca01f15c02b66d98497.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6917ef599609ebf6fb4e21cf3d25936410b0ec19caf5f8860be40b53197e3737.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/a133ed1e0b1b781bda2f011dcd343f0a671ff9cb6bf34aaa61011e9f4e5fe000.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9db080b0ec79881bc296855c76b8114a49f14362efa26302a38f47cc4e4c0a78.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c4486344cd0037374afd7fc0b5584f63f3dfd2b4f82c124787d191d9e29efc98.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/97755f6693949b4b4666ae02f86fa956010e1390f1a05ca01f15c02b66d98497.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "db8db6b5-47e9-4dd9-9c08-27b5e92101f5",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-09T16:45:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 5,
+                "goalsAway": 1,
+                "winnerSlug": "barcelona",
+                "venue": "Spotify Camp Nou",
+                "venueCity": "Barcelona",
+                "fixtureId": "f90e8609-1ded-4a89-b8f0-68877c0ea1d5"
+            },
+            "home": {
+                "slug": "barcelona",
+                "name": "FC Barcelona",
+                "shortName": "BAR",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/b0b4a48008c40a769fc6ae3a51befc3fa731b6e641baf2aedb6319fc106743e0.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d6570cf8f784798a501813d1245306b1cb4c45b806dc1df641fad359f76370cf.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/002d4372063687acce1f3059c82a94f0c784683da79dff2b6b7dce161d65793d.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ff52fd1f863b497a06a0f2d46cb15994651383a42866bf21e873d1ab817ccc28.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006.png"
+                }
+            },
+            "away": {
+                "slug": "feyenoord-feyenoord",
+                "name": "Feyenoord",
+                "shortName": "FEY",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/437815754cb04bfd51363cae1588a908534230a0a1f1e59f02ed73a00cdd4ba3.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/aeead70c95f6728a34e578260da7899ec7e7fd182f57b46fe0ae8545abd26489.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/433d8bbd4d03eecfae89ad04fce82d0798bebcde05bb79bb74a6f2bc7dc3e04d.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/70df32793c26eb400d02c0063e15e49b27659babd3542dfd3a2d4f222abe1a0b.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/8b172a113266bc604ad10f15ecd70092f98a8f8e126a34874139b7d0dc412500.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/437815754cb04bfd51363cae1588a908534230a0a1f1e59f02ed73a00cdd4ba3.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "8e6be91d-d12e-4227-9f48-1fd7f66a7808",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-09T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 0,
+                "goalsAway": 1,
+                "winnerSlug": "arsenal",
+                "venue": "Estadio San Paolo",
+                "venueCity": "Napoli",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "napoli",
+                "name": "Napoli",
+                "shortName": "NAP",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/98088b48ae48196b043eb851c3d262869b6aed1c048ca851587ec599befe5a1f.webp",
+                "logoUrls": {
+                    "teamLogo": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/98088b48ae48196b043eb851c3d262869b6aed1c048ca851587ec599befe5a1f.webp",
+                    "teamLogoLight": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/a847b640e95d2beb0bdf293cdc80b55f11e02443c5d0262518b1ca8cee162b60.webp"
+                }
+            },
+            "away": {
+                "slug": "arsenal",
+                "name": "Arsenal",
+                "shortName": "ARS",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f061448ba45e6aab892dad1b6e80140857dd896a6726d4e7446d784cd43f1ab2.png",
+                "logoUrls": {
+                    "20": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/01b9850b3e869cee5c2920d28db5cb87b15cea45b5d528cb62bf21f645e1c46e.png",
+                    "25": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/13b49a8e7188b8239527641608d5c4391d2cc6707748320d795e52b530462edd.png",
+                    "50": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/8b9409098c29773b508076e8d5c4f18dc5dc7266cf5b4f076a8caa98bb9192c5.png",
+                    "70": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/758632736f6187258e88791fb3230109dd559f2f39508f8dedc9900f959425d6.png",
+                    "100": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f061448ba45e6aab892dad1b6e80140857dd896a6726d4e7446d784cd43f1ab2.png",
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/34846859662c2f27d51e0880d82998cbe15edbaaf265df191e18a050cb8b6216.svg"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "a912e8cc-8815-4414-8786-e66fb9ecde59",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-09T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 6,
+                "goalsAway": 1,
+                "winnerSlug": "psg",
+                "venue": "Parc des Princes",
+                "venueCity": "Paris",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "psg",
+                "name": "PSG",
+                "shortName": "PSG",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/a7511836b86ddb476fb45b39b13f182b3fd2ee5dea91648497d5115e59daf3ea.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7ac0a281c086216953b66a2d5ed2bdb88f70986dbdb1ef95fa5600b508668846.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/33917e59f18f247d8466910380bf7164bfb6d03deb9d3d04ba7829d627f2e40d.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d7693bdee36e63ea4e6df47792a80c172a18f99ad3dc8b650c8f2d1f0839bebe.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/64ba153666c2bbe2499d7190b9cf05bc9f9e49ed356eecf74fb0e0598f580524.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/a7511836b86ddb476fb45b39b13f182b3fd2ee5dea91648497d5115e59daf3ea.png"
+                }
+            },
+            "away": {
+                "slug": "s-bratislava",
+                "name": "S. Bratislava",
+                "shortName": "SLB",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6299bf77f9bc43b31f3506baac57ac3f81687274ffc6945b3091f7bef1f3feb2.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c853e39f09d6049e7d5e0fd7e61b2ce594e5ad0b262e8f5e0f45fcc67d84b228.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0db839e8376bb38078781016e657c1a9c67c47331102de0677b0df4036c36d98.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/bb7921a3d12ce29c371320df42f2af446e4697c965055f26ef10954bbe509eb6.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/51dc61f8dfa19b351bdc1dde87b9820131dd035ddc5b901fc2a272bacd496d07.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6299bf77f9bc43b31f3506baac57ac3f81687274ffc6945b3091f7bef1f3feb2.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "d85878d2-c20c-4bb8-9154-800292e873aa",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-09T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 2,
+                "goalsAway": 1,
+                "winnerSlug": "liverpool",
+                "venue": "Anfield",
+                "venueCity": "England",
+                "fixtureId": "f3e96945-9340-4173-8317-84bd6e1358d0"
+            },
+            "home": {
+                "slug": "liverpool",
+                "name": "Liverpool",
+                "shortName": "LIV",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0685357c160df9afd82d654c7907cfb46ef2e345b9c168bf51b51437680edf94.png",
+                "logoUrls": {
+                    "20": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/db206b199749afb921b0b7be977a5ea64804731853d8f60f8d7f6b7fad9496f5.png",
+                    "25": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4874bcc1b5f6d28843ee8e3f72242b8fca0baaa8e4be3d51e8071b27e5117c4c.png",
+                    "50": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5582ced9b9cd0605cf6975ab3f6e31acd1a6092f05e58d37740cf119bc6f2607.png",
+                    "70": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f94fb1f6bc430203441c4d42091cc5f9b9125df6edebc4a287487abddf26592e.png",
+                    "100": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0685357c160df9afd82d654c7907cfb46ef2e345b9c168bf51b51437680edf94.png",
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d7ede6abfcfbb9d8bf3445d403067b8f386510560d831fbf4aa762abf9b6e0fb.svg"
+                }
+            },
+            "away": {
+                "slug": "atletico-madrid",
+                "name": "Atl\u00e9tico de Madrid",
+                "shortName": "ATM",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/08eeee63b3528d564505dfcec064d31600380c0c53a30ab95d7c37bb26b9707a.png",
+                "logoUrls": {
+                    "hl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/b0d124dffbde5eccb30c17694fb3d79e2b5f3c705351aef5120ab0bee765651c.png",
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9d961ceb8177d22fcec6c50d163a1dd2c8289512328f753497c82748cd644295.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/936f124e8a1ddaf9703a99798e33eeeb02b13401c5889da3e942225f789822a4.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4cf35d3f17666e96d109b3d9fc364584e1088776217dd07f4f077d1255e76a5b.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/18c11d0a7dd5e0b7dee8761cfe12d753fabde2e45c00fd0b73a1941dec371052.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/08eeee63b3528d564505dfcec064d31600380c0c53a30ab95d7c37bb26b9707a.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "e87727e1-b8c1-4585-9da5-2026852e0df7",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-09T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 3,
+                "goalsAway": 1,
+                "winnerSlug": "sporting-portugal",
+                "venue": "Estadio Jos\u00e9 Alvalade",
+                "venueCity": "Lisboa",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "sporting-portugal",
+                "name": "Sporting Portugal",
+                "shortName": "SCP",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/e3afc83697be1cc4224f4274ef85210d930a9a424f4c6a9a718e06553fb050a3.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9f4c6946e65093caf56abda402e853c9a19c4b32beda897423893f0691743e18.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d91856810d401e648aeec6c22c947840b240903134f3bd6ae7bd9569d6622b3b.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/332a2b86fd9bb78baa299d6306545ea82d5d3668a3933e9643039f3b1ee708a9.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6e6890eb3250ff9e6370879422d9a05dd7918a344b8d9c4bb41a99ca996823ae.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/e3afc83697be1cc4224f4274ef85210d930a9a424f4c6a9a718e06553fb050a3.png"
+                }
+            },
+            "away": {
+                "slug": "galatasaray",
+                "name": "Galatasaray",
+                "shortName": "GAL",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/58abdd8eb33139c23ef3f1ad7a8d2ccd1ce2a924d15cb6fcd126d790439b357e.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/8acc75ccc989297fd32b3011f341b4f9013835488773591c90a070bfecd7d717.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0571b67b4f3eb943b8accfc712950e991183aebfe505f6cc4e251e11fdbd988f.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/640dde34b6e06026d7a7a5db716e2689c26c6d5a85c62e58a4ec8711979e9582.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/35c2a6e18e58798f36c4164c57d652ecb45fc50c4e64d344e111ed763bf356db.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/58abdd8eb33139c23ef3f1ad7a8d2ccd1ce2a924d15cb6fcd126d790439b357e.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "299c92b2-23a7-4d1c-b644-88e0b9d477e3",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-10T16:45:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 1,
+                "goalsAway": 1,
+                "winnerSlug": null,
+                "venue": "\u015e\u00fckr\u00fc Saraco\u011flu Stadyumu",
+                "venueCity": "\u0130stanbul",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "fenerbahce-fenerbahce",
+                "name": "Fenerbah\u00e7e",
+                "shortName": "FEN",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/3f3ceb7be9ec21df8a4dc1c1ec708b5f2bcd5c625621c51e968b87391d7be35f.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ec3abbb4a90a6d8ca365f7e4cf4af3402142e026d5d5883917cdd2655be93796.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6f900a434cf981bae133a31048c19df7566207f269ba2ab8935aa405f1719eef.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/af2e419a718058f063fd0446fb31688f74c11872b3a93b2792378a89a05fc6f6.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d60760b0eb69095e2549ffce790963b2093960e5946ad893d79ca6b60e1ffaf8.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/3f3ceb7be9ec21df8a4dc1c1ec708b5f2bcd5c625621c51e968b87391d7be35f.png"
+                }
+            },
+            "away": {
+                "slug": "roma",
+                "name": "Roma",
+                "shortName": "ROM",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ddfc72fd6ed5c7357212f3d6a1e1f9b71383829f11a36514c3f3110558ba1c37.webp",
+                "logoUrls": {
+                    "teamLogo": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ddfc72fd6ed5c7357212f3d6a1e1f9b71383829f11a36514c3f3110558ba1c37.webp",
+                    "teamLogoLight": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/ddfc72fd6ed5c7357212f3d6a1e1f9b71383829f11a36514c3f3110558ba1c37.webp"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "5dedfc95-a675-4a1b-bc0c-63a2336acda2",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-10T16:45:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 1,
+                "goalsAway": 1,
+                "winnerSlug": null,
+                "venue": "Philips Stadion",
+                "venueCity": "Eindhoven",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "psv",
+                "name": "PSV",
+                "shortName": "PSV",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fcdf2e77b0ad5cc64fd04213748461392ddf0164cc2b43bab8c39ddaf5368424.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/193ee354d52683eb3de277f1a305a4b4ae389e3f6bee207254c83788bd194f59.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/04d89f4dd216b197747172d9b0a2fd9d75b437bf1da41b58d5474a957df1d8cb.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5d605836c9ca3d007ab7a6e7d399006a1906452f51bbf37c3b0630e7b3a0a8af.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/7281b6e06efc522d8cc92efc78336cb4c4bbedd3a1ba3e5d2ee6a39900184bcd.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fcdf2e77b0ad5cc64fd04213748461392ddf0164cc2b43bab8c39ddaf5368424.png"
+                }
+            },
+            "away": {
+                "slug": "shakhtar-d",
+                "name": "Shakhtar D.",
+                "shortName": "FCS",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/03574eb6c0ac68b2aa9021933355303deadcda72f3b39c6625bd9fc8819d904b.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/821448c83fac9be0441cb49fc023de9ca8227dfdc2c1dac204ae7cc8e7445d01.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6c9813478e64ab49359d1509b02f43f4d979b9463b352949f7945369e85f1f74.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5c5a0631e185d9c3d6d547d6b4119eb4e20b18f349ce9fa81bd3b6d57dfc16af.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/6a189a5f55c443b4cd80a3d838c6974b356f384a2b78a9ff85dc91c93bbe084c.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/03574eb6c0ac68b2aa9021933355303deadcda72f3b39c6625bd9fc8819d904b.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "2e539b90-4fef-407a-887b-c406aad2880f",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-10T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 5,
+                "goalsAway": 0,
+                "winnerSlug": "fc-bayern-muenchen",
+                "venue": "Allianz Arena",
+                "venueCity": "M\u00fcnchen",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "fc-bayern-muenchen",
+                "name": "FC Bayern M\u00fcnchen",
+                "shortName": "FCB",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fe1e059956ddc61feec68dd4aeee2eafd18a146af8473b6fa4c9a35378986504.svg",
+                "logoUrls": {
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fe1e059956ddc61feec68dd4aeee2eafd18a146af8473b6fa4c9a35378986504.svg"
+                }
+            },
+            "away": {
+                "slug": "bod-glimt",
+                "name": "Bod\u00f8/Glimt",
+                "shortName": "BOD",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/1b207c5bf11c3347f146f89db9dbafb5033681d610702619eb23cd769874b587.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/aa632db4af3b5b8ba9a219d2b5490c9c5f40b25074357074728a4ebcbc66335f.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f0893649e4a1af52ef57e850de4530e3b38d6677196962700cddd01f34bc4b7a.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/23e78ae0b6cc7be4b555269db293dee1ec6a330d7a3e2386974bed9588da3850.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/3fac1c4cdd1d05140bd58b3f168a288432d7a05da6c663597430183b4de501da.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/1b207c5bf11c3347f146f89db9dbafb5033681d610702619eb23cd769874b587.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "2e78eb3d-4d7b-4842-9371-00eb94d28aa4",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-10T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 4,
+                "goalsAway": 1,
+                "winnerSlug": "como",
+                "venue": "Stadio Giuseppe Sinigaglia",
+                "venueCity": "Como",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "como",
+                "name": "Como",
+                "shortName": "COM",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/2c5c5dc4d34ee36a0054c1d2cf317a8bf14fd80cc16477aec195054d0deb377a.webp",
+                "logoUrls": {
+                    "teamLogo": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/2c5c5dc4d34ee36a0054c1d2cf317a8bf14fd80cc16477aec195054d0deb377a.webp",
+                    "teamLogoLight": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/2c5c5dc4d34ee36a0054c1d2cf317a8bf14fd80cc16477aec195054d0deb377a.webp"
+                }
+            },
+            "away": {
+                "slug": "rb-leipzig",
+                "name": "RB Leipzig",
+                "shortName": "RBL",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/23311d1bbb634fa51827ddfa719965381f8623e4f64e3ceb657037003b177033.svg",
+                "logoUrls": {
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/23311d1bbb634fa51827ddfa719965381f8623e4f64e3ceb657037003b177033.svg"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "6c06eaf6-d9e7-427e-9583-63b2c20a30d4",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-10T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 2,
+                "goalsAway": 3,
+                "winnerSlug": "lens-lens",
+                "venue": "Eden Arena",
+                "venueCity": "Hlavn\u00ed m\u011bsto Praha",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "slavia-praha-slavia-praha",
+                "name": "Slavia Praha",
+                "shortName": "SPG",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fea460794774c146f8fc8bb7b56e9b6eb80aa21073e9ec632d91caba9fdd8e41.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/a9e52b09eaedd94a77543811acc7fc8912d83fe404f75118ed3f7890ed0b8aa3.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/5d9eda9efad5f702416c5a06b0f752aba32cd383ec09bd8cc2e290562623c1dd.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0ff9cb7996a14d74807ec2b1b00597898c23eb13aff2ef00a033c764eafe2c63.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/8764394706d50121982284666fbdc14ff85eb7eab02697e50f5d852e4f58115a.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fea460794774c146f8fc8bb7b56e9b6eb80aa21073e9ec632d91caba9fdd8e41.png"
+                }
+            },
+            "away": {
+                "slug": "lens-lens",
+                "name": "Lens",
+                "shortName": "LEN",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/895089c7d731996c2afbfa7ee61a0586df967d1ee47c2e40d747ee27c2e9ecab.png",
+                "logoUrls": {
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/e5a23c61bf936fdf1c49db6fea257f785135d039d34c61bf3cd6161a92125383.png",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/4d7da751c95e7c7ba60465ff65eb1b31a319d38473255f999d008074d5c7fef4.png",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/2d279ed84963bb13348f8ca3477a182fa652f0e9d7415825b27b92fa0a8e7bb9.png",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c325388ba8bbf64b91f0ace4b4a5ae03ab7df7324ffe6b3d76a1c6f7cf6eea0b.png",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/895089c7d731996c2afbfa7ee61a0586df967d1ee47c2e40d747ee27c2e9ecab.png"
+                }
+            }
+        },
+        {
+            "fixture": {
+                "id": "a80d5fe6-a8b2-4875-98a7-376f313eca04",
+                "season": 2026,
+                "stage": "league-phase",
+                "matchday": 1,
+                "round": "Jornada 1",
+                "competitionName": "UEFA Champions League",
+                "kickoffUtc": "2026-09-10T19:00:00+00:00",
+                "kickoffTbd": false,
+                "status": "finished",
+                "goalsHome": 4,
+                "goalsAway": 0,
+                "winnerSlug": "manchester-united",
+                "venue": "Old Trafford",
+                "venueCity": "Stretford",
+                "fixtureId": null
+            },
+            "home": {
+                "slug": "manchester-united",
+                "name": "Manchester United",
+                "shortName": "MUN",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/53546406c1234ef955aa713d2b0ebc9afded9100a9a55a1754ec4ab2cf21be3c.png",
+                "logoUrls": {
+                    "20": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/49e1910ecf750a4a9c3ecc49562fb4d87f21b65aa0efb5ec691ccbc5e175b41f.png",
+                    "25": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/f3d072e5a98d096c6193a6d104efce7b6e41530b0e42d6d42cc921c42c81c1e6.png",
+                    "50": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/fb5d5bd82f966e3c5bfdb4f7564079243d61e15e7128e2004c106bd142e5de66.png",
+                    "70": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c7253cb4099feea0f4a62d3d013f1b162c1ec5b3fe053616298b681eaeb84264.png",
+                    "100": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/53546406c1234ef955aa713d2b0ebc9afded9100a9a55a1754ec4ab2cf21be3c.png",
+                    "svg": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/26a24cef1e79effd71f2ce571b5ac73a847916f53c4d50c60731f669dc32c004.svg"
+                }
+            },
+            "away": {
+                "slug": "sabah-sabah",
+                "name": "Sabah",
+                "shortName": "SAB",
+                "logoUrl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/632c0162d22f94263479b76bf958c6a240baba1dee3cac6d2179d989d378fb8e.jpg",
+                "logoUrls": {
+                    "hl": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/0b5e9a6e4b822d3e2f6be8ed1b1fcb4bd0dd725aa31807547d00259c916f8e76.jpg",
+                    "large": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/9935c36374dbcda707071dde73ba964c87afb2022f6f79e2ecd676d98751fbe1.jpg",
+                    "small": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/c0de7265edd8956c564ab1838b92936ad5f91bd523cb8add0a392804c2fa9c8a.jpg",
+                    "medium": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/8e6143c8e7b243b97675766d023002e833b372dbf5021aa08a2dc51c01f34541.jpg",
+                    "xlarge": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/d02bc966cb0cd1dada8f8e46dc56bcff059b9b183b59175df5bd688dcb989fa9.jpg",
+                    "xsmall": "https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/632c0162d22f94263479b76bf958c6a240baba1dee3cac6d2179d989d378fb8e.jpg"
+                }
+            }
+        }
+    ]
+}

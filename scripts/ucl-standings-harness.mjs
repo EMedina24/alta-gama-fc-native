@@ -77,6 +77,7 @@ try {
         join(repo, 'src/lib/cronogol/derive.ts'),
         join(repo, 'src/lib/cronogol/leagues.ts'),
         join(repo, 'src/lib/cronogol/standings.ts'),
+        join(repo, 'src/lib/cronogol/feed.ts'),
       ],
     }),
   );
@@ -93,11 +94,21 @@ try {
   };
 
   const lib = (name) => require(join(out, 'lib/cronogol', name));
-  const { UCL_LEAGUE_PHASE, cupBandFor, cupBandsApply, cupCaption, usedCupBands } =
-    lib('competitions.js');
+  const {
+    UCL_LEAGUE_PHASE,
+    cupBandFor,
+    cupBandsApply,
+    cupCaption,
+    uclFixtureRow,
+    uclOpeningRound,
+    uclRoundPlayed,
+    usedCupBands,
+  } = lib('competitions.js');
   const { abbreviate, crestSrc } = lib('derive.js');
   const { LEAGUES, roundCount } = lib('leagues.js');
   const { bandRangeLabel } = lib('standings.js');
+  const { googleAddUrl, jornadaFeedUrl, uclJornadaFeedUrl, uclSeasonFeedUrl, webcalUrl } =
+    lib('feed.js');
 
   const comp = UCL_LEAGUE_PHASE;
   const view = load('ucl-standings-2026.json');
@@ -231,6 +242,109 @@ try {
       const code = abbreviate(row.team.name, row.team.slug, row.team.shortName);
       assert.ok(code && code.length > 0, `${row.team.slug} has no monogram`);
     }
+  });
+
+  /* ── The league phase as a MATCHDAY (§124) ──────────────────────────────── */
+  console.log('\nthe round list — a second data path through the same rows');
+  const index = load('ucl-season-rounds-2026.json');
+  const md1 = load('ucl-jornada-2026-md1.json');
+
+  ok('fixture guard: 8 rounds of 18, round 1 played out', () => {
+    assert.equal(index.matchdays.length, 8);
+    assert.equal(md1.count, 18);
+    assert.equal(md1.fixtures.length, 18);
+    const r1 = index.matchdays.find((r) => r.matchday === 1);
+    assert.equal(r1.fixtures, 18);
+    assert.equal(r1.finished, 18);
+  });
+
+  ok('⚠ the round count is the INDEX LENGTH — roundCount() would say 70', () => {
+    assert.equal(index.matchdays.length, comp.matchdays);
+    assert.equal(roundCount({ clubCount: comp.clubs }), 70);
+  });
+
+  ok('⚠ `stages` is [] before the February draw — the normal state, not a gap', () => {
+    assert.deepEqual(index.stages, []);
+  });
+
+  ok('uclRoundPlayed reads finished === fixtures, never a clock', () => {
+    assert.equal(uclRoundPlayed(index.matchdays.find((r) => r.matchday === 1)), true);
+    assert.equal(uclRoundPlayed(index.matchdays.find((r) => r.matchday === 2)), false);
+    // ⚠ A round nobody has played is NOT "played out", even at zero of zero.
+    assert.equal(uclRoundPlayed({ matchday: 9, fixtures: 0, finished: 0 }), false);
+  });
+
+  ok('uclOpeningRound stops at the first round not played out', () => {
+    assert.equal(uclOpeningRound(index.matchdays), 2);
+    assert.equal(uclOpeningRound([]), null);
+    // Season over: hold on the last round rather than falling off the end.
+    assert.equal(
+      uclOpeningRound(index.matchdays.map((r) => ({ ...r, finished: r.fixtures }))),
+      8,
+    );
+  });
+
+  console.log('\nuclFixtureRow — the neutral row every organism already draws');
+  ok('carries the COMPETITION id, never the club-centric twin', () => {
+    const withTwin = md1.fixtures.find((i) => i.fixture.fixtureId);
+    assert.ok(withTwin, 'fixture no longer exercises the twin');
+    const row = uclFixtureRow(withTwin);
+    assert.equal(row.id, withTwin.fixture.id);
+    assert.notEqual(row.id, withTwin.fixture.fixtureId);
+  });
+  ok('⚠ only a MINORITY carry that twin — routing through it loses the rest', () => {
+    const twins = md1.fixtures.filter((i) => i.fixture.fixtureId).length;
+    assert.ok(twins < md1.fixtures.length / 2, `${twins}/18 carry a twin`);
+    console.log(`    (${twins}/18 carry fixtureId — the other ${18 - twins} have no club-side id at all)`);
+  });
+  ok('maps every row, home-away and never for-against', () => {
+    for (const item of md1.fixtures) {
+      const row = uclFixtureRow(item);
+      assert.equal(row.competition, 'cup');
+      assert.equal(row.competitionName, 'UEFA Champions League');
+      assert.equal(row.goalsHome, item.fixture.goalsHome);
+      assert.equal(row.goalsAway, item.fixture.goalsAway);
+      assert.equal(row.homeTeam, item.home);
+      assert.equal(row.awayTeam, item.away);
+      assert.ok(!('form' in row));
+    }
+  });
+  ok('passes a null side THROUGH — a pre-draw placeholder is not a missing club', () => {
+    const predraw = { fixture: { ...md1.fixtures[0].fixture }, home: null, away: null };
+    const row = uclFixtureRow(predraw);
+    assert.equal(row.homeTeam, null);
+    assert.equal(row.awayTeam, null);
+  });
+
+  /* ── Calendar feeds (§125) ──────────────────────────────────────────────── */
+  console.log('\ncalendar feeds — a URL that reaches a device cannot be recalled');
+  ok('the two cup feeds are the documented paths, verbatim', () => {
+    assert.equal(
+      uclSeasonFeedUrl(2026),
+      'https://crono-gol.com/cronogol/feed/ucl/2026.ics',
+    );
+    assert.equal(
+      uclJornadaFeedUrl(2026, 2),
+      'https://crono-gol.com/cronogol/feed/ucl/jornada/2026/2.ics',
+    );
+  });
+  ok('⚠ the ORIGIN is pinned, never an env-driven API base', () => {
+    for (const url of [uclSeasonFeedUrl(2026), uclJornadaFeedUrl(2026, 1), jornadaFeedUrl('laliga', 2026, 1)]) {
+      assert.ok(url.startsWith('https://crono-gol.com/'), url);
+    }
+  });
+  ok('webcalUrl swaps the SCHEME and nothing else', () => {
+    const https = uclSeasonFeedUrl(2026);
+    assert.equal(webcalUrl(https), 'webcal://crono-gol.com/cronogol/feed/ucl/2026.ics');
+    assert.equal(webcalUrl(https).slice(9), https.slice(8));
+  });
+  ok('⚠⚠ googleAddUrl carries the WEBCAL form — an https cid silently adds nothing', () => {
+    const cid = googleAddUrl(webcalUrl(uclSeasonFeedUrl(2026)));
+    assert.ok(cid.includes(encodeURIComponent('webcal://')));
+    assert.ok(!cid.includes(encodeURIComponent('https://crono-gol.com')));
+    // ⚠ This function does NOT convert. The web app's same-named one does, and
+    // copy-pasting it here would double-convert and reinstate the shipped bug.
+    assert.ok(googleAddUrl(uclSeasonFeedUrl(2026)).includes(encodeURIComponent('https://')));
   });
 
   console.log(`\n${passed} assertions passed.\n`);
