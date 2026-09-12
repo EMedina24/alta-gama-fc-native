@@ -25,7 +25,102 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-11 (latest) — MATCHDAYS carries the Champions League league
+> ⭐ **NEW 2026-09-11 (latest) — THE MATCHDAY ROW IS A STACKED PAIR NOW, and
+> its score is a goal column ([0158](./decisions/0158-matchday-rows-become-a-stacked-pair.md)).**
+> Ed, off a screenshot: *"the match rows seem cramped. The club names stacking
+> seems messy and difficult to read."* The defect was **correspondence, not
+> spacing**: the two crests ran HORIZONTALLY (`⬤ v ⬤`) while the two names ran
+> VERTICALLY, so nothing connected a crest to its club — you paired them by
+> remembering the order. [0035](./decisions/0035-jornada-rows-show-in-play-scores.md)
+> justified the 40pt pair with *"this pairing is unnamed, so the crest is the
+> whole identification"*, and that was never true in practice: the names sat
+> right beside it. It is one crest per name per line now — the shape FINISHED
+> TODAY ([0069](./decisions/0069-finished-today-stacked-rows.md)) already reached
+> from the opposite direction, fixing truncation rather than correspondence.
+>
+> ⚠ **A club name may now take TWO lines, and never truncates.** That reverses
+> 0035's one-line rule and is the web app's own conclusion for the same names:
+> *"a club name that wraps beats one that silently loses its second half."* Rows
+> in a day group are therefore ragged — accepted HERE and explicitly **not** on
+> FINISHED TODAY, whose goal digits are read down the card like a table. The
+> venue stays the one-line designated shrink.
+>
+> ⚠⚠ **The score moved to a per-line goal column on the right** — Ed's follow-up
+> mid-change: *"can we update the score view to match this one… it's the same as
+> on the board screen."* 0069's `goals` style is PORTED, not re-derived; they
+> must stay in step. Each digit now dims with its own name, which the chip could
+> not do. **The column is reserved for the whole ROUND (`anyPlayed`), never per
+> row** — goals are read down the list and a column appearing only on played
+> rows shifts the names on every row around it. A round with nothing played
+> draws no column at all; an unplayed row inside a reserved one prints `–`,
+> never `0` ([0044](./decisions/0044-score-is-an-atom.md)).
+>
+> ⚠⚠ `FixtureTiming` gained **`showScore`**, so a played row now KEEPS its
+> kickoff (`15:00` over `FT`) instead of losing it to the chip. **This does not
+> relax 0035 or trap 8.** It moves where the digits are drawn — the in-play
+> caption that must never say "live" and the cadence footnote beside the list
+> are both still required, and `showScore` cannot switch either off.
+>
+> ⚠⚠ **A CONCLUDED row says `FINAL` in LIME where its kickoff would be** — Ed:
+> *"for concluded games can we remove the time and replace it with FINAL in our
+> lime color please."* `FixtureTiming` gains an opt-in `finalLabel` branch; it
+> is a WORD, so `eyebrowLg` and never `tabular`. ⚠ The copy must stay SHORT — it
+> draws uppercase inside `Size.timingColumn` (64pt on a 24-hour clock), which is
+> why the Spanish is `Final` and **not** `Finalizado`.
+>
+> ⚠ **Two things about it were flagged before building, and stand as Ed's call.**
+> It costs a played row the kickoff time it had just gained; and it is a **THIRD
+> lime thing** on this screen beside the round pill and the calendar chip, where
+> SPEC §2 says *"if two things on a screen are lime, one is wrong"* — judged on
+> a fully-played round, where ten `FINAL`s appear at once. Same call as 0157.
+>
+> ⚠⚠ **`FT` is DELETED.** Ed had asked for it under the scores (*"please move
+> the ft to sit under the scores please"*) and the chevron still lives there —
+> but once `FINAL` is on the row, the word says the fact twice, which is exactly
+> what 0069 deleted it for on the board. `FixtureListProps.finishedLabel` and
+> `copy.matchdays.finished` went with it (`copy.today.finished` is untouched),
+> and the goal column dropped back to `Size.goalColumn` — the short-lived
+> `goalCaptionColumn` token is deleted rather than left dead.
+>
+> ⚠ **The in-play caption deliberately does NOT move.** They annotate different facts: `FT` says *this score is final* and
+> belongs to the digits; `In play` says *as of the last check*, a claim about
+> the TIME, and it is the one the cadence sentence pairs with. It is also the
+> only column that can afford it — 0035 sized `Size.timingColumn` (64/88)
+> **against `EN JUEGO`, not against the clock**, so the space is already paid
+> for there, while under the score it would widen the goal column on in-play
+> rows ALONE and shift the names on every row around them.
+>
+> ⚠ **The chevron rides beside `FT`** and deliberately does NOT take the board's
+> own trailing column: that is trap 33, where exactly that column cost this
+> row's names 19pt and truncated `Espanyol de Barcelona`. Resemblance to the
+> board is not worth re-opening it.
+>
+> ⚠ **Forcing a locale to check a label wipes the persisted store** — a dev fast
+> refresh of `store/preferences.ts` is trap 63, and it drops you into onboarding
+> mid-check. `/_debug/skip-onboarding` is the way back, and it cost a cycle here
+> before I remembered.
+>
+> ⚠ **The row is a COLUMN and the venue is a SIBLING of the head.** With the
+> venue inside the name block, the head's vertical centre fell between the away
+> club and the venue, and `13:00` read as belonging to the away side rather than
+> to the match. Caught on the simulator, not in review.
+>
+> `ClubLine` is promoted to `molecules/` (0013 — `fixture-list` is the second
+> consumer). ⚠ The two consumers legitimately DIFFER: the board keeps
+> `bodyStrong`/`lines={1}`, the matchday row takes `headline`/`lines={2}`.
+> `CrestPair` is deleted. Rows ~80pt → ~118pt, ~5 a screen instead of ~8 — Ed:
+> *"if the rows need to be taller to fit everything thats fine."*
+>
+> ⚠ **The width gate was measured, not argued**: a **335pt clamp** on the 402pt
+> simulator = a 375pt device's content width (0155's trick; no SE is installed),
+> on a 12-hour clock, with the goal column present — the tightest case in the
+> app at **162pt**. `Bayer 04 Leverkusen` and `Borussia Mönchengladbach` wrap;
+> neither truncates. Also verified: a TBD round (`--:--`), Bundesliga (`venue`
+> null on every fixture, so no third line), the UCL round, and FINISHED TODAY
+> unchanged at `/_debug/gallery?only=finished`. **A live row was not reachable**,
+> so the `rowActive` tint's full bleed is unconfirmed by eye.
+
+> ⭐ **NEW 2026-09-11 — MATCHDAYS carries the Champions League league
 > phase ([0156](./decisions/0156-the-league-phase-is-a-matchday.md)).**
 > `senpai-backend` §124 shipped `GET /cronogol/ucl/jornada/{season}` and
 > `…/{season}/{matchday}` (plus a stage route), and they are the **only** honest

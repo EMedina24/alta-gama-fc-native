@@ -779,7 +779,17 @@ export interface Copy {
     previous: string;
     next: string;
     missing: (n: number) => string;
-    finished: string;
+    /**
+     * ⚠ Replaces the KICKOFF on a concluded row, in `accent` — Ed's call
+     * (ADR 0158). It is not a caption: a played row no longer shows the time it
+     * started, and it no longer carries `FT` under its score either, which
+     * would have been the same fact twice on one row.
+     *
+     * ⚠ Renders uppercase inside `Size.timingColumn` (64pt at a 24-hour clock),
+     * so it must stay SHORT — `Finalizado` does not fit, which is why the
+     * Spanish is `Final` too.
+     */
+    final: string;
     /**
      * The caption under an in-play score, in `live`. ⚠ Means "as of the last
      * check" and must never become the word "live" — the fixture sweep is ~3h
@@ -1358,7 +1368,9 @@ export const esCopy: Copy = {
     previous: 'Jornada anterior',
     next: 'Jornada siguiente',
     missing: (n: number) => `Faltan ${n} partidos por publicar`,
-    finished: 'FIN',
+    // ⚠ `Final`, no `Finalizado`: se dibuja en mayúsculas dentro de
+    // `Size.timingColumn` (64pt) y la palabra larga no cabe.
+    final: 'Final',
     // ⚠ Dice "en juego", nunca "en directo": el barrido corre cada ~3 h.
     inProgress: 'En juego',
     inPlayNote:
@@ -1886,7 +1898,7 @@ export const enCopy: Copy = {
     previous: 'Previous matchday',
     next: 'Next matchday',
     missing: (n: number) => `${n} matches not published yet`,
-    finished: 'FT',
+    final: 'Final',
     // ⚠ "In play", never "live" — and shorter than the board's "In progress",
     // which does not fit the timing column at eyebrow tracking.
     inProgress: 'In play',

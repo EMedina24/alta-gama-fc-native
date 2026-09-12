@@ -491,7 +491,7 @@ export default function MatchdaysScreen() {
             zone={zone}
             clock={clock}
             phrases={phrases}
-            finishedLabel={copy.matchdays.finished}
+            finalLabel={copy.matchdays.final}
             inProgressLabel={copy.matchdays.inProgress}
             eventsCopy={copy.events}
           />

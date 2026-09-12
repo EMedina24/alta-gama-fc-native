@@ -4,8 +4,16 @@
  * ⚠ Branch order matters and is ported from the web app's `FixtureTiming`:
  *   1. finished OR live, with both goals non-null → the score
  *   2. cancelled → an em dash
- *   3. `kickoffTbd` → `--:--` with the full sentence on the label
- *   4. otherwise → the kickoff time
+ *   3. finished AND `finalLabel` given → that word, in `accent` (ADR 0158)
+ *   4. `kickoffTbd` → `--:--` with the full sentence on the label
+ *   5. otherwise → the kickoff time
+ *
+ * ⚠ Branch 3 is the one addition to the ported order, and it is OPT-IN: without
+ * `finalLabel` nothing changes for any caller. It sits after `cancelled`
+ * because a cancelled match is not a concluded one, and before `kickoffTbd`
+ * because a match that has been played has a real result whatever its kickoff
+ * once was. ⚠ It is a WORD, so it is not `tabular` and not a numeral variant —
+ * it is the one value this cell draws that is not a time or a dash.
  *
  * ⚠ Branch 1 is the only one that is not a string. A score is the `Score` atom
  * (ADR 0044) — two numerals, a rule, and a chip; the other three are a time or
@@ -53,6 +61,29 @@ export interface FixtureTimingProps {
   /** ⚠ `live` only ever paints the honest in-play caption — see the header. */
   captionTone?: ThemeColor;
   /**
+   * Whether branch 1 may fire at all (ADR 0158).
+   *
+   * ⚠ The matchday row passes `false` because its score moved to a per-line
+   * goal column on the right, matching the board's stacked pair (ADR 0069) —
+   * drawn twice, it would be the same fact in two places on one row. This cell
+   * then always shows the kickoff, which is what a played row otherwise loses.
+   *
+   * ⚠ It does NOT relax ADR 0035 / trap 8. An in-play score still appears only
+   * beside a caption that says *in play* and a cadence sentence on the screen;
+   * `false` moves where the digits are drawn, never whether the caption and the
+   * footnote are required.
+   */
+  showScore?: boolean;
+  /**
+   * `Final` — REPLACES the kickoff on a concluded row, in `accent` (ADR 0158,
+   * Ed's call). Omit it and a finished row keeps showing the time it started.
+   *
+   * ⚠ Drawn uppercase at `eyebrowLg` inside `Size.timingColumn` — 64pt at a
+   * 24-hour clock. A longer word than `FINAL` does not fit, which is why the
+   * Spanish copy is `Final` and not `Finalizado`.
+   */
+  finalLabel?: string | null;
+  /**
    * A disclosure mark, drawn BESIDE the caption (ADR 0045).
    *
    * ⚠ It lives here, and not in a column of its own on the row, because this
@@ -77,19 +108,29 @@ export function FixtureTiming({
   tbdLabel,
   caption,
   captionTone = 'textFaint',
+  showScore = true,
+  finalLabel = null,
   disclosure = null,
   align = 'left',
 }: FixtureTimingProps) {
   const scored =
-    (status === 'finished' || status === 'live') && goalsHome !== null && goalsAway !== null;
+    showScore &&
+    (status === 'finished' || status === 'live') &&
+    goalsHome !== null &&
+    goalsAway !== null;
 
   let value: string;
   let label: string | undefined;
   let dim = false;
+  /** ⚠ A word, not a time — see branch 3 in the header. */
+  let word = false;
 
   if (status === 'cancelled') {
     value = '—';
     dim = true;
+  } else if (status === 'finished' && finalLabel) {
+    value = finalLabel;
+    word = true;
   } else if (kickoffTbd) {
     value = '--:--';
     label = tbdLabel;
@@ -119,7 +160,13 @@ export function FixtureTiming({
           style={align === 'right' ? styles.chipRight : styles.chipLeft}
         />
       ) : (
-        <Text variant="numeralLg" tabular color={dim ? 'textFaint' : 'text'} accessibilityLabel={label}>
+        <Text
+          variant={word ? 'eyebrowLg' : 'numeralLg'}
+          // ⚠ Never on the word — `tabular` is for runs of digits, and lining
+          // figures do nothing for `FINAL` but cost it its natural spacing.
+          tabular={!word}
+          color={word ? 'accent' : dim ? 'textFaint' : 'text'}
+          accessibilityLabel={label}>
           {value}
         </Text>
       )}

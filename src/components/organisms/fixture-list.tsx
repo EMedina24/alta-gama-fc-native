@@ -10,6 +10,39 @@
  * which is editorial (what you can actually plan around, first); sorting by day
  * would float a provisional date above a confirmed one.
  *
+ * ⚠ **Each match is a STACKED pair** (ADR 0158): home over away, one crest and
+ * one name per line, the venue under them. It is deliberately the same shape as
+ * FINISHED TODAY (ADR 0069). What it replaces — a horizontal `⬤ v ⬤` pairing
+ * beside two stacked names — asked the reader to pair a crest with a name by
+ * remembering the order, and starved the names to ~187pt to do it.
+ *
+ * ⚠ The score is a per-line GOAL COLUMN on the right, not the chip in the
+ * timing column (ADR 0158) — the board's shape (ADR 0069), so each digit sits
+ * on its own club's line and dims with its own name. The timing cell therefore
+ * always shows the KICKOFF, which a played row used to lose to the chip.
+ *
+ * ⚠ The column is reserved for the WHOLE ROUND whenever any fixture in it has
+ * been played, not per row: goals are read down the list, and a column that
+ * appeared only on played rows would shift the names on every row around them.
+ * A round with nothing played draws no column at all, so a future matchday
+ * pays nothing for it. An unplayed row inside a reserved column prints `–`,
+ * never `0` (ADR 0044).
+ *
+ * ⚠ A CONCLUDED row says `FINAL` in `accent` where its kickoff would be, and
+ * does NOT also carry `FT` under its score (ADR 0158). A row wearing both said
+ * the same fact twice — the reason ADR 0069 deleted the word on the board.
+ * ⚠ It costs a played row the time it kicked off. That is the trade Ed asked
+ * for; the in-play caption is unaffected and still lives in the timing cell.
+ *
+ * ⚠ The chevron stays under the score, and does NOT take a column of its own
+ * the way the board's does. That is trap 33: a right-hand chevron column cost
+ * this row's names 19pt and truncated `Espanyol de Barcelona`.
+ *
+ * ⚠ A club name here may take TWO lines. Rows in one day group are therefore
+ * ragged, which is accepted: a name that wraps beats one that silently loses
+ * its second half, and truncating one is the failure ADR 0029 names. FINISHED
+ * TODAY keeps `lines={1}` because its goal digits are read down the card.
+ *
  * ⚠ The losing side's name drops to `textDim`; **a draw leaves both at full
  * ink.** That is score-driven, not status-driven — an in-play row dims the side
  * that is behind, which is what the visible score already says. `scoreEmphasis`
@@ -33,13 +66,13 @@
 import { Fragment, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Chevron, Crest, Text } from '@/components/atoms';
-import { FixtureTiming } from '@/components/molecules';
+import { Chevron, Text } from '@/components/atoms';
+import { ClubLine, FixtureTiming } from '@/components/molecules';
 import { Colors, Size, Spacing } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
 import { dayGroups } from '@/lib/cronogol/jornada';
 import { scoreEmphasis } from '@/lib/cronogol/scores';
-import type { JornadaFixtureView, TeamRef } from '@/lib/cronogol/types';
+import type { JornadaFixtureView } from '@/lib/cronogol/types';
 import { formatFixtureDate } from '@/lib/format';
 import type { Copy } from '@/lib/i18n/copy';
 import type { Phrases } from '@/lib/i18n/phrases';
@@ -47,13 +80,23 @@ import type { ClockFormat } from '@/store/preferences';
 import { MatchEvents } from './match-events';
 import type { FixtureEventsSource } from '@/queries/use-fixture-events';
 
+/** ⚠ Never `0` — an unplayed row mirrors the format, it does not claim a result (ADR 0044). */
+const NO_SCORE = '–';
+
 export interface FixtureListProps {
   fixtures: readonly JornadaFixtureView[];
   zone: string;
   clock: ClockFormat;
   phrases: Phrases;
-  /** `FT` — shown under a finished score. */
-  finishedLabel: string;
+  /**
+   * `Final` — REPLACES the kickoff on a concluded row, in `accent` (ADR 0158).
+   *
+   * ⚠ It is not a caption beside the score; it is the row's status, said once.
+   * The `FT` word that used to sit under the digits is GONE with it — a row
+   * carrying both said the same fact twice, which is what ADR 0069 deleted the
+   * word for on the board.
+   */
+  finalLabel: string;
   /**
    * `IN PLAY` — shown under an in-play score, in `live`.
    * ⚠ Never the word "live": the sweep is ~3h (ADR 0035).
@@ -71,62 +114,27 @@ export interface FixtureListProps {
   eventsSource?: FixtureEventsSource;
 }
 
-/**
- * `[home] v [away]` — the pairing, in the order the match is named.
- *
- * ⚠ Private to this organism (ADR 0013): promote to `molecules/` only when a
- * second organism wants it. It is deliberately NOT `VersusBadge`, which is the
- * 34pt accent ring built for the next-up card's 64pt crests (ADR 0034) — at row
- * weight the ring would be the loudest thing in a ten-row list.
- *
- * ⚠ `accessible={false}`: the pairing is named once, by the two club names
- * beside it. Without this VoiceOver gains a stop that reads only "v".
- *
- * ⚠ `Size.crestCard` (40), NOT `Size.crestRow` (26). `crestRow` is shared with
- * the standings row, FINISHED TODAY and `ScoreLine` and must not move; 40 is
- * the size ADR 0034 records as "the row and list size", and this pairing is
- * unnamed, so the crest is the whole identification. (`UpcomingCard` used to
- * share it; it dropped to 30 in ADR 0043 once the names joined it.)
- *
- * ⚠ The cut is `small`, not `xsmall`. `CREST_KEYS.xsmall` is documented for
- * 40–76px slots — at 40pt that is a 120px box on a @3x screen, and ADR 0034
- * already found `xsmall` "visibly softens" when asked to fill one.
- *
- * Its width is constant — two fixed-size crests and one glyph, and a club with
- * no artwork falls back to a monogram tile at the same size — so the name
- * column lines up across every row without a fixed-width token.
- */
-function CrestPair({ home, away }: { home: TeamRef | null; away: TeamRef | null }) {
-  return (
-    <View style={styles.crests} accessible={false}>
-      <Crest
-        src={crestSrc(home?.logoUrls ?? null, home?.logoUrl ?? null, 'small')}
-        fallback={home ? abbreviate(home.name, home.slug, home.shortName) : '?'}
-        size={Size.crestCard}
-      />
-      <Text variant="caption" color="textFaint">
-        v
-      </Text>
-      <Crest
-        src={crestSrc(away?.logoUrls ?? null, away?.logoUrl ?? null, 'small')}
-        fallback={away ? abbreviate(away.name, away.slug, away.shortName) : '?'}
-        size={Size.crestCard}
-      />
-    </View>
-  );
-}
-
 export function FixtureList({
   fixtures,
   zone,
   clock,
   phrases,
-  finishedLabel,
+  finalLabel,
   inProgressLabel,
   eventsCopy,
   eventsSource = 'league',
 }: FixtureListProps) {
   const groups = dayGroups(fixtures, zone);
+  /**
+   * ⚠ Over the WHOLE round, not the day group: two groups side by side with
+   * different column widths would misalign the names between them.
+   *
+   * ⚠ Keyed on STATUS, not on non-null goals. The column also carries the `FT`
+   * and in-play captions, and a `live` row with null goals — which falls through
+   * to its kickoff — would otherwise lose the caption ADR 0035 and trap 8
+   * require it to wear.
+   */
+  const anyResult = fixtures.some((f) => f.status === 'finished' || f.status === 'live');
   /** ⚠ One row open at a time — a single id, not a set (ADR 0045). */
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -170,41 +178,116 @@ export function FixtureList({
              */
             const body = (
               <>
-                <FixtureTiming
-                  kickoffUtc={fixture.kickoffUtc}
-                  kickoffTbd={fixture.kickoffTbd}
-                  status={fixture.status}
-                  goalsHome={fixture.goalsHome}
-                  goalsAway={fixture.goalsAway}
-                  zone={zone}
-                  clock={clock}
-                  tbdLabel={phrases.kickoffTbd}
-                  caption={inPlay ? inProgressLabel : played ? finishedLabel : null}
-                  captionTone={inPlay ? 'live' : 'textFaint'}
-                  // ⚠ Beside `FIN`, not in a column of its own on the right. A
-                  // right-hand chevron column cost the name block 19pt and
-                  // truncated `Espanyol de Barcelona` — measured on the
-                  // simulator, not guessed, and the exact failure ADR 0029
-                  // names. See `FixtureTiming`'s `disclosure` prop.
-                  disclosure={canExpand ? <Chevron expanded={expanded} /> : null}
-                />
+                <View style={styles.head}>
+                  <FixtureTiming
+                    kickoffUtc={fixture.kickoffUtc}
+                    kickoffTbd={fixture.kickoffTbd}
+                    status={fixture.status}
+                    goalsHome={fixture.goalsHome}
+                    goalsAway={fixture.goalsAway}
+                    zone={zone}
+                    clock={clock}
+                    tbdLabel={phrases.kickoffTbd}
+                    /**
+                     * ⚠ The IN-PLAY caption stays HERE, while `FT` moved under
+                     * the score (ADR 0158). They annotate different facts: `FT`
+                     * says *this score is final*, so it belongs to the digits;
+                     * `In play` says *as of the last check*, which is a claim
+                     * about the TIME and the one the cadence sentence beside the
+                     * list pairs with (ADR 0035, trap 8).
+                     *
+                     * ⚠ It is also the only column that can afford it —
+                     * `Size.timingColumn` was measured against `EN JUEGO`, not
+                     * against the clock. Under the score it would widen the goal
+                     * column on in-play rows alone and shift the names on every
+                     * row around them.
+                     */
+                    caption={inPlay ? inProgressLabel : null}
+                    captionTone="live"
+                    finalLabel={finalLabel}
+                    // ⚠ The digits and `FT` live in the goal column now, so this
+                    // cell is the kickoff and, when live, its honest caption.
+                    showScore={false}
+                  />
 
-                <CrestPair home={fixture.homeTeam} away={fixture.awayTeam} />
+                  <View style={styles.pair}>
+                    {(
+                      [
+                        { team: fixture.homeTeam, name: homeName, muted: dim.home === 'muted' },
+                        { team: fixture.awayTeam, name: awayName, muted: dim.away === 'muted' },
+                      ] as const
+                    ).map(({ team, name, muted }, i) => (
+                      <ClubLine
+                        key={i}
+                        // ⚠ `xsmall`, not `small`. At `Size.crestRow` a @3x box
+                        // is 78px, which is what that cut is documented for —
+                        // and the pairing FINISHED TODAY already ships.
+                        src={crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'xsmall')}
+                        fallback={team ? abbreviate(team.name, team.slug, team.shortName) : '?'}
+                        name={name}
+                        muted={muted}
+                        // 17pt, not FINISHED TODAY's 15: dropping the 95pt
+                        // pairing column gave this name ~60pt back, and there is
+                        // no goal column on the right taking it away again.
+                        variant="headline"
+                        lines={2}
+                      />
+                    ))}
+                  </View>
 
-                <View style={styles.names}>
-                  <Text variant="bodyStrong" color={dim.home === 'muted' ? 'textDim' : 'text'} numberOfLines={1}>
-                    {homeName}
-                  </Text>
-                  <Text variant="bodyStrong" color={dim.away === 'muted' ? 'textDim' : 'text'} numberOfLines={1}>
-                    {awayName}
-                  </Text>
-                  {place ? (
-                    <Text variant="footnote" color="textFaint" numberOfLines={1}>
-                      {place}
-                    </Text>
+                  {anyResult ? (
+                    /* ⚠ Both digits `tabular` and in a FIXED column — the same
+                       shape the board uses, so a reader moving between the two
+                       screens reads one score, not two. */
+                    <View style={styles.goals}>
+                      {(
+                        [
+                          { goals: fixture.goalsHome, muted: dim.home === 'muted' },
+                          { goals: fixture.goalsAway, muted: dim.away === 'muted' },
+                        ] as const
+                      ).map(({ goals, muted }, i) => (
+                        <Text
+                          key={i}
+                          variant="numeral"
+                          tabular
+                          color={goals === null ? 'textFaint' : muted ? 'textDim' : 'text'}
+                          style={styles.goal}>
+                          {goals === null ? NO_SCORE : goals}
+                        </Text>
+                      ))}
+
+                      {/* ⚠ The disclosure stays UNDER its own score (Ed's
+                          call), but the `FT` word that sat beside it is gone —
+                          `FINAL` in the kickoff cell already says it, and a row
+                          saying it twice is what ADR 0069 deleted the word for.
+                          ⚠ Still not a column of its own: that width is trap 33. */}
+                      {canExpand ? (
+                        <View style={styles.captionRow}>
+                          <Chevron expanded={expanded} />
+                        </View>
+                      ) : null}
+                    </View>
                   ) : null}
                 </View>
 
+                {place ? (
+                  <Text
+                    variant="footnote"
+                    color="textFaint"
+                    numberOfLines={1}
+                    // ⚠ Indented to the club NAMES, not to the row's edge, so the
+                    // whole block has one text left-edge. Built from the tokens
+                    // to its left; the timing column is the clock-dependent one.
+                    style={{
+                      paddingLeft:
+                        (clock === '12' ? Size.timingColumn12 : Size.timingColumn) +
+                        Spacing.three +
+                        Size.crestRow +
+                        Spacing.three,
+                    }}>
+                    {place}
+                  </Text>
+                ) : null}
               </>
             );
 
@@ -265,14 +348,12 @@ const styles = StyleSheet.create({
     marginHorizontal: -Spacing.five,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // ⚠ `two`, not `three`. At 40pt crests the pairing column is 95pt wide and
-    // the name column is the one that pays for it — 4pt back on each side of
-    // the pairing is the difference between `Espanyol de Barcelona` fitting and
-    // truncating for a reader on a 12-hour clock.
+    // ⚠ A COLUMN, and the venue is a SIBLING of the head rather than a third
+    // line inside the name block. Inside it, the head's vertical centre fell
+    // between the away club and the venue, and `13:00` read as belonging to the
+    // away side rather than to the match. The head centres on the two clubs.
     gap: Spacing.two,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.four,
     // Bleeds past the screen gutter so the rule below — and a live row's tint —
     // run edge to edge, flush with the day header above them.
     paddingHorizontal: Spacing.five,
@@ -281,6 +362,37 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.dark.hairline,
   },
   live: { backgroundColor: Colors.dark.rowActive },
-  crests: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
-  names: { flex: 1, gap: Spacing.half, minWidth: 0 },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // `three` is affordable again now the 95pt pairing column is gone — it was
+    // clawed back to `two` in ADR 0035 to stop `Espanyol de Barcelona`
+    // truncating, and the stacked pair hands the names far more than it costs.
+    gap: Spacing.three,
+  },
+  /** The two club lines. `two` between them reads as one pair. */
+  pair: { flex: 1, minWidth: 0, gap: Spacing.two },
+  /**
+   * A hairline on its left running the pair's full height, so the digits sit in
+   * a column of their own and not at the end of a name. The same `two` gap as
+   * the pair keeps each digit on its club's line. Ported from the board's own
+   * `goals` style (ADR 0069) rather than re-derived — they must stay in step.
+   */
+  goals: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    // ⚠ `flex: 0` and a FIXED width — it has an intrinsic width and must never
+    // take a share (trap 56), and it must not resize per row either. Two digits
+    // set it; the chevron under them is narrower. It went back to `goalColumn`
+    // when `FT` left this column for `FINAL` on the other side of the row.
+    flex: 0,
+    width: Size.goalColumn,
+    alignItems: 'flex-end',
+    gap: Spacing.two,
+    paddingLeft: Spacing.three,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: Colors.dark.hairlineMid,
+  },
+  goal: { width: Size.goalColumn, textAlign: 'right' },
+  captionRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
 });

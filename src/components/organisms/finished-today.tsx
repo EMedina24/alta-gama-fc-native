@@ -7,7 +7,11 @@
  *
  * ⚠ **Each match is a STACKED pair** (ADR 0069): home over away, one crest and
  * one name per line, the goals in a fixed right-aligned column, the chevron in
- * its own. There is no `FT` word — the section is titled "Finished today" and
+ * its own. The line itself is now the `ClubLine` molecule — promoted out of
+ * here under ADR 0013 once the matchday row wanted the same shape (ADR 0158).
+ * ⚠ It keeps `lines={1}`: the goals are read DOWN the card, so a row grown by a
+ * wrapped name would break that column. The matchday row, which has no such
+ * column, is the one that wraps. There is no `FT` word — the section is titled "Finished today" and
  * the row used to say it again, at the cost of the names: the trailing cell
  * truncated `Nottingham Forest`, `Brighton & Hove Albion` and `Real Sociedad`.
  * Nothing on this row may be added to the right of the goals without
@@ -37,7 +41,8 @@ import { Fragment, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { Chevron, Crest, Hairline, Text } from '@/components/atoms';
+import { Chevron, Hairline, Text } from '@/components/atoms';
+import { ClubLine } from '@/components/molecules';
 import { Colors, LeagueBand, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
 import type { LeagueBandSpec } from '@/constants/theme';
 import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
@@ -162,20 +167,13 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
                           { team: fixture.awayTeam, name: awayName, muted: dim.away === 'muted' },
                         ] as const
                       ).map(({ team, name, muted }, i) => (
-                        <View key={i} style={styles.line}>
-                          <Crest
-                            src={crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'xsmall')}
-                            fallback={team ? abbreviate(team.name, team.slug, team.shortName) : '?'}
-                            size={Size.crestRow}
-                          />
-                          <Text
-                            variant="bodyStrong"
-                            color={muted ? 'textDim' : 'text'}
-                            numberOfLines={1}
-                            style={styles.name}>
-                            {name}
-                          </Text>
-                        </View>
+                        <ClubLine
+                          key={i}
+                          src={crestSrc(team?.logoUrls ?? null, team?.logoUrl ?? null, 'xsmall')}
+                          fallback={team ? abbreviate(team.name, team.slug, team.shortName) : '?'}
+                          name={name}
+                          muted={muted}
+                        />
                       ))}
                     </View>
 
@@ -243,8 +241,6 @@ const styles = StyleSheet.create({
   },
   /** The two club lines. `two` between them so the crests read as a pair. */
   pair: { flex: 1, minWidth: 0, gap: Spacing.two },
-  line: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  name: { flex: 1, minWidth: 0 },
   /**
    * The goal column: a hairline on its left running the pair's full height, so
    * the digits sit in a column of their own and not at the end of a name. The

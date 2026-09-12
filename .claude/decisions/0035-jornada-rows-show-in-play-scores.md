@@ -1,7 +1,11 @@
 # 0035 — Jornada rows: horizontal crest pairing, and an in-play score that never says "live"
 
 - **Date:** 2026-08-25
-- **Status:** Accepted
+- **Status:** Accepted — **row geometry superseded by [0158](./0158-matchday-rows-become-a-stacked-pair.md)** (the horizontal crest
+  pairing, `Size.crestCard` at 40, the `small` cut, the `Spacing.two` row gap and
+  the one-line name rule). ⚠ **Everything else here stands**: the in-play branch,
+  the `In play` / `En juego` caption that must never say "live", the required
+  cadence footnote, `Type.numeralLg`, and the full-bleed separators.
 - **Decided by:** Ed Medina
 
 ## Context
