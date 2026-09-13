@@ -1171,6 +1171,37 @@ export const Size = {
   /** Slot count at which the crown mark drops to the tight cut above. */
   leagueRailTightFrom: 6,
   /**
+   * The crown mark once the rail carries `leagueRailTighterFrom` slots or more
+   * (ADR 0160). The Table screen reached SEVEN when Liga Hondubet joined the
+   * catalogue beside the Champions League chip.
+   *
+   * ⚠ **Same arithmetic as the tight cut above, one slot further on.** The rail
+   * is `min(width, MaxContentWidth) - 2*Spacing.five`, less `2*leagueRailPad`,
+   * split into equal flexed slots with no gap:
+   *
+   * | Device | content | 7 slots | air/side at the 44 tight cut |
+   * | --- | --- | --- | --- |
+   * | SE 3 / 13 mini (375) | 323 | **46.14** | **1.07** |
+   * | 15 / 16 (393) | 341 | 48.71 | 2.36 |
+   * | 16 Pro (402) | 350 | 50.00 | 3.00 |
+   * | 16 Pro Max (440) | 388 | 55.43 | 5.71 |
+   *
+   * Six chips have 4.9pt/side today. `46.14 - 2*4.07 = 38` → **38 x 19**, which
+   * restores 4.07pt/side at 375 — the same derivation 0153 used to land on 44,
+   * and the closest the seventh slot can get to what the sixth reads like.
+   *
+   * ⚠ The 19:1 ratio matches the two cuts above (2:1 landscape), so a mark does
+   * not change shape as the rail grows — only scale.
+   *
+   * ⚠ **A first cut, device-judged like every chip number before it** (0116,
+   * 0153). If the marks read as stamps rather than badges, the lever is the
+   * rail's own `MaxContentWidth`/pad rather than a fourth cut.
+   */
+  leagueChipMarkWCrownTighter: 38,
+  leagueChipMarkHCrownTighter: 19,
+  /** Slot count at which the crown mark drops again, to the tighter cut above. */
+  leagueRailTighterFrom: 7,
+  /**
    * A DRAWN competition lockup in a crown chip (ADR 0133/0153).
    *
    * ⚠ **Sized by the CHIP, not by the landscape mark box.** `CompetitionMark`

@@ -456,21 +456,64 @@ export function playerDisplayName(name: string): string {
 }
 
 /**
- * The surname half of a surname-first name — the short form a shirt carries.
+ * Tokens that are part of a surname rather than a surname — never a shirt name.
  *
- * For the leagues that serve `"Surname, Given"` this is the playing name and
- * the only form that fits a lineup token. Every other league has no comma and
- * gets its whole name back, exactly as before this existed.
+ * ⚠⚠ **Without this list the token reads `de`.** Compared lower-cased against a
+ * single token, so multi-word particles (`de la`) need only their first word
+ * here; the walk below steps past one particle, which is all any name in this
+ * data needs.
+ */
+const NAME_PARTICLES = new Set([
+  "de", "del", "la", "las", "los", "da", "das", "do", "dos",
+  "e", "di", "van", "von", "y", "bin", "al",
+]);
+
+/**
+ * The one word a shirt carries — the short form for a lineup token.
+ *
+ * Three shapes, because three conventions reach this function:
+ *
+ * 1. **`"Surname, Given"`** (Puerto Rico) — the comma is the discriminant and
+ *    the whole first half is the playing name; both surnames belong to it.
+ * 2. **Fewer than four tokens** — the LAST word. `"David Raya"` → `Raya`.
+ * 3. **Four or more** (ADR 0161) — the SPANISH convention's paternal surname,
+ *    the second-to-last word, stepping past a particle if it lands on one.
+ *    `"Edrick Eduardo Menjivar Johnson"` → `Menjivar`.
+ *
+ * ⚠⚠ **Shape 3 assumes the SPANISH order (given · paternal · maternal), and
+ * the Portuguese order is the OPPOSITE** (given · maternal · paternal), so
+ * `"Gabriel dos Santos Magalhães"` answers `Santos` where a Brazilian would say
+ * Magalhães. Nothing in a name says which convention it follows. This is
+ * survivable only because of where the function is REACHED: `tokenName` prefers
+ * `shortName`, LaLiga serves one for every player, and the leagues that do not
+ * are the Premier League (whose unnamed rows are all two tokens — shape 2) and
+ * Honduras (Spanish). ⚠ A Portuguese-convention league arriving with null
+ * `shortName`s needs a different answer, not a bigger particle list.
+ *
+ * ⚠ **Never title-cases and never reorders** — `playerDisplayName`'s rule, and
+ * for the same reason.
  *
  * ⚠ Not a substitute for `playerDisplayName` in a list or a header: two
  * brothers on one squad share a surname, and the token is told apart by the
  * shirt beside it.
+ *
+ * Verified 2026-09-12 against every squad the app can reach — all 12 Honduran
+ * clubs (297 players) plus Barcelona, Real Madrid and Arsenal: **zero** results
+ * are a particle or a stub, and no Honduran result exceeds 12 characters, which
+ * is the width at which `nameSize` drops a token to its smallest step.
  */
 export function playerFamilyName(name: string): string {
   const comma = name.indexOf(",");
-  if (comma === -1) return name;
-  const surnames = name.slice(0, comma).trim();
-  return surnames.length > 0 ? surnames : name;
+  if (comma !== -1) {
+    const surnames = name.slice(0, comma).trim();
+    return surnames.length > 0 ? surnames : name;
+  }
+  const tokens = name.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return name;
+  const last = tokens[tokens.length - 1];
+  if (tokens.length < 4) return last;
+  const paternal = tokens[tokens.length - 2];
+  return NAME_PARTICLES.has(paternal.toLowerCase()) ? last : paternal;
 }
 
 /** Fixtures that can still be added to a calendar. */

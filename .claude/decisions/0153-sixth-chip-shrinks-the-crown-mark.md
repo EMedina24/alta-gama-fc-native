@@ -5,6 +5,12 @@
 - **Decided by:** Ed (chose the sixth chip over a separate control, and placed it second)
 - **Amends:** [0118](./0118-league-rail-static-and-plate-drags.md) — which pre-authorised exactly this ("a sixth league shrinks the slots further; the mark tokens are the lever if that day comes")
 - **Reads:** [0123](./0123-league-marks-full-colour-at-rest.md) · keeps [0031](./0031-league-filter-tiles-are-artwork-only.md) · third surface for [0133](./0133-ucl-lockup-replaces-the-spelled-name.md)
+- **Amended by [0160](./0160-a-seventh-chip-shrinks-the-mark-again.md)** (2026-09-12), which adds a
+  third cut at seven slots and turns `tight` into a three-valued `MarkCut`. ⚠ Two lines
+  below are now stale and 0160 says so: the consequences section's *"Matchdays (4 chips)
+  and Clubs (5, ground tone) are untouched … only the Table rail has six"* — Liga
+  Hondubet ([0159](./0159-liga-hondubet-joins-the-catalogue.md)) put BOTH of those rails
+  on six and the Table on seven. Everything else here stands unchanged.
 
 ## Context
 

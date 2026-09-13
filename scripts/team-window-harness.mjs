@@ -1,7 +1,9 @@
 /**
  * Plain-node harness for the pure board modules — `matchEventsCapable`'s
- * competition gate (ADR 0132 §10, opened for the UCL by ADR 0137) and
- * `eventSide`'s slug-less-opponent elimination rule (ADR 0137).
+ * competition gate (ADR 0132 §10, opened for the UCL by ADR 0137),
+ * `eventSide`'s slug-less-opponent elimination rule (ADR 0137),
+ * `crestSrc`'s fall-through to the mirrored `logoUrl` (ADR 0159), and
+ * `playerFamilyName`'s shirt-name rule (ADR 0161).
  *
  * ADR 0132's original 14-assertion harness was scratch and thrown away; this
  * one is checked in. Run: `node scripts/team-window-harness.mjs`.
@@ -58,6 +60,7 @@ try {
         join(repo, 'src/lib/cronogol/team-window.ts'),
         join(repo, 'src/lib/cronogol/events.ts'),
         join(repo, 'src/lib/cronogol/live.ts'),
+        join(repo, 'src/lib/cronogol/derive.ts'),
       ],
     }),
   );
@@ -81,6 +84,7 @@ try {
   const { matchEventsCapable } = lib('team-window.js');
   const { eventSide } = lib('events.js');
   const { teamRefFromLive, boardFromRoute } = lib('live.js');
+  const { crestSrc, playerFamilyName, playerDisplayName } = lib('derive.js');
 
   // ── matchEventsCapable ────────────────────────────────────────────────────
   // League branch: byte-for-byte the pre-0137 semantics (ADR 0132 §10).
@@ -93,6 +97,13 @@ try {
   assert.equal(
     matchEventsCapable({ competition: 'league', leagueSlug: 'lpr-pro-clausura', competitionName: null }),
     false, 'league + LPR (matchEvents: false, ADR 0105) stays disabled');
+  assert.equal(
+    matchEventsCapable({
+      competition: 'league',
+      leagueSlug: 'liga-nacional-apertura',
+      competitionName: null,
+    }),
+    false, 'league + Liga Hondubet (matchEvents: false, ADR 0159) stays disabled');
 
   // Non-league branch: the dated allowlist on the EXACT wire name (ADR 0137).
   assert.equal(
@@ -204,6 +215,75 @@ try {
     'a null side on the fixture row costs nothing — the catalogue still answers');
   assert.equal(board.source, 'route', 'still a tier-0 board');
   console.log('teamRefFromLive/boardFromRoute: 9 assertions pass');
+
+  // ── crestSrc: the S1 fall-through ─────────────────────────────────────────
+  // ⚠⚠ Liga Hondubet's clubs carry `logoUrls: { S1 }` and NOTHING else, and
+  // that S1 URL points at the Genius Sports image CDN — which 403s on a burst,
+  // and a 403 writes a PERMANENT `asset_mirrors.rejected_at` on the backend
+  // that no later sweep retries. A twelve-crest grid is exactly that burst.
+  //
+  // `logoUrl` is our own mirrored copy. This app already renders it, because
+  // `S1` appears in none of the four per-league key vocabularies in
+  // `CREST_KEYS`, so every size walks its list, matches nothing and falls
+  // through. ⚠ That safety is INCIDENTAL rather than designed — nobody added
+  // S1 to a deny-list — so it is pinned here: a well-meaning "add the sizes the
+  // scraped leagues serve" would silently start hot-linking a CDN we can be
+  // locked out of for good. ADR 0159.
+  const HN_URLS = { S1: 'https://images.statsengine.playbyplay.api.geniussports.com/abc123S1.png' };
+  const HN_MIRROR = 'https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/def456.png';
+  for (const want of ['xsmall', 'small', 'medium', 'card']) {
+    assert.equal(crestSrc(HN_URLS, HN_MIRROR, want), HN_MIRROR,
+      `crestSrc(${want}) falls past the S1-only map to the mirrored logoUrl`);
+  }
+  // The neighbouring behaviours this must not have broken.
+  assert.equal(crestSrc({ svg: 's.svg', small: 's.png' }, 'fallback.png', 'small'), 's.png',
+    'a matching size key still outranks logoUrl');
+  assert.equal(crestSrc(null, HN_MIRROR, 'small'), HN_MIRROR,
+    'a null map is the logoUrl, as for an opponent-only club');
+  assert.equal(crestSrc({ S1: 'genius.png' }, null, 'small'), null,
+    'S1 alone with no mirror is NULL — the monogram, never the third-party CDN');
+  console.log('crestSrc: 7 assertions pass');
+
+  // ── playerFamilyName: the shirt name (ADR 0161) ───────────────────────────
+  // Shape 1 — the comma form. Unchanged from before 0161; Puerto Rico's.
+  assert.equal(playerFamilyName('COTTO MARTINEZ, LUIS ALEJANDRO'), 'COTTO MARTINEZ',
+    'the comma form still yields the whole surname half, both surnames');
+  assert.equal(playerFamilyName('MALFORMED,'), 'MALFORMED',
+    'a trailing comma keeps the half that is real — and note this DIFFERS from '
+    + 'playerDisplayName, which returns the name whole for the same input');
+
+  // Shape 2 — under four tokens, the last word.
+  assert.equal(playerFamilyName('David Raya'), 'Raya',
+    'two tokens take the last — 43 of Arsenal\'s 49 have no shortName and hit this');
+  assert.equal(playerFamilyName('Raul Alejandro Benitez'), 'Benitez', 'three tokens take the last');
+  assert.equal(playerFamilyName('Rodrygo'), 'Rodrygo', 'one token is itself');
+
+  // Shape 3 — four or more, the SPANISH paternal surname.
+  assert.equal(playerFamilyName('Edrick Eduardo Menjivar Johnson'), 'Menjivar',
+    'four tokens take the second-to-last, not the maternal surname');
+  assert.equal(playerFamilyName('Edwin Alexander Rodriguez Castillo'), 'Rodriguez',
+    'the longest Honduran name resolves to a shirt-sized word');
+
+  // ⚠⚠ The guard. Every one of these printed `de` or `e` on a shirt without it.
+  assert.equal(playerFamilyName('Gabriel Fernando de Jesus'), 'Jesus',
+    "a particle at [-2] steps to the last word — NEVER 'de'");
+  assert.equal(playerFamilyName('Rodrygo Silva de Goes'), 'Goes', "never 'de'");
+  assert.equal(playerFamilyName('Bernardo Mota Veiga de Carvalho e Silva'), 'Silva',
+    "never 'e' — and this one is right by accident and correct anyway");
+  assert.equal(playerFamilyName('Endrick Felipe Moreira de Sousa'), 'Sousa', "never 'de'");
+
+  // ⚠ The documented Portuguese miss, pinned so it is a KNOWN answer rather
+  // than a surprise: the convention is the reverse and no name says which it
+  // follows. Reached only if such a league ever serves a null shortName.
+  assert.equal(playerFamilyName('Gabriel dos Santos Magalhães'), 'Santos',
+    'Portuguese order answers the MATERNAL surname — documented, not fixed here');
+
+  // playerFamilyName must not have disturbed its sibling.
+  assert.equal(playerDisplayName('COTTO MARTINEZ, LUIS ALEJANDRO'), 'LUIS ALEJANDRO COTTO MARTINEZ',
+    'playerDisplayName still flips on the first comma only');
+  assert.equal(playerDisplayName('Edrick Eduardo Menjivar Johnson'), 'Edrick Eduardo Menjivar Johnson',
+    'a comma-less name is returned untouched — lists and headers keep the full name');
+  console.log('playerFamilyName: 14 assertions pass');
 
   console.log('team-window harness: ALL PASS');
 } finally {

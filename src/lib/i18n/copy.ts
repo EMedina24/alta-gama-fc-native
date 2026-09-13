@@ -472,7 +472,15 @@ export interface Copy {
     rowBody: string;
     /** The builder's nav title and the eyebrow under the club name. */
     title: string;
-    sourceLine: (league: string) => string;
+    /**
+     * ⚠ Takes `null`, and the separator goes with it. `competitionName` is
+     * null on EVERY fixture of both scraped leagues — Puerto Rico's and
+     * Honduras's — so `primaryCompetition` answers null and this printed a
+     * dangling `Inscripciones oficiales ·` with nothing after the dot. Shipped
+     * with Puerto Rico on 2026-09-02 and found when Honduras arrived
+     * (ADR 0159).
+     */
+    sourceLine: (league: string | null) => string;
     placed: (n: number) => string;
     hintIdle: string;
     hintPick: (slot: string) => string;
@@ -735,7 +743,13 @@ export interface Copy {
     followClub: (club: string) => string;
     /** The bubble's label: the club, and its league position when there is one. */
     railClub: (club: string, rank: number | null) => string;
-    /** The footnote closing the screen: four leagues today, more as data lands. */
+    /**
+     * The footnote closing the screen: how many leagues today, more as data
+     * lands. ⚠ Both locales spell the COUNT out in words, so a new entry in
+     * `LEAGUES` is a copy change in two places — this docblock deliberately
+     * does not repeat the number, because it was wrong for a week after Puerto
+     * Rico joined.
+     */
     moreLeagues: string;
     schedulePending: string;
     fullSeason: (n: number) => string;
@@ -1188,7 +1202,8 @@ export const esCopy: Copy = {
     rowTitle: 'Once inicial',
     rowBody: 'Coloca tus once en el campo y comparte la imagen.',
     title: 'Once inicial',
-    sourceLine: (league) => `Inscripciones oficiales · ${league}`,
+    sourceLine: (league) =>
+      league ? `Inscripciones oficiales · ${league}` : 'Inscripciones oficiales',
     placed: (n) => `${n} / 11`,
     hintIdle: 'Toca una posición, o toca un jugador para ocupar la siguiente',
     hintPick: (slot) => `Elige al ${slot}`,
@@ -1341,7 +1356,7 @@ export const esCopy: Copy = {
     railClub: (club: string, rank: number | null) =>
       rank === null ? club : `${club}, puesto ${rank}`,
     moreLeagues:
-      'Cinco ligas por ahora. Se añaden más según se publican sus datos de temporada; ' +
+      'Seis ligas por ahora. Se añaden más según se publican sus datos de temporada; ' +
       'las suscripciones y los calendarios funcionan igual en todas.',
     // ⚠ `lastSyncedAt === null`: no presentar como calendario.
     schedulePending: 'Calendario pendiente',
@@ -1719,7 +1734,8 @@ export const enCopy: Copy = {
     rowTitle: 'Starting XI',
     rowBody: 'Put your eleven on a pitch and share the card.',
     title: 'Starting XI',
-    sourceLine: (league) => `Official registrations · ${league}`,
+    sourceLine: (league) =>
+      league ? `Official registrations · ${league}` : 'Official registrations',
     placed: (n) => `${n} / 11`,
     hintIdle: 'Tap a slot, or tap a player to fill the next one',
     hintPick: (slot) => `Pick the ${slot}`,
@@ -1872,7 +1888,7 @@ export const enCopy: Copy = {
     railClub: (club: string, rank: number | null) =>
       rank === null ? club : `${club}, position ${rank}`,
     moreLeagues:
-      'Five leagues today. More are added as their season data comes online — ' +
+      'Six leagues today. More are added as their season data comes online — ' +
       'subscriptions and calendar feeds work the same in every one.',
     schedulePending: 'Schedule pending',
     fullSeason: (n: number) => `${n} matches`,

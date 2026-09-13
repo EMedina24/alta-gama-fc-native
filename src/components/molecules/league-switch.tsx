@@ -14,6 +14,12 @@
  * `Size.leagueRailTightFrom` slots or more the crown mark drops to the tight
  * cut. Chip HEIGHT never moves, so 0116's device-judged calibration stands.
  *
+ * ⚠⚠ **And it came again** (ADR 0160): Liga Hondubet made that same rail SEVEN,
+ * at 46.14pt a slot. So the cut is a THREE-way answer now, not a boolean —
+ * `Size.leagueRailTighterFrom` drops it again to 38×19. Every further league is
+ * another slot off the same budget, and the rail's pad and `MaxContentWidth`
+ * are the next levers, not a fourth cut.
+ *
  * ⚠ **Artwork alone — no text label** (ADR 0031, which 0089 and 0117 keep).
  * The chips are a filter row, not a legend; the name still reaches VoiceOver
  * through `accessibilityLabel`. The text branch survives for a league that
@@ -117,16 +123,34 @@ interface ChipBox {
  */
 interface Slot extends ChipBox, LeagueOption {}
 
+/**
+ * Which mark cut the rail is drawing, decided ONCE from the slot count.
+ *
+ * ⚠ A three-valued cut rather than two booleans: `tight && tighter` is not a
+ * state, and a pair of flags would let the chip and the lens disagree about it
+ * — the exact class of bug ADR 0153 spent its consequences section on.
+ */
+type MarkCut = 'full' | 'tight' | 'tighter';
+
 export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: LeagueSwitchProps) {
   const crown = tone === 'crown';
   /**
    * ⚠ The rail is static and every slot is an equal flex share, so the slot
    * WIDTH is a function of how many there are. At six the 54pt crown mark is
-   * wider than its own slot on a 375pt device — see `Size.leagueChipMarkWCrownTight`
-   * for the arithmetic. Computed once here and passed down, so the chip and the
-   * lens can never disagree about which cut is drawn.
+   * wider than its own slot on a 375pt device, and at seven the 44pt tight cut
+   * has 1.07pt of air left — see `Size.leagueChipMarkWCrownTight` and
+   * `...Tighter` for both sets of arithmetic. Computed once here and passed
+   * down, so the chip and the lens can never disagree about which cut is drawn.
+   *
+   * ⚠ Ordered widest-threshold-first: the tighter test has to run before the
+   * tight one, or seven slots answer 'tight' and the seventh mark overhangs.
    */
-  const tight = leagues.length >= Size.leagueRailTightFrom;
+  const cut: MarkCut =
+    leagues.length >= Size.leagueRailTighterFrom
+      ? 'tighter'
+      : leagues.length >= Size.leagueRailTightFrom
+        ? 'tight'
+        : 'full';
   const reduceMotion = useReducedMotion();
   // Slots are equal by flex, but the plate still follows measured boxes —
   // rounding and the text branch keep the truth in onLayout, not arithmetic.
@@ -301,7 +325,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
             material), so the selected mark stays crisp. */}
         <SelectionPlate
           crown={crown}
-          tight={tight}
+          cut={cut}
           tx={tx}
           w={w}
           shown={shown}
@@ -316,7 +340,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
             league={league}
             selected={league.slug === active}
             crown={crown}
-            tight={tight}
+            cut={cut}
             onPress={() => {
               select(league.slug);
               const box = boxes[league.slug];
@@ -343,7 +367,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
         {touching ? (
           <SelectionPlate
             crown={crown}
-            tight={tight}
+            cut={cut}
             tx={tx}
             w={w}
             shown={shown}
@@ -369,7 +393,7 @@ export function LeagueSwitch({ leagues, active, onSelect, tone = 'ground' }: Lea
  */
 function SelectionPlate({
   crown,
-  tight,
+  cut,
   tx,
   w,
   shown,
@@ -379,7 +403,7 @@ function SelectionPlate({
   lens,
 }: {
   crown: boolean;
-  tight: boolean;
+  cut: MarkCut;
   tx: SharedValue<number>;
   w: SharedValue<number>;
   shown: SharedValue<number>;
@@ -456,7 +480,7 @@ function SelectionPlate({
             <View style={styles.lensViewport}>
               <Animated.View style={magStyle}>
                 {slots.map((slot) => {
-                  const box = magnifiedBox(slot, crown, tight);
+                  const box = magnifiedBox(slot, crown, cut);
                   if (!box) return null;
                   return (
                     <View
@@ -494,14 +518,22 @@ function SelectionPlate({
 /**
  * The mark box a chip draws into, at rest.
  *
- * ⚠ Three cuts, not two. The crown row takes 0116's size (resized by 0118)
+ * ⚠ FOUR boxes, not two. The crown row takes 0116's size (resized by 0118)
  * until the rail reaches `Size.leagueRailTightFrom` slots, at which point the
- * mark — not the chip — shrinks (ADR 0153). The ground row is untouched by any
- * of it and keeps 0089's.
+ * mark — not the chip — shrinks (ADR 0153), and again at
+ * `Size.leagueRailTighterFrom` (ADR 0160). The ground row is untouched by any
+ * of it and keeps 0089's: it carries no competition chip, so it tops out at the
+ * catalogue's own length and reaches neither threshold before the crown does.
  */
-function markBox(crown: boolean, tight: boolean): { width: number; height: number } {
+function markBox(crown: boolean, cut: MarkCut): { width: number; height: number } {
   if (!crown) return { width: Size.leagueChipMarkW, height: Size.leagueChipMarkH };
-  return tight
+  if (cut === 'tighter') {
+    return {
+      width: Size.leagueChipMarkWCrownTighter,
+      height: Size.leagueChipMarkHCrownTighter,
+    };
+  }
+  return cut === 'tight'
     ? { width: Size.leagueChipMarkWCrownTight, height: Size.leagueChipMarkHCrownTight }
     : { width: Size.leagueChipMarkWCrown, height: Size.leagueChipMarkHCrown };
 }
@@ -525,12 +557,12 @@ function lockupBox(kind: CompetitionMarkKind, crown: boolean): { width: number; 
 function magnifiedBox(
   option: LeagueOption,
   crown: boolean,
-  tight: boolean,
+  cut: MarkCut,
 ): { width: number; height: number } | null {
   const box = option.mark
     ? lockupBox(option.mark, crown)
     : option.logoUrl
-      ? markBox(crown, tight)
+      ? markBox(crown, cut)
       : null;
   return box
     ? { width: box.width * Glide.magnify, height: box.height * Glide.magnify }
@@ -543,7 +575,12 @@ function magnifiedBox(
  *
  * Precedence is `mark → logoUrl → text`. The text branch is the last resort for
  * a league that arrives with no artwork at all (ADR 0031 keeps labels off the
- * others); Puerto Rico is the only entry taking it today.
+ * others).
+ *
+ * ⚠ **Nothing takes it today, and that is the hazard.** Both scraped leagues
+ * arrived with none and both were served a mark backend-side within hours, so
+ * this branch goes back to being untested — which is how it reached seven slots
+ * still unable to bound itself. See the comment on the branch below.
  *
  * ⚠ **The drawn mark inks `text`, not `accent`.** ADR 0123's "full colour at
  * rest" means *not desaturated* — a drawn mark has no colour of its own, and
@@ -585,10 +622,33 @@ function ChipArtwork({
   // The rail is ink on BOTH tones now, so idle text is light on both; the crown
   // keeps its lit selected ink (recorded divergence: this branch swaps colour
   // instantly, no crossfade).
+  //
+  // ⚠⚠ **BOUNDED, and it was not** (ADR 0160). This `Text` had no width, no
+  // `numberOfLines` and no shrink, which was survivable while the only taker was
+  // a five-slot rail. At seven slots the box is ~46pt and `Liga Hondubet` broke
+  // MID-WORD onto three lines — `LIGA / HONDU / BET` — spilling past a 52pt chip
+  // that has no `overflow: hidden` to catch it. Seen on the simulator; invisible
+  // to `tsc` and to every gallery case, because no `_debug` fixture had seven
+  // slots.
+  //
+  // The box is the mark box, so a text chip occupies exactly what an artwork
+  // chip does and the rail cannot be pushed out of shape by a long name. Two
+  // lines and `adjustsFontSizeToFit` are damage control, NOT a fix: at this
+  // width a two-word name is a smudge whatever it is scaled to. ⚠ **The fix for
+  // a league with a long name is artwork** — 0031's text branch is a fallback
+  // for a league that has none, not a supported way to label a narrow chip.
   return (
-    <Text variant="eyebrow" color={selected ? (crown ? 'crownChipInk' : 'text') : 'textFaint'}>
-      {option.name}
-    </Text>
+    <View style={{ width, height, justifyContent: 'center' }}>
+      <Text
+        variant="eyebrow"
+        color={selected ? (crown ? 'crownChipInk' : 'text') : 'textFaint'}
+        center
+        numberOfLines={2}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}>
+        {option.name}
+      </Text>
+    </View>
   );
 }
 
@@ -596,14 +656,14 @@ function Chip({
   league,
   selected,
   crown,
-  tight,
+  cut,
   onPress,
   onBox,
 }: {
   league: LeagueOption;
   selected: boolean;
   crown: boolean;
-  tight: boolean;
+  cut: MarkCut;
   onPress: () => void;
   onBox: (box: ChipBox) => void;
 }) {
@@ -621,9 +681,9 @@ function Chip({
   }));
 
   // The crown row wears the larger cut (ADR 0116, resized by 0118, tightened by
-  // 0153 at six slots); the ground row keeps 0089's. A drawn lockup sizes
-  // itself.
-  const box = league.mark ? lockupBox(league.mark, crown) : markBox(crown, tight);
+  // 0153 at six slots and again by 0160 at seven); the ground row keeps 0089's.
+  // A drawn lockup sizes itself.
+  const box = league.mark ? lockupBox(league.mark, crown) : markBox(crown, cut);
 
   return (
     <Pressable

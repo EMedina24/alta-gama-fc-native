@@ -235,7 +235,7 @@ export default function StartingXiScreen() {
             {displayName(team.name)}
           </Text>
           <Text variant="caption" color="textMuted" numberOfLines={1}>
-            {xi.sourceLine(competition ?? '')}
+            {xi.sourceLine(competition)}
           </Text>
         </View>
         <View style={[styles.count, full && styles.countFull]}>

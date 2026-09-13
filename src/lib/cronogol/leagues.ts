@@ -83,7 +83,9 @@ export interface League {
    * is the only key the route takes, so with none there is no URL to build.
    * Serie A and the Bundesliga have no player stats at all — Serie A's events
    * carry a name string and no stable person id, and the Bundesliga writes no
-   * events. Puerto Rico has neither events nor stats.
+   * events. Neither scraped league has events or stats: Puerto Rico's
+   * federation enters none, and Honduras's only source for them is a licensed
+   * feed the backend deliberately never calls.
    */
   playerStats: boolean;
   /**
@@ -251,6 +253,74 @@ export const LEAGUES: readonly League[] = [
     // "no bands"; omitting it would not compile, which is the point.
     zones: [],
   },
+  {
+    /**
+     * Liga Nacional de Honduras, Apertura — scraped from `lnphn.com` the way
+     * Puerto Rico is scraped from its federation's pages (`senpai-backend`
+     * decision 0064, spec §126). Read the Puerto Rico entry above first: this
+     * is the same KIND of source, and the differences are the interesting part.
+     *
+     * ⚠ Honduras is TWO leagues, not one, exactly as Puerto Rico is.
+     * `liga-nacional-apertura` and `liga-nacional-clausura` are separate
+     * championships with separate tables inside one calendar year. Only the
+     * Apertura has a league row today (2026-09-12); the Clausura is configured
+     * on the backend and 404s until its calendar appears, expected ~Jan 2027.
+     *
+     * ⭐ **`rounds: true` is the one place this diverges from Puerto Rico**, and
+     * it is the whole reason this league needs no new screen state. `matchweek`
+     * is a clean integer on every Honduran fixture, so the jornada routes work
+     * and this league belongs on Matchdays. Puerto Rico answers
+     * `matchweeks: []` and is kept off it.
+     *
+     * ⚠ `live: true` is not a claim about live SCORES — it means the league has
+     * clubs to browse, which Honduras does (twelve). See `matchEvents` below
+     * for the sharper version of that distinction here.
+     *
+     * ⚠ The capability answers below are hand-copied from
+     * `senpai-backend/CRONOGOL-API.md` §"Honduras" and re-verified against
+     * production on 2026-09-12 (`handoff_honduras/API-HONDURAS.md`). There is
+     * no capabilities field on the wire and none is planned.
+     */
+    slug: 'liga-nacional-apertura',
+    // ⚠ No divergence: unlike LaLiga, our slug and the API's are the same
+    // string. Do not "tidy" this to a shorter route key — `apiSlug` is what
+    // `?league=` and the jornada path take, and a wrong one returns `[]`.
+    apiSlug: 'liga-nacional-apertura',
+    // ⚠ NOT the wire's `Liga Nacional de Honduras — Apertura`, which is 36
+    // characters against a ~46pt chip. `Liga Hondubet` is the league's own
+    // sponsored mark and is Ed's call (2026-09-12).
+    //
+    // ⚠ It is the chip's `accessibilityLabel` and its fallback if the artwork
+    // ever fails to resolve — NOT what the chip normally draws. This league
+    // served no artwork for the first hours of its life and took 0031's text
+    // branch, where at seven slots it was illegible; the mark was uploaded
+    // backend-side the same day and the chip draws it now (ADR 0159).
+    name: 'Liga Hondubet',
+    order: 6,
+    // ⚠ Twelve, checked against the live table's `clubs`. `bandsApply` compares
+    // the standings' `clubs` against this, so a wrong number silently drops the
+    // rank badges and the club-page strip rather than failing loudly.
+    clubCount: 12,
+    live: true,
+    // ⭐ The divergence. `GET /cronogol/jornada/liga-nacional-apertura/2026`
+    // serves `totalMatchweeks: 22` with 16 rounds published so far — a season in
+    // progress, not a short one. ⚠ `matchweeks.length` is NOT `totalMatchweeks`.
+    rounds: true,
+    // `/cronogol/fixtures/{id}/events` answers `count: 0` and always will: the
+    // only source of a Honduran timeline is a licensed Genius Sports feed the
+    // backend deliberately never calls (§126.6). A capability, not a gap.
+    matchEvents: false,
+    // No season statistics exist from this source at any price (§126.11).
+    playerStats: false,
+    // The Apertura runs Jul–Dec 2026 and is named by that one calendar year.
+    calendarYearSeason: true,
+    // Apertura and Clausura are separate championships, not halves of a season.
+    hasHalves: false,
+    zone: 'America/Tegucigalpa',
+    // The source publishes no continental-qualification and no relegation
+    // bands, and the standings payload carries none. Empty says "no bands".
+    zones: [],
+  },
 ];
 
 export const DEFAULT_LEAGUE = LEAGUES[0];
@@ -314,8 +384,12 @@ export function byEditorialOrder(a: League, b: League): number {
  * the next time that artwork changes ink, which it already has once.
  *
  * Artwork is optional: a league with none renders as its name (ADR 0031), and
- * the row is still usable while `useLeagueArtwork` is in flight. Puerto Rico
- * is the first league to actually take that branch — it serves no artwork.
+ * the row is still usable while `useLeagueArtwork` is in flight. The two
+ * scraped leagues were the ones that took that branch — and NEITHER does any
+ * more. Both were served artwork backend-side within hours of joining, with no
+ * client change either time, because this resolver and the Table's both already
+ * fell through to `primary`. ⚠ The branch is therefore UNEXERCISED again, which
+ * is exactly how it shipped unable to fit a name in a 46pt slot (ADR 0160).
  *
  * `leagues` narrows the row to a capability's subset — `ROUND_LEAGUES` on the
  * Matchdays screen. It defaults to the whole catalogue, so a caller that has no

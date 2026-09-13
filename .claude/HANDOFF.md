@@ -545,6 +545,88 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > Betis/Madrid data (ES). ⚠ Paint only — live ledger, accessories, provider,
 > reload budget untouched. ⚠ Needs a new NATIVE build to reach a device.
 >
+> ⭐⭐ **NEW 2026-09-12 — the app carries SIX leagues, and the Table rail carries
+> SEVEN chips.** Liga Nacional de Honduras — shown as **Liga Hondubet**, api slug
+> `liga-nacional-apertura` — joined the catalogue
+> ([0159](./decisions/0159-liga-hondubet-joins-the-catalogue.md)). `senpai-backend`
+> §126 brought it up on production the same day; it is scraped HTML like Puerto
+> Rico, and like Puerto Rico it is **one entry in `LEAGUES` and nothing else**.
+>
+> ⭐ **The one divergence from Puerto Rico: `rounds: true`.** Honduras has real
+> matchweeks, so the jornada routes work and it **does** appear on Matchdays —
+> where Puerto Rico cannot. 12 clubs, `totalMatchweeks: 22` with 16 published,
+> and `roundCount()` agrees with the wire (`2×(12−1) = 22`), which is the check
+> that kept the UCL out of `LEAGUES`.
+>
+> ⚠⚠ **Three things about it that look like bugs and are not — read these before
+> filing one:**
+>
+> 1. **A Honduran fixture reports `status: "live"` and `/cronogol/live` will
+>    NEVER carry it.** Verified simultaneously on 2026-09-12: Motagua v Génesis
+>    was `live` in matchweek 7 while the live route answered
+>    `{"matches":[],"count":0}`. The Genius Sports feed behind this league is
+>    licensed and the backend structurally never calls it. **There is no gate and
+>    there should not be** — `boardLives` tier 2 already handles a sweep-flagged
+>    match of a league the route does not cover (0126/0132) and draws an age
+>    caption, not a fabricated minute. ⚠ Not yet watched through a real Honduran
+>    kickoff on the simulator.
+> 2. **50 of 96 kickoffs sit at a placeholder 19:00 with `kickoffTbd: false`.**
+>    Nothing in the payload separates a real time from a guessed one and no
+>    client rule can. Dates are trustworthy; times beyond the current round are
+>    not. Whether to suppress the time past the current jornada is an open design
+>    question for Ed.
+> 3. **Squads are systematically short and have no photos.** 62 of 359 players
+>    league-wide have no position at source and are dropped, so a squad count is
+>    a floor (Olimpia serves 32 of 33). `photoUrl`, `shortName` and `nationality`
+>    are null on **every** row, permanently.
+>
+> ⚠⚠ **The crest trap, and why it is already handled.** Honduran clubs carry
+> `logoUrls: { S1 }` and nothing else, and that URL is the Genius image CDN,
+> which 403s on a burst — and on the backend a 403 writes a **permanent**
+> `asset_mirrors.rejected_at` that no sweep retries. A twelve-crest grid is that
+> burst. The app renders the mirrored `logoUrl` because `S1` is in none of
+> `CREST_KEYS`' four vocabularies and every size falls through — **incidentally,
+> not by design**, so `scripts/team-window-harness.mjs` now asserts it. ⛔ Never
+> "fix" crest resolution by adding the scraped leagues' size keys.
+>
+> ⭐ **Its chip artwork lives on the WIRE, not in the app.** It shipped with
+> `logoUrl: null` and the text branch could not fit `Liga Hondubet` in a 46pt
+> slot — it broke mid-word onto three lines and spilled out of the pill. The
+> mark (`senpai-backend/assets/ligaHonduras.png`, a hummingbird) was trimmed to
+> its alpha bounds and uploaded to Supabase Storage at
+> `team-assets/leagues/<sha256>.png`, and `leagues.logo_url` points at it —
+> **with zero client change**, because `useLeagueArtwork` keys on `apiSlug` and
+> both resolvers already fall through to `primary`. Second time that has
+> happened; Puerto Rico was the first. ⛔ Do not bundle a league mark in the app:
+> the UCL is bundled only because it has no wire row at all.
+>
+> ⚠ The text branch is now **bounded** (two lines, `adjustsFontSizeToFit`, drawn
+> into the mark box) so it can never spill again — but it is unexercised once
+> more, since no league takes it today. `accentColor` is still null, so the
+> `FINISHED TODAY` header is neutral, exactly as LPR's is.
+>
+> ⚠ **It found a shipped Puerto Rico bug.** The Starting XI strip printed
+> `Inscripciones oficiales ·` with nothing after the dot: `primaryCompetition`
+> reads `fixture.competitionName`, which is **null on every fixture of BOTH
+> scraped leagues**, and the call site passed `?? ''` into a template that always
+> wrote the separator. Live since 2026-09-02. Fixed.
+>
+> ⚠ The XI token needed its own rule
+> ([0161](./decisions/0161-the-shirt-name-is-the-paternal-surname.md)) — Honduran
+> players have `shortName: null` and a full legal name, so **296 of 297** tokens
+> clipped. `playerFamilyName` now answers the paternal surname, with a particle
+> guard that is the whole trick: without it four production names render `de` or
+> `e` on a shirt. ⭐ Side effect: 43 Arsenal players get a real shirt name.
+>
+> Its sibling `liga-nacional-clausura` is configured on the backend with no
+> league row and is deliberately absent here until ~Jan 2027.
+>
+> ⚠ **The rail arithmetic moved** ([0160](./decisions/0160-a-seventh-chip-shrinks-the-mark-again.md)):
+> the Table is seven chips at 46.14pt a slot on a 375pt device, so the crown mark
+> has a **third** cut (38×19 at `leagueRailTighterFrom`) and `tight` became a
+> three-valued `MarkCut`. **Matchdays and Clubs both reach six** and draw the
+> existing tight cut for the first time — look at all three rails on the SE.
+
 > ⭐ **NEW 2026-09-02 — the app carries FIVE leagues.** Puerto Rico
 > (`lpr-pro-clausura`, shown as **LPR Clausura**) joined the catalogue
 > ([0105](./decisions/0105-lpr-clausura-and-league-capability-flags.md)) and is
