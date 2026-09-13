@@ -1,7 +1,7 @@
 # 0122 — The plate wears two states: frosted at rest, the lens under the finger
 
 - **Date:** 2026-09-06
-- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) as a CONTROL — but its three glass rules (no fractional alpha on a glass ancestor, no transform scale, never park glass invisible) are load-bearing for the dropdown and are restated at the top of `league-menu.tsx`. Read this entry before touching glass anywhere
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) as a CONTROL — but its three glass rules (no fractional alpha on a glass ancestor, no transform scale, never park glass invisible) are load-bearing for the dropdown and are restated at the top of `league-menu.tsx`. Read this entry before touching glass anywhere ⚠⚠ **[0163](./0163-the-dropdown-leaves-the-crown-and-leaves-glass.md) draws the other conclusion from these same rules**: where they bind hard — a surface that must be opaque anyway, and must animate — the answer is to stop using glass there, not to build around them.
 - **Decided by:** Ed ("the main nav has an effect when you tap and hold on
   the glass pane, it sort of magnifies and i can see light destortion, thats
   the effect im after")

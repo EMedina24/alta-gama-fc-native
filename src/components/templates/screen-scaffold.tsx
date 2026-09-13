@@ -36,7 +36,7 @@ import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { Avatar, MeshGround } from '@/components/atoms';
-import { CrownLiftContext } from '@/hooks/use-crown-lift';
+import { ScreenOverlayContext } from '@/hooks/use-screen-overlay';
 import { BottomTabInset, Colors, CrownRamp, MaxContentWidth, Spacing } from '@/constants/theme';
 import { Crown } from './crown';
 
@@ -108,8 +108,11 @@ export function ScreenScaffold({
    * threshold — this re-renders twice per scroll, not sixty times a second.
    */
   const [overBright, setOverBright] = useState(true);
-  /** See `useCrownLift`. Off at rest; every payload that raises it lowers it. */
-  const [lifted, setLifted] = useState(false);
+  /**
+   * What a control has published to draw OVER the page — see `useScreenOverlay`.
+   * Null at rest, and the control that puts a node here takes it back down.
+   */
+  const [overlay, setOverlay] = useState<ReactNode>(null);
   const threshold = Math.max(0, (insets.top + CrownRamp) * BRIGHT_BAND - insets.top);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -117,6 +120,17 @@ export function ScreenScaffold({
   };
 
   return (
+    // ⚠ The provider wraps the WHOLE screen, not just the payload: Clubs renders
+    // its league control in `children` (the body), not in the crown, and both
+    // must be able to publish. A payload-only provider would leave the Clubs
+    // menu opening into nothing.
+    //
+    // ⚠⚠ **`value` must stay the bare setter.** A `useState` setter is stable
+    // forever; wrap it in an object literal and the context value is new on
+    // every render, which propagates THROUGH React's bail-outs to the consumer,
+    // which publishes again — an infinite render loop the moment the menu opens.
+    // The publisher is safe today only because this reference never changes.
+    <ScreenOverlayContext.Provider value={setOverlay}>
     <View style={styles.screen}>
       {/* ⚠ Only while FOCUSED: a blurred tab still mounted under a pushed club
           page would otherwise hold the status bar dark over that screen. */}
@@ -149,13 +163,20 @@ export function ScreenScaffold({
           meta={meta}
           accessory={accessory}
           padBottom={crownPadBottom}
-          lifted={lifted}
           topInset={insets.top}>
-          <CrownLiftContext.Provider value={setLifted}>{payload}</CrownLiftContext.Provider>
+          {payload}
         </Crown>
         <View style={styles.body}>{children}</View>
       </ScrollView>
+      {/* ⚠⚠ LAST, and outside the scroll view — the whole point of the slot
+          (ADR 0163). Painted over the page, so a control no longer has to lift
+          the crown to escape it; and touches land here rather than reaching the
+          `ScrollView`, so an open overlay's scrim finally blocks scrolling.
+          ⚠ It does NOT cover the tab bar, which `NativeTabs` draws outside this
+          screen — tapping a tab is a legitimate way out and always has been. */}
+      {overlay}
     </View>
+    </ScreenOverlayContext.Provider>
   );
 }
 

@@ -550,6 +550,38 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > Betis/Madrid data (ES). ⚠ Paint only — live ledger, accessories, provider,
 > reload budget untouched. ⚠ Needs a new NATIVE build to reach a device.
 >
+> ⭐⭐ **NEW 2026-09-13 (later) — the dropdown's PANEL left the crown and left
+> GLASS** ([0163](./decisions/0163-the-dropdown-leaves-the-crown-and-leaves-glass.md)).
+> Ed reported the same close artifact **three times**; each patch fixed a real,
+> different cause and uncovered the next. The fourth diagnosis ended it:
+> `Glide.spring` is underdamped, so `grow` reached 0 at ~180ms but `finished` —
+> and with it the unmount and the crown-lift release — only fired at settle
+> ~350ms, leaving **~150ms of lifted crown with the scrim already transparent**
+> and its gradient layer hazing the page (traps 73–74).
+>
+> ⚠ It could not be tuned away: the lift is a React commit and the fade is an
+> animation. So the panel is **paint** now (the trigger is still glass — trap 59
+> had already forced the body opaque, so all that was lost is a 5pt rim, while
+> the glass RULES had been dictating a height animation), and the scrim + panel
+> publish to a **`ScreenScaffold` overlay** through the new `useScreenOverlay`.
+> `useCrownLift`, `Crown.lifted` and the crown z-index are deleted. Motion is
+> `withTiming` opacity + scale, so **a pick animates again**.
+>
+> ⚠ Three things came free: the scrim finally **blocks page scroll** (it was
+> inside the `ScrollView` all along), `accessibilityViewIsModal` finally means
+> something (its siblings are the mesh and the scroll view, not the trigger), and
+> the panel's own `ScrollView` left the page's.
+>
+> ⚠⚠ Two ways to break it, both silent: the provider must wrap the **whole
+> screen** (Clubs publishes from `children`, not the payload), and its `value`
+> must stay the **bare setter** — an object literal there re-renders the
+> publisher through React's bail-outs and loops forever.
+>
+> ⭐ **`/_debug/menu`** is new: the control over a real scaffold, **Replay** and
+> **Slow ×10** so a 160ms transition can be stepped with `simctl io screenshot`.
+> Three reports each cost a cold launch and a lucky capture; this is the tool
+> that should have existed first.
+>
 > ⭐⭐ **NEW 2026-09-13 — the league RAIL is gone; it is a liquid-glass DROPDOWN**
 > ([0162](./decisions/0162-the-league-rail-becomes-a-dropdown.md)). Ed: *"the
 > league selector is getting crowded — can we implement some sort of fancy liquid
@@ -568,13 +600,32 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > / BET` smudge cannot recur. 0153 and 0160 keep the arithmetic if a rail is ever
 > wanted back.
 >
-> ⚠⚠ **Three glass findings, all simulator-caught, all now traps 69–71.** The
+> ⚠⚠ **Five findings, all simulator-caught, now traps 69–72.** The
 > panel body must be OPAQUE (trap 59) so it is built as the 0090/0091 tray; glass
 > over that opaque fill is a **no-op**, so the selection lozenge is paint;
 > and a crown payload needs `useCrownLift` to draw over the body — **temporarily**,
 > because a permanently lifted crown hazes the top of every screen. ⚠⚠ And a PICK
 > dismisses with **no animation** (trap 71): the collapse animates a layout prop
 > against the heaviest re-render the screen does, and it stalled part-collapsed.
+> ⚠⚠ **Ed reported the black bar TWICE** — the second time on a plain cancel, and
+> the causes were different both times. The panel now interpolates its height
+> from **0** (a 24pt closed floor stayed visible until React unmounted it), the
+> open's `measureInWindow` takes a ticket that a close voids (a 1.4s-late
+> callback was re-opening the menu), and the crown lift is DERIVED from the
+> mounted flag rather than raised and lowered by hand (trap 72). **Nothing about
+> what is on screen now waits on a React commit.**
+>
+> ⚠⚠ **And the liquid-glass MERGE is reversed.** The trigger and panel were
+> wrapped in a `GlassContainer` so `UIGlassContainerEffect` would fuse them as
+> they overlapped — which showed nothing at rest (they sit past the merge
+> distance) and, on the close, flared a pair of dark tapered **wings** off the
+> trigger's bottom corners as the shrinking panel was dragged into it (Ed, third
+> report). The overlap causing it was our own `leagueMenuTuck`. Container, tuck
+> and `Glide.merge` are all deleted; the panel grows from zero height at its
+> resting gap, and the `stack` box and trigger margin that existed only to keep
+> things inside a `UIVisualEffectView`'s bounds went with them. ⚠ **A container
+> that fuses two glass surfaces has to look right in every frame of the CLOSE** —
+> that is the case to solve first if it is ever wanted back.
 >
 > ⚠ The panel is **placed by `measureInWindow`** at open time — down if the rows
 > clear the tab bar, UP otherwise, scrolling only if neither side fits. On Clubs
@@ -1797,6 +1848,64 @@ documented at the code that handles them; this is the index.
     animates. ⚠ Transform/opacity would dodge this, but on glass they are both
     forbidden (ADR 0122) — so on a glass surface the honest answer is no
     animation rather than a different one.
+    ⚠⚠ **That was only half of it. The panel's DISAPPEARANCE was gated on a React
+    commit too.** It collapsed to a 24pt floor (put there so the glass was never
+    "born out of nothing") and then SAT there, visible, until React unmounted it
+    — so Ed hit the same black bar again on a plain cancel, where there is no
+    heavy work at all. It interpolates from **0** now. **Animate to a state that
+    is already invisible; let the commit do cleanup only.**
+    ⚠⚠ **And a zero-height box is not an invisible one.** At height 0 the panel's
+    `GlassView` still drew its rim — a faint hairline under the trigger for as
+    long as it stayed mounted (Ed's third report) — and the flat branch is worse,
+    since a 1pt border on a 0-height box renders as a 2pt line. The panel clips
+    itself now. ⚠ That contradicts the old rail's comment that "only the GLASS
+    must never sit under `overflow: 'hidden'`", which over-generalised 0122: the
+    real finding was that a clip cropped the LENS's press SWELL. Nothing in the
+    dropdown swells, and the glass renders fine under the clip (checked).
+
+72. **⚠⚠ An async measurement callback outlives the interaction that asked for
+    it, and a hand-paired acquire/release diverges.** Two bugs, one report, both
+    in the league dropdown (2026-09-13). `measureInWindow` — which the panel uses
+    to decide whether to open up or down — was seen answering **1.4 seconds**
+    late on a busy screen, long after the reader had closed the menu, at which
+    point it re-opened it: a stuck bar and a hazed crown with no menu in sight.
+    Every open now takes a ticket and every close and pick voids it. ⚠ And the
+    crown lift was `lift(true)` at one end and `lift(false)` at the other; when
+    the stale open re-mounted the panel the release had already run, so the crown
+    sat lifted over nothing. It is **derived from the mounted flag** in an effect
+    now, with an unmount cleanup. **If two pieces of state must agree, compute
+    one from the other — a pair that is written by hand at two ends will come
+    apart the first time the order surprises you.**
+
+73. **⚠⚠ A SPRING's `finished` callback fires at SETTLE, not when the value
+    reaches its target — and if a clamped style is already done, everything
+    gated on that callback is late by the whole tail.**
+    `Glide.spring` is ζ ≈ 0.705. Closing the league dropdown, `grow` crossed 0
+    at **~180ms** and only reported `finished` at **~350ms**. The panel height
+    and the scrim opacity both clamped at zero, so they were visually finished at
+    180 — but the unmount, and with it the crown-lift release, waited for 350.
+    Result: **~150ms of lifted crown with no scrim over it**, its over-tall
+    gradient layer hazing the whole page. Ed reported it three times before it
+    was measured; each earlier patch fixed a different, real cause and revealed
+    this one ([0163](./decisions/0163-the-dropdown-leaves-the-crown-and-leaves-glass.md)).
+    ⚠ **Use `withTiming` when a callback has to mean "done".** It ends where it
+    ends. A spring is for something being thrown, not for something being
+    switched off. ⚠ And the deeper rule: **if a visual state is released by a
+    React commit but hidden by an animation, they cannot be made to agree** —
+    delete the dependency instead of tuning the timing.
+
+74. **⚠⚠ Obeying the glass rules can cost more than the glass is worth — price
+    the rim before you pay for it.** ADR 0122's three findings are real (no
+    fractional alpha on a glass ancestor, no transform scale, never park glass
+    invisible), and the league dropdown's panel obeyed them by animating its
+    HEIGHT instead, which is a layout prop — the direct cause of a 760ms stall
+    and a hairline-at-zero-height. What the obedience bought: **a 5pt rim**,
+    because trap 59 already forces a panel over content to be opaque. The panel
+    is paint now and the motion is opacity + scale
+    ([0163](./decisions/0163-the-dropdown-leaves-the-crown-and-leaves-glass.md)).
+    ⚠ The test before putting a `GlassView` on a surface that must ANIMATE: how
+    much of it can actually be glass once trap 59 has had its say? If the answer
+    is "an edge", the rules are about to govern the whole component for it.
 
 ---
 

@@ -1,10 +1,11 @@
 # 0162 — The league rail becomes a liquid-glass dropdown
 
 - **Date:** 2026-09-13
-- **Status:** Accepted — simulator-verified on an iPhone 17 Pro: all three screens, both
+- **Status:** **Superseded IN PART by [0163](./0163-the-dropdown-leaves-the-crown-and-leaves-glass.md)** (2026-09-13) — the dropdown, its placement logic and its catalogue arithmetic all stand. Its glass PANEL, its crown LIFT and its height animation do not: they produced four close artifacts in one day, and 0163 records why they could not be patched. ⚠ Read both; this entry is still where the control's shape is argued.
   drop directions, a commit, a cancel, and the lingering-bar regression Ed caught and its
-  fix. ⚠ Not yet seen on a phone, and not on an SE, where the upward flip is the common
-  case rather than the rare one.
+  fix — and the two divergences behind the SECOND report of it (a 1.4s-late measurement
+  re-opening the menu, and a hand-paired crown lift). ⚠ Not yet seen on a phone, and not on
+  an SE, where the upward flip is the common case rather than the rare one.
 - **Decided by:** Ed ("the league selector is getting crowded — can we implement some sort
   of fancy liquid glass dropdown"); full replacement and a naming trigger chosen over a
   hybrid rail-plus-overflow
@@ -72,11 +73,22 @@ no-op, not a subtle effect.** With trap 59 that fully boxes this panel in: it ma
 transparent, and glass on top of it cannot be seen. The lozenge is paint — the segmented
 thumb's `segThumb` fill with the app's hairline.
 
-What remains genuinely liquid is the trigger, the panel's shell, and the `GlassContainer`
-holding both, whose `UIGlassContainerEffect` merges them while they overlap and lets them
-pull apart as the panel travels: `Glide.merge` (8) against a 16pt opening tuck and a 12pt
-resting gap. ⚠ That number is device-judged and is the lever if the open reads as a panel
-appearing rather than as liquid separating.
+What remains genuinely liquid is the trigger and the panel's shell, each refracting the
+screen's own ground.
+
+⚠⚠ **The `GlassContainer` that used to hold both is GONE, and that reversal is the third
+thing the simulator taught.** The point of it was `UIGlassContainerEffect`: the two surfaces
+would merge while they overlapped and pull apart as the panel travelled, which is the liquid
+in liquid glass. What it delivered was nothing at rest — they sit 12pt apart, past the merge
+distance — a brief blob on the way open, and on the way CLOSED a pair of dark tapered
+**wings** flaring off the trigger's bottom corners as the shrinking panel was dragged back
+into it. Ed caught those on the third report. The overlap that caused them was
+`leagueMenuTuck`, i.e. mine, so the artifact was self-inflicted and the effect it paid for
+was invisible in the state the control spends its life in. Both the tuck and `Glide.merge`
+are deleted; the panel simply grows from zero height at its resting gap. ⚠ Removing the
+container also deleted the `stack` box and the trigger's compensating margin, which existed
+only to keep everything inside a `UIVisualEffectView`'s bounds — about twenty lines of
+geometry that served the effect rather than the control.
 
 ### A pick dismisses at once; only a cancel animates
 
@@ -98,6 +110,46 @@ never what confirmed the choice.
 ⚠ The first fix attempt was to keep the animation and unmount from the spring's
 callback — which is what produced the 762ms measurement and proved it was the
 layout commit, not the callback, that was late.
+
+⚠⚠ **And that was still not enough, because the panel's DISAPPEARANCE was gated
+on a React commit.** Ed hit the same black bar again, this time on a plain
+cancel. The panel collapsed to a `leagueMenuShutH: 24` floor — put there so the
+glass was "never born out of nothing" — and then SAT there, visible, until React
+unmounted it. The panel now interpolates from **0** and clamps there, so the
+spring ending and the panel vanishing are the same instant and the commit only
+does cleanup. The floor token is deleted. **Anything whose visibility depends on
+a React commit landing promptly will linger; animate to a state that is already
+invisible.**
+
+⚠⚠ **A zero-height panel is still not an invisible one.** Ed reported a remnant a
+third time: a faint hairline under the trigger after the close. At height 0 the
+`GlassView` shell still draws its rim, and the flat branch is worse — a 1pt
+border on a 0-height box is a 2pt line. The panel now **clips itself**
+(`overflow: 'hidden'`), which makes both impossible at every height with no state
+to get out of step. ⚠ That deliberately contradicts a comment on the old rail
+asserting "only the GLASS must never sit under `overflow: 'hidden'`" — a
+generalisation of 0122, whose actual finding was narrower: a clip cropped the
+LENS's press SWELL, which grew past its own bounds. Nothing here swells, and the
+glass was checked under the clip on the simulator. The narrow rule is the true
+one.
+
+### Two more ways it diverged, both now impossible by construction
+
+⚠⚠ **A `measureInWindow` callback outlived the interaction that asked for it.**
+The open measures the trigger in a callback, and that callback was seen landing
+**1.4 seconds** late on a busy screen — long after the reader had closed the
+menu, at which point it dutifully re-opened it. What was left on screen was a
+stuck bar and a hazed crown with no menu in sight. Every open now takes a ticket
+(`openId`) and every close and pick voids it; a stale measurement returns
+without touching anything.
+
+⚠⚠ **The crown lift was raised and lowered BY HAND at the two ends, and the two
+ends diverged.** When the stale open re-mounted the panel, the paired
+`lift(false)` had already run and the crown sat lifted over nothing — the
+matchday chips hazing under a veil. The lift is now **derived from `mounted`**
+in an effect, with a cleanup for the screen unmounting mid-open. The scrim is
+gated on that same `mounted`, so the lift and the thing that hides what it does
+are one condition rather than two that have to agree.
 
 ### The crown lift, which is the subtle part
 
@@ -136,6 +188,11 @@ frames. A body-tone control (Clubs) needs none of this and asks for none.
   `window.height − BottomTabInset`, because `NativeTabs` draws the real bar and JS cannot
   measure it; the ceiling is `insets.top + Spacing.two`. If a panel ever tucks under the bar
   or the notch, those two lines are where to look.
+- ⚠ **The liquid-glass MERGE is the one part of the brief that did not survive contact
+  with the device.** Everything else Ed asked for is there — the glass trigger, the
+  glass-shelled panel, the bloom — but a container that fuses two glass surfaces has to look
+  right in *every* frame of the close, and it did not. If it is ever wanted back, the close
+  is the case to solve first, not the open.
 - ⚠ **Anything else that animates a layout prop on this control will hit the same
   wall.** The open can afford it (nothing heavy happens when a menu appears); the
   close, on the one path that triggers a screenful of work, cannot. A future
@@ -161,8 +218,10 @@ frames. A body-tone control (Clubs) needs none of this and asks for none.
 - **Let the rail scroll past seven**, reversing 0118. The plate's drag-to-snap is built on
   every slot being measured and on screen; Ed declined this at six, at seven, and here.
 - **A `Modal` for the panel** rather than an in-tree overlay. It would have solved z-order
-  and the scrim for free, but it cannot share a `GlassContainer` with the trigger — the
-  merge is the effect Ed asked for — and glass inside a presented view controller is exactly
-  the kind of compositing question that has cost this repo three separate findings already.
+  and the scrim for free, but glass inside a presented view controller is exactly the kind
+  of compositing question that has cost this repo several findings already, and an in-tree
+  panel needs no portal. ⚠ It was also rejected because a `Modal` cannot share a
+  `GlassContainer` with the trigger — which stopped being a reason when the container was
+  removed, so a modal is a legitimate option again if this ever needs one.
 - **A transparent glass panel over a heavy scrim.** Reopens trap 59 by construction: the
   scrim dims what is behind the glass, it does not stop it ghosting through.

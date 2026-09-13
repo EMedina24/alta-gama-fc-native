@@ -555,21 +555,6 @@ export const Glide = {
    * transform scale would sit over glass (0122's finding 3). ⚠ Device-judged.
    */
   hover: 3,
-  /**
-   * How close two glass surfaces must be to read as ONE (ADR 0162) — the
-   * `UIGlassContainerEffect` spacing that lets the league panel bloom OUT of
-   * its trigger instead of appearing beside it.
-   *
-   * ⚠ Read with `Size.leagueMenuGap` (12) and `Size.leagueMenuTuck` (16): the
-   * panel opens 4pt INSIDE the trigger — merged — and rests 12pt below it,
-   * which is past this number, so it separates. A value above the gap would
-   * leave them fused at rest; a value below the overlap would mean they never
-   * merge at all and the whole effect is a fade.
-   *
-   * ⚠ Device-judged, and the first thing to reach for if the open reads as a
-   * panel appearing rather than as liquid pulling apart.
-   */
-  merge: 8,
 } as const;
 
 /**
@@ -1201,27 +1186,29 @@ export const Size = {
    * that overlapped its neighbour would pick the wrong league.
    *
    * `leagueMenuGap` is the resting distance from the trigger's bottom edge to
-   * the panel's top; `leagueMenuTuck` is how far UP the panel starts, so it
-   * opens from inside the trigger and pulls away. ⚠ The two are read together
-   * with `Glide.merge`: the panel must START closer than `merge` (they read as
-   * one body of glass) and REST further than it (they separate). Change one and
-   * check all three.
+   * the panel's top. ⚠⚠ `leagueMenuTuck` and the `GlassContainer` merge distance
+   * it was paired with are both GONE (ADR 0162's own reversal): the tuck started
+   * the panel 16pt higher so the two glass surfaces overlapped and merged, and
+   * what that bought at rest was nothing (they sit further apart than the merge
+   * distance) while on the way closed it dragged the shrinking panel back into
+   * the trigger as a pair of dark tapered **wings** off its bottom corners. The
+   * panel grows from zero height at its resting gap instead.
    *
-   * `leagueMenuShutH` is the panel's height at rest-closed — a capsule's worth,
-   * not zero: a `GlassView` animating out of nothing pops.
+   * ⚠⚠ There is deliberately **no closed-height floor**. The first cut had one
+   * (`leagueMenuShutH: 24`, "so the glass is never born out of nothing") and it
+   * was a bug: a closed panel still occupied 24pt and stayed on screen as a black
+   * bar under the trigger until React unmounted it, which on a busy screen is
+   * late enough to see. The panel interpolates from **0**, so the spring ending
+   * and the panel vanishing are the same instant.
    *
-   * ⚠ `leagueMenuScrimReach` is a REACH, not a spacing: the dismiss catcher is
-   * absolutely positioned inside a control halfway down the crown and has to
-   * cover a whole phone in every direction. 1200 clears the tallest device in
-   * both axes with room over.
+   * ⚠ `leagueMenuScrimReach` is GONE with ADR 0163: the scrim was an oversized
+   * box reaching ±1200 past a control buried in the crown, and it is a plain
+   * `absoluteFill` in the screen's overlay now.
    */
   leagueMenuTriggerH: 44,
   leagueMenuRowH: 46,
   leagueMenuGap: 12,
-  leagueMenuTuck: 16,
-  leagueMenuShutH: 24,
   leagueMenuPadX: 14,
-  leagueMenuScrimReach: 1200,
   bigCrestBleed: 238,
   oppCrestBleed: 146,
 } as const;
