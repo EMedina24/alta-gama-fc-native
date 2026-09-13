@@ -30,7 +30,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, SkeletonRows, Text, competitionMarkKind } from '@/components/atoms';
-import { LeagueSwitch, type LeagueOption } from '@/components/molecules';
+import { LeagueMenu, type LeagueOption } from '@/components/molecules';
 import { StandingsTable } from '@/components/organisms/standings-table';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
@@ -266,10 +266,11 @@ export default function TableScreen() {
       refreshing={query.isRefetching}
       payload={
         options.length > 0 ? (
-          <LeagueSwitch
+          <LeagueMenu
             leagues={options}
             active={activeSlug}
             onSelect={setActiveSlug}
+            copy={copy.leagueMenu}
             tone="crown"
           />
         ) : null

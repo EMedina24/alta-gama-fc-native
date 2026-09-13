@@ -1,7 +1,7 @@
 # 0118 — The league rail goes static and its plate drags like the nav's
 
 - **Date:** 2026-09-05
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — the rail is gone, and with it the static-slot arithmetic this entry named and 0153/0160 twice pulled the lever on. Its own "that day will come" clause is what the dropdown answers
 - **Decided by:** Ed ("the glass pane should be draggable just like the main
   nav … The rail should be static and not scrollable. Can we please reduce
   the size of the league icons so they all fit", off simulator screenshots

@@ -1,7 +1,7 @@
 # 0121 — The league plate is the lens
 
 - **Date:** 2026-09-06
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — the lens is gone with the rail
 - **Decided by:** Ed ("what i mean is the glass pane effect. see screenshot" —
   a close-up of the nav's drag lozenge mid-drag: transparent, magnifying,
   chromatic at the rim)

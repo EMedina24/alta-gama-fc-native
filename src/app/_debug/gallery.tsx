@@ -793,9 +793,12 @@ export default function GalleryScreen() {
         </Case>
       ))}
 
-      {/* ⚠ No league row here. The Clubs screen shares `LeagueSwitch` with
+      {/* ⚠ No league control here. The Clubs screen shares `LeagueMenu` with
           Matchdays and Table, so it is exercised by those screens, and a
-          fixture copy of it would be a second thing to keep in step. */}
+          fixture copy of it would be a second thing to keep in step.
+          ⚠ It is also the one control this gallery could not hold honestly: the
+          dropdown's panel is absolutely positioned and hangs over whatever
+          follows it (ADR 0162), which in here is the next `Case`. */}
       <Case label="the follow pill, alone — label plus the glyph in its disc">
         <ChipButton label={copy.clubs.follow} shape="pill" trailing={<PlusGlyph />} onPress={() => {}} />
       </Case>

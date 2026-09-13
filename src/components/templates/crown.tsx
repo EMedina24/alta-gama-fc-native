@@ -25,6 +25,14 @@
  * full-bleed — the screen gutter lives on `inner`, not on the scaffold's
  * content container.
  *
+ * ⚠⚠ **`lifted` is TEMPORARY by design, and a permanent lift is a bug** (ADR
+ * 0162). The gradient layer below is deliberately taller than this box and
+ * runs on BEHIND the body; raise the crown above the body and that overflow
+ * paints ON the body instead, veiling the top of the screen in the fade's tail
+ * — on the Table that was the band legend and the first two rows going hazy
+ * (simulator, 2026-09-13). The lift exists only so a payload control can hang
+ * something over the body while its own scrim covers the veil.
+ *
  * ⚠ The gradient runs to y = 0, BEHIND the status bar (ADR 0094). The scaffold
  * therefore flips the status bar to dark glyphs while the bright band is up
  * there, and back to light once it has scrolled past — white on lime and black
@@ -67,6 +75,15 @@ export interface CrownProps {
    */
   padBottom?: number;
   /**
+   * Raise the whole crown above the screen body for as long as a payload
+   * control needs to draw over it — the league dropdown's panel (ADR 0162).
+   *
+   * ⚠ It must go back off the moment that control closes: see the header.
+   * `ScreenScaffold` owns the flag and hands the setter down through
+   * `useCrownLift`; nothing sets it directly.
+   */
+  lifted?: boolean;
+  /**
    * The safe-area top inset (ADR 0094). The crown's GRADIENT starts at y = 0 —
    * the lime runs up behind the status bar — and this pushes its CONTENT back
    * down clear of the notch. It is padding, never a margin: a margin would
@@ -85,6 +102,7 @@ export function Crown({
   accessory,
   children,
   padBottom,
+  lifted = false,
   topInset = 0,
 }: CrownProps) {
   const pad = padBottom ?? (children ? Spacing.eight : Spacing.four + 2);
@@ -103,7 +121,7 @@ export function Crown({
   const layerHeight = topInset + CrownRamp;
 
   return (
-    <View style={styles.crown}>
+    <View style={[styles.crown, lifted && styles.lifted]}>
       <View pointerEvents="none" style={[styles.layer, { height: layerHeight }]}>
         <WashGradient angle="vertical" stops={CrownGrad} />
         <WashRadial
@@ -145,7 +163,21 @@ export function Crown({
 const styles = StyleSheet.create({
   // ⚠ `overflow` stays VISIBLE — the fixed layer may be taller than the box,
   // and clipping it would put a hard edge exactly where the fade hands off.
+  //
+  // ⚠⚠ `zIndex` is what lets a payload CONTROL hang over the screen body — the
+  // league dropdown's panel (ADR 0162) opens downward past the crown's bottom
+  // edge, and the body is the crown's NEXT SIBLING in the scroll's content. A
+  // z-index on the panel alone cannot do it: it raises a child among its own
+  // siblings, never past its parent's. It is also the header's own rule made
+  // literal — nothing in the crown may sit below the screen ground.
   crown: { position: 'relative' },
+  /**
+   * ⚠⚠ Only while a payload control is open — never at rest. A child's z-index
+   * cannot raise it past its PARENT's sibling, which is why the lift has to
+   * land here rather than on the control, and why it has to be conditional:
+   * the gradient layer rides up with it. See the header.
+   */
+  lifted: { zIndex: 1 },
   /** The fixed gradient layer; its height is set inline (`topInset + CrownRamp`). */
   layer: { position: 'absolute', top: 0, left: 0, right: 0 },
   inner: {

@@ -188,16 +188,21 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > sheet scopes with the correct `webcal://` URL in each.
 >
 > ⚠⚠ **TWO BUGS found landing this, and they share a root — read this before
-> adding anything to a `LeagueSwitch`.** Ed: *"LaLiga is selected but the
+> adding anything to the league control.** Ed: *"LaLiga is selected but the
 > matches are UCL."* `matchdays.tsx` passed **`active={league.slug}`**, and
 > `league` is a FALLBACK (`ROUND_LEAGUES[0]` whenever the cup is active, because
 > the hooks below need a `League` unconditionally). So the cup tab drew **LaLiga
-> as selected**, and `LeagueSwitch.select` early-returns on a tap whose slug
+> as selected**, and the rail's `select` early-returned on a tap whose slug
 > equals `active` — making the LaLiga chip **completely unpressable**. There was
 > no way back out of the Champions League. It is `active={leagueSlug}` now, and
-> **the rule lives on `LeagueSwitchProps.active`**, not at the call site: the
-> Clubs rail has the identical `find(...) ?? DEFAULT` shape and is safe only
-> because every chip there resolves today. ⚠ The Table screen had it right;
+> **the rule lives on `LeagueMenuProps.active`**, not at the call site: the
+> Clubs control has the identical `find(...) ?? DEFAULT` shape and is safe only
+> because every league there resolves today.
+> ⚠ **The dropdown ([0162](./decisions/0162-the-league-rail-becomes-a-dropdown.md))
+> removed the second half of this and made the first half quieter, which is
+> worse**: there is no early-returning chip to become unpressable, but a trigger
+> fed a fallback slug simply NAMES the wrong competition while the screen shows
+> another. The rule stands unchanged. ⚠ The Table screen had it right;
 > Matchdays inherited a line that was correct until `league` gained a fallback
 > under it.
 > **Second:** the round number carried ACROSS competitions, so returning from
@@ -545,6 +550,39 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > Betis/Madrid data (ES). ⚠ Paint only — live ledger, accessories, provider,
 > reload budget untouched. ⚠ Needs a new NATIVE build to reach a device.
 >
+> ⭐⭐ **NEW 2026-09-13 — the league RAIL is gone; it is a liquid-glass DROPDOWN**
+> ([0162](./decisions/0162-the-league-rail-becomes-a-dropdown.md)). Ed: *"the
+> league selector is getting crowded — can we implement some sort of fancy liquid
+> glass dropdown"*. `LeagueSwitch` is **deleted** (~780 lines: the gliding plate,
+> the drag-to-snap, the lens and its composed magnifier, the hover inflate) and
+> `LeagueMenu` replaces it on Matchdays, Table and Clubs. A trigger capsule NAMES
+> the competition — artwork back at the full 54×27, the biggest the crown has
+> drawn since five leagues — and a panel blooms out of it, one row per
+> competition. **A new league now costs a row, not a slice of everyone's gutter**,
+> which is the whole trade; what it costs is a tap.
+>
+> ⚠ **Deleted with it:** the three mark cuts (`leagueChipMarkWCrownTight`,
+> `...Tighter`), `leagueRailTightFrom`/`TighterFrom`, `leagueRailPad`,
+> `leagueChipH`, and **0031's text branch** — every row carries the name, so a
+> league with no artwork needs no special case, and 0160's mid-word `LIGA / HONDU
+> / BET` smudge cannot recur. 0153 and 0160 keep the arithmetic if a rail is ever
+> wanted back.
+>
+> ⚠⚠ **Three glass findings, all simulator-caught, all now traps 69–71.** The
+> panel body must be OPAQUE (trap 59) so it is built as the 0090/0091 tray; glass
+> over that opaque fill is a **no-op**, so the selection lozenge is paint;
+> and a crown payload needs `useCrownLift` to draw over the body — **temporarily**,
+> because a permanently lifted crown hazes the top of every screen. ⚠⚠ And a PICK
+> dismisses with **no animation** (trap 71): the collapse animates a layout prop
+> against the heaviest re-render the screen does, and it stalled part-collapsed.
+>
+> ⚠ The panel is **placed by `measureInWindow`** at open time — down if the rows
+> clear the tab bar, UP otherwise, scrolling only if neither side fits. On Clubs
+> it did not fit and the last league sat under the bar; that is the part that has
+> to keep working as leagues are added. ⚠ **Not seen on a phone, and not on an
+> SE**, where the upward flip is the common case rather than the rare one, and
+> where the whole three-rail "look at it on the SE" note below is now moot.
+>
 > ⭐⭐ **NEW 2026-09-12 — the app carries SIX leagues, and the Table rail carries
 > SEVEN chips.** Liga Nacional de Honduras — shown as **Liga Hondubet**, api slug
 > `liga-nacional-apertura` — joined the catalogue
@@ -621,11 +659,14 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 > Its sibling `liga-nacional-clausura` is configured on the backend with no
 > league row and is deliberately absent here until ~Jan 2027.
 >
-> ⚠ **The rail arithmetic moved** ([0160](./decisions/0160-a-seventh-chip-shrinks-the-mark-again.md)):
+> ⚠ ~~**The rail arithmetic moved** ([0160](./decisions/0160-a-seventh-chip-shrinks-the-mark-again.md)):
 > the Table is seven chips at 46.14pt a slot on a 375pt device, so the crown mark
 > has a **third** cut (38×19 at `leagueRailTighterFrom`) and `tight` became a
 > three-valued `MarkCut`. **Matchdays and Clubs both reach six** and draw the
-> existing tight cut for the first time — look at all three rails on the SE.
+> existing tight cut for the first time — look at all three rails on the SE.~~
+> **Moot 2026-09-13** — there is no rail and no slot arithmetic
+> ([0162](./decisions/0162-the-league-rail-becomes-a-dropdown.md)). The SE still
+> wants a look, but at the dropdown's PLACEMENT, not at a mark cut.
 
 > ⭐ **NEW 2026-09-02 — the app carries FIVE leagues.** Puerto Rico
 > (`lpr-pro-clausura`, shown as **LPR Clausura**) joined the catalogue
@@ -1714,6 +1755,48 @@ documented at the code that handles them; this is the index.
     only the namespace clash did. `runLabel` now takes `namespaced` and captions
     with kickoffs instead. **Screenshot the merged case — the numbers were right
     in every unit test.**
+
+69. **⚠⚠ LIQUID GLASS OVER AN OPAQUE FILL IS A NO-OP, not a subtle effect.**
+    The other half of trap 59, and together they box in every overlay panel this
+    app will ever draw. The league dropdown's selection lozenge was built as the
+    old rail plate's `GlassView` riding the panel's own inner surface — and it
+    rendered as **nothing** (simulator, 2026-09-13). The rail's plate worked
+    because the capsule under it was ITSELF glass over the live screen, so there
+    was a real backdrop to bend; an opaque slab has none. ⚠ The bind: a panel
+    hanging over content must be opaque (trap 59 — the standings would ghost
+    through it), and once it is opaque, glass on top of it is invisible. **The
+    answer is paint** ([0162](./decisions/0162-the-league-rail-becomes-a-dropdown.md)).
+    ⚠ Nothing warns you — no error, no log, no typecheck; the view is simply not
+    there.
+
+70. **⚠⚠ Raising the CROWN above the screen body hazes the top of the screen,
+    because its gradient is a LAYER that deliberately overflows the box.**
+    `CrownRamp` is a fixed 432pt layer anchored at y = 0 (ADR 0094/0095) and the
+    crown is usually shorter, so the fade runs on BEHIND the body. Give the crown
+    a `zIndex` — which a payload control needs in order to draw over the body,
+    since a child's z-index cannot pass its parent's sibling — and that overflow
+    paints **on** the body: the Table's band legend and first two rows went
+    visibly hazy, A/B-measured on screenshots (2026-09-13). ⚠ The lift is
+    therefore `useCrownLift`, held only while the control's own SCRIM is up, and
+    the scrim reads the same spring so the two can never end on different frames.
+    **A permanently lifted crown is the bug; there is no version of it that is
+    just "cleaner".**
+
+71. **⚠⚠ An animation on a LAYOUT prop stalls when the same gesture triggers a
+    screenful of React work — and it stalls VISIBLY, mid-animation.** The league
+    dropdown's close animates the panel's height. Choosing a league is the moment
+    the screen does its heaviest work (new query, new standings, whole list
+    re-rendered), so the collapse froze part-way and left a black bar under the
+    trigger long after the new league was on screen — Ed caught it on a
+    screenshot within minutes of the first build, and the spring's completion
+    callback took **762ms** to reach JS against a spring that settles in ~300.
+    ⚠ The first fix — unmounting from the spring's callback — is what produced
+    that measurement and proved the LAYOUT COMMIT was late, not the callback.
+    The fix is to not animate that path at all: a pick unmounts in the same
+    commit that switches the league; a cancel, which does no work, still
+    animates. ⚠ Transform/opacity would dodge this, but on glass they are both
+    forbidden (ADR 0122) — so on a glass surface the honest answer is no
+    animation rather than a different one.
 
 ---
 

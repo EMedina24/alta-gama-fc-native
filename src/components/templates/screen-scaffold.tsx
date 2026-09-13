@@ -36,6 +36,7 @@ import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { Avatar, MeshGround } from '@/components/atoms';
+import { CrownLiftContext } from '@/hooks/use-crown-lift';
 import { BottomTabInset, Colors, CrownRamp, MaxContentWidth, Spacing } from '@/constants/theme';
 import { Crown } from './crown';
 
@@ -107,6 +108,8 @@ export function ScreenScaffold({
    * threshold — this re-renders twice per scroll, not sixty times a second.
    */
   const [overBright, setOverBright] = useState(true);
+  /** See `useCrownLift`. Off at rest; every payload that raises it lowers it. */
+  const [lifted, setLifted] = useState(false);
   const threshold = Math.max(0, (insets.top + CrownRamp) * BRIGHT_BAND - insets.top);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -146,8 +149,9 @@ export function ScreenScaffold({
           meta={meta}
           accessory={accessory}
           padBottom={crownPadBottom}
+          lifted={lifted}
           topInset={insets.top}>
-          {payload}
+          <CrownLiftContext.Provider value={setLifted}>{payload}</CrownLiftContext.Provider>
         </Crown>
         <View style={styles.body}>{children}</View>
       </ScrollView>

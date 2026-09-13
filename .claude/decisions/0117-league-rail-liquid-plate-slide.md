@@ -1,7 +1,7 @@
 # 0117 — The league selector becomes a solid rail with a gliding liquid-glass plate
 
 - **Date:** 2026-09-05
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — the rail is a dropdown; the gliding plate is gone. The glass-under-content ordering it established lives on in the menu's trigger
 - **Decided by:** Ed ("lets make a plan to add some smoothness or animation to
   the league selector … something similar to the way the main nav works. A
   rail and a plate of liquid glass … a solid rail like the nav with a glass on

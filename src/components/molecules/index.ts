@@ -7,7 +7,12 @@ export { FixtureTiming } from './fixture-timing';
 export { FormStrip } from './form-strip';
 export { HomeAwayTag } from './home-away-tag';
 export { LeaguePills, type LeaguePillsProps } from './league-pills';
-export { LeagueSwitch, type LeagueOption } from './league-switch';
+export {
+  LeagueMenu,
+  type LeagueMenuCopy,
+  type LeagueMenuProps,
+  type LeagueOption,
+} from './league-menu';
 export { ListRow } from './list-row';
 export { MatchdayPager } from './matchday-pager';
 export { MatchdayStrip } from './matchday-strip';

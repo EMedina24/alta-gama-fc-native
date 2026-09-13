@@ -1,7 +1,7 @@
 # 0160 — A seventh chip shrinks the mark again, and the cut stops being a boolean
 
 - **Date:** 2026-09-12
-- **Status:** Accepted — ⚠ 38×19 is a FIRST CUT and device-judged, like 0116 and 0153 before it; not yet seen on a phone
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — which is the "second control" this entry's own last line said the eighth chip would need. The 38×19 cut never shipped to a phone. Keep the arithmetic here in case a rail is ever wanted back
 - **Decided by:** Ed (chose the tighter cut over a scrolling rail)
 - **Amends:** [0153](./0153-sixth-chip-shrinks-the-crown-mark.md) — same lever, one slot further on
 - **Keeps:** [0118](./0118-league-rail-static-and-plate-drags.md) (the rail still never scrolls) · [0116](./0116-crown-league-chips-larger-cut.md) (chip HEIGHT untouched) · [0031](./0031-league-filter-tiles-are-artwork-only.md) · [0123](./0123-league-marks-full-colour-at-rest.md)

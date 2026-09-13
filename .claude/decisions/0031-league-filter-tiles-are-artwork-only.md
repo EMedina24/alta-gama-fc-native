@@ -1,7 +1,7 @@
 # 0031 — The league filter tiles are artwork only
 
 - **Date:** 2026-08-25
-- **Status:** Accepted — the fixed-tile geometry and idle-opacity rule are Superseded by [0089](./0089-league-chips-grayscale-inactive.md); artwork-only and the labelled fallback stand
+- **Status:** Accepted — the fixed-tile geometry and idle-opacity rule are Superseded by [0089](./0089-league-chips-grayscale-inactive.md); **artwork-only is AMENDED by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13), which makes the control a dropdown that names the competition, and deletes the labelled fallback this entry kept — every row carries the name now, so a league with no artwork needs no special branch
 - **Decided by:** Ed Medina
 
 ## Context

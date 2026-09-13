@@ -1,7 +1,7 @@
 # 0120 — The league rail is glass, and untinted
 
 - **Date:** 2026-09-05
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — no rail, no capsule. The untinted dark-scheme rule it found still governs every `GlassView` in the menu
 - **Decided by:** Ed ("it still doesnt match the main nav rail", twice, against
   simulator screenshots of the rail beside the bar)
 - **Amends:** [0117](./0117-league-rail-liquid-plate-slide.md)/[0118](./0118-league-rail-static-and-plate-drags.md)

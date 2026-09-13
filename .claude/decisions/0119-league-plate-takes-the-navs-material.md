@@ -1,7 +1,7 @@
 # 0119 — The league plate takes the nav's material
 
 - **Date:** 2026-09-05
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — there is no resting plate. ⚠ Its finding survives inverted: the plate worked because the rail's capsule was itself glass over the live screen, which is why the menu's lozenge over an OPAQUE panel rendered as nothing
 - **Decided by:** Ed ("I noticed the liquid glass effect isnt the same as the
   one in the nav", comparing the rail against the tab bar on the simulator)
 - **Amends:** [0117](./0117-league-rail-liquid-plate-slide.md) — the plate's

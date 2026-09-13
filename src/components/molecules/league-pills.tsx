@@ -5,14 +5,18 @@
  * 0056's rules carry over unchanged; only the form shrank so the clubs get the
  * screen:
  *
- * ⚠ The pills carry the league's NAME, deliberately breaking the artwork-only
- * rule that governs `LeagueSwitch` (ADR 0031). On the first screen of the app
- * the reader has never seen any of the marks — here the row IS a legend.
+ * ⚠ The pills carry the league's NAME, which in 2026 broke the artwork-only
+ * rule the league rail was built on (ADR 0031): on the first screen of the app
+ * the reader has never seen any of the marks, so the row IS a legend. ⚠ That
+ * exception has since become the norm — the rail is a DROPDOWN now and names
+ * every competition it lists (ADR 0162). This row is no longer the odd one
+ * out; `LeaguePills` survives because a first-run picker wants every option
+ * on screen at once, which is the one thing a dropdown will not do.
  *
  * ⚠ NO light plate behind the marks — the Premier League's mark is PURE WHITE,
  * drawn for a dark UI, and a plate would render it invisible.
  *
- * ⚠ NO 50% idle opacity, unlike `LeagueSwitch`. Here it read as three disabled
+ * ⚠ NO 50% idle opacity, unlike the league rail's chips. Here it read as three disabled
  * options, and it is what made the white mark look faint. Idle pills are full
  * opacity and the accent ring alone carries selection, as the club tiles do.
  *
@@ -23,7 +27,7 @@ import { Image } from 'expo-image';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { Text } from '@/components/atoms';
-import type { LeagueOption } from './league-switch';
+import type { LeagueOption } from './league-menu';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface LeaguePillsProps {

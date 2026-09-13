@@ -1,7 +1,7 @@
 # 0116 — The crown's league chips take a larger cut
 
 - **Date:** 2026-09-05
-- **Status:** Accepted
+- **Status:** Accepted — **amended by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13): the rail is gone, but `leagueChipHCrown: 52` survives as the DROPDOWN TRIGGER's height, because nothing about this twice-device-judged number was ever about the slot count
 - **Decided by:** Ed ("can we make the league selectors a bit bigger please —
   on the match day and table screen", off a device screenshot)
 - **Amends:** [0089](./0089-league-chips.md) — the chip geometry is no longer

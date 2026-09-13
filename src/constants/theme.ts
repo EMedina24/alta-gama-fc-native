@@ -555,6 +555,21 @@ export const Glide = {
    * transform scale would sit over glass (0122's finding 3). ⚠ Device-judged.
    */
   hover: 3,
+  /**
+   * How close two glass surfaces must be to read as ONE (ADR 0162) — the
+   * `UIGlassContainerEffect` spacing that lets the league panel bloom OUT of
+   * its trigger instead of appearing beside it.
+   *
+   * ⚠ Read with `Size.leagueMenuGap` (12) and `Size.leagueMenuTuck` (16): the
+   * panel opens 4pt INSIDE the trigger — merged — and rests 12pt below it,
+   * which is past this number, so it separates. A value above the gap would
+   * leave them fused at rest; a value below the overlap would mean they never
+   * merge at all and the whole effect is a fade.
+   *
+   * ⚠ Device-judged, and the first thing to reach for if the open reads as a
+   * panel appearing rather than as liquid pulling apart.
+   */
+  merge: 8,
 } as const;
 
 /**
@@ -1111,96 +1126,50 @@ export const Size = {
    * `StyleSheet.hairlineWidth` (0.33 disappears against the mesh the way the
    * score rule did in 0044). `trayPad` is the band between a tray's outer and
    * inner surfaces AND their radius difference — one number, two duties, so
-   * the curves stay concentric. `leagueChipH` is the 0089 chip (below
-   * `minTouch`; carries hitSlop like `eventTab`). The two bleeds are the club
-   * page's decorative crests, drawn outside the box on purpose (ADR 0091).
+   * the curves stay concentric. ⚠ `trayPad` earned a second call site in ADR
+   * 0162 — the league panel is a tray, and its opaque inner is what keeps the
+   * screen behind it from ghosting through the glass (trap 59). The two bleeds
+   * are the club page's decorative crests, drawn outside the box on purpose
+   * (ADR 0091).
+   *
+   * ⚠ `leagueChipH` (the 0089 ground chip, 36) and `leagueRailPad` are GONE
+   * with the rail itself (ADR 0162). So are the tight (44×22) and tighter
+   * (38×19) crown cuts and their slot thresholds: a dropdown's artwork does not
+   * shrink as the catalogue grows, so there is one crown cut again. 0153 and
+   * 0160 hold the arithmetic if a rail is ever wanted back.
    */
   glassBorder: 0.5,
   trayPad: 5,
-  leagueChipH: 36,
   /**
-   * The 0089 chip's mark box. Wider than tall because three of the four are
-   * landscape lockups; LaLiga's 1:1 icon letterboxes inside it. The old fixed
-   * TILE (`leagueTileW/H`, `leagueMarkW/H`) is superseded by 0089 and those
-   * tokens await P6 cleanup.
+   * The 0089 mark box, now the LEAGUE MENU's row cut and the season-stats
+   * wordmark's (ADR 0162). Wider than tall because most are landscape lockups;
+   * LaLiga's 1:1 icon letterboxes inside it. The old fixed TILE
+   * (`leagueTileW/H`, `leagueMarkW/H`) is superseded by 0089 and those tokens
+   * await P6 cleanup.
    */
   leagueChipMarkW: 44,
   leagueChipMarkH: 22,
   /**
-   * The CROWN row's larger cut (ADR 0116, Ed: "a bit bigger" on Matchdays and
-   * Table). The crown band is the screen's header and its chips are the
-   * screen's primary control; the Clubs body row keeps the 0089 size above.
-   * Above `minTouch`, which the 36 chip never reached. Mark box is 1.5× the
-   * 0089 mark, same landscape ratio. ⚠ Device-judged like `groundLift`: the
-   * first cut (44 / 54×27) was approved on the simulator and still read
-   * small on the phone.
+   * The CROWN control's height (ADR 0116, Ed: "a bit bigger" on Matchdays and
+   * Table) — the rail's chip until 0162, the DROPDOWN TRIGGER since. The crown
+   * band is the screen's header and this is the screen's primary control.
+   * ⚠ Device-judged like `groundLift`: the first cut (44) was approved on the
+   * simulator and still read small on the phone. It survives the rail because
+   * nothing about it was ever about the slot count.
    */
   leagueChipHCrown: 52,
   /**
-   * ⚠ 0118 pulls the crown mark back to 0116's FIRST cut (54×27, from 66×33):
-   * the rail is STATIC now — five flexed slots share the gutter width
-   * (~61pt each at five leagues), and the 66 mark no longer fits its slot.
-   * The chip HEIGHT keeps 0116's 52.
+   * The crown mark, at 0116's first cut (54×27, pulled back from 66×33 by
+   * 0118 when the rail went static).
+   *
+   * ⚠⚠ **This is a RESTING size again** (ADR 0162). Under the rail it was the
+   * widest of three, dropping to 44×22 at six slots and 38×19 at seven, because
+   * every league divided one fixed gutter. The trigger draws ONE mark and its
+   * box does not move when an eighth league lands — which is the reason the
+   * dropdown exists.
    */
   leagueChipMarkWCrown: 54,
   leagueChipMarkHCrown: 27,
-  /**
-   * The crown mark once the rail carries `leagueRailTightFrom` slots or more
-   * (ADR 0153). The Table screen reached six when the Champions League joined.
-   *
-   * ⚠ **The arithmetic, because 0118's own figure is wrong.** The rail is
-   * `min(width, MaxContentWidth) - 2*Spacing.five`, less `2*leagueRailPad`, split
-   * into equal flexed slots with no gap. On a 375pt device that is 323pt — so
-   * **64.6pt a slot at five** (0118 says "~61"), and **53.83 at six**. Against
-   * the 54pt mark above that is **-0.08pt of air**: the mark is wider than its
-   * slot, six lockups sit edge to edge, and the pill plate becomes a rounded
-   * square with artwork touching both rims. That is the "no longer fits its
-   * slot" condition 0118 named, and it pre-authorised this lever.
-   *
-   * Today's real budget at five chips is 5.3pt/side at 375. Applied to six:
-   * `53.83 - 2*5.3 = 43.2` → **44 x 22**, which leaves 4.9pt/side, within a
-   * tenth of a point of what five chips have now.
-   *
-   * ⚠ Equal to `leagueChipMarkW`/`leagueChipMarkH` (the 0089 GROUND cut) today,
-   * and held under separate names ON PURPOSE — the `moved`/`bandUel` precedent.
-   * Aliasing them would make a future crown resize silently resize the Clubs
-   * body row, which is a different device-judged decision.
-   */
-  leagueChipMarkWCrownTight: 44,
-  leagueChipMarkHCrownTight: 22,
-  /** Slot count at which the crown mark drops to the tight cut above. */
-  leagueRailTightFrom: 6,
-  /**
-   * The crown mark once the rail carries `leagueRailTighterFrom` slots or more
-   * (ADR 0160). The Table screen reached SEVEN when Liga Hondubet joined the
-   * catalogue beside the Champions League chip.
-   *
-   * ⚠ **Same arithmetic as the tight cut above, one slot further on.** The rail
-   * is `min(width, MaxContentWidth) - 2*Spacing.five`, less `2*leagueRailPad`,
-   * split into equal flexed slots with no gap:
-   *
-   * | Device | content | 7 slots | air/side at the 44 tight cut |
-   * | --- | --- | --- | --- |
-   * | SE 3 / 13 mini (375) | 323 | **46.14** | **1.07** |
-   * | 15 / 16 (393) | 341 | 48.71 | 2.36 |
-   * | 16 Pro (402) | 350 | 50.00 | 3.00 |
-   * | 16 Pro Max (440) | 388 | 55.43 | 5.71 |
-   *
-   * Six chips have 4.9pt/side today. `46.14 - 2*4.07 = 38` → **38 x 19**, which
-   * restores 4.07pt/side at 375 — the same derivation 0153 used to land on 44,
-   * and the closest the seventh slot can get to what the sixth reads like.
-   *
-   * ⚠ The 19:1 ratio matches the two cuts above (2:1 landscape), so a mark does
-   * not change shape as the rail grows — only scale.
-   *
-   * ⚠ **A first cut, device-judged like every chip number before it** (0116,
-   * 0153). If the marks read as stamps rather than badges, the lever is the
-   * rail's own `MaxContentWidth`/pad rather than a fourth cut.
-   */
-  leagueChipMarkWCrownTighter: 38,
-  leagueChipMarkHCrownTighter: 19,
-  /** Slot count at which the crown mark drops again, to the tighter cut above. */
-  leagueRailTighterFrom: 7,
   /**
    * A DRAWN competition lockup in a crown chip (ADR 0133/0153).
    *
@@ -1219,12 +1188,40 @@ export const Size = {
    */
   leagueChipLockupHCrown: 34,
   /**
-   * The league rail's inset (ADR 0117): the solid ink capsule pads the chip
-   * slots by this on every side, so the rail stands 2× this taller than its
-   * chips (64 crown / 48 ground). ⚠ Device-judged like the chip cut above —
-   * the rail eats crown-band height that 0116 calibrated without it.
+   * The LEAGUE MENU (ADR 0162) — the dropdown that replaced the rail.
+   *
+   * `leagueMenuTriggerH` is the GROUND trigger (Clubs); the crown keeps
+   * `leagueChipHCrown` above, so the crown band's calibrated height is
+   * untouched by the change of control. 44 is `minTouch` exactly — the ground
+   * row was a 36pt chip carrying hitSlop, and a capsule with words in it has no
+   * excuse to be under the target.
+   *
+   * `leagueMenuRowH` is a panel row: the 44×22 mark box plus air, and above
+   * `minTouch` on its own without hitSlop, because rows are stacked and a slop
+   * that overlapped its neighbour would pick the wrong league.
+   *
+   * `leagueMenuGap` is the resting distance from the trigger's bottom edge to
+   * the panel's top; `leagueMenuTuck` is how far UP the panel starts, so it
+   * opens from inside the trigger and pulls away. ⚠ The two are read together
+   * with `Glide.merge`: the panel must START closer than `merge` (they read as
+   * one body of glass) and REST further than it (they separate). Change one and
+   * check all three.
+   *
+   * `leagueMenuShutH` is the panel's height at rest-closed — a capsule's worth,
+   * not zero: a `GlassView` animating out of nothing pops.
+   *
+   * ⚠ `leagueMenuScrimReach` is a REACH, not a spacing: the dismiss catcher is
+   * absolutely positioned inside a control halfway down the crown and has to
+   * cover a whole phone in every direction. 1200 clears the tallest device in
+   * both axes with room over.
    */
-  leagueRailPad: 6,
+  leagueMenuTriggerH: 44,
+  leagueMenuRowH: 46,
+  leagueMenuGap: 12,
+  leagueMenuTuck: 16,
+  leagueMenuShutH: 24,
+  leagueMenuPadX: 14,
+  leagueMenuScrimReach: 1200,
   bigCrestBleed: 238,
   oppCrestBleed: 146,
 } as const;

@@ -21,6 +21,24 @@ import type { ZoneKind } from '@/lib/cronogol/leagues';
 
 export interface Copy {
   tabs: { today: string; matchdays: string; table: string; clubs: string };
+  /**
+   * The league DROPDOWN's own words (ADR 0162) — chrome shared by Matchdays,
+   * Table and Clubs, so it sits at the top level rather than inside any one of
+   * them.
+   *
+   * ⚠ Every string here is for VOICEOVER. The control itself draws the
+   * competition's own name, which comes from the catalogue and is never
+   * translated — `LaLiga` is `LaLiga` in both languages (0148's rule that a
+   * slug must never reach a reader cuts the other way for a brand).
+   */
+  leagueMenu: {
+    /** The trigger's label: the control, then what it currently reads. */
+    label: (league: string) => string;
+    /** Its hint — what a tap does. */
+    hint: string;
+    /** The scrim's label: the way out for a reader who opened it by accident. */
+    close: string;
+  };
   alerts: {
     eyebrow: (club: string, matches: number) => string;
     title: (club: string) => string;
@@ -917,6 +935,11 @@ export interface Copy {
 
 export const esCopy: Copy = {
   tabs: { today: 'Hoy', matchdays: 'Jornadas', table: 'Clasificación', clubs: 'Clubes' },
+  leagueMenu: {
+    label: (league) => `Competición: ${league}`,
+    hint: 'Elige una competición',
+    close: 'Cerrar',
+  },
 
   alerts: {
     eyebrow: (club: string, matches: number) => `${club} · ${matches} partidos`.toUpperCase(),
@@ -1454,6 +1477,11 @@ export const esCopy: Copy = {
 
 export const enCopy: Copy = {
   tabs: { today: 'Today', matchdays: 'Matchdays', table: 'Table', clubs: 'Clubs' },
+  leagueMenu: {
+    label: (league) => `Competition: ${league}`,
+    hint: 'Choose a competition',
+    close: 'Close',
+  },
 
   alerts: {
     eyebrow: (club: string, matches: number) => `${club} · ${matches} matches`.toUpperCase(),

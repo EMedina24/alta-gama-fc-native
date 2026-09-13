@@ -19,7 +19,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BAND_COLOR, Button, SkeletonRows, Text } from '@/components/atoms';
-import { LeagueSwitch, SearchField, SectionHeader } from '@/components/molecules';
+import { LeagueMenu, SearchField, SectionHeader } from '@/components/molecules';
 import { ClubBrowser, type BrowseClub } from '@/components/organisms/club-browser';
 import { ClubRail, type RailClub } from '@/components/organisms/club-rail';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
@@ -219,10 +219,11 @@ export default function ClubsScreen() {
               league filter sitting over those results would claim a scope the
               list does not have (ADR 0032). */}
           {query ? null : (
-            <LeagueSwitch
+            <LeagueMenu
               leagues={leagueOptions(artwork.data)}
               active={league.slug}
               onSelect={setLeagueSlug}
+              copy={copy.leagueMenu}
             />
           )}
 

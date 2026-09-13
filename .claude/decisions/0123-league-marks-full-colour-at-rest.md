@@ -1,7 +1,7 @@
 # 0123 — League marks are full colour at rest
 
 - **Date:** 2026-09-06
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) as a rail decision; the rule itself is KEPT — the menu's marks are full colour at rest and an idle row recedes by the 0.72 dim alone
 - **Decided by:** Ed ("Lets make the league icons fill color, it seems they
   default to white when they're not selected", on the glass rail)
 - **Supersedes:** [0089](./0089-league-chips-grayscale-inactive.md)'s

@@ -1,7 +1,7 @@
 # 0124 — The rail hovers under the held lens
 
 - **Date:** 2026-09-06
-- **Status:** Accepted
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — no rail capsule to inflate
 - **Decided by:** Ed ("when holding down on the glass lense, the entire rail
   raises or hovers … mimic the main nav as much as possible"; corrected on
   the first cut: "the rail is shifting up. the main nav stays in position

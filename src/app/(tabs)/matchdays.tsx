@@ -43,7 +43,7 @@ import {
   competitionMarkKind,
 } from '@/components/atoms';
 import {
-  LeagueSwitch,
+  LeagueMenu,
   MatchdayPager,
   MatchdayStrip,
   type LeagueOption,
@@ -112,7 +112,7 @@ export default function MatchdaysScreen() {
    * where `!isCup` — or where the value genuinely does not matter.
    *
    * ⚠ **Anything asking "which tab is selected" must read `leagueSlug`.**
-   * Passing this to `LeagueSwitch`'s `active` drew LaLiga as selected while the
+   * Passing this to the league control's `active` drew LaLiga as selected while the
    * cup was showing, and — because the switch early-returns on a tap that
    * matches `active` — left no way back to LaLiga at all.
    *
@@ -380,16 +380,17 @@ export default function MatchdaysScreen() {
               secondary={rangeMeta}
             />
           ) : null}
-          <LeagueSwitch
+          <LeagueMenu
             leagues={options}
             // ⚠⚠ `leagueSlug`, the STATE — never `league.slug`. `league` falls
             // back to `ROUND_LEAGUES[0]` whenever the cup is active (see its
-            // definition), so passing it drew LaLiga as selected on the cup tab
-            // AND made the LaLiga chip unpressable: `LeagueSwitch.select`
-            // early-returns when the tapped slug already equals `active`, so
-            // there was no way back out of the Champions League.
+            // definition). Under the rail that drew LaLiga as selected on the
+            // cup tab AND made the LaLiga chip unpressable (ADR 0157); under
+            // the dropdown (ADR 0162) the trigger would simply NAME the wrong
+            // competition — quieter, and worse.
             active={leagueSlug}
             onSelect={setLeagueSlug}
+            copy={copy.leagueMenu}
             tone="crown"
           />
         </View>

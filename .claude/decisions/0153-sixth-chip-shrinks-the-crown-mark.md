@@ -1,7 +1,7 @@
 # 0153 — A sixth chip shrinks the crown MARK, and a drawn lockup joins the rail
 
 - **Date:** 2026-09-11
-- **Status:** Accepted — ⚠ the lockup height is a FIRST CUT and device-judged, like 0116 before it
+- **Status:** **Superseded by [0162](./0162-the-league-rail-becomes-a-dropdown.md)** (2026-09-13) — there are no slots to divide, so there is one crown cut again. ⚠ Its STRUCTURAL rule outlives it: artwork is chosen in ONE place, used by every drawer of it. Keep the arithmetic here in case a rail is ever wanted back
 - **Decided by:** Ed (chose the sixth chip over a separate control, and placed it second)
 - **Amends:** [0118](./0118-league-rail-static-and-plate-drags.md) — which pre-authorised exactly this ("a sixth league shrinks the slots further; the mark tokens are the lever if that day comes")
 - **Reads:** [0123](./0123-league-marks-full-colour-at-rest.md) · keeps [0031](./0031-league-filter-tiles-are-artwork-only.md) · third surface for [0133](./0133-ucl-lockup-replaces-the-spelled-name.md)
