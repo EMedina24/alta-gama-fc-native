@@ -26,7 +26,7 @@
  *    organism just draws what it is handed.
  */
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, SkeletonRows, Text, competitionMarkKind } from '@/components/atoms';
@@ -39,7 +39,6 @@ import {
   UCL_LEAGUE_PHASE,
   cupBandFor,
   cupBandsApply,
-  cupCaption,
   usedCupBands,
   type Competition,
 } from '@/lib/cronogol/competitions';
@@ -63,7 +62,7 @@ import {
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useStandings, useAllSeasonJornadas, useUclStandings } from '@/queries/use-standings';
 import { useTeams } from '@/queries/use-teams';
-import { usePreferences } from '@/store/preferences';
+import { setLeagueSlug, usePreferences } from '@/store/preferences';
 
 /**
  * The selected tab.
@@ -81,11 +80,15 @@ export default function TableScreen() {
   const router = useRouter();
   const initials = useIdentityInitials();
   const { copy, phrases } = useI18n();
-  const { followed } = usePreferences();
+  const { followed, leagueSlug: activeSlug } = usePreferences();
   const standings = useStandings();
   const jornadas = useAllSeasonJornadas();
 
-  const [activeSlug, setActiveSlug] = useState(LEAGUES[0].slug);
+  /**
+   * The pick is SHARED with Matchdays and Clubs and persisted (ADR 0164). No
+   * clamp here: this screen lists the WHOLE catalogue plus the cup, so every
+   * value the store can hold is one this screen can show.
+   */
   const active: Tab = useMemo(() => {
     if (activeSlug === UCL_LEAGUE_PHASE.slug) {
       return { kind: 'ucl', competition: UCL_LEAGUE_PHASE };
@@ -158,22 +161,36 @@ export default function TableScreen() {
       .map(({ order: _order, ...option }) => option);
   }, [tables]);
 
-  const subtitle = useMemo(() => {
+  /** The pill's scope: this competition's club count, or null while it loads. */
+  const clubCount =
+    active.kind === 'ucl' ? active.competition.clubs : (current?.table.clubs ?? null);
+
+  /**
+   * The line under the title — how far the season has run (ADR 0165).
+   *
+   * ⚠⚠ **The club count is deliberately NOT here any more.** It moved to the
+   * banner pill directly above, and printing `20 clubs` in both put the same
+   * two words on two consecutive lines. `cupCaption` is dropped for the same
+   * reason: it composed exactly that pair.
+   *
+   * ⚠ `undefined` — not a placeholder — while the matchday is unknown. A null
+   * matchday is trap 2's honest state and on the cup tab it is the state two
+   * nights in three.
+   */
+  const metaLine = useMemo(() => {
     if (active.kind === 'ucl') {
-      return ucl.data
-        ? cupCaption(ucl.data, active.competition, {
-            afterMatchday: copy.table.afterMatchday,
-            clubCount: copy.table.clubCount,
-          })
-        : undefined;
+      // ⚠ `matchday` is nullable on the wire and null is the HONEST state, not
+      // an outage — see this file's header on the deferred-fixture case.
+      return ucl.data?.matchday == null
+        ? undefined
+        : copy.table.afterMatchday(ucl.data.matchday, active.competition.matchdays);
     }
     if (!current) return undefined;
     const index = jornadas.byLeague[current.league.apiSlug];
     const done = index ? completedMatchweek(index.matchweeks, current.table.lastMatchUtc) : null;
-    const clubs = copy.table.clubCount(current.table.clubs);
     return done === null
-      ? clubs
-      : `${copy.table.afterMatchday(done, roundCount(current.league))} · ${clubs}`;
+      ? undefined
+      : copy.table.afterMatchday(done, roundCount(current.league));
   }, [active, ucl.data, current, jornadas.byLeague, copy]);
 
   /**
@@ -252,27 +269,45 @@ export default function TableScreen() {
 
   return (
     <ScreenScaffold
+      /* ⚠ Null on the cup tab: `active.league` is the `?? LEAGUES[0]` fallback
+         there, and the UCL has no `LeagueBand` row anyway, so it wears the
+         brand crown (ADR 0164). */
+      tintLeague={active.kind === 'league' ? active.league.apiSlug : null}
       title={copy.table.title}
-      accessory={
-        <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
-      }
-      // ⚠ UNDER the title, not the mock's right-shoulder block (ADR 0100):
-      // beside the title, "Clasificación" got ~130pt and wrapped MID-WORD —
-      // the shoulder cannot hold the Spanish title. It can legitimately be
-      // the club count alone — a null matchday is trap 2's honest state, and
-      // on the cup tab it is the state two nights in three.
-      subtitle={subtitle}
+      /* ⚠ UNDER the title, never a right-shoulder block (ADR 0100): beside the
+         title, "Clasificación" got ~130pt and wrapped MID-WORD. */
+      metaLine={metaLine}
       onRefresh={() => void query.refetch()}
       refreshing={query.isRefetching}
-      payload={
+      /* The banner row (ADR 0165) — the same construction Matchdays uses, and
+         it replaces `accessory`: the avatar lives here now. */
+      banner={
         options.length > 0 ? (
-          <LeagueMenu
-            leagues={options}
-            active={activeSlug}
-            onSelect={setActiveSlug}
-            copy={copy.leagueMenu}
-            tone="crown"
-          />
+          <View style={styles.banner}>
+            <View style={styles.bannerMenu}>
+              <LeagueMenu
+                leagues={options}
+                active={activeSlug}
+                onSelect={setLeagueSlug}
+                copy={copy.leagueMenu}
+                tone="crown"
+                /* ⚠ This screen's own scope is its CLUB count, not a round
+                   count — `phrases.clubs`, which pluralises, rather than
+                   `copy.table.clubCount`, which does not at n = 1. */
+                subtitle={[
+                  clubCount === null ? null : phrases.clubs(clubCount),
+                  options.length > 1 ? copy.leagueMenu.switch : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              />
+            </View>
+            <AvatarButton
+              initials={initials}
+              onPress={() => router.push('/(sheets)/account')}
+              tone="ground"
+            />
+          </View>
         ) : null
       }>
       {query.isPending ? (
@@ -335,4 +370,7 @@ export default function TableScreen() {
 
 const styles = StyleSheet.create({
   state: { gap: Spacing.four, paddingVertical: Spacing.six },
+  /** The banner row (ADR 0165) — see Matchdays' copy of this for why the pill flexes. */
+  banner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  bannerMenu: { flex: 1 },
 });

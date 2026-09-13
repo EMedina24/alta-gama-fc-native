@@ -35,9 +35,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { Avatar, MeshGround } from '@/components/atoms';
+import { Avatar, MeshGround, PremierCrest } from '@/components/atoms';
 import { ScreenOverlayContext } from '@/hooks/use-screen-overlay';
-import { BottomTabInset, Colors, CrownRamp, MaxContentWidth, Spacing } from '@/constants/theme';
+import { leagueCrownTheme } from '@/lib/cronogol/league-theme';
+import {
+  BottomTabInset,
+  Colors,
+  CrownArt,
+  CrownRamp,
+  MaxContentWidth,
+  Spacing,
+} from '@/constants/theme';
 import { Crown } from './crown';
 
 /**
@@ -77,6 +85,26 @@ export interface ScreenScaffoldProps {
   payload?: ReactNode;
   /** Override the crown's content-driven bottom padding (see `Crown`). */
   crownPadBottom?: number;
+  /** A control row above the crown's head — the banner pill + avatar (ADR 0165). */
+  banner?: ReactNode;
+  /** A dot-separated line under the title (ADR 0165). See `Crown.metaLine`. */
+  metaLine?: string;
+  /** `quiet` marks a provisional value — see `Crown.metaTone`. */
+  metaTone?: 'strong' | 'quiet';
+  /**
+   * The league this screen is scoped to, as its **`apiSlug`** — the crown and
+   * the page mesh take that league's hue (ADR 0164).
+   *
+   * ⚠⚠ `apiSlug`, not our route `slug`: `laliga`, never `la-liga`. Pass the
+   * wrong one and LaLiga alone falls back to the brand crown while every other
+   * league looks correct (trap 34 / ADR 0084). `findLeague(slug)?.apiSlug` is
+   * the conversion.
+   *
+   * ⚠ Omitted is the CORRECT state for a screen with no single league — Today
+   * and News are multi-league by construction — and for a competition with no
+   * `LeagueBand` entry. Both wear the brand crown.
+   */
+  tintLeague?: string | null;
   children: ReactNode;
   onRefresh?: () => void;
   refreshing?: boolean;
@@ -91,6 +119,10 @@ export function ScreenScaffold({
   accessory,
   payload,
   crownPadBottom,
+  banner,
+  metaLine,
+  metaTone,
+  tintLeague,
   children,
   onRefresh,
   refreshing = false,
@@ -115,6 +147,22 @@ export function ScreenScaffold({
   const [overlay, setOverlay] = useState<ReactNode>(null);
   const threshold = Math.max(0, (insets.top + CrownRamp) * BRIGHT_BAND - insets.top);
 
+  /**
+   * The league's paint, DERIVED — never held in state (trap 72: if two pieces
+   * of state must agree, compute one from the other). Both calls are a handful
+   * of HSL conversions over ten colours, and both return the brand's own frozen
+   * table when there is no league, so the common case allocates nothing.
+   *
+   * ⚠ No cross-fade, deliberately (trap 71). Picking a league is already the
+   * heaviest frame in the app — new query, new list, whole screen re-rendered —
+   * and an animation on that frame stalls visibly. The recolour lands on the
+   * same commit as the content it belongs to, which is what makes it read as
+   * "the screen changed" rather than as a transition that hitched.
+   */
+  const theme = leagueCrownTheme(tintLeague);
+  /** Whether this screen wears a league's dark head rather than the brand's lime. */
+  const deepCrown = theme.tone === 'deep';
+
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setOverBright(e.nativeEvent.contentOffset.y < threshold);
   };
@@ -134,9 +182,14 @@ export function ScreenScaffold({
     <View style={styles.screen}>
       {/* ⚠ Only while FOCUSED: a blurred tab still mounted under a pushed club
           page would otherwise hold the status bar dark over that screen. */}
-      <StatusBar style={focused && overBright ? 'dark' : 'light'} />
+      {/* ⚠⚠ The flip is the BRIGHT crown's alone. Dark glyphs exist because the
+          brand's lime runs up behind the status bar; a DEEP league crown is dark
+          at every offset, so `light` is correct there from y = 0 and the scroll
+          position is irrelevant. Asking `overBright` on a deep crown would put
+          black glyphs on a near-black band. */}
+      <StatusBar style={focused && deepCrown === false && overBright ? 'dark' : 'light'} />
       {/* The aurora mesh sits BEHIND the scroll and does not move (ADR 0087). */}
-      <MeshGround />
+      <MeshGround pools={theme.pools} />
       <ScrollView
         style={styles.scroll}
         onScroll={onScroll}
@@ -150,8 +203,10 @@ export function ScreenScaffold({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              // Dark ink — the spinner spins over the crown's bright band.
-              tintColor={Colors.dark.onCrownDim}
+              // ⚠ The spinner spins over the crown's TOP, so its ink follows the
+              // same rule the head's does: dark on the brand's bright band,
+              // white on a league's deep one (ADR 0165).
+              tintColor={deepCrown ? Colors.dark.onDeepDim : Colors.dark.onCrownDim}
             />
           ) : undefined
         }>
@@ -163,6 +218,12 @@ export function ScreenScaffold({
           meta={meta}
           accessory={accessory}
           padBottom={crownPadBottom}
+          stops={theme.stops}
+          tone={theme.tone}
+          art={theme.art === 'premier-league' ? <PremierCrest height={CrownRamp * CrownArt.height} alpha={CrownArt.alpha} /> : null}
+          banner={banner}
+          metaLine={metaLine}
+          metaTone={metaTone}
           topInset={insets.top}>
           {payload}
         </Crown>

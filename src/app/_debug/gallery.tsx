@@ -9,7 +9,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BAND_COLOR, BookmarkGlyph, Button, ChipButton, Hairline, PlusGlyph, Score, Switch, Text } from '@/components/atoms';
+import { BAND_COLOR, BookmarkGlyph, Button, ChipButton, Hairline, PlusGlyph, PremierCrest, Score, Switch, Text, WashGradient } from '@/components/atoms';
 import {
   ClubBubble,
   ClubRow,
@@ -34,7 +34,7 @@ import { LivePlate } from '@/components/organisms/live-plate';
 import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpDeck } from '@/components/organisms/next-up-deck';
-import { Colors, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, CrownRamp, Radius, Size, Spacing } from '@/constants/theme';
 import {
   detailLine,
   eventKind,
@@ -47,6 +47,7 @@ import {
   type EventGroup,
 } from '@/lib/cronogol/events';
 import { pairWash } from '@/lib/cronogol/club-wash';
+import { leagueCrownTheme } from '@/lib/cronogol/league-theme';
 import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
 import type {
   FixtureWindowView,
@@ -354,6 +355,48 @@ const cardStory = (a: NewsArticleView) => ({
   title: a.title, imageUrl: a.imageUrl, topic: a.categories[0] ?? null, publisher: a.publisher.name, age: '2h',
 });
 
+/**
+ * One league's crown, at true `CrownRamp` height (ADR 0164/0165).
+ *
+ * ⚠⚠ The ink comes from `theme.tone`, NOT from whether `apiSlug` is set — which
+ * is the whole point of `leagueCrownTheme` returning the two together. The two
+ * unbanded columns prove it: they wear the BRAND ramp and must therefore show
+ * DARK ink, and a column that derived ink from the slug would draw them white
+ * on lime.
+ */
+function TintColumn({ label, apiSlug }: { label: string; apiSlug: string | null }) {
+  const theme = leagueCrownTheme(apiSlug);
+  const deep = theme.tone === 'deep';
+  return (
+    <View style={styles.tintCol}>
+      <View style={styles.tintRamp}>
+        <WashGradient angle="vertical" stops={theme.stops} />
+        {theme.art === 'premier-league' ? (
+          <View style={styles.tintArt}>
+            <PremierCrest height={CrownRamp * 0.7} />
+          </View>
+        ) : null}
+        <Text variant="eyebrowSm" color={deep ? 'onDeepDim' : 'onCrownDim'}>
+          {label.toUpperCase()}
+        </Text>
+        {/* The real ink pair, at the real height it sits at. */}
+        <Text variant="crownTitle" color={deep ? 'onDeep' : 'onCrown'} style={styles.tintTitle}>
+          Md 7
+        </Text>
+      </View>
+      {/* The mesh shows BELOW the fade, which is where these sit. */}
+      <View style={styles.tintPools}>
+        {theme.pools.map((pool, i) => (
+          <View
+            key={i}
+            style={[styles.tintPool, { backgroundColor: pool.color, opacity: pool.alpha }]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function Case({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={styles.case}>
@@ -365,6 +408,25 @@ function Case({ label, children }: { label: string; children: React.ReactNode })
     </View>
   );
 }
+
+/**
+ * The per-league crown and mesh (ADR 0164), every case the app can produce.
+ *
+ * ⚠ Keyed by **`apiSlug`**, which is what `leagueCrown`/`leagueMesh` take —
+ * `laliga`, not `la-liga` (trap 34). The last two rows are the ones worth
+ * checking: both must come back IDENTICAL to the first, because neither the UCL
+ * nor Honduras has a `LeagueBand` entry and the brand crown is their correct
+ * answer, not a failure.
+ */
+const TINTS: readonly { label: string; apiSlug: string | null }[] = [
+  { label: 'brand', apiSlug: null },
+  { label: 'laliga', apiSlug: 'laliga' },
+  { label: 'premier', apiSlug: 'premier-league' },
+  { label: 'bundesliga', apiSlug: 'bundesliga' },
+  { label: 'serie a', apiSlug: 'serie-a' },
+  { label: '⚠ ucl', apiSlug: 'champions-league' },
+  { label: '⚠ honduras', apiSlug: 'liga-nacional-apertura' },
+];
 
 /** Counted once — the fixture array is a module constant, not props. */
 const EV_COUNTS = groupCounts(EVENTS);
@@ -488,7 +550,8 @@ export default function GalleryScreen() {
    * scroll and the shell cannot drive one (no `idb`, no Accessibility), so a
    * section deep in it is otherwise unreachable from a deep link + screenshot.
    */
-  // ⚠ `?only=next-deck` joined the list with ADR 0113; `?only=last` with 0132.
+  // ⚠ `?only=next-deck` joined the list with ADR 0113; `?only=last` with 0132;
+  // `?only=league-tint` with 0164.
   const { only } = useLocalSearchParams<{ only?: string }>();
   const [on, setOn] = useState(true);
   // ⚠ `null` and derived, exactly as `MatchEvents` does it — the gallery must
@@ -728,6 +791,32 @@ export default function GalleryScreen() {
             </View>
           }
         />
+      </Case>
+    </>
+  );
+
+  /**
+   * The per-league crown and page tint (ADR 0164). `?only=league-tint`.
+   *
+   * ⚠ This is the section to judge the feature on: six ramps side by side is
+   * the comparison no single screen can show, and two of the columns exist to
+   * prove the BRAND fallback still fires for a competition with no band row.
+   */
+  const leagueTints = (
+    <>
+      <SectionHeader title="League tint" meta="bright brand vs deep league (ADR 0164/0165)" />
+      {/* ⚠⚠ Each column is the FULL `CrownRamp` (432pt), never a fraction of a
+          shorter box. That is ADR 0094's whole finding: a fraction compresses
+          the ramp, which puts a different colour at the title's height and makes
+          the comparison a lie. Scroll sideways — the columns are meant to be
+          read against each other, and the vertical distribution is the thing
+          being judged. */}
+      <Case label="the crown ramp at true height · ink follows the TONE, not the slug · the three mesh pools under the fade">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tintRow}>
+          {TINTS.map(({ label, apiSlug }) => (
+            <TintColumn key={label} label={label} apiSlug={apiSlug} />
+          ))}
+        </ScrollView>
       </Case>
     </>
   );
@@ -993,6 +1082,14 @@ export default function GalleryScreen() {
     );
   }
 
+  if (only === 'league-tint') {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {leagueTints}
+      </ScrollView>
+    );
+  }
+
   if (only === 'clubs') {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -1226,6 +1323,7 @@ export default function GalleryScreen() {
           <Switch value={false} onValueChange={() => {}} disabled />
         </View>
       </Case>
+      {leagueTints}
       <SectionHeader title="Match events" meta="every glyph · every null" />
       <Case label="the expanded panel's timeline, on fabricated data">
         <View style={styles.eventPanel}>
@@ -1302,6 +1400,25 @@ export default function GalleryScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ⚠ The league-tint preview. `tintRamp` carries `CrownRamp` verbatim — see
+  // the comment at the call site for why a fraction would invalidate it.
+  tintRow: { marginHorizontal: -Spacing.five },
+  tintCol: { width: 128, marginLeft: Spacing.five },
+  tintRamp: {
+    // `relative` + a real height is `WashGradient`'s contract (it measures its box).
+    position: 'relative',
+    height: CrownRamp,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
+    gap: Spacing.one,
+    overflow: 'hidden',
+    borderRadius: Radius.card,
+  },
+  tintTitle: { marginTop: Spacing.one },
+  tintPools: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.three },
+  /** The bled crest, as the crown places it: off the right edge, top-anchored. */
+  tintArt: { position: 'absolute', right: -Spacing.five, top: 0 },
+  tintPool: { flex: 1, height: 28, borderRadius: Radius.chip },
   // The bubble hangs its rank badge 2pt below itself; give it the clearance.
   rail: { paddingBottom: Spacing.two, alignItems: 'flex-start' },
   // Matches `ClubBrowser`'s real tray inner (ADR 0090) so the browse-row

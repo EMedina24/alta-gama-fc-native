@@ -39,13 +39,13 @@ import { useI18n } from '@/lib/i18n/use-i18n';
 import { useLeagueArtwork } from '@/queries/use-leagues';
 import { useStandings } from '@/queries/use-standings';
 import { useTeams } from '@/queries/use-teams';
-import { followClub, usePreferences } from '@/store/preferences';
+import { followClub, setLeagueSlug, usePreferences } from '@/store/preferences';
 
 export default function ClubsScreen() {
   const router = useRouter();
   const initials = useIdentityInitials();
   const { copy } = useI18n();
-  const { followed } = usePreferences();
+  const { followed, leagueSlug } = usePreferences();
   /**
    * ⚠ TWO queries, and they are not redundant.
    *
@@ -59,10 +59,22 @@ export default function ClubsScreen() {
    */
   const teams = useTeams();
   /**
-   * The league being browsed. Screen state, not a preference: it is a place in
-   * a list, and the Matchdays switcher forgets its league the same way.
+   * The league being browsed — SHARED with Matchdays and Table, and persisted
+   * (ADR 0164).
+   *
+   * ⚠ **This reverses the note that stood here.** It read "screen state, not a
+   * preference: it is a place in a list, and the Matchdays switcher forgets its
+   * league the same way", and that was right while every crown was the same
+   * lime. Once the crown wears the league's colour, three tabs holding three
+   * independent leagues make the app change colour on a tab switch with nothing
+   * on screen explaining it — so the pick became one value.
+   *
+   * ⚠ The existing `?? DEFAULT_LEAGUE` is now also the CLAMP, and it already
+   * does the right thing: this screen's menu lists no cup, so a stored
+   * `champions-league` (pickable on Matchdays) resolves to the default here
+   * rather than to an empty roster. It is a read — the fallback is never
+   * written back, so browsing Clubs cannot clobber a UCL pick.
    */
-  const [leagueSlug, setLeagueSlug] = useState(DEFAULT_LEAGUE.slug);
   const league = findLeague(leagueSlug) ?? DEFAULT_LEAGUE;
   const browse = useTeams(league.apiSlug);
   const artwork = useLeagueArtwork();
@@ -171,12 +183,24 @@ export default function ClubsScreen() {
 
   return (
     <ScreenScaffold
+      /* ⚠ `league` is the real selection here, not a fallback-for-a-cup-tab as
+         on Matchdays — this screen has no cup — so its `apiSlug` is safe to
+         tint from directly (ADR 0164). */
+      tintLeague={league.apiSlug}
       title={copy.clubs.title}
       // The one 48pt crown: its subhead carries the follow count (ADR 0087).
       titleVariant="crownTitleLg"
       subtitle={copy.clubs.followedCount(followed.length)}
       accessory={
-        <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
+        <AvatarButton
+          initials={initials}
+          onPress={() => router.push('/(sheets)/account')}
+          /* ⚠ `ground`, not `crown`: this head is a league's DARK band now, and
+             the crown tone's near-black ink is invisible on it (ADR 0165).
+             ⚠ No banner here — this screen's league control lives in the BODY
+             by design, hidden while searching (ADR 0032). */
+          tone="ground"
+        />
       }
       // Search and the subscribed rail ride the crown. The SUBSCRIBED header
       // and the rail sit past the gradient's midpoint, where the ground is

@@ -21,6 +21,8 @@ import { getLocales } from 'expo-localization';
 import { useSyncExternalStore } from 'react';
 
 import { effectiveZone } from '@/lib/timezones';
+import { COMPETITIONS } from '@/lib/cronogol/competitions';
+import { DEFAULT_LEAGUE, findLeague } from '@/lib/cronogol/leagues';
 import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/phrases';
 
 const STORAGE_KEY = 'altagama:preferences';
@@ -28,12 +30,13 @@ const STORAGE_KEY = 'altagama:preferences';
 /**
  * Bump when the stored SHAPE changes.
  *
- * ⚠ 2 added `reminderLeads` (ADR 0040); 5 added `savedStories` (ADR 0129).
+ * ⚠ 2 added `reminderLeads` (ADR 0040); 5 added `savedStories` (ADR 0129);
+ * 6 added `leagueSlug` (ADR 0164).
  * Bumping is safe precisely because `FOLLOWED_RULE_VERSION` did NOT move —
  * that separation is what stops a shape bump from emptying every reader's
  * follow list.
  */
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -178,6 +181,28 @@ export interface Preferences {
   newsSeenAt: string | null;
   /** Saved stories, newest-saved-first (ADR 0129). See `SavedStory`. */
   savedStories: readonly SavedStory[];
+  /**
+   * The competition the league-scoped tabs are showing — Matchdays, Table and
+   * Clubs (ADR 0164).
+   *
+   * ⚠⚠ **Our route `slug`, not the API's `apiSlug`** — `la-liga`, not `laliga`.
+   * It is what `LeagueMenu` speaks on both `active` and `onSelect`, so keeping
+   * the store in the menu's own vocabulary leaves exactly ONE place that
+   * converts (the `tintLeague` prop, via `findLeague(slug)?.apiSlug`). Storing
+   * the API form instead would put that conversion at every read.
+   *
+   * ⚠ **It became shared BECAUSE the crown is tinted.** While every crown was
+   * the same lime, three tabs holding three independent leagues was invisible;
+   * tinted, the app changes colour on a tab switch with no cause the reader can
+   * see. The shared value is the fix, not a tidy-up.
+   *
+   * ⚠ **It may hold a slug a given tab cannot show** — the Champions League
+   * league phase is pickable on Matchdays and is not a `League` at all (ADR
+   * 0150), and Matchdays itself lists only `ROUND_LEAGUES`. Each screen clamps
+   * for its own use; this field records the reader's last pick, and clamping is
+   * not the store's job.
+   */
+  leagueSlug: string;
 }
 
 const DEFAULTS: Preferences = {
@@ -195,6 +220,7 @@ const DEFAULTS: Preferences = {
   reminderLeads: [30],
   newsSeenAt: null,
   savedStories: [],
+  leagueSlug: DEFAULT_LEAGUE.slug,
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -236,10 +262,31 @@ function parse(raw: string | null): Preferences {
       newsSeenAt: typeof data.newsSeenAt === 'string' ? data.newsSeenAt : null,
       // Absent on every v1–v4 payload; absent means "nothing saved".
       savedStories: parseSavedStories(data.savedStories),
+      // Absent on every v1–v5 payload; absent means "the default league".
+      leagueSlug: parseLeagueSlug(data.leagueSlug),
     };
   } catch {
     return DEFAULTS;
   }
+}
+
+/**
+ * A stored league pick, or the default.
+ *
+ * ⚠ Validated against the CATALOGUE, not merely type-checked: a slug from a
+ * build that shipped a league we have since dropped would otherwise persist
+ * forever and leave its tab querying a competition that no longer exists.
+ *
+ * ⚠ `COMPETITIONS` is in the accepted set as well as `LEAGUES`. The Champions
+ * League league phase is a legitimate pick on Matchdays and is deliberately not
+ * a `League` (ADR 0150), so validating on `findLeague` alone would silently
+ * reset a UCL reader to LaLiga on every relaunch.
+ */
+function parseLeagueSlug(raw: unknown): string {
+  if (typeof raw !== 'string') return DEFAULT_LEAGUE.slug;
+  if (findLeague(raw)) return raw;
+  if (COMPETITIONS.some((competition) => competition.slug === raw)) return raw;
+  return DEFAULT_LEAGUE.slug;
 }
 
 /**
@@ -292,25 +339,60 @@ function parseSavedStories(raw: unknown): readonly SavedStory[] {
   return stories;
 }
 
+/**
+ * The fields that are NOT plain scalars, and how each is compared. Everything
+ * else is compared with `===` by walking the object's own keys.
+ *
+ * ⚠⚠ **This used to be a hand-written list of every field, and that shipped a
+ * bug** (ADR 0166): `leagueSlug` was added to `Preferences` and not to the list,
+ * so `same` answered TRUE for a payload where only the league had moved.
+ * `commit` then skipped both the snapshot swap and the `emit` — while still
+ * persisting the new value — so the league switcher did nothing on screen and
+ * the pick only appeared after a relaunch. Silent, and invisible to `tsc`.
+ *
+ * Walking the keys instead means a new SCALAR field is covered the moment it
+ * exists. A new field that needs its own comparison has to be added here, and
+ * the `satisfies` below is what makes forgetting a compile error rather than a
+ * silent equality.
+ */
+const DEEP_EQUAL = {
+  reminderLeads: sameLeads,
+  followed: (a: readonly string[], b: readonly string[]) =>
+    a.length === b.length && a.every((slug, i) => slug === b[i]),
+  // `url` alone: the writers only ever add or remove whole rows, so a list with
+  // the same urls in the same order is the same list.
+  savedStories: (a: readonly SavedStory[], b: readonly SavedStory[]) =>
+    a.length === b.length && a.every((story, i) => story.url === b[i].url),
+} satisfies { [K in ArrayKeys]: (a: Preferences[K], b: Preferences[K]) => boolean };
+
+/** Every key of `Preferences` whose value is an array — those need `DEEP_EQUAL`. */
+type ArrayKeys = {
+  [K in keyof Preferences]-?: Preferences[K] extends readonly unknown[] ? K : never;
+}[keyof Preferences];
+
+/**
+ * Exposed for `scripts/preferences-harness.mjs`, which asserts that a payload
+ * differing in ANY single field compares unequal — the shape of the bug ADR 0166
+ * fixes. `tameHsl` and `TINT_FALLBACK_ENTRIES` are exported for their harnesses
+ * for the same reason: the rule most worth pinning is not always the one with a
+ * public caller.
+ */
+export function samePreferences(a: Preferences, b: Preferences): boolean {
+  return same(a, b);
+}
+
 function same(a: Preferences, b: Preferences): boolean {
-  return (
-    a.tz === b.tz &&
-    a.clock === b.clock &&
-    a.lang === b.lang &&
-    a.onboarded === b.onboarded &&
-    a.alertReminder === b.alertReminder &&
-    a.alertMoved === b.alertMoved &&
-    a.alertPostponed === b.alertPostponed &&
-    a.alertGoals === b.alertGoals &&
-    sameLeads(a.reminderLeads, b.reminderLeads) &&
-    a.newsSeenAt === b.newsSeenAt &&
-    a.followed.length === b.followed.length &&
-    a.followed.every((slug, i) => slug === b.followed[i]) &&
-    // `url` alone: the writers only ever add or remove whole rows, so a list
-    // with the same urls in the same order is the same list.
-    a.savedStories.length === b.savedStories.length &&
-    a.savedStories.every((story, i) => story.url === b.savedStories[i].url)
-  );
+  // ⚠ Both objects' keys, not just `a`'s: a snapshot built before a schema bump
+  // can be missing a field the new one has, and walking one side alone would
+  // call that equal.
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)]) as Set<keyof Preferences>) {
+    const compare = (DEEP_EQUAL as Record<string, ((x: unknown, y: unknown) => boolean) | undefined>)[
+      key
+    ];
+    const equal = compare ? compare(a[key], b[key]) : a[key] === b[key];
+    if (!equal) return false;
+  }
+  return true;
 }
 
 function commit(next: Preferences) {
@@ -420,6 +502,16 @@ export function setLanguage(lang: Locale | null) {
 
 export function setOnboarded(onboarded: boolean) {
   update({ onboarded });
+}
+
+/**
+ * The reader picked a competition on Matchdays, Table or Clubs (ADR 0164).
+ *
+ * ⚠ Takes our route `slug`, exactly as `LeagueMenu.onSelect` hands it over —
+ * see the field's docblock for why the store holds that form.
+ */
+export function setLeagueSlug(slug: string) {
+  update({ leagueSlug: slug });
 }
 
 /** The reader opened the News screen — everything filed before `iso` is seen. */

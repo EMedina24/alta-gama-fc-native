@@ -72,6 +72,25 @@ const dark = {
   crownChipInk: '#dcff7a',
 
   /**
+   * Ink on the DEEP crown (ADR 0165) — the league-scoped head, which is dark
+   * where the brand's is bright, so its ink is white where the brand's is black.
+   * Mirrors the `onCrown*` family name for name.
+   *
+   * ⚠⚠ **Not `text`/`textDim`.** `textDim` (`#8fa0a6`) measures **4.47** on the
+   * Premier League's top stop — under AA — and a cool grey on a saturated purple
+   * reads muddy besides. 62 % white measures 5.33 at its worst across the
+   * catalogue, and it stays neutral on every hue because it has none of its own.
+   *
+   * ⚠ Which family a screen takes is decided by `leagueCrownTheme().tone`, never
+   * by the screen: a league with no `LeagueBand` row wears the BRAND ramp and
+   * must therefore keep `onCrown`'s dark ink. Ink follows the ramp, not the slug.
+   */
+  onDeep: '#ffffff',
+  onDeepDim: 'rgba(255,255,255,0.62)',
+  onDeepLine: 'rgba(255,255,255,0.22)',
+  onDeepFill: 'rgba(255,255,255,0.1)',
+
+  /**
    * The double-bezel TRAY (ADR 0090/0091): an outer glass band wrapped around
    * an opaque inner surface, `Size.trayPad` apart. Supersedes the bubble-only
    * scope of the bezel pair above — the tray is a sanctioned card shape now
@@ -395,6 +414,66 @@ export const CrownGrad = [
   { offset: 0.92, color: '#0a2828', opacity: 0.14 },
   { offset: 1, color: '#0f1316', opacity: 0 },
 ] as const;
+
+/**
+ * The DEEP crown's ladder (ADR 0165) — the league-scoped head's lightness and
+ * opacity, with no hue of its own. `leagueCrownTheme` supplies hue and
+ * saturation from `LeagueBand`; this table supplies everything else, so the
+ * geometry is identical on every league and only the colour changes.
+ *
+ * ⚠⚠ **The lightness band is the whole decision.** ADR 0164 chose to hue-rotate
+ * the BRIGHT ramp because holding its lightness is what kept `onCrown`'s dark
+ * ink legal — and it rejected painting the literal brand hex on measurement,
+ * because white ink dies on the Bundesliga's light red (`#FF404A`, 3.45).
+ * Clamping lightness DOWN rescues exactly that case: on this ladder white reads
+ * 12.1–14.5 and `onDeepDim` 5.3–6.3 across the catalogue, the Bundesliga
+ * included. It is `ClubWash`'s trick — pull every brand hex into one lightness
+ * band before it goes behind white text — at crown scale.
+ *
+ * ⚠ Offsets match `CrownGrad`'s exactly, so the two ramps can be read against
+ * each other in `/_debug/gallery?only=league-tint`.
+ *
+ * ⚠ It ends in TRANSPARENCY on `background`, like `CrownGrad` — the fade is the
+ * hand-off to the mesh, never a hard edge.
+ */
+export const CrownDeep = [
+  { offset: 0, light: 22, opacity: 1 },
+  { offset: 0.26, light: 19, opacity: 1 },
+  { offset: 0.5, light: 15, opacity: 1 },
+  { offset: 0.68, light: 12, opacity: 0.8 },
+  { offset: 0.82, light: 9, opacity: 0.48 },
+  { offset: 0.92, light: 6, opacity: 0.2 },
+  // ⚠ The ground itself, held verbatim — re-hueing this stop tints the seam the
+  // fade hands off to and leaves a visible edge against the mesh.
+  { offset: 1, ground: true, opacity: 0 },
+] as const;
+
+/**
+ * The saturation window a league's brand hex is pulled into for `CrownDeep`.
+ *
+ * ⚠ Both ends earn their keep. Without the floor, a desaturated brand hex draws
+ * a grey crown that reads as a rendering fault rather than a colour; without the
+ * cap, the Bundesliga's 100 %-saturated red and the Premier League's
+ * 100 %-saturated purple glare at full-screen size in a way they never do in a
+ * 3pt band. Lightness is `CrownDeep`'s job, not this one's.
+ */
+export const CrownDeepSat = { min: 45, max: 85 } as const;
+
+/**
+ * The deep crown's background art (ADR 0165/0167): the bled league crest's peak
+ * opacity, and its drawn height as a fraction of `CrownRamp`.
+ *
+ * ⚠⚠ **`alpha` lives here, not at the call site, because the INK depends on it.**
+ * The art is white, so it lightens the band the head's text sits on: at 0.095
+ * the Premier League's `onDeepDim` falls 5.33 → 4.72, which still clears AA but
+ * has far less room than the bare ramp. `scripts/league-theme-harness.mjs`
+ * asserts both inks with this value composited under them, so a later nudge
+ * upward fails the harness instead of quietly pushing the quiet ink under AA.
+ *
+ * ⚠ `height` was pulled back with the bleed (Ed, 2026-09-13): a bigger mark
+ * moved left would crowd the title rather than sit beside it.
+ */
+export const CrownArt = { alpha: 0.095, height: 0.55 } as const;
 
 /**
  * The crown gradient's FIXED height, in points (ADR 0094/0095) — the mock's
@@ -1143,6 +1222,23 @@ export const Size = {
    * nothing about it was ever about the slot count.
    */
   leagueChipHCrown: 52,
+  /**
+   * The crown trigger's height once it carries a SUBTITLE (ADR 0165) — the
+   * mock's banner pill, which names the competition and then its scope
+   * (`38 MATCHDAYS · SWITCH`).
+   *
+   * Derived rather than eyeballed: a 17pt `headline` line box (~22) plus a 9.5pt
+   * `eyebrowSm` line box (~12), `Spacing.half` between them, and the trigger's
+   * own ~13 of vertical padding a side. 64 is that sum rounded to an even
+   * number.
+   *
+   * ⚠ `leagueChipHCrown` (52) SURVIVES for a trigger with no subtitle — Clubs'
+   * ground control and the `_debug/menu` harness both still draw one, and 52 is
+   * device-judged (see above). Two heights, because there are two controls.
+   *
+   * ⚠ Device-judge this one the same way before it is treated as settled.
+   */
+  leagueChipHCrownTall: 64,
   /**
    * The crown mark, at 0116's first cut (54×27, pulled back from 66×33 by
    * 0118 when the rail went static).

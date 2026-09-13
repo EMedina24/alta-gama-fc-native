@@ -14,7 +14,6 @@ export {
   type LeagueOption,
 } from './league-menu';
 export { ListRow } from './list-row';
-export { MatchdayPager } from './matchday-pager';
 export { MatchdayStrip } from './matchday-strip';
 export { NewsMeta } from './news-meta';
 export { NewsRow, type NewsRowProps } from './news-row';

@@ -36,15 +36,14 @@ import { StyleSheet, View } from 'react-native';
 
 import {
   Button,
+  CalendarGlyph,
   ChipButton,
-  Eyebrow,
   SkeletonRows,
   Text,
   competitionMarkKind,
 } from '@/components/atoms';
 import {
   LeagueMenu,
-  MatchdayPager,
   MatchdayStrip,
   type LeagueOption,
 } from '@/components/molecules';
@@ -77,21 +76,36 @@ import {
   useUclSeasonRounds,
 } from '@/queries/use-jornada';
 import { useLeagueArtwork } from '@/queries/use-leagues';
-import { useZone, usePreferences } from '@/store/preferences';
+import { setLeagueSlug, useZone, usePreferences } from '@/store/preferences';
 
 export default function MatchdaysScreen() {
   const router = useRouter();
   const initials = useIdentityInitials();
   const { copy, phrases } = useI18n();
   const zone = useZone();
-  const { clock } = usePreferences();
+  const { clock, leagueSlug: storedSlug } = usePreferences();
 
   /**
    * ⚠ `ROUND_LEAGUES` throughout this screen, never the whole catalogue. A
    * league without a matchweek index (Puerto Rico) does not 404 here — it
    * returns an empty index, which would draw a full pager of empty rounds.
+   *
+   * The pick is SHARED with Table and Clubs and persisted (ADR 0164) — it has
+   * to be, now that the crown wears the league's colour: three tabs holding
+   * three independent leagues made the app change colour on a tab switch with
+   * nothing on screen explaining it.
    */
-  const [leagueSlug, setLeagueSlug] = useState(ROUND_LEAGUES[0].slug);
+  /**
+   * ⚠⚠ **Clamped for THIS screen, and never written back.** The shared value
+   * may name a competition Matchdays cannot show — Puerto Rico has no matchweek
+   * index and is absent from `ROUND_LEAGUES` — so it falls back locally. Writing
+   * the fallback to the store instead would silently overwrite a pick that Table
+   * and Clubs can both honour, just by visiting this tab.
+   */
+  const leagueSlug =
+    storedSlug === UCL_LEAGUE_PHASE.slug || ROUND_LEAGUES.some((l) => l.slug === storedSlug)
+      ? storedSlug
+      : ROUND_LEAGUES[0].slug;
   /**
    * ⚠ A union, for the reason ADR 0150 gives on the Table screen: the obvious
    * `ROUND_LEAGUES.find(...) ?? ROUND_LEAGUES[0]` answers LaLiga for
@@ -344,54 +358,68 @@ export default function MatchdaysScreen() {
 
   return (
     <ScreenScaffold
+      /* ⚠⚠ **`isCup ? null : league.apiSlug`, and the guard is the point.** On
+         the cup tab `league` is the LaLiga FALLBACK this file warns about above,
+         so `league.apiSlug` alone would paint the Champions League crown LaLiga
+         red. Null is also the right answer on its own merits: the UCL has no
+         `LeagueBand` row, so it wears the brand (ADR 0164). */
+      tintLeague={isCup ? null : league.apiSlug}
       title={matchweek === null ? '' : copy.matchdays.title(matchweek)}
-      accessory={
-        <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
-      }
       eyebrow={
         isCup
-          ? // ⚠ The competition SPELLS its name here rather than wearing the
-            // lockup (ADR 0133's mark stands on the cards, not in an eyebrow),
-            // and the third segment names the PHASE where a league names its half.
-            copy.matchdays.eyebrow(
-              UCL_LEAGUE_PHASE.name,
-              seasonLabel(SEASON),
-              copy.matchdays.leaguePhase,
-            )
-          : copy.matchdays.eyebrow(league.name, seasonLabel(SEASON), half)
+          ? // ⚠ The third segment names the PHASE where a league names its half.
+            // The competition's own NAME is no longer here — the banner pill
+            // directly above carries it (ADR 0165).
+            copy.matchdays.eyebrow(seasonLabel(SEASON), copy.matchdays.leaguePhase)
+          : copy.matchdays.eyebrow(seasonLabel(SEASON), half)
       }
+      /* The date range, the match count and the zone, on ONE line under the
+         title (ADR 0165) — both halves were already composed for the pager this
+         replaced, so there is no new formatting here. */
+      metaLine={total !== null && matchweek !== null && rangeSource
+        ? [rangeLabel, rangeMeta].filter(Boolean).join(' · ')
+        : undefined}
+      /* ⚠ The provisional round reads a shade back. This is the honesty signal
+         `MatchdayPager.primaryTone` carried, not decoration. */
+      metaTone={rangeConfirmed ? 'strong' : 'quiet'}
       onRefresh={() => void query.refetch()}
       refreshing={query.isRefetching}
-      // The pager and the league chips ride the crown (ADR 0087/0089); the
-      // MATCHDAY strip sits just UNDER the fade, first in the body — the
-      // mock's own split.
-      payload={
-        <View style={styles.controls}>
-          {total !== null && matchweek !== null && rangeSource ? (
-            <MatchdayPager
-              canPrev={matchweek > 1}
-              canNext={matchweek < total}
-              onPrev={() => goTo(matchweek - 1)}
-              onNext={() => goTo(matchweek + 1)}
-              prevLabel={copy.matchdays.previous}
-              nextLabel={copy.matchdays.next}
-              primary={rangeLabel}
-              primaryTone={rangeConfirmed ? 'textSecondary' : 'textFaint'}
-              secondary={rangeMeta}
+      /* The banner row (ADR 0165): the competition and the way out of it, above
+         the head. ⚠ It replaces `accessory` — the avatar moved here, so there is
+         no longer a block beside the title. */
+      banner={
+        <View style={styles.banner}>
+          <View style={styles.bannerMenu}>
+            <LeagueMenu
+              leagues={options}
+              // ⚠⚠ `leagueSlug`, the STATE — never `league.slug`. `league` falls
+              // back to `ROUND_LEAGUES[0]` whenever the cup is active (see its
+              // definition). Under the rail that drew LaLiga as selected on the
+              // cup tab AND made the LaLiga chip unpressable (ADR 0157); under
+              // the dropdown (ADR 0162) the trigger would simply NAME the wrong
+              // competition — quieter, and worse.
+              active={leagueSlug}
+              onSelect={setLeagueSlug}
+              copy={copy.leagueMenu}
+              tone="crown"
+              /* ⚠ `total` is this competition's OWN round count — 38 on LaLiga,
+                 8 on the cup — and is null while the index loads, which drops
+                 the scope half rather than printing a placeholder. The switch
+                 half is gated on there being something to switch to. */
+              subtitle={[
+                total === null ? null : phrases.matchdays(total),
+                options.length > 1 ? copy.leagueMenu.switch : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             />
-          ) : null}
-          <LeagueMenu
-            leagues={options}
-            // ⚠⚠ `leagueSlug`, the STATE — never `league.slug`. `league` falls
-            // back to `ROUND_LEAGUES[0]` whenever the cup is active (see its
-            // definition). Under the rail that drew LaLiga as selected on the
-            // cup tab AND made the LaLiga chip unpressable (ADR 0157); under
-            // the dropdown (ADR 0162) the trigger would simply NAME the wrong
-            // competition — quieter, and worse.
-            active={leagueSlug}
-            onSelect={setLeagueSlug}
-            copy={copy.leagueMenu}
-            tone="crown"
+          </View>
+          <AvatarButton
+            initials={initials}
+            onPress={() => router.push('/(sheets)/account')}
+            /* ⚠ `ground`, not `crown`: this head is a league's DARK band, where
+               the crown tone's near-black ink is invisible (ADR 0165). */
+            tone="ground"
           />
         </View>
       }>
@@ -415,24 +443,28 @@ export default function MatchdaysScreen() {
            * is an invitation to act, which is `ChipButton`'s own header rule.
            * Two different lime weights doing two different jobs.
            */}
-          <View style={styles.stripHead}>
-            <Eyebrow small color="onCrown">
-              {copy.matchdays.stripLabel}
-            </Eyebrow>
-            {hasFixtures ? (
-              <ChipButton
-                label={copy.matchdays.calendar}
-                shape="pill"
-                onPress={openCalendar}
-              />
-            ) : null}
-          </View>
+          {/* ⚠⚠ **The MATCHDAY label row is gone and the pill moved INTO the
+              strip's row** (ADR 0165). The label was what taught the reader that
+              the lime word opposite it was a button — the note above says so —
+              and with the label deleted that lesson has to come from the pill
+              itself, which is why it gains the calendar glyph. Ring plus glyph
+              plus verb reads as a control with nothing to lean on. */}
           <MatchdayStrip
             total={total}
             current={matchweek}
             played={played}
             onSelect={goTo}
             label={copy.matchdays.title}
+            trailing={
+              hasFixtures ? (
+                <ChipButton
+                  label={copy.matchdays.calendar}
+                  shape="pill"
+                  onPress={openCalendar}
+                  leading={<CalendarGlyph size={14} />}
+                />
+              ) : null
+            }
           />
         </View>
       ) : null}
@@ -506,11 +538,18 @@ const styles = StyleSheet.create({
   controls: { gap: Spacing.three },
   strip: { gap: Spacing.two },
   /**
+   * The banner row (ADR 0165): the competition pill, then the avatar. ⚠ The
+   * pill is the flex child and the avatar is intrinsic — the panel measures the
+   * TRIGGER and takes its width, so the pill must own the row's spare space or
+   * the dropdown opens narrower than the reader expects.
+   */
+  banner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  bannerMenu: { flex: 1 },
+  /**
    * ⚠ `styles.addAll` is GONE with the button it wrapped (ADR 0157) — and it had
    * always painted nothing anyway: it set `borderColor` with no `borderWidth`,
    * so the ring a reader saw was entirely the Button's own `outline` tone.
    */
-  stripHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 
   state: { gap: Spacing.four, paddingVertical: Spacing.six },
 });

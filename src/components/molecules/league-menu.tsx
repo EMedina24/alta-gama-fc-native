@@ -134,6 +134,20 @@ export interface LeagueMenuProps {
   /** Which ground the control sits on. The default is the screen body. */
   tone?: 'crown' | 'ground';
   /**
+   * A second line on the trigger, under the competition's name — the mock's
+   * `38 MATCHDAYS · SWITCH` (ADR 0165). Absent keeps the original one-line
+   * control at its own calibrated height.
+   *
+   * ⚠ **Only meaningful with `tone="crown"`.** The ground control is
+   * `Size.minTouch` exactly and has no room; passing one there is ignored
+   * rather than silently overflowing the row.
+   *
+   * ⚠ The caller must gate the "switch" half of this on there being something
+   * to switch TO — with one competition the chevron is hidden and the trigger is
+   * disabled, so the word would be a lie. `leagues.length > 1` is the test.
+   */
+  subtitle?: string;
+  /**
    * ⚠ **Debug only — never set this in the app.** Multiplies the open/close
    * duration so `/_debug/menu` can play the transition slowly enough to
    * screenshot frame by frame. Three visual artifacts on this control have each
@@ -178,6 +192,7 @@ export function LeagueMenu({
   onSelect,
   copy,
   tone = 'ground',
+  subtitle,
   motionScale = 1,
 }: LeagueMenuProps) {
   const crown = tone === 'crown';
@@ -206,7 +221,18 @@ export function LeagueMenu({
    */
   const publish = useScreenOverlay();
 
-  const triggerH = crown ? Size.leagueChipHCrown : Size.leagueMenuTriggerH;
+  /**
+   * ⚠ Three heights, and each is device-judged in its own right: the ground
+   * control is `minTouch` exactly, the crown's one-line control is 52 (ADR
+   * 0116), and the crown's subtitled banner is 64 (ADR 0165). A subtitle on the
+   * ground tone is ignored — see the prop.
+   */
+  const banner = crown && subtitle !== undefined;
+  const triggerH = !crown
+    ? Size.leagueMenuTriggerH
+    : banner
+      ? Size.leagueChipHCrownTall
+      : Size.leagueChipHCrown;
   const panelH = panelHeight(leagues.length);
 
   /**
@@ -394,6 +420,7 @@ export function LeagueMenu({
         disclosed={many}
         label={copy.label(activeLeague?.name ?? '')}
         hint={copy.hint}
+        subtitle={banner ? subtitle : undefined}
         onPress={open ? closeMenu : openMenu}
       />
     </View>
@@ -527,6 +554,7 @@ function Trigger({
   disclosed,
   label,
   hint,
+  subtitle,
   onPress,
 }: {
   league: LeagueOption | undefined;
@@ -536,6 +564,7 @@ function Trigger({
   disclosed: boolean;
   label: string;
   hint: string;
+  subtitle?: string;
   onPress: () => void;
 }) {
   const box = league ? artworkBox(league, crown ? 'triggerCrown' : 'trigger') : null;
@@ -568,9 +597,19 @@ function Trigger({
                 <LeagueArtwork option={league} width={box.width} height={box.height} />
               ) : null}
             </View>
-            <Text variant="headline" numberOfLines={1} style={styles.triggerName}>
-              {league?.name ?? ''}
-            </Text>
+            {/* ⚠ A COLUMN when a subtitle is present, a bare line otherwise —
+                the ground trigger and the `_debug/menu` harness both still draw
+                the one-line form at its own calibrated height. */}
+            <View style={styles.triggerText}>
+              <Text variant="headline" numberOfLines={1}>
+                {league?.name ?? ''}
+              </Text>
+              {subtitle ? (
+                <Text variant="eyebrowSm" color="onDeepDim" numberOfLines={1}>
+                  {subtitle}
+                </Text>
+              ) : null}
+            </View>
             {disclosed ? <Chevron expanded={open} color="textSecondary" /> : null}
           </View>
         </View>
@@ -729,7 +768,7 @@ const styles = StyleSheet.create({
   },
   /** Width is set inline from the tone's widest cut — see `Trigger`. */
   triggerMark: { alignItems: 'center', justifyContent: 'center' },
-  triggerName: { flex: 1 },
+  triggerText: { flex: 1, gap: Spacing.half },
   pressed: { opacity: PRESSED_OPACITY },
   /**
    * The panel: ONE opaque surface, positioned in window coordinates from the

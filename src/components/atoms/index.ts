@@ -5,6 +5,7 @@ export { Check, type CheckProps } from './check';
 export { Chevron, type ChevronProps } from './chevron';
 export { ChipButton, type ChipButtonProps } from './chip-button';
 export { Crest } from './crest';
+export { CalendarGlyph, type CalendarGlyphProps } from './calendar-glyph';
 export { EventGlyph, type EventGlyphProps } from './event-glyph';
 export { FadeOutImage, type FadeOutImageProps } from './fade-out-image';
 export { Eyebrow } from './eyebrow';
@@ -33,6 +34,7 @@ export {
 export { MeshGround } from './mesh-ground';
 export { SearchGlyph } from './search-glyph';
 export { GlobeGlyph } from './globe-glyph';
+export { PL_CREST_RATIO, PremierCrest, type PremierCrestProps } from './premier-crest';
 export { PersonGlyph, type PersonGlyphProps } from './person-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';
 export { GoogleMark } from './google-mark';

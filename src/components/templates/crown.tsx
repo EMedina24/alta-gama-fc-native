@@ -45,7 +45,8 @@
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Eyebrow, Text, WashGradient, WashRadial } from '@/components/atoms';
+import { Eyebrow, Text, WashGradient, WashRadial, type WashStop } from '@/components/atoms';
+import type { CrownTone } from '@/lib/cronogol/league-theme';
 import {
   CrownGrad,
   CrownHighlight,
@@ -53,6 +54,21 @@ import {
   MaxContentWidth,
   Spacing,
 } from '@/constants/theme';
+
+/**
+ * How far below the safe-area inset the bled crest starts, and how much of it
+ * hangs off the right edge (ADR 0165).
+ *
+ * ⚠ **Both are device-judged, and the first cut was wrong in both axes.** At
+ * `top: 0` and a six-space bleed the mark sat behind the status bar and the
+ * banner pill, and its widest circle landed directly under the title — which
+ * made it read as a second subject competing with the words rather than as
+ * wallpaper. `ART_DROP` clears the banner row; `ART_OFF` takes enough of the
+ * mark off-screen that what remains is a fragment, which is what a watermark is.
+ * The club hero's own bleed is the same lesson (`BLEED_OFF`, ADR 0091/0098).
+ */
+const ART_DROP = 76;
+const ART_OFF = 44;
 
 export interface CrownProps {
   eyebrow?: string;
@@ -79,6 +95,57 @@ export interface CrownProps {
    */
   padBottom?: number;
   /**
+   * The crown's vertical ramp (ADR 0164). Defaults to the brand's `CrownGrad`;
+   * a league-scoped screen passes `leagueCrownTheme(apiSlug).stops`, which is a
+   * DEEP ramp in that league's hue (ADR 0165).
+   *
+   * ⚠ It is a ramp, not a colour: the stops carry the lightness ladder that
+   * keeps `onCrown`'s dark ink legal on the bright band, and the last stop is
+   * the transparent hand-off to the mesh. Never pass a flat two-stop gradient
+   * here — that is the hard edge this component's header forbids.
+   */
+  stops?: readonly WashStop[];
+  /**
+   * Which ink family the head takes (ADR 0165) — `bright` is the brand's lime
+   * band with dark `onCrown*` ink; `deep` is a league's dark band with white
+   * `onDeep*` ink.
+   *
+   * ⚠⚠ **It must come from the same call that produced `stops`**
+   * (`leagueCrownTheme`), never from a screen's own "do I have a league?" test.
+   * A competition with no `LeagueBand` row wears the BRAND ramp and therefore
+   * keeps DARK ink; deriving the two separately is what breaks that case.
+   */
+  tone?: CrownTone;
+  /**
+   * Background art, drawn into the gradient layer — the league crest, bled
+   * (ADR 0165). It lands ABOVE the ramp and BELOW the head, and inherits the
+   * layer's `pointerEvents="none"`.
+   */
+  art?: ReactNode;
+  /**
+   * A control row ABOVE the head — the banner pill and the avatar (ADR 0165).
+   *
+   * ⚠ Rendered OUTSIDE the `title` gate below, deliberately. Matchdays passes
+   * `title=''` until its matchweek resolves, and with the head gated on the
+   * title the whole header used to vanish on first paint. The banner is the
+   * screen's identity and its way out; it must survive that state.
+   */
+  banner?: ReactNode;
+  /**
+   * A dot-separated line UNDER the title — Matchdays' date range, match count
+   * and zone (ADR 0165).
+   *
+   * ⚠ Not `meta`, which is a row sibling BESIDE the title and is what the two
+   * onboarding screens put their `StepDots` in.
+   */
+  metaLine?: string;
+  /**
+   * `quiet` is the provisional state — Matchdays' "dates to be confirmed" reads
+   * a shade back, which is the honesty signal `MatchdayPager.primaryTone`
+   * carried before this slot replaced it. Never cosmetic.
+   */
+  metaTone?: 'strong' | 'quiet';
+  /**
    * The safe-area top inset (ADR 0094). The crown's GRADIENT starts at y = 0 —
    * the lime runs up behind the status bar — and this pushes its CONTENT back
    * down clear of the notch. It is padding, never a margin: a margin would
@@ -97,8 +164,22 @@ export function Crown({
   accessory,
   children,
   padBottom,
+  stops = CrownGrad,
+  tone = 'bright',
+  art,
+  banner,
+  metaLine,
+  metaTone = 'strong',
   topInset = 0,
 }: CrownProps) {
+  /**
+   * The head's ink, by surface. ⚠ Two families, not one with an override: the
+   * dark set is only legal on a bright band and the white set only on a deep
+   * one, so the pair travels together with the ramp that earned it.
+   */
+  const deep = tone === 'deep';
+  const ink = deep ? 'onDeep' : 'onCrown';
+  const inkDim = deep ? 'onDeepDim' : 'onCrownDim';
   const pad = padBottom ?? (children ? Spacing.eight : Spacing.four + 2);
 
   /**
@@ -117,30 +198,50 @@ export function Crown({
   return (
     <View style={styles.crown}>
       <View pointerEvents="none" style={[styles.layer, { height: layerHeight }]}>
-        <WashGradient angle="vertical" stops={CrownGrad} />
-        <WashRadial
-          cx={CrownHighlight.cx}
-          cy={CrownHighlight.cy}
-          rx={CrownHighlight.rx}
-          ry={CrownHighlight.ry}
-          stops={[
-            { offset: 0, color: CrownHighlight.color, opacity: CrownHighlight.alpha },
-            { offset: CrownHighlight.fade, color: CrownHighlight.color, opacity: 0 },
-          ]}
-        />
+        <WashGradient angle="vertical" stops={stops} />
+        {/* ⚠ The white sheen is the BRIGHT crown's alone. At alpha 0.26 over a
+            deep league ramp it reads as a grey veil across the top-right
+            shoulder — it lifts a lime band and washes out a dark one. */}
+        {deep ? null : (
+          <WashRadial
+            cx={CrownHighlight.cx}
+            cy={CrownHighlight.cy}
+            rx={CrownHighlight.rx}
+            ry={CrownHighlight.ry}
+            stops={[
+              { offset: 0, color: CrownHighlight.color, opacity: CrownHighlight.alpha },
+              { offset: CrownHighlight.fade, color: CrownHighlight.color, opacity: 0 },
+            ]}
+          />
+        )}
+        {/* Above the ramp, below the head — and inside the layer, so it cannot
+            be raised over the body (this component may never take a z-index). */}
+        {art ? (
+          <View style={[styles.art, { top: topInset + ART_DROP, right: -ART_OFF }]}>{art}</View>
+        ) : null}
       </View>
       <View
         style={[styles.inner, { paddingTop: topInset + Spacing.two + 2, paddingBottom: pad }]}>
+        {banner}
         {title ? (
           <View style={styles.head}>
             <View style={styles.headings}>
-              {eyebrow ? <Eyebrow color="onCrownDim">{eyebrow}</Eyebrow> : null}
-              <Text variant={titleVariant} color="onCrown">
+              {eyebrow ? <Eyebrow color={inkDim}>{eyebrow}</Eyebrow> : null}
+              <Text variant={titleVariant} color={ink}>
                 {title}
               </Text>
               {subtitle ? (
-                <Text variant="caption" color="onCrownDim" style={styles.subtitle}>
+                <Text variant="caption" color={inkDim} style={styles.subtitle}>
                   {subtitle}
+                </Text>
+              ) : null}
+              {metaLine ? (
+                <Text
+                  variant="eyebrowSm"
+                  color={metaTone === 'strong' ? ink : inkDim}
+                  tabular
+                  style={styles.metaLine}>
+                  {metaLine}
                 </Text>
               ) : null}
             </View>
@@ -183,4 +284,13 @@ const styles = StyleSheet.create({
   },
   headings: { flex: 1, gap: Spacing.one },
   subtitle: { marginTop: Spacing.one },
+  metaLine: { marginTop: Spacing.two },
+  /**
+   * The bled crest. ⚠ Anchored to the layer's RIGHT edge and pushed off it, so
+   * the cut happens at the physical screen edge — the one place ADR 0098 says a
+   * hard clip reads as intentional. Its foot needs no clip: the art's own fill
+   * has already faded to nothing (`PremierCrest`). `top`/`right` are inline —
+   * they carry the safe-area inset and the bleed.
+   */
+  art: { position: 'absolute' },
 });

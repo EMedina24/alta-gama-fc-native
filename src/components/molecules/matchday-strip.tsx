@@ -12,8 +12,8 @@
  * ⚠ Not in SPEC §5's molecule list; added because the screen's own spec (§3.2)
  * describes it in detail and it is reused by the prev/next pair.
  */
-import { useEffect, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
@@ -26,6 +26,12 @@ export interface MatchdayStripProps {
   onSelect: (n: number) => void;
   /** The accessibility label for pill n — `copy.matchdays.title`, so it speaks the reader's language. */
   label: (n: number) => string;
+  /**
+   * A control PINNED to the row's right end, outside the scroller — the Calendar
+   * pill (ADR 0165). Absent keeps the original full-bleed strip, whose last
+   * round runs off the screen edge.
+   */
+  trailing?: ReactNode;
 }
 
 /**
@@ -40,7 +46,14 @@ const SLOT = Size.pill + Spacing.two;
 /** Whole rounds kept visible BEFORE the active one, so it has context on its left. */
 const LEAD = 2;
 
-export function MatchdayStrip({ total, current, played, onSelect, label }: MatchdayStripProps) {
+export function MatchdayStrip({
+  total,
+  current,
+  played,
+  onSelect,
+  label,
+  trailing,
+}: MatchdayStripProps) {
   const scroller = useRef<ScrollView>(null);
 
   /**
@@ -61,11 +74,13 @@ export function MatchdayStrip({ total, current, played, onSelect, label }: Match
   }, [current]);
 
   return (
+    <View style={styles.row}>
     <ScrollView
       ref={scroller}
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.track}>
+      style={styles.scroller}
+      contentContainerStyle={[styles.track, trailing ? styles.trackPinned : styles.trackBleed]}>
       {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
         const active = n === current;
         return (
@@ -88,12 +103,30 @@ export function MatchdayStrip({ total, current, played, onSelect, label }: Match
           </Pressable>
         );
       })}
-    </ScrollView>
+      </ScrollView>
+      {trailing}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  track: { gap: Spacing.two, paddingRight: Spacing.five },
+  /**
+   * ⚠ The scroller is no longer the root (ADR 0165): the Calendar pill is PINNED
+   * beside it rather than scrolling away with the chips, which the mock's own
+   * row shows. `flexShrink` on the scroller is what keeps the pill at its
+   * intrinsic width — content with an intrinsic width gets flex: 0, never a share.
+   */
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  scroller: { flexGrow: 1, flexShrink: 1 },
+  track: { gap: Spacing.two },
+  /** Full-bleed: the tail pad lets the last round clear the screen's own edge. */
+  trackBleed: { paddingRight: Spacing.five },
+  /**
+   * ⚠ Pinned: the tail pad becomes WRONG next to a pinned control — it would
+   * hold the last round a gutter away from a pill that is already there, and
+   * read as a gap in the row rather than as bleed.
+   */
+  trackPinned: { paddingRight: 0 },
   pill: {
     width: Size.pill,
     height: Size.pill,

@@ -38,6 +38,16 @@ export interface ChipButtonProps {
    */
   tone?: 'accent' | 'neutral';
   /**
+   * Drawn BEFORE the label, inside the chip — the Calendar pill's glyph (ADR
+   * 0165). ⚠ Decorative only, exactly as `trailing` is: it shares the chip's
+   * single press target and must never be a control of its own.
+   *
+   * ⚠ It takes no disc. `trailing`'s `accentWash` circle exists because the
+   * follow pill's tick needs its own weight on the right; a leading glyph reads
+   * as part of the label and a second disc beside the ring is one shape too many.
+   */
+  leading?: ReactNode;
+  /**
    * Drawn after the label, inside the chip. ⚠ Decorative only — it shares the
    * chip's single press target and must never be a control of its own.
    */
@@ -47,6 +57,7 @@ export interface ChipButtonProps {
 }
 
 export function ChipButton({
+  leading,
   label,
   onPress,
   active = false,
@@ -69,11 +80,15 @@ export function ChipButton({
         styles.chip,
         shape === 'pill' ? styles.pill : styles.control,
         shape === 'pill' && !trailing && styles.pillBare,
+        // ⚠ `pillBare` zeroes the gap for a pill with nothing beside its
+        // label; a LEADING glyph needs it back, or the two touch.
+        shape === 'pill' && !trailing && !!leading && styles.pillLed,
         quiet && styles.quiet,
         active && styles.active,
         pressed && !disabled && (shape === 'pill' ? styles.pressedPill : styles.pressed),
         disabled && styles.disabled,
       ]}>
+      {leading}
       <Text variant="eyebrowSm" color={active ? 'onAccent' : quiet ? 'textSecondary' : 'accent'}>
         {label}
       </Text>
@@ -108,6 +123,8 @@ const styles = StyleSheet.create({
   },
   /** A labelled pill with no disc — see the header. */
   pillBare: { paddingLeft: Spacing.three, paddingRight: Spacing.three, gap: 0 },
+  /** ...unless it carries a leading glyph, which needs the gap back (ADR 0165). */
+  pillLed: { gap: Spacing.two },
   disc: {
     width: Size.followPillDisc,
     height: Size.followPillDisc,

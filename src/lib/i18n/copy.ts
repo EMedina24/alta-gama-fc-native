@@ -26,10 +26,16 @@ export interface Copy {
    * Table and Clubs, so it sits at the top level rather than inside any one of
    * them.
    *
-   * ⚠ Every string here is for VOICEOVER. The control itself draws the
+   * ⚠ Every string here WAS for VoiceOver alone. The control itself draws the
    * competition's own name, which comes from the catalogue and is never
    * translated — `LaLiga` is `LaLiga` in both languages (0148's rule that a
    * slug must never reach a reader cuts the other way for a brand).
+   *
+   * ⚠⚠ **`switch` broke that** (ADR 0165): the banner trigger draws a second
+   * line, and half of it is this word. It is the first string here a reader can
+   * see, so it is the first that has to FIT — the line is an `eyebrowSm` beside
+   * a scope phrase, on one line, with the mark and the chevron taking their own
+   * columns.
    */
   leagueMenu: {
     /** The trigger's label: the control, then what it currently reads. */
@@ -38,6 +44,15 @@ export interface Copy {
     hint: string;
     /** The scrim's label: the way out for a reader who opened it by accident. */
     close: string;
+    /**
+     * The banner trigger's affordance word, after the screen's own scope:
+     * `38 MATCHDAYS · SWITCH` (ADR 0165). **Drawn, not spoken** — `hint` is what
+     * VoiceOver reads, and the two must not drift into saying the same thing
+     * twice.
+     *
+     * ⚠ Uppercased by the `eyebrowSm` token, never here.
+     */
+    switch: string;
   };
   alerts: {
     eyebrow: (club: string, matches: number) => string;
@@ -777,8 +792,15 @@ export interface Copy {
   };
   matchdays: {
     title: (n: number) => string;
-    /** "LALIGA 2026/27 · PRIMERA VUELTA" */
-    eyebrow: (league: string, season: string, half: string | null) => string;
+    /**
+     * `"2026/27 · PRIMERA VUELTA"`.
+     *
+     * ⚠⚠ **The league's NAME is gone from here** (ADR 0165). It moved to the
+     * banner pill directly above, and printing it in both put the same word on
+     * two consecutive lines. The joiner is unchanged, so a league with no half
+     * still collapses to the season alone.
+     */
+    eyebrow: (season: string, half: string | null) => string;
     firstHalf: string;
     secondHalf: string;
     midweek: string;
@@ -787,8 +809,6 @@ export interface Copy {
     timesPending: string;
     /** The header's range slot while kickoffs are provisional — short, eyebrow-length. */
     datesPending: string;
-    /** The eyebrow over the 1…N strip. */
-    stripLabel: string;
     /**
      * The calendar affordance on the strip's own label row (ADR 0157), which
      * replaced the full-width `addAll` button.
@@ -808,8 +828,6 @@ export interface Copy {
      */
     leaguePhase: string;
     /** Accessibility labels for the prev/next squares. */
-    previous: string;
-    next: string;
     missing: (n: number) => string;
     /**
      * ⚠ Replaces the KICKOFF on a concluded row, in `accent` — Ed's call
@@ -939,6 +957,7 @@ export const esCopy: Copy = {
     label: (league) => `Competición: ${league}`,
     hint: 'Elige una competición',
     close: 'Cerrar',
+    switch: 'Cambiar',
   },
 
   alerts: {
@@ -1391,8 +1410,7 @@ export const esCopy: Copy = {
 
   matchdays: {
     title: (n: number) => `Jornada ${n}`,
-    eyebrow: (league, season, half) =>
-      [league, season, half].filter(Boolean).join(' · ').toUpperCase(),
+    eyebrow: (season, half) => [season, half].filter(Boolean).join(' · ').toUpperCase(),
     firstHalf: 'Primera vuelta',
     secondHalf: 'Segunda vuelta',
     midweek: 'Entre semana',
@@ -1400,11 +1418,8 @@ export const esCopy: Copy = {
     timesPending:
       'Los horarios de esta jornada aún no están confirmados. Las fechas son provisionales.',
     datesPending: 'Fechas por confirmar',
-    stripLabel: 'Jornada',
     calendar: 'Calendario',
     leaguePhase: 'Fase de liga',
-    previous: 'Jornada anterior',
-    next: 'Jornada siguiente',
     missing: (n: number) => `Faltan ${n} partidos por publicar`,
     // ⚠ `Final`, no `Finalizado`: se dibuja en mayúsculas dentro de
     // `Size.timingColumn` (64pt) y la palabra larga no cabe.
@@ -1481,6 +1496,7 @@ export const enCopy: Copy = {
     label: (league) => `Competition: ${league}`,
     hint: 'Choose a competition',
     close: 'Close',
+    switch: 'Switch',
   },
 
   alerts: {
@@ -1927,8 +1943,7 @@ export const enCopy: Copy = {
 
   matchdays: {
     title: (n: number) => `Matchday ${n}`,
-    eyebrow: (league, season, half) =>
-      [league, season, half].filter(Boolean).join(' · ').toUpperCase(),
+    eyebrow: (season, half) => [season, half].filter(Boolean).join(' · ').toUpperCase(),
     firstHalf: 'First half',
     secondHalf: 'Second half',
     midweek: 'Midweek',
@@ -1936,11 +1951,8 @@ export const enCopy: Copy = {
     timesPending:
       'Kickoff times for this matchday are not confirmed yet. The dates are provisional.',
     datesPending: 'Dates to be confirmed',
-    stripLabel: 'Matchday',
     calendar: 'Calendar',
     leaguePhase: 'League phase',
-    previous: 'Previous matchday',
-    next: 'Next matchday',
     missing: (n: number) => `${n} matches not published yet`,
     final: 'Final',
     // ⚠ "In play", never "live" — and shorter than the board's "In progress",
