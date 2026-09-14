@@ -21,6 +21,12 @@ import { getLocales } from 'expo-localization';
 import { useSyncExternalStore } from 'react';
 
 import { effectiveZone } from '@/lib/timezones';
+import {
+  DEFAULT_HIDDEN,
+  DEFAULT_ORDER,
+  normalizeLayout,
+  type BoardCardId,
+} from '@/lib/board-layout';
 import { COMPETITIONS } from '@/lib/cronogol/competitions';
 import { DEFAULT_LEAGUE, findLeague } from '@/lib/cronogol/leagues';
 import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/phrases';
@@ -31,12 +37,12 @@ const STORAGE_KEY = 'altagama:preferences';
  * Bump when the stored SHAPE changes.
  *
  * ⚠ 2 added `reminderLeads` (ADR 0040); 5 added `savedStories` (ADR 0129);
- * 6 added `leagueSlug` (ADR 0164).
+ * 6 added `leagueSlug` (ADR 0164); 7 added `bdOrder`/`bdHidden` (ADR 0174).
  * Bumping is safe precisely because `FOLLOWED_RULE_VERSION` did NOT move —
  * that separation is what stops a shape bump from emptying every reader's
  * follow list.
  */
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -203,6 +209,21 @@ export interface Preferences {
    * not the store's job.
    */
   leagueSlug: string;
+  /**
+   * The Board's card order — EVERY catalogue card, hidden ones included (ADR
+   * 0174).
+   *
+   * ⚠⚠ **Hidden cards keep their slot here, and that is the point.** Removing a
+   * card and putting it back is meant to return it where it was, not append it
+   * to the bottom; an order holding only the visible cards cannot do that.
+   *
+   * ⚠ Read through `normalizeLayout` on the way in, never used raw: a payload
+   * written by an older build is missing whatever cards have shipped since, and
+   * one written by a newer build may name a card this one has dropped.
+   */
+  bdOrder: readonly BoardCardId[];
+  /** The cards put away, a subset of `bdOrder` (ADR 0174). */
+  bdHidden: readonly BoardCardId[];
 }
 
 const DEFAULTS: Preferences = {
@@ -221,6 +242,8 @@ const DEFAULTS: Preferences = {
   newsSeenAt: null,
   savedStories: [],
   leagueSlug: DEFAULT_LEAGUE.slug,
+  bdOrder: DEFAULT_ORDER,
+  bdHidden: DEFAULT_HIDDEN,
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -236,6 +259,7 @@ function parse(raw: string | null): Preferences {
   try {
     const data = JSON.parse(raw) as Partial<Preferences> & { v?: number };
     const version = typeof data.v === 'number' ? data.v : 0;
+    const layout = normalizeLayout(data.bdOrder, data.bdHidden);
     return {
       v: SCHEMA_VERSION,
       followed:
@@ -264,6 +288,15 @@ function parse(raw: string | null): Preferences {
       savedStories: parseSavedStories(data.savedStories),
       // Absent on every v1–v5 payload; absent means "the default league".
       leagueSlug: parseLeagueSlug(data.leagueSlug),
+      // ⚠ Absent on every v1–v6 payload, and `normalizeLayout` treats absent
+      // exactly as it treats a partial order: every missing card is inserted at
+      // its default neighbourhood with its default visibility, so a reader who
+      // has never edited their board gets the default layout and one who has
+      // gets their own, grown to fit this build's catalogue. The two fields are
+      // parsed TOGETHER because the hidden set is only meaningful against the
+      // order it points into.
+      bdOrder: layout.order,
+      bdHidden: layout.hidden,
     };
   } catch {
     return DEFAULTS;
@@ -363,6 +396,12 @@ const DEEP_EQUAL = {
   // the same urls in the same order is the same list.
   savedStories: (a: readonly SavedStory[], b: readonly SavedStory[]) =>
     a.length === b.length && a.every((story, i) => story.url === b[i].url),
+  // ⚠ Element-wise, like `followed`: ORDER is the whole value of a board layout,
+  // so two lists with the same ids rearranged are emphatically not equal.
+  bdOrder: (a: readonly BoardCardId[], b: readonly BoardCardId[]) =>
+    a.length === b.length && a.every((id, i) => id === b[i]),
+  bdHidden: (a: readonly BoardCardId[], b: readonly BoardCardId[]) =>
+    a.length === b.length && a.every((id, i) => id === b[i]),
 } satisfies { [K in ArrayKeys]: (a: Preferences[K], b: Preferences[K]) => boolean };
 
 /** Every key of `Preferences` whose value is an array — those need `DEEP_EQUAL`. */
@@ -512,6 +551,40 @@ export function setOnboarded(onboarded: boolean) {
  */
 export function setLeagueSlug(slug: string) {
   update({ leagueSlug: slug });
+}
+
+/**
+ * The Board's layout (ADR 0174).
+ *
+ * ⚠⚠ **Written on RELEASE, never per swap.** `commit` serialises the WHOLE
+ * preferences record — with a full `savedStories` list that is tens of
+ * kilobytes — so a drag that crosses four neighbours writing four times is four
+ * of those. The reorder is live in the screen's own state while the finger is
+ * down; this is called once, when it lifts.
+ *
+ * ⚠ Normalised on the way in as well as on the way out: the caller is a gesture,
+ * and a layout that lost a card to a bug in the drag arithmetic must not be able
+ * to persist that loss.
+ */
+export function setBoardOrder(order: readonly BoardCardId[]) {
+  const layout = normalizeLayout(order, snapshot.bdHidden);
+  update({ bdOrder: layout.order, bdHidden: layout.hidden });
+}
+
+/** The reader removed a card from the board, or added one back from the tray. */
+export function setBoardCardHidden(id: BoardCardId, hidden: boolean) {
+  const layout = normalizeLayout(
+    snapshot.bdOrder,
+    hidden
+      ? [...snapshot.bdHidden, id]
+      : snapshot.bdHidden.filter((entry) => entry !== id),
+  );
+  update({ bdOrder: layout.order, bdHidden: layout.hidden });
+}
+
+/** Back to the order and the hidden set the app ships with. Immediate, no confirm. */
+export function resetBoardLayout() {
+  update({ bdOrder: DEFAULT_ORDER, bdHidden: DEFAULT_HIDDEN });
 }
 
 /** The reader opened the News screen — everything filed before `iso` is seen. */

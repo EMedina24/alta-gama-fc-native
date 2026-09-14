@@ -116,3 +116,33 @@ export async function hapticArmed(): Promise<void> {
     // As above.
   }
 }
+
+/**
+ * A Board card LIFTING under the finger (ADR 0174) — the moment the hold wins
+ * and the row leaves the stack. `.rigid`, the XI's `swapped` weight: it is the
+ * heaviest thing in the mode and the only one that reports a state the reader
+ * cannot see yet (the hold has completed; the finger now moves a card).
+ *
+ * ⚠ It is also the accommodation. The lift is a 150 ms hold with no progress
+ * indicator; without this the reader learns the delay by failing at it.
+ */
+export async function hapticLift(): Promise<void> {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+  } catch {
+    // As above.
+  }
+}
+
+/**
+ * Two Board cards swapping mid-drag (ADR 0174) — `.light`, and deliberately
+ * lighter than the lift: several fire in one drag, and at `.rigid` a travel
+ * across four neighbours buzzes.
+ */
+export async function hapticReorder(): Promise<void> {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch {
+    // As above.
+  }
+}

@@ -21,7 +21,7 @@
  * unreadable — and the root layout's `light` is the app-wide default this
  * overrides only while a tab is focused.
  */
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type RefObject } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -140,6 +140,21 @@ export interface ScreenScaffoldProps {
   children: ReactNode;
   onRefresh?: () => void;
   refreshing?: boolean;
+  /**
+   * The page's own scroll view, for a screen that must drive it (ADR 0174) —
+   * the Board's edit mode auto-scrolls while a card is held at an edge.
+   *
+   * ⚠ A plain ref, not `useAnimatedRef`. Turning this into an
+   * `Animated.ScrollView` to get a worklet `scrollTo` would put an animated
+   * ancestor over every screen in the app for one screen's benefit, and an
+   * animated ancestor has already cost the native tab bar its glass rail once
+   * (trap 64). The auto-scroll is a JS-side `scrollTo` loop instead.
+   */
+  scrollRef?: RefObject<ScrollView | null>;
+  /** Reports the scroll offset. ⚠ Throttled — see `scrollEventThrottle` below. */
+  onScrollY?: (y: number) => void;
+  /** `false` freezes the page — the Board holds it still while a card is up. */
+  scrollEnabled?: boolean;
 }
 
 export function ScreenScaffold({
@@ -158,6 +173,9 @@ export function ScreenScaffold({
   children,
   onRefresh,
   refreshing = false,
+  scrollRef,
+  onScrollY,
+  scrollEnabled = true,
 }: ScreenScaffoldProps) {
   const insets = useSafeAreaInsets();
   const focused = useIsFocused();
@@ -202,7 +220,9 @@ export function ScreenScaffold({
     );
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setOverBright(e.nativeEvent.contentOffset.y < threshold);
+    const y = e.nativeEvent.contentOffset.y;
+    setOverBright(y < threshold);
+    onScrollY?.(y);
   };
 
   return (
@@ -229,6 +249,8 @@ export function ScreenScaffold({
       {/* The aurora mesh sits BEHIND the scroll and does not move (ADR 0087). */}
       <MeshGround pools={theme.pools} />
       <ScrollView
+        ref={scrollRef}
+        scrollEnabled={scrollEnabled}
         style={styles.scroll}
         onScroll={onScroll}
         scrollEventThrottle={32}

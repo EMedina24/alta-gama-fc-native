@@ -162,6 +162,13 @@ const dark = {
   live: '#ff5c47',              // in-progress marker, destructive
   liveWash: 'rgba(255,92,71,0.14)',
   danger: '#ff5c47',
+  /**
+   * Ink ON a solid `danger` disc — the Board editor's remove glyph (ADR 0174).
+   * ⚠ Not `background` and not black: it is `danger`'s own hue taken almost to
+   * zero, the same relationship `onAccent` has to `accent`, so the minus reads
+   * as a hole punched in the disc rather than as a second colour on it.
+   */
+  onDanger: '#160404',
 
   /**
    * The Live Activity card's own ground and its floodlight pool (ADR 0085).
@@ -797,6 +804,130 @@ export const Splash = {
     lockup: [0.22, 0.9, 0.2, 1],
     baseOut: [0.4, 0, 0.2, 1],
   },
+} as const;
+
+/**
+ * The ATTENTION PULSE (ADR 0174) — a lime ring breathing around a control that
+ * must be found quickly. The Board's DONE pill is the first consumer: edit mode
+ * has no other way out, and a reader who does not find it is stuck in a mode.
+ *
+ * ⚠ **A feature group, not an extension of `Motion`.** `Motion`'s contract is
+ * the app's vocabulary of SHORT durations for a control settling; a breathing
+ * loop is neither short nor a settle, and putting it there would invite it onto
+ * a chip. Same split `Deck.spring`, `Splash.t` and `SeasonStats.count` make.
+ *
+ * ⚠⚠ **The THIRD looping animation in the app**, after `skeleton.tsx` and the
+ * signed-out avatar's orbit (ADR 0101), whose docblock calls itself a sanctioned
+ * exception. This one is scoped to a transient MODE rather than to a resting
+ * screen — it exists only while the Board is being arranged and leaves with it.
+ * A fourth needs its own argument.
+ *
+ * ⚠ Every consumer must branch on `useReducedMotion()`: with the switch on, the
+ * ring holds at full strength and does not breathe. The RING is the affordance;
+ * the breathing is only how it asks twice.
+ */
+export const Pulse = {
+  /** One breath, in and out. Slow enough to read as breathing, not blinking. */
+  period: 1100,
+  /** How far the halo fades at the bottom of a breath. Never to zero — the ring
+   *  is the affordance and must survive the dimmest frame. */
+  dim: 0.22,
+  /** How far the halo opens. Transform only — never a layout property. */
+  scale: 1.08,
+  /** The halo's clearance outside the control it rings. */
+  gap: 3,
+} as const;
+
+/**
+ * The Board's EDIT MODE (ADR 0174) — the geometry of a card collapsed to a
+ * movable row, and the spring that carries it.
+ *
+ * ⚠ **A feature group, not an extension of `Spacing`/`Radius`.** The row cap and
+ * the 10pt gap are off the 4-point scale on purpose: they are one screen's
+ * mechanics, like `Deck`'s peek and `Splash`'s timeline, and putting them on the
+ * shared scale would invite a 104 somewhere it means nothing. Everything here
+ * that DOES have a shared token — the 24 radius (`Radius.cardLg`), the hint
+ * bar's 14 (`Radius.control`), the handle's 11 (`Radius.crownControl`), the
+ * 0.5 hairline (`Size.glassBorder`), the row name (`Type.bodyStrong`) — is read
+ * from there and is deliberately absent below.
+ *
+ * ⚠ `scrim` is FLAT, with no backdrop blur behind it. The design asks for a 3pt
+ * blur under a 93 %-opaque fill, where it is invisible — and glass here would
+ * cost the whole of traps 59/69/74 for that. ADR 0129 reached the same
+ * conclusion for the reel's own panels.
+ */
+export const BoardEdit = {
+  /**
+   * One editable row.
+   *
+   * ⚠ **72, not the design's 104.** That number existed to hold a slice of the
+   * card behind the row, and the slice is gone (see `rowFill`). A name over a
+   * summary line needs 72; the other 32 were paying for empty space, and seven
+   * cards at 114 apiece were most of why a drag needed edge auto-scroll at all.
+   */
+  rowHeight: 72,
+  /** Between rows while editing; view mode keeps the body's own `Spacing.four`. */
+  gap: 10,
+  /**
+   * How far past the half-way mark a drag must travel before the rows swap.
+   * ⚠ Non-zero on purpose: at exactly half, a row resting on the boundary
+   * swaps back and forth on sub-pixel jitter.
+   */
+  swapBias: 6,
+  /**
+   * An editable row's ground. OPAQUE — there is nothing behind it.
+   *
+   * ⚠⚠ **The design's veiled card was built, measured and DROPPED. Do not put it
+   * back from the handoff**, which still specifies it. The row used to render the
+   * live card clipped to its height under a scrim; two rounds of Ed reporting the
+   * rows looked wrong ended in the measurement that settled it. Ghost contrast
+   * above the row's ground, on the News row:
+   *
+   *     design's own screenshot      9 levels
+   *     our first build (0.93)      15 levels
+   *     our last build (0.985)       4 levels
+   *
+   * We were already more than twice as faint as the thing we were copying, and it
+   * still read wrong — so the defect was never how MUCH showed. It was WHAT: a
+   * fixed window onto a card of some other height lands mid-sentence (a headline
+   * cut through its x-height), and every section begins with its own
+   * `SectionHeader`, so the row printed its name twice — once ghosted, once solid.
+   * No alpha fixes a sliced word; it only makes a faint one.
+   *
+   * ⚠ Judge anything in this range by MEASUREMENT, never by a screenshot: every
+   * viewer in the chain lifts shadows, and at these levels the eye is shown a
+   * picture the device never draws.
+   */
+  rowFill: '#070c0b',
+  /**
+   * The hint bar's ground, ON the crown.
+   *
+   * ⚠ **Nearly opaque, and that is the point** (Ed, 2026-09-14: *"give this a bit
+   * more importance so the user recognizes it and sees it quicker"*). At the
+   * first cut's 0.5 the lime read straight through it and the bar sat back as
+   * wallpaper on the band — it is the one instruction in the mode and the first
+   * thing that should land after the title. The last 8 % of transparency is what
+   * keeps it reading as a plate ON the crown rather than a hole cut in it.
+   */
+  hintFill: 'rgba(6,11,10,0.92)',
+  /** The remove disc, and the tray's add disc. */
+  remove: 26,
+  /** The drag handle's square. ⚠ Below `Size.minTouch` — it carries `hitSlop`. */
+  handle: 34,
+  /** The lifted row: just off the page, never a card-sized pop. */
+  dragScale: 1.015,
+  dragShadow: {
+    shadowColor: '#000000',
+    shadowOpacity: 0.55,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 22 },
+  },
+  /** The settle when a row is released, and when a neighbour steps aside. */
+  spring: { damping: 20, stiffness: 220, mass: 1 },
+  /** Auto-scroll while a lifted row is held within this of a screen edge. */
+  edge: 96,
+  /** pt per frame of auto-scroll at the edge. */
+  edgeSpeed: 9,
 } as const;
 
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */

@@ -12,6 +12,7 @@ export { Eyebrow } from './eyebrow';
 export { FormChip, type FormResult } from './form-chip';
 export { Grabber } from './grabber';
 export { Hairline } from './hairline';
+export { HandleGlyph, type HandleGlyphProps } from './handle-glyph';
 export { Pill } from './pill';
 export { PlayerPhoto, type PlayerPhotoProps } from './player-photo';
 export { Score, type ScoreProps, type ScoreSize } from './score';
@@ -42,6 +43,7 @@ export { SERIE_A_DIAMOND_RATIO, SerieADiamond, type SerieADiamondProps } from '.
 export { HONDURAS_COLIBRI_RATIO, HondurasColibri, type HondurasColibriProps } from './honduras-colibri';
 export { PUERTO_RICO_BALL_RATIO, PuertoRicoBall, type PuertoRicoBallProps } from './puerto-rico-ball';
 export { PersonGlyph, type PersonGlyphProps } from './person-glyph';
+export { MinusGlyph, type MinusGlyphProps } from './minus-glyph';
 export { PlusGlyph, type PlusGlyphProps } from './plus-glyph';
 export { GoogleMark } from './google-mark';
 export { BookmarkGlyph, type BookmarkGlyphProps } from './bookmark-glyph';

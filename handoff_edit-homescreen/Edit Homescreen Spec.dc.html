@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  doc-page:not(:defined){visibility:hidden}
+  a{color:#1f6b52;text-decoration:none;border-bottom:1px solid rgba(31,107,82,.35)}
+  a:hover{color:#0f4a38}
+</style>
+<script src="./doc-page.js"></script>
+</helmet>
+<doc-page margin="0.7in">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid #12181c;padding-bottom:10px;margin-bottom:26px">
+    <div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5c6a70">ALTA GAMA FC · iOS · SPEC 0158</div>
+    <div style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:#5c6a70">14 SEP 2026 · v1</div>
+  </div>
+
+  <h1 style="font:300 42px/1.05 Newsreader,Georgia,serif;letter-spacing:-.015em;color:#12181c;margin:0 0 12px">Edit homescreen</h1>
+  <p style="font:400 16px/1.5 Newsreader,Georgia,serif;color:#2c3539;max-width:34em;margin:0 0 8px;text-wrap:pretty">The Board — the app's homescreen — is a stack of cards the supporter owns. Edit mode lets them reorder that stack, remove cards they don't read, and put removed cards back. This document specifies that mode only; the rest of the app is unchanged.</p>
+  <p style="font:400 12.5px/1.5 'IBM Plex Mono',monospace;color:#5c6a70;margin:0 0 30px">Scope: Board (Today tab) · Entry, edit chrome, reorder, remove, add tray, reset, exit.</p>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 14px">1 · THE THREE STATES</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:10px;break-inside:avoid">
+    <figure style="margin:0">
+      <img src="shot-view.png" alt="Board in view mode" style="width:100%;display:block;border-radius:10px;border:1px solid #dcd8d0">
+      <figcaption style="font:400 11.5px/1.4 'IBM Plex Mono',monospace;color:#5c6a70;margin-top:8px"><span style="color:#12181c;font-weight:600">A · View.</span> The <b>EDIT</b> chip sits in the crown beside the title. Account avatar keeps its pinned top-right slot.</figcaption>
+    </figure>
+    <figure style="margin:0">
+      <img src="shot-edit.png" alt="Board in edit mode" style="width:100%;display:block;border-radius:10px;border:1px solid #dcd8d0">
+      <figcaption style="font:400 11.5px/1.4 'IBM Plex Mono',monospace;color:#5c6a70;margin-top:8px"><span style="color:#12181c;font-weight:600">B · Editing.</span> Chip becomes <b>DONE</b>, the avatar steps aside, a hint bar carries the instruction and the on-count. Cards collapse to rows.</figcaption>
+    </figure>
+    <figure style="margin:0">
+      <img src="shot-edit-long.png" alt="Full edit mode scroll, cards you can add" style="width:100%;display:block;border-radius:10px;border:1px solid #dcd8d0">
+      <figcaption style="font:400 11.5px/1.4 'IBM Plex Mono',monospace;color:#5c6a70;margin-top:8px"><span style="color:#12181c;font-weight:600">C · Full scroll.</span> Below the rows: <b>CARDS YOU CAN ADD</b> and <b>Reset to default layout</b>. Full-height render, not a device crop.</figcaption>
+    </figure>
+  </div>
+  <p style="font:400 13px/1.5 Newsreader,Georgia,serif;color:#2c3539;margin:0 0 28px">The live match panel is <b>pinned</b>: it stays a full card in edit mode, with no remove button and no handle. It is the reason the screen exists on a matchday, so it is not the supporter's to move.</p>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">2 · ENTER AND EXIT</h2>
+  <table style="width:100%;border-collapse:collapse;font:400 13px/1.45 Newsreader,Georgia,serif;color:#2c3539;margin-bottom:28px">
+    <thead><tr style="border-bottom:1px solid #12181c"><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">TRIGGER</th><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">RESULT</th></tr></thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:8px 10px 8px 0;width:34%"><b>EDIT</b> chip (crown, view mode only)</td><td style="padding:8px 10px 8px 0">Edit mode on. No navigation, no sheet — the screen stays put.</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:8px 10px 8px 0"><b>DONE</b> pill</td><td style="padding:8px 10px 8px 0">Edit mode off. Layout is already saved; DONE only closes the mode.</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:8px 10px 8px 0">Tab change / app background</td><td style="padding:8px 10px 8px 0">Edit mode persists as screen state; layout itself is stored per user.</td></tr>
+      <tr><td style="padding:8px 10px 8px 0">Account avatar</td><td style="padding:8px 10px 8px 0">Hidden while editing — DONE owns the top-right slot and the two would collide.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">3 · CARD ROW ANATOMY</h2>
+  <p style="font:400 13px/1.5 Newsreader,Georgia,serif;color:#2c3539;max-width:34em;margin:0 0 14px">In edit mode each editable card keeps its position in the stack but is capped to a 104px row and veiled by a scrim, so the stack reads as a list of movable objects rather than live content.</p>
+  <table style="width:100%;border-collapse:collapse;font:400 12.5px/1.45 'IBM Plex Mono',monospace;color:#2c3539;margin-bottom:28px">
+    <tbody>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;width:30%;color:#12181c">Row cap / gap</td><td style="padding:7px 0">104px max height · 10px vertical gap (0px in view mode)</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;color:#12181c">Scrim</td><td style="padding:7px 0">rgba(7,12,11,.93) · backdrop-blur 3px · radius 24 · 0.5px rgba(255,255,255,.1) border</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;color:#12181c">Remove</td><td style="padding:7px 0">26px circle · fill #ff5c47 · glyph #160404 · left edge · tap = hide card</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;color:#12181c">Label</td><td style="padding:7px 0">Card name, 600 15px, single line, ellipsis</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;color:#12181c">Drag handle</td><td style="padding:7px 0">34px square · radius 11 · rgba(255,255,255,.1) · right edge · pointerdown starts drag</td></tr>
+      <tr><td style="padding:7px 10px 7px 0;color:#12181c">Dragging</td><td style="padding:7px 0">scale 1.015 · shadow 0 22px 44px rgba(0,0,0,.55) · z-index 20</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">4 · REORDER BEHAVIOUR</h2>
+  <ol style="font:400 13.5px/1.55 Newsreader,Georgia,serif;color:#2c3539;max-width:36em;margin:0 0 28px;padding-left:20px">
+    <li style="margin-bottom:5px">Drag starts on <b>pointerdown on the handle</b> only — the row body is not a drag target, so a mis-tap never picks a card up.</li>
+    <li style="margin-bottom:5px">Row heights are measured once at drag start; the dragged row follows the pointer on the Y axis only.</li>
+    <li style="margin-bottom:5px">A swap fires when travel passes <b>half the neighbour's height + 6px</b>; the dragged row keeps the pointer, the neighbour takes its old slot.</li>
+    <li style="margin-bottom:5px">Only <b>visible, eligible</b> cards take part — a hidden or ineligible card is never a swap target.</li>
+    <li>Release (pointerup or cancel) drops the row into its slot. The new order is committed as it happens, not on DONE.</li>
+  </ol>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">5 · REMOVE, ADD, RESET</h2>
+  <table style="width:100%;border-collapse:collapse;font:400 13px/1.45 Newsreader,Georgia,serif;color:#2c3539;margin-bottom:14px">
+    <tbody>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:8px 10px 8px 0;width:30%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#12181c">Remove</td><td style="padding:8px 0">Tap −. The card leaves the stack immediately and appears in the add tray. No confirm, no undo toast: putting it back is one tap away.</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:8px 10px 8px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#12181c">Add tray</td><td style="padding:8px 0">Heading <b>CARDS YOU CAN ADD</b>. Each row: lime + button (26px, #c8f25a on #101806), card name and one-line description, dashed 0.5px border. Tap anywhere on the row to add; the card returns to its <b>remembered position</b> in the order, not to the bottom.</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:8px 10px 8px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#12181c">Tray empty</td><td style="padding:8px 0">“Every card is on your board.” replaces the rows — the section header stays so the affordance is still explained.</td></tr>
+      <tr><td style="padding:8px 10px 8px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#12181c">Reset</td><td style="padding:8px 0">44px outlined button, “Reset to default layout”. Restores the default order and the default hidden set in one step. Immediate, no confirm.</td></tr>
+    </tbody>
+  </table>
+  <div style="border-left:2px solid #c8f25a;padding:2px 0 2px 14px;font:400 13px/1.5 Newsreader,Georgia,serif;color:#2c3539;max-width:34em;margin-bottom:28px">The hint bar doubles as the state readout: <b>“Drag to reorder · tap − to remove”</b> on the left, <b>“6 OF 8 ON”</b> on the right. It is the only instructional copy in the mode.</div>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">6 · CARD CATALOGUE AND ELIGIBILITY</h2>
+  <table style="width:100%;border-collapse:collapse;font:400 12.5px/1.4 'IBM Plex Mono',monospace;color:#2c3539;margin-bottom:28px">
+    <thead><tr style="border-bottom:1px solid #12181c"><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">ID</th><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">LABEL</th><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">SHOWN WHEN</th><th style="text-align:left;padding:0 0 7px;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">DEFAULT</th></tr></thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">last</td><td style="padding:6px 10px 6px 0">Last result</td><td style="padding:6px 10px 6px 0">no live match</td><td style="padding:6px 0">on</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">next</td><td style="padding:6px 10px 6px 0">Next up</td><td style="padding:6px 10px 6px 0">no live match</td><td style="padding:6px 0">on</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">news</td><td style="padding:6px 10px 6px 0">News</td><td style="padding:6px 10px 6px 0">follows ≥1 club</td><td style="padding:6px 0">on</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">results</td><td style="padding:6px 10px 6px 0">Finished today</td><td style="padding:6px 10px 6px 0">always</td><td style="padding:6px 0">on</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">upcoming</td><td style="padding:6px 10px 6px 0">Rest of the round</td><td style="padding:6px 10px 6px 0">follows ≥1 club</td><td style="padding:6px 0">on</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">counters</td><td style="padding:6px 10px 6px 0">Counters</td><td style="padding:6px 10px 6px 0">follows ≥1 club</td><td style="padding:6px 0">on</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">table</td><td style="padding:6px 10px 6px 0">Table snapshot</td><td style="padding:6px 10px 6px 0">always</td><td style="padding:6px 0">off</td></tr>
+      <tr><td style="padding:6px 10px 6px 0">season</td><td style="padding:6px 10px 6px 0">Season so far</td><td style="padding:6px 10px 6px 0">always</td><td style="padding:6px 0">off</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">7 · COPY (EN / ES)</h2>
+  <table style="width:100%;border-collapse:collapse;font:400 12.5px/1.45 'IBM Plex Mono',monospace;color:#2c3539;margin-bottom:28px">
+    <thead><tr style="border-bottom:1px solid #12181c"><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">KEY</th><th style="text-align:left;padding:0 10px 7px 0;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">EN</th><th style="text-align:left;padding:0 0 7px;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#12181c">ES</th></tr></thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">bdEditLabel</td><td style="padding:6px 10px 6px 0">EDIT</td><td style="padding:6px 0">EDITAR</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">bdDone</td><td style="padding:6px 10px 6px 0">DONE</td><td style="padding:6px 0">LISTO</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">bdHint</td><td style="padding:6px 10px 6px 0">Drag to reorder · tap − to remove</td><td style="padding:6px 0">Arrastra para ordenar · toca − para quitar</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">bdCount</td><td style="padding:6px 10px 6px 0">6 OF 8 ON</td><td style="padding:6px 0">6 ACTIVAS DE 8</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">bdAdd</td><td style="padding:6px 10px 6px 0">CARDS YOU CAN ADD</td><td style="padding:6px 0">TARJETAS QUE PUEDES AÑADIR</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:6px 10px 6px 0">bdAllOn</td><td style="padding:6px 10px 6px 0">Every card is on your board.</td><td style="padding:6px 0">Ya tienes todas las tarjetas.</td></tr>
+      <tr><td style="padding:6px 10px 6px 0">bdReset</td><td style="padding:6px 10px 6px 0">Reset to default layout</td><td style="padding:6px 0">Volver al orden original</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#12181c;margin:0 0 12px">8 · STATE AND HANDOFF NOTES</h2>
+  <table style="width:100%;border-collapse:collapse;font:400 12.5px/1.45 'IBM Plex Mono',monospace;color:#2c3539;margin-bottom:20px">
+    <tbody>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;width:30%;color:#12181c">bdOrder</td><td style="padding:7px 0">string[] · full order incl. hidden cards · default ['last','next','news','results','upcoming','counters','table','season']</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;color:#12181c">bdHidden</td><td style="padding:7px 0">string[] · default ['table','season']</td></tr>
+      <tr style="border-bottom:1px solid #e6e2da"><td style="padding:7px 10px 7px 0;color:#12181c">bdEdit</td><td style="padding:7px 0">boolean · screen state, not persisted with the layout</td></tr>
+      <tr><td style="padding:7px 10px 7px 0;color:#12181c">Persistence</td><td style="padding:7px 0">Order and hidden set are per user and survive relaunch; hidden cards keep their slot so re-adding is not a re-sort.</td></tr>
+    </tbody>
+  </table>
+  <p style="font:400 13px/1.5 Newsreader,Georgia,serif;color:#2c3539;max-width:34em;margin:0 0 6px">Prototype hooks for QA and screenshots: the prototype takes <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">boardEdit</span> (open the Board straight into edit mode) and <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">boardScroll</span> (land at a scroll offset) so any state in this document can be reproduced without a tap.</p>
+  <p style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:#5c6a70;margin:0">Source: AltaGama FC iOS.dc.html · ADR 0158 (“the Board is the user's, not ours”). Screenshots rendered at 2× from the prototype, 14 Sep 2026.</p>
+</doc-page>
+
+</x-dc>
+</body>
+</html>

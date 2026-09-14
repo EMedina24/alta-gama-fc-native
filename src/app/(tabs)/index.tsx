@@ -6,11 +6,19 @@
  * design's own rule (SPEC §3.1), and it is why this screen is fully buildable
  * before push exists: it is exactly what a new user sees.
  */
-import { useIsFocused, useRouter } from 'expo-router';
-import { useEffect, useMemo, useReducer, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, competitionMarkKind, Crest, SkeletonRows, Text } from '@/components/atoms';
+import {
+  Button,
+  ChipButton,
+  competitionMarkKind,
+  Crest,
+  SkeletonRows,
+  Text,
+} from '@/components/atoms';
 import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { LiveDeck } from '@/components/organisms/live-deck';
@@ -19,10 +27,26 @@ import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpDeck } from '@/components/organisms/next-up-deck';
 import { NewsCard } from '@/components/organisms/news-card';
+import { BoardEditHint, BoardStack, type BoardSection } from '@/components/organisms/board-stack';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { applyWidgetLive } from '@/features/widgets/live';
-import { Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
+import {
+  BoardEdit,
+  BottomTabInset,
+  Colors,
+  Radius,
+  Size,
+  Spacing,
+  Surfaces,
+} from '@/constants/theme';
+import {
+  applyVisibleOrder,
+  BUILT_COUNT,
+  trayCards,
+  visibleCards,
+  type BoardCardId,
+} from '@/lib/board-layout';
 import {
   boardOutcome,
   involvesFollowed,
@@ -63,7 +87,13 @@ import { useLive } from '@/queries/use-live';
 import { useNews } from '@/queries/use-news';
 import { useTeamWindows } from '@/queries/use-team-windows';
 import { UPCOMING_DAYS, useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
-import { usePreferences, useZone } from '@/store/preferences';
+import {
+  resetBoardLayout,
+  setBoardCardHidden,
+  setBoardOrder,
+  usePreferences,
+  useZone,
+} from '@/store/preferences';
 
 /** The six clubs offered in the follow card's grid. */
 const FOLLOW_PICKS = 6;
@@ -91,7 +121,7 @@ export default function TodayScreen() {
   const { copy, phrases } = useI18n();
   const zone = useZone();
   const initials = useIdentityInitials();
-  const { followed, clock, newsSeenAt } = usePreferences();
+  const { followed, clock, newsSeenAt, bdOrder, bdHidden } = usePreferences();
 
   const finished = useFinishedToday(zone);
   const upcoming = useUpcoming(zone);
@@ -110,6 +140,51 @@ export default function TodayScreen() {
   const news = useNews();
 
   const hasClubs = followed.length > 0;
+
+  /**
+   * Whether the board is being ARRANGED (ADR 0174).
+   *
+   * ⚠ Screen state, never persisted: the layout survives a relaunch, the mode
+   * does not. A reader who leaves the tab mid-edit is not editing when they come
+   * back — nothing is pending, because every change committed as it was made.
+   *
+   * ⚠ `boardEdit` opens straight into it, `__DEV__` only — the design
+   * prototype's own QA hook, and what makes the mode screenshot-able without a
+   * tap (`altagamafc://(tabs)?boardEdit=1`).
+   */
+  const params = useLocalSearchParams<{ boardEdit?: string }>();
+  const forcedEdit = __DEV__ && params.boardEdit === '1';
+  const [edited, setEdited] = useState(false);
+  // ⚠ DERIVED, not copied into state by an effect (trap 72: if two pieces of
+  // state must agree, compute one from the other). A `useState` initialiser
+  // would read the param on MOUNT only, and this tab is already mounted when the
+  // deep link arrives — which is exactly the case the hook exists for.
+  const editing = edited || forcedEdit;
+  const setEditing = (on: boolean) => {
+    setEdited(on);
+    // ⚠ DONE has to be able to close a mode the URL opened, so it clears the
+    // param rather than fighting it.
+    if (!on && forcedEdit) router.setParams({ boardEdit: undefined });
+  };
+
+  /**
+   * The page, handed to the editor so a held card can scroll it (ADR 0174).
+   *
+   * ⚠ A ref for the offset, not state: it is written on every scroll frame and
+   * read only by the auto-scroll loop, so a re-render per frame would buy
+   * nothing and cost the whole screen.
+   */
+  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollOffset = useRef(0);
+  const [dragging, setDragging] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { height: screenH } = useWindowDimensions();
+  const dragScroll = {
+    ref: scrollRef,
+    offset: scrollOffset,
+    top: insets.top + BoardEdit.edge,
+    bottom: screenH - BottomTabInset - BoardEdit.edge,
+  };
 
   /**
    * ⚠ **Both conditions, not either.** `useLive` polls every fifteen seconds
@@ -213,11 +288,7 @@ export default function TodayScreen() {
           ...(recent.data?.fixtures ?? []),
           ...teamRows,
         ],
-        swept: [
-          ...(finished.data?.fixtures ?? []),
-          ...(recent.data?.fixtures ?? []),
-          ...teamRows,
-        ],
+        swept: [...(finished.data?.fixtures ?? []), ...(recent.data?.fixtures ?? []), ...teamRows],
         now: now.getTime(),
         seenLive,
       });
@@ -240,6 +311,42 @@ export default function TodayScreen() {
   /** The cup lockup for the LAST RESULT meta row (ADR 0133), when we hold one. */
   const lastMark =
     last && last.competition !== 'league' ? competitionMarkKind(last.competitionName) : null;
+
+  /**
+   * The LAST RESULT card's meta line — `MD 3 · Sun 13 Sep`.
+   *
+   * ⚠ Hoisted out of the JSX because the EDITOR's row uses it too (ADR 0174):
+   * this card has no count to summarise, and the line that dates the result is
+   * the honest answer to "what is on this card". Two renderings of one string,
+   * never two constructions of it.
+   *
+   * ⚠ A non-league result names its competition where a league one says the
+   * matchday (ADR 0132) — "MD 1" for a Champions League jornada reads as
+   * LaLiga's. With a LOCKUP on file the card draws that instead and the meta
+   * carries the date alone (ADR 0133).
+   */
+  const lastMeta = !last
+    ? null
+    : [
+        last.competition !== 'league'
+          ? lastMark
+            ? null
+            : last.competitionName
+          : lastMatchday !== null
+            ? copy.today.md(lastMatchday)
+            : null,
+        formatFixtureDate(last.kickoffUtc, zone, phrases),
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+  /**
+   * How many of today's matches have actually finished — the FINISHED TODAY
+   * section's count, and the editor row's summary. ⚠ One construction: it was
+   * written out twice in the JSX and a third time would have been the drift.
+   */
+  const finishedCount =
+    finished.data?.fixtures.filter((f) => f.status === 'finished').length ?? 0;
 
   /**
    * A followed club's fixture that has not kicked off yet.
@@ -267,14 +374,16 @@ export default function TodayScreen() {
       upcoming.data.fixtures,
       sliceWindow(teamRows, Date.parse(upFrom), Date.parse(upTo)),
     );
-    return merged
-      .filter(
-        (f) => involvesFollowed(f, followed) && (f.kickoffTbd || Date.parse(f.kickoffUtc) > at),
-      )
-      // ⚠ A real sort, not trust in concatenation order: `deck[0]` must be the
-      // soonest kickoff whichever route served it. Stable, so pure-league data
-      // keeps the window route's exact order.
-      .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc));
+    return (
+      merged
+        .filter(
+          (f) => involvesFollowed(f, followed) && (f.kickoffTbd || Date.parse(f.kickoffUtc) > at),
+        )
+        // ⚠ A real sort, not trust in concatenation order: `deck[0]` must be the
+        // soonest kickoff whichever route served it. Stable, so pure-league data
+        // keeps the window route's exact order.
+        .sort((a, b) => Date.parse(a.kickoffUtc) - Date.parse(b.kickoffUtc))
+    );
   })();
 
   /**
@@ -414,7 +523,7 @@ export default function TodayScreen() {
    * treats as "no colour on this side".
    */
   const catalogueTeam = (team: WindowFixtureView['homeTeam']) =>
-    team ? (teams.data ?? []).find((t) => t.slug === team.slug) ?? null : null;
+    team ? ((teams.data ?? []).find((t) => t.slug === team.slug) ?? null) : null;
 
   /**
    * One NEXT UP card's props — the single card and every deck layer share this
@@ -440,9 +549,7 @@ export default function TodayScreen() {
       competitionMarkKind(fixture.competitionName) === null
         ? `${copy.today.nextUp} · ${fixture.competitionName}`
         : copy.today.nextUp,
-    kickoffLabel: fixture.kickoffTbd
-      ? '--:--'
-      : formatKickoffTime(fixture.kickoffUtc, zone, clock),
+    kickoffLabel: fixture.kickoffTbd ? '--:--' : formatKickoffTime(fixture.kickoffUtc, zone, clock),
     dateLabel: formatFixtureDate(fixture.kickoffUtc, zone, phrases),
     zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
     venue: fixture.venue,
@@ -489,71 +596,28 @@ export default function TodayScreen() {
     },
   });
 
-  return (
-    <ScreenScaffold
-      title={copy.today.title}
-      eyebrow={copy.today.eyebrow(formatWeekdayLong(new Date().toISOString(), zone, phrases))}
-      accessory={<AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />}
-      // The match in progress IS the crown's payload (ADR 0088): a dark glass
-      // plate on the bright band. With nothing live the crown collapses to
-      // eyebrow + title, exactly as APP-SHELL asks.
-      /**
-       * The crown's payload is the screen's LEAD CARD, whichever it is (ADR
-       * 0095): the live plate while a match is in play, otherwise NEXT UP —
-       * the single card, or the same-day DECK of them (ADR 0113). The
-       * gradient runs over it either way, so the head of the screen is one
-       * object rather than a header with a card under it.
-       *
-       * ⚠ The live boards outrank the whole NEXT UP deck exactly as one
-       * outranks the fixture it became — live and next-up are never both
-       * drawn, and the body's LAST RESULT is what follows either. Two-plus
-       * live boards are their own deck (ADR 0126); one is the solo plate.
-       *
-       * ⚠ Each deck's `key` is its membership: any change — a kickoff
-       * passing, a refetch, a match ending — remounts it with the earliest
-       * back on top. A shuffle is a peek, not a preference (ADR 0113), and a
-       * remount is the reset that needs no effect. ⚠ The live key has no
-       * zone term — live boards are not zone-derived — and a kickoff→route
-       * source upgrade keeps its fixture id, so the card upgrades IN PLACE
-       * without resetting the shuffle.
-       */
-      payload={
-        !hasClubs ? undefined : boards.length > 1 ? (
-          <LiveDeck
-            key={boards.map((b) => b.fixture.id).join('|')}
-            cards={boards.map(liveCard)}
-            copy={copy.today}
-            events={copy.events}
-          />
-        ) : boards.length === 1 ? (
-          <LivePlate {...liveCard(boards[0])} copy={copy.today} events={copy.events} />
-        ) : deck.length > 1 ? (
-          <NextUpDeck
-            key={`${zone}:${deck.map((f) => f.id).join('|')}`}
-            cards={deck.map(nextCardProps)}
-            copy={copy.today}
-          />
-        ) : next ? (
-          <NextUpCard {...nextCardProps(next)} copy={copy.today} />
-        ) : undefined
-      }
-      onRefresh={() => {
-        void finished.refetch();
-        void upcoming.refetch();
-        void recent.refetch();
-        void live.refetch();
-        teamWindows.refetch();
-      }}
-      refreshing={
-        finished.isRefetching ||
-        upcoming.isRefetching ||
-        recent.isRefetching ||
-        teamWindows.isRefetching
-      }>
-      {/* LAST RESULT follows the crown's lead card (ADR 0095). Suppressed
-          while any match is live: the result the reader wants is the one being
-          played, and the finished one is a distraction under it. */}
-      {hasClubs && boards.length === 0 && last ? (
+  /**
+   * The Board's CARDS, resolved — the screen still decides what each one says
+   * and whether it has anything to say; the reader decides what order they come
+   * in and which of them it draws at all (ADR 0174).
+   *
+   * ⚠⚠ **A `null` here means "nothing to draw today", not "put away".** The two
+   * are different facts and only one of them is the reader's: an ineligible card
+   * is absent from the stack AND from the editor's rows, because a slot that is
+   * not on screen cannot be dragged to — while a card the reader removed sits in
+   * the add tray, one tap from coming back.
+   *
+   * ⚠ The LEAD card is not in here at all: live and NEXT UP are the crown's
+   * payload (ADR 0088/0095) and are PINNED — the match being played is the
+   * reason this screen exists on a matchday and is not the reader's to move.
+   * That is why the catalogue has no `next` card, against the handoff's eight.
+   */
+  const cards: Partial<Record<BoardCardId, ReactNode>> = {
+    /* LAST RESULT follows the crown's lead card (ADR 0095). Suppressed
+        while any match is live: the result the reader wants is the one being
+        played, and the finished one is a distraction under it. */
+    last:
+      hasClubs && boards.length === 0 && last ? (
         <LastResultCard
           // ⚠ The fixture's own id and its two `TeamRef`s, for the events
           // panel (ADR 0045). `ScoreSide` carries no slug, and the panel
@@ -563,23 +627,8 @@ export default function TodayScreen() {
           awayTeam={last.awayTeam}
           home={side(last.homeTeam, last.goalsHome, loses(last.goalsHome, last.goalsAway))}
           away={side(last.awayTeam, last.goalsAway, loses(last.goalsAway, last.goalsHome))}
-          // ⚠ A non-league result names its competition where a league one
-          // says the matchday (ADR 0132) — "MD 1" for a Champions League
-          // jornada reads as LaLiga's. With a LOCKUP on file the card draws
-          // that instead and the meta carries the date alone (ADR 0133).
           mark={lastMark}
-          meta={[
-            last.competition !== 'league'
-              ? lastMark
-                ? null
-                : last.competitionName
-              : lastMatchday !== null
-                ? copy.today.md(lastMatchday)
-                : null,
-            formatFixtureDate(last.kickoffUtc, zone, phrases),
-          ]
-            .filter(Boolean)
-            .join(' · ')}
+          meta={lastMeta ?? ''}
           outcome={lastOutcome ? phrases.formLetters[lastOutcome] : null}
           copy={copy.today}
           events={copy.events}
@@ -590,56 +639,54 @@ export default function TodayScreen() {
           // one (`matchEventsCapable`, ADR 0132).
           matchEvents={matchEventsCapable(last)}
         />
-      ) : null}
+      ) : null,
 
-      {/* ⚠ Under the match, above the rest of the round: scores first, always.
-          A headline is never why someone opened this app (ADR 0064). */}
-      {newsPick?.lead ? (
-        <NewsCard
-          lead={story(newsPick.lead)}
-          rows={newsPick.rows.map(story)}
-          newLabel={newsPick.newCount > 0 ? copy.news.newCount(newsPick.newCount) : null}
-          title={copy.news.title}
-          allNews={copy.news.allNews}
-          onPress={() => router.push('/news')}
-        />
-      ) : null}
-
-      <SectionHeader
-        title={copy.today.finishedToday}
-        meta={
-          finished.data
-            ? phrases.matches(finished.data.fixtures.filter((f) => f.status === 'finished').length)
-            : null
-        }
+    /* ⚠ Under the match, above the rest of the round: scores first, always.
+        A headline is never why someone opened this app (ADR 0064). */
+    news: newsPick?.lead ? (
+      <NewsCard
+        lead={story(newsPick.lead)}
+        rows={newsPick.rows.map(story)}
+        newLabel={newsPick.newCount > 0 ? copy.news.newCount(newsPick.newCount) : null}
+        title={copy.news.title}
+        allNews={copy.news.allNews}
+        onPress={() => router.push('/news')}
       />
+    ) : null,
 
-      {finished.isPending ? (
-        <SkeletonRows count={3} height={Size.rowSkeleton} />
-      ) : finished.data && finished.data.fixtures.some((f) => f.status === 'finished') ? (
-        <>
-          <FinishedToday
-            window={finished.data}
-            eventsCopy={copy.events}
-          />
-          <Text variant="footnote" color="textFaint">
-            {copy.today.settleNote}
+    results: (
+      <>
+        <SectionHeader
+          title={copy.today.finishedToday}
+          meta={finished.data ? phrases.matches(finishedCount) : null}
+        />
+
+        {finished.isPending ? (
+          <SkeletonRows count={3} height={Size.rowSkeleton} />
+        ) : finished.data && finishedCount > 0 ? (
+          <>
+            <FinishedToday window={finished.data} eventsCopy={copy.events} />
+            <Text variant="footnote" color="textFaint">
+              {copy.today.settleNote}
+            </Text>
+          </>
+        ) : (
+          <Text variant="body" color="textDim">
+            {copy.today.quiet}
           </Text>
-        </>
-      ) : (
-        <Text variant="body" color="textDim">
-          {copy.today.quiet}
-        </Text>
-      )}
+        )}
+      </>
+    ),
 
-      {hasClubs && mine.length > 0 ? (
+    upcoming:
+      hasClubs && mine.length > 0 ? (
         <>
           {/* ⚠ Plain, no count: the accent in this section belongs to the day
-              word on today's card, and the count restates six visible cards. */}
+            word on today's card, and the count restates six visible cards. */}
           <SectionHeader title={copy.today.upcoming} />
           <View style={styles.upcoming}>
             {/* ⚠ One `now` for the whole section: read per card, a render that
-                straddles midnight would date two of them off different days. */}
+              straddles midnight would date two of them off different days. */}
             {mine.map((fixture) => {
               // The row is read from the followed club's bench (ADR 0029) —
               // for the tap target and the home/away fallback, not the order:
@@ -681,52 +728,251 @@ export default function TodayScreen() {
                   // date under the kickoff already carries it.
                   todayLabel={relative?.tone === 'accent' ? relative.label : null}
                   kickoffLabel={
-                    fixture.kickoffTbd ? '--:--' : formatKickoffTime(fixture.kickoffUtc, zone, clock)
+                    fixture.kickoffTbd
+                      ? '--:--'
+                      : formatKickoffTime(fixture.kickoffUtc, zone, clock)
                   }
                   dateLabel={formatFixtureDate(fixture.kickoffUtc, zone, phrases)}
                   onPress={() =>
-                    router.push({ pathname: '/club/[slug]', params: { slug: row.club.slug } })
+                    router.push({
+                      pathname: '/club/[slug]',
+                      params: { slug: row.club.slug },
+                    })
                   }
                 />
               );
             })}
           </View>
         </>
-      ) : null}
+      ) : null,
 
-      {/**
-       * The two stat tiles (SPEC §3.1 item 4).
+    /**
+     * The two stat tiles (SPEC §3.1 item 4).
+     *
+     * ⚠ Gated on `hasClubs` ALONE, not on the upcoming section above it. A
+     * reader who follows clubs but has no fixtures in the window — an
+     * international break, or the gap between seasons — still follows those
+     * clubs, and the tiles are how they get back to them. Tying these to
+     * `mine.length` would make the shortcuts vanish exactly when the screen is
+     * emptiest and they are most useful.
+     *
+     * ⚠ **Both tiles show the SAME NUMBER, deliberately.** A calendar feed is
+     * derived 1:1 from a followed club here (ADR 0019/0038) — there are no
+     * claimed or subset feeds — so the counts cannot disagree. The tiles earn
+     * their place on their DESTINATIONS, not on the arithmetic. If that ever
+     * reads as a bug to a real user, drop the second one rather than inventing
+     * a number for it.
+     */
+    counters: hasClubs ? (
+      <View style={styles.tiles}>
+        <StatTile
+          value={followed.length}
+          label={copy.today.tileClubs}
+          accessibilityLabel={`${followed.length} ${copy.today.tileClubs}`}
+          onPress={() => router.push('/clubs')}
+        />
+        <StatTile
+          value={followed.length}
+          label={copy.today.tileFeeds}
+          accessibilityLabel={`${followed.length} ${copy.today.tileFeeds}`}
+          onPress={() => router.push('/(sheets)/account')}
+        />
+      </View>
+    ) : null,
+  };
+
+  /**
+   * What each card is HOLDING, for the editor's rows (ADR 0174) — the line under
+   * the name that answers "what do I lose if I take this off".
+   *
+   * ⚠ Every one of these already existed on this screen; none of them is a new
+   * query and none is a new copy key — `phrases.stories`/`matches`/`clubs` are
+   * the counted phrases the rest of the app uses, so Spanish agreement is
+   * already handled (`partido` masculine, `noticia` feminine).
+   *
+   * ⚠ LAST RESULT has no count, so it takes the card's own meta line — the date
+   * it was played. A fabricated "1 match" there would be a number pretending to
+   * be information.
+   */
+  const summaries: Partial<Record<BoardCardId, string>> = {
+    last: lastMeta ?? undefined,
+    // ⚠ `1 +`: the lead IS a story. `rows` is what sits under it.
+    news: newsPick?.lead ? phrases.stories(1 + newsPick.rows.length) : undefined,
+    results: phrases.matches(finishedCount),
+    upcoming: phrases.matches(mine.length),
+    counters: phrases.clubs(followed.length),
+  };
+
+  /** The reader's arrangement. ⚠ Already normalised — `parse` does it on read. */
+  const layout = { order: bdOrder, hidden: bdHidden };
+
+  /** What the body draws, in the reader's order: on the board, and eligible. */
+  const sections = visibleCards(layout).flatMap<BoardSection>((id) => {
+    const node = cards[id];
+    return node == null ? [] : [{ id, node, summary: summaries[id] ?? null }];
+  });
+
+  /**
+   * The crown's payload: the screen's LEAD CARD, whichever it is (ADR 0095) —
+   * the live plate while a match is in play, otherwise NEXT UP, as a single card
+   * or as the same-day DECK of them (ADR 0113).
+   *
+   * ⚠⚠ **PINNED.** It is the one panel edit mode cannot touch (ADR 0174): no
+   * handle, no remove, no slot in the order. The match being played is the
+   * reason the screen exists on a matchday, and the crown is not a place a card
+   * can be dragged to.
+   */
+  const lead = !hasClubs ? undefined : boards.length > 1 ? (
+    <LiveDeck
+      key={boards.map((b) => b.fixture.id).join('|')}
+      cards={boards.map(liveCard)}
+      copy={copy.today}
+      events={copy.events}
+    />
+  ) : boards.length === 1 ? (
+    <LivePlate {...liveCard(boards[0])} copy={copy.today} events={copy.events} />
+  ) : deck.length > 1 ? (
+    <NextUpDeck
+      key={`${zone}:${deck.map((f) => f.id).join('|')}`}
+      cards={deck.map(nextCardProps)}
+      copy={copy.today}
+    />
+  ) : next ? (
+    <NextUpCard {...nextCardProps(next)} copy={copy.today} />
+  ) : undefined;
+
+  return (
+    <ScreenScaffold
+      title={copy.today.title}
+      eyebrow={copy.today.eyebrow(formatWeekdayLong(new Date().toISOString(), zone, phrases))}
+      /**
+       * The crown's top-right slot (ADR 0174).
        *
-       * ⚠ Gated on `hasClubs` ALONE, not on the upcoming section above it. A
-       * reader who follows clubs but has no fixtures in the window — an
-       * international break, or the gap between seasons — still follows those
-       * clubs, and the tiles are how they get back to them. Tying these to
-       * `mine.length` would make the shortcuts vanish exactly when the screen is
-       * emptiest and they are most useful.
+       * ⚠ While editing, DONE owns it ALONE — the avatar steps aside rather
+       * than sitting beside a second pill, which is the design's call and the
+       * only way both fit on a 375pt head.
        *
-       * ⚠ **Both tiles show the SAME NUMBER, deliberately.** A calendar feed is
-       * derived 1:1 from a followed club here (ADR 0019/0038) — there are no
-       * claimed or subset feeds — so the counts cannot disagree. The tiles earn
-       * their place on their DESTINATIONS, not on the arithmetic. If that ever
-       * reads as a bug to a real user, drop the second one rather than inventing
-       * a number for it.
-       */}
-      {hasClubs ? (
-        <View style={styles.tiles}>
-          <StatTile
-            value={followed.length}
-            label={copy.today.tileClubs}
-            accessibilityLabel={`${followed.length} ${copy.today.tileClubs}`}
-            onPress={() => router.push('/clubs')}
+       * ⚠ No EDIT chip with nothing followed: the follow card REPLACES the
+       * board there, so there is no arrangement to make.
+       */
+      accessory={
+        editing ? (
+          // ⚠ `pulse` is the way OUT of a mode that has no other one: with the
+          // avatar stood down, this pill is the only control in the crown, and a
+          // reader who does not find it is stuck (ADR 0174 §13). It is also the
+          // app's third looping animation — see `Pulse`.
+          <ChipButton
+            label={copy.board.done}
+            shape="pill"
+            tone="crown"
+            pulse
+            onPress={() => setEditing(false)}
           />
-          <StatTile
-            value={followed.length}
-            label={copy.today.tileFeeds}
-            accessibilityLabel={`${followed.length} ${copy.today.tileFeeds}`}
-            onPress={() => router.push('/(sheets)/account')}
-          />
-        </View>
-      ) : null}
+        ) : (
+          <View style={styles.crownControls}>
+            {hasClubs ? (
+              <ChipButton
+                label={copy.board.edit}
+                shape="pill"
+                tone="crown"
+                onPress={() => setEditing(true)}
+              />
+            ) : null}
+            <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
+          </View>
+        )
+      }
+      scrollRef={scrollRef}
+      onScrollY={(y) => {
+        scrollOffset.current = y;
+      }}
+      // ⚠ Frozen while a card is up: the drag owns the Y axis then, and the
+      // page scrolling underneath it is the auto-scroll's job alone.
+      scrollEnabled={!dragging}
+      // The match in progress IS the crown's payload (ADR 0088): a dark glass
+      // plate on the bright band. With nothing live the crown collapses to
+      // eyebrow + title, exactly as APP-SHELL asks.
+      /**
+       * The crown's payload is the screen's LEAD CARD, whichever it is (ADR
+       * 0095): the live plate while a match is in play, otherwise NEXT UP —
+       * the single card, or the same-day DECK of them (ADR 0113). The
+       * gradient runs over it either way, so the head of the screen is one
+       * object rather than a header with a card under it.
+       *
+       * ⚠ The live boards outrank the whole NEXT UP deck exactly as one
+       * outranks the fixture it became — live and next-up are never both
+       * drawn, and the body's LAST RESULT is what follows either. Two-plus
+       * live boards are their own deck (ADR 0126); one is the solo plate.
+       *
+       * ⚠ Each deck's `key` is its membership: any change — a kickoff
+       * passing, a refetch, a match ending — remounts it with the earliest
+       * back on top. A shuffle is a peek, not a preference (ADR 0113), and a
+       * remount is the reset that needs no effect. ⚠ The live key has no
+       * zone term — live boards are not zone-derived — and a kickoff→route
+       * source upgrade keeps its fixture id, so the card upgrades IN PLACE
+       * without resetting the shuffle.
+       */
+      /**
+       * ⚠⚠ **`lead` alone unless editing, never a fragment around it.** `Crown`
+       * collapses its bottom padding when it has NO payload, which is Today's
+       * idle state — and a fragment is always truthy, so wrapping
+       * unconditionally would silently re-pad the crown on every quiet day.
+       *
+       * ⚠ The hint bar rides INSIDE the crown above the pinned lead card, which
+       * is the design's own placement and needs no crown API: `Crown.inner`
+       * already gaps its children by `Spacing.four`. ⚠⚠ Never by raising the
+       * crown over the body to get there (trap 70).
+       */
+      payload={
+        editing ? (
+          <>
+            <BoardEditHint
+              hint={copy.board.hint}
+              count={copy.board.count(visibleCards(layout).length, BUILT_COUNT)}
+            />
+            {lead}
+          </>
+        ) : (
+          lead
+        )
+      }
+      // ⚠ No pull-to-refresh while arranging: a refetch mid-edit reshuffles the
+      // content under the scrims and can take a card out of the stack under the
+      // finger, for a reader who is not reading any of it.
+      onRefresh={
+        editing
+          ? undefined
+          : () => {
+              void finished.refetch();
+              void upcoming.refetch();
+              void recent.refetch();
+              void live.refetch();
+              teamWindows.refetch();
+            }
+      }
+      refreshing={
+        finished.isRefetching ||
+        upcoming.isRefetching ||
+        recent.isRefetching ||
+        teamWindows.isRefetching
+      }
+    >
+      <BoardStack
+        sections={sections}
+        editing={editing}
+        tray={trayCards(layout)}
+        copy={copy.board}
+        // ⚠ The drag speaks in VISIBLE rows; the store holds the whole
+        // catalogue's order. `applyVisibleOrder` is the join — it rewrites only
+        // the slots those rows occupied, so a put-away card keeps the place it
+        // was put away from (ADR 0174).
+        onOrder={(visible) => setBoardOrder(applyVisibleOrder(bdOrder, visible))}
+        onRemove={(id) => setBoardCardHidden(id, true)}
+        onAdd={(id) => setBoardCardHidden(id, false)}
+        onReset={resetBoardLayout}
+        scroll={dragScroll}
+        onDragging={setDragging}
+      />
 
       {/* ⚠ The no-subscriptions state: the follow card REPLACES the board. */}
       {!hasClubs ? (
@@ -741,9 +987,13 @@ export default function TodayScreen() {
               <Pressable
                 key={team.slug}
                 onPress={() =>
-                  router.push({ pathname: '/club/[slug]', params: { slug: team.slug } })
+                  router.push({
+                    pathname: '/club/[slug]',
+                    params: { slug: team.slug },
+                  })
                 }
-                style={styles.pick}>
+                style={styles.pick}
+              >
                 <Crest
                   src={crestSrc(team.logoUrls, team.logoUrl, 'small')}
                   fallback={abbreviate(team.name, team.slug, team.shortName)}
@@ -756,10 +1006,7 @@ export default function TodayScreen() {
             ))}
           </View>
 
-          <Button
-            label={copy.today.browseAll}
-            onPress={() => router.push('/clubs')}
-          />
+          <Button label={copy.today.browseAll} onPress={() => router.push('/clubs')} />
         </View>
       ) : null}
     </ScreenScaffold>
@@ -767,6 +1014,13 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ⚠ The EDIT chip and the avatar share the crown's top-right slot (ADR 0174).
+  // Both have an intrinsic width and neither takes a flex share (trap 56).
+  crownControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   // ⚠ Each fixture draws its own surface (ADR 0043); this only spaces them.
   upcoming: { gap: Spacing.three },
   // ⚠ The gap is the only thing separating the two tiles — they share a fill

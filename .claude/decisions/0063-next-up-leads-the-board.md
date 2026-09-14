@@ -3,6 +3,11 @@
 - **Date:** 2026-08-29
 - **Status:** Accepted — not yet verified on the simulator
 - **Decided by:** Ed Medina
+- **Amended by [0174](./0174-the-board-is-the-readers.md)** — the order below is
+  the **default** now, not the rule: the reader can reorder, remove and restore
+  every body card. The one part that still holds absolutely is the lead card's
+  primacy — live and NEXT UP are the crown's payload and are pinned, which is why
+  0174's catalogue has no `next` card at all.
 
 ## Context
 `MatchBoard`'s non-live stack rendered LAST RESULT above NEXT UP, in chronological

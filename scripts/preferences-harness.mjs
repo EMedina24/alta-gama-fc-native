@@ -105,7 +105,7 @@ try {
 
   /** A complete, realistic snapshot — every field populated, nothing defaulted away. */
   const base = Object.freeze({
-    v: 6,
+    v: 7,
     followed: ['barcelona', 'real-madrid'],
     tz: 'Europe/Madrid',
     clock: '24',
@@ -119,6 +119,8 @@ try {
     newsSeenAt: '2026-09-13T12:00:00.000Z',
     savedStories: [{ url: 'https://example.test/a', title: 'A' }],
     leagueSlug: 'la-liga',
+    bdOrder: ['last', 'news', 'results', 'upcoming', 'counters', 'table', 'season'],
+    bdHidden: ['table', 'season'],
   });
 
   /* ── 1 · Identity ────────────────────────────────────────────────────────── */
@@ -140,11 +142,14 @@ try {
   const mutate = (key) => {
     const v = base[key];
     if (Array.isArray(v)) {
-      return key === 'savedStories'
-        ? [{ url: 'https://example.test/DIFFERENT', title: 'A' }]
-        : key === 'reminderLeads'
-          ? [15]
-          : ['someone-else'];
+      if (key === 'savedStories') return [{ url: 'https://example.test/DIFFERENT', title: 'A' }];
+      if (key === 'reminderLeads') return [15];
+      // ⚠ A REARRANGEMENT, not a different set: order is the whole value of a
+      // board layout, and a comparator that only counted ids would call a
+      // reordered board unchanged and leave every drag dead on screen.
+      if (key === 'bdOrder') return [...v].reverse();
+      if (key === 'bdHidden') return ['season'];
+      return ['someone-else'];
     }
     if (typeof v === 'boolean') return !v;
     if (typeof v === 'number') return v + 1;
@@ -152,7 +157,7 @@ try {
   };
 
   const keys = Object.keys(base);
-  assert.ok(keys.length >= 14, `expected the full shape, got ${keys.length} keys`);
+  assert.ok(keys.length >= 16, `expected the full shape, got ${keys.length} keys`);
 
   for (const key of keys) {
     const next = { ...base, [key]: mutate(key) };
@@ -192,6 +197,13 @@ try {
     }),
     true,
     'saved stories compare by URL alone — the writers only add or remove whole rows',
+  );
+
+  assert.equal(
+    samePreferences(base, { ...base, bdOrder: [...base.bdOrder].reverse() }),
+    false,
+    'a board layout with the SAME cards in a different order must compare unequal — ' +
+      'the order IS the value (ADR 0174)',
   );
 
   console.log('\npreferences: all assertions passed.');

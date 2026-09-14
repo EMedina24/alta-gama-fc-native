@@ -16,6 +16,7 @@
  * `.claude/decisions/0042-brand-spelling-spaced-form-reinstated.md`.
  */
 
+import type { BoardCardId } from '@/lib/board-layout';
 import type { CupBandKind } from '@/lib/cronogol/competitions';
 import type { ZoneKind } from '@/lib/cronogol/leagues';
 
@@ -313,6 +314,74 @@ export interface Copy {
      * and stays truthful without it.
      */
     alertsNoPermission: string;
+  };
+  /**
+   * The Board's EDIT MODE (ADR 0174) — the chip, the hint bar, the add tray.
+   *
+   * ⚠ A SIBLING of `today`, not more keys on it: `copy.today` is handed whole to
+   * six organisms that have no business seeing edit chrome.
+   *
+   * ⚠ Sentence case throughout. `Eyebrow` / `eyebrowSm` apply the uppercase, and
+   * a translator must never be handed typography (the `+`/`−` glyphs are drawn
+   * for the same reason — see `plus-glyph.tsx`).
+   */
+  board: {
+    /** The crown chip, view mode. */
+    edit: string;
+    /** The crown pill, edit mode. It only closes the mode — nothing is pending. */
+    done: string;
+    /**
+     * The only instruction in the mode — and it names ONE action, not two.
+     *
+     * ⚠⚠ **Removal is deliberately unsaid** (Ed, 2026-09-14: *"remove the '− to
+     * remove', that's a given already within the UI"*). Every row carries a red
+     * `−` disc in the position iOS has used for exactly that since the first
+     * editable list; captioning it spent the bar's whole width teaching what the
+     * control already says.
+     *
+     * ⚠ The bar's two halves still share one row, and the handoff's original
+     * wording truncated mid-sentence at a 335pt clamp — a 375pt device's content
+     * width — in ENGLISH as well as Spanish. The copy is short now with room to
+     * spare, but re-word it and re-measure at that clamp; do not trust a 402pt
+     * simulator.
+     */
+    hint: string;
+    /**
+     * "5 of 5" — how many cards are on the board, of the cards there are.
+     *
+     * ⚠ A function, not a template the caller assembles: the word order diverges
+     * (`5 OF 5` / `5 DE 5`).
+     *
+     * ⚠ `total` counts the cards this build can actually DRAW — a card declared
+     * in the catalogue but not yet built appears in neither the stack nor the
+     * tray, and counting it would name a card the reader cannot find.
+     */
+    count: (on: number, total: number) => string;
+    /** The add tray's heading. ⚠ Stays up when the tray is empty — it is what
+     *  explains the affordance. */
+    addTitle: string;
+    /** The tray with nothing in it. */
+    allOn: string;
+    reset: string;
+    /**
+     * ⚠⚠ **VoiceOver cannot drag.** These are the two accessibility actions
+     * every editable row carries, and they are the only way to reorder the
+     * board without the gesture (the `CardDeck` shuffle actions' precedent).
+     */
+    moveUp: string;
+    moveDown: string;
+    /** The remove and add controls, spoken. */
+    removeCard: (card: string) => string;
+    addCard: (card: string) => string;
+    /**
+     * Each card's NAME in the editor, and the one line the tray explains it with.
+     *
+     * ⚠ The name is not the card's section heading and may be shorter — it draws
+     * on one line beside two controls, where "Upcoming from your clubs" does not
+     * fit. It must still be recognisably the same card: if a section heading is
+     * reworded, reword this with it.
+     */
+    cards: Record<BoardCardId, { label: string; body: string }>;
   };
   today: {
     title: string;
@@ -1144,6 +1213,29 @@ export const esCopy: Copy = {
       'Las notificaciones están desactivadas para esta app, así que estos avisos no pueden mostrarse. Toca aquí para activarlas.',
   },
 
+  board: {
+    edit: 'Editar',
+    done: 'Listo',
+    hint: 'Arrastra para ordenar',
+    count: (on: number, total: number): string => `${on} de ${total}`,
+    addTitle: 'Tarjetas que puedes añadir',
+    allOn: 'Ya tienes todas las tarjetas.',
+    reset: 'Volver al orden original',
+    moveUp: 'Subir',
+    moveDown: 'Bajar',
+    removeCard: (card: string): string => `Quitar ${card} del tablero`,
+    addCard: (card: string): string => `Añadir ${card} al tablero`,
+    cards: {
+      last: { label: 'Último resultado', body: 'Cómo acabó el último partido de tu club' },
+      news: { label: 'Noticias', body: 'Titulares de los clubes que sigues' },
+      results: { label: 'Finalizados hoy', body: 'Los partidos que han acabado hoy' },
+      upcoming: { label: 'Resto de la jornada', body: 'Los próximos partidos de tus clubes' },
+      counters: { label: 'Contadores', body: 'Clubes seguidos y calendarios' },
+      table: { label: 'Clasificación', body: 'Tu club y sus vecinos' },
+      season: { label: 'La temporada', body: 'Forma, goles y porterías a cero' },
+    },
+  },
+
   today: {
     title: 'Tablero',
     eyebrow: (weekday: string) => weekday.toUpperCase(),
@@ -1676,6 +1768,29 @@ export const enCopy: Copy = {
       'Alert settings could not be saved. They will be retried the next time something changes or the app opens.',
     alertsNoPermission:
       'Notifications are off for this app, so these alerts cannot show. Tap here to turn them on.',
+  },
+
+  board: {
+    edit: 'Edit',
+    done: 'Done',
+    hint: 'Drag to reorder',
+    count: (on: number, total: number): string => `${on} of ${total}`,
+    addTitle: 'Cards you can add',
+    allOn: 'Every card is on your board.',
+    reset: 'Reset to default layout',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+    removeCard: (card: string): string => `Remove ${card} from your board`,
+    addCard: (card: string): string => `Add ${card} to your board`,
+    cards: {
+      last: { label: 'Last result', body: "How your club's last match ended" },
+      news: { label: 'News', body: 'Headlines from the clubs you follow' },
+      results: { label: 'Finished today', body: 'Every match that ended today' },
+      upcoming: { label: 'Rest of the round', body: "Your clubs' next matches" },
+      counters: { label: 'Counters', body: 'Clubs followed and calendars' },
+      table: { label: 'Table snapshot', body: 'Your club and its neighbours' },
+      season: { label: 'Season so far', body: 'Form, goals and clean sheets' },
+    },
   },
 
   today: {

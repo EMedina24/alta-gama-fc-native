@@ -25,7 +25,118 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-11 (latest) — THE MATCHDAY ROW IS A STACKED PAIR NOW, and
+> ⭐ **NEW 2026-09-14 (latest) — THE BOARD IS THE READER'S: it has an EDIT MODE
+> ([0174](./decisions/0174-the-board-is-the-readers.md)).** From
+> `handoff_edit-homescreen/`. An `EDIT` chip in the crown collapses every body
+> card to a 104pt row under a scrim; drag to reorder, tap `−` to remove, add it
+> back from a tray, or reset. The layout is per-device and survives relaunch
+> (`bdOrder`/`bdHidden`, prefs **v7**). This **amends
+> [0063](./decisions/0063-next-up-leads-the-board.md)**: its editorial order is
+> the DEFAULT now, not the rule.
+>
+> ⚠⚠ **The crown lead is PINNED, so the catalogue is SEVEN cards, not the
+> handoff's eight.** Live and NEXT UP are the crown's payload (0088/0095) — the
+> match being played is the reason the screen exists on a matchday and is not the
+> reader's to move — so the handoff's `next` card is dropped. Ed's call, with two
+> others: `table` and `season` are a FOLLOW-UP (they ship `built: false`, held in
+> the stored order so building them resets nobody, and filtered out of the stack,
+> the tray **and the count** — the bar reads `5 OF 5 ON`), and the drag lifts on a
+> **150 ms hold** rather than the handoff's pointer-down.
+>
+> ⚠⚠ **`normalizeLayout` is the load-bearing piece and it is why the catalogue
+> lives in a pure module** (`lib/board-layout.ts`, plain-node harness). A stored
+> order drops ids it no longer knows AND **inserts ids it has never heard of**,
+> after their nearest surviving default predecessor, with their own default
+> visibility. Without that second half, a card added in a later release is
+> invisible **forever** to everyone who already arranged their board — the layout
+> would pin the catalogue it was written against. `applyVisibleOrder` is the other
+> half: a drag speaks in VISIBLE rows, the store holds the whole catalogue, and
+> folding one into the other rewrites only those slots, which is what makes
+> add-back return a card WHERE IT WAS rather than to the bottom.
+>
+> ⚠⚠ **Both array fields carry ELEMENT-WISE `DEEP_EQUAL` comparators**
+> ([0166](./decisions/0166-the-preferences-comparator-walks-its-own-keys.md)) —
+> for a layout the ORDER IS THE VALUE, and a comparator that only counted ids
+> would call a reordered board unchanged and leave every drag dead on screen.
+> ⚠ The order persists on RELEASE, not per swap: a `commit` serialises the whole
+> preferences record, `savedStories` and all.
+>
+> ⚠⚠ **The hint bar names ONE action, and it is LOUD.** Ed on the first build:
+> *"give this a bit more importance so the user recognizes it and sees it
+> quicker"* and *"remove the '− to remove', that's a given already within the
+> UI"*. Removal is unsaid — every row carries a red `−` disc where iOS has always
+> put one — and the width that bought goes to weight: ground 0.5 → **0.92 alpha**
+> (the lime had been reading straight through it), `bodyStrong` over `caption`, a
+> full `eyebrow` count in `textSecondary`. ⚠⚠ Both halves were re-written by
+> MEASUREMENT first: at a 335pt clamp the handoff's own wording truncated
+> mid-sentence in **English as well as Spanish**, and the count lost the word the
+> number implies (`5 OF 5 ON` → `5 OF 5`). Re-word either and re-measure at that
+> clamp; a 402pt simulator will not show you the problem.
+>
+> ⚠⚠ **A ROW IS A NAME AND A SUMMARY LINE — the handoff's veiled card was built,
+> measured and DROPPED. Do not put it back from the handoff, which still
+> specifies it.** Ed called the rows wrong twice (*"these are a bit too
+> transparent"*, then *"this still looks off"*), and the second report forced the
+> measurement that settled it. Ghost contrast above the row's own ground, News row:
+> **9 levels in the design's own screenshot, 15 in our first build, 4 in our
+> last.** We were already more than twice as faint as the thing we were copying
+> and it still read wrong — so the defect was never how MUCH showed, and a third
+> opacity would not have found it. It was WHAT: a fixed window onto a card of some
+> other height lands mid-sentence (Ed's shot cut `inicio defensivo en Primera`
+> through its x-height), and every section opens with its own `SectionHeader`, so
+> the row printed its name twice — ghosted at the top, solid across the middle.
+>
+> The row is a plate now: the card's name over what it is holding — `3 stories`,
+> `3 matches`, `4 clubs`. ⚠ **No new copy and no new query**: `phrases.stories` /
+> `matches` / `clubs` are the counted phrases the app already uses (Spanish
+> agreement solved) and every number was already on the screen. ⚠ LAST RESULT has
+> no count and takes its own meta date; a fabricated `1 match` would be a number
+> pretending to be information. ⚠ `BoardEdit.rowHeight` **104 → 72** with the
+> slice it existed to hold — which is also most of why a drag needed edge
+> auto-scroll.
+>
+> ⚠⚠ **Judge anything in this range by MEASUREMENT, never by a screenshot.** Every
+> viewer in the chain lifts shadows: the 0.97 pass looked unchanged on screen and
+> measurably was not, and the design's own rows look far fainter than they are.
+>
+> ⚠ Uniform rows still make the swap pure arithmetic, so the handoff's "measure
+> every height at drag start" was never needed. The cards are no longer RENDERED
+> in edit mode, but the screen still BUILDS them — a null node is how eligibility
+> is decided. A drop commits only a
+> sequence of exactly the rows on screen NOW: a kickoff can take LAST RESULT away
+> under a finger that is still down.
+>
+> ⚠ `ScreenScaffold` grew `scrollRef`/`onScrollY`/`scrollEnabled` for the drag's
+> edge auto-scroll — a PLAIN ref and a JS `scrollTo` loop, deliberately, because
+> an `Animated.ScrollView` would put an animated ancestor over every screen in the
+> app for one screen's benefit (trap 64). `ChipButton` gained a `crown` tone.
+> ⚠ Dev hooks: `altagamafc://?boardEdit=1` opens straight into edit mode
+> (DERIVED from the param — the tab is already mounted when the link arrives), and
+> `_debug/reset-board` restores the default layout.
+>
+> ⚠⚠ **The mode wears a LIME RING, and the way out of it BREATHES.** Ed: *"give
+> this an attention grabbing border along with the DONE button. The DONE button
+> should pulse."* The hint bar and the DONE pill — the two pieces of chrome that
+> belong to the MODE, not to the board — take a full point of `accent` at
+> opposite ends of the crown, so the mode announces itself as one object. A full
+> point, not the 0.5pt glass hairline: a 0.33pt lime ring vanishes against the
+> mesh (`chip-button.tsx`'s own finding). The pill adds a breathing halo — new
+> `ChipButton pulse` and a new **`Pulse`** token group. ⚠⚠ The halo NEVER fades to
+> zero: the ring is the affordance, the breath only asks twice. What pays for
+> animating at all is that **edit mode has no other way out** — the avatar is
+> stood down and this pill is the only control in the crown. ⚠⚠ It is the app's
+> **third** looping animation, after `skeleton.tsx` and the signed-out avatar's
+> orbit (whose docblock calls itself a sanctioned exception); it is payable only
+> because it is scoped to a TRANSIENT mode and leaves with it. A fourth needs its
+> own argument. ⚠ It spends the lime budget against SPEC §2 — flagged before
+> building, Ed's call.
+>
+> ⚠ **Not verified by hand yet:** VoiceOver's `Move up` / `Move down` actions (the
+> only reorder a screen reader has), the edge auto-scroll under a finger, and any
+> of it on a physical device. **Reduce Motion IS verified** — the halo holds still
+> at full strength and a drag still reorders.
+
+> ⭐ **NEW 2026-09-11 — THE MATCHDAY ROW IS A STACKED PAIR NOW, and
 > its score is a goal column ([0158](./decisions/0158-matchday-rows-become-a-stacked-pair.md)).**
 > Ed, off a screenshot: *"the match rows seem cramped. The club names stacking
 > seems messy and difficult to read."* The defect was **correspondence, not
@@ -1907,6 +2018,26 @@ documented at the code that handles them; this is the index.
     much of it can actually be glass once trap 59 has had its say? If the answer
     is "an edge", the rules are about to govern the whole component for it.
 
+75. **⚠ A drawn glyph's DEFAULT colour is the app's accent — so a glyph on an
+    accent-filled disc draws nothing at all.** The Board editor's add tray put
+    `PlusGlyph` (default `accent`) on a lime `accent` disc: a solid lime circle
+    with an invisible `+`, shipped past `tsc`, past lint and past review, caught
+    only on the simulator ([0174](./decisions/0174-the-board-is-the-readers.md)).
+    ⚠ Every atom in `atoms/*-glyph.tsx` defaults to the ink it is *usually* drawn
+    in; the moment one sits on a FILL, pass the fill's own `on*` token
+    (`onAccent`, `onDanger`). The general rule: **a default colour is a claim
+    about a background**, and the claim is void the moment you paint one.
+
+76. **⚠ A payload slot that is sometimes empty must stay UNDEFINED when it is —
+    a fragment around it is always truthy.** `Crown` collapses its bottom padding
+    when it has no payload, which is Today's idle state. Wrapping the lead card in
+    `<>…</>` to add the edit-mode hint bar made the crown re-pad itself on every
+    quiet day, with nothing in the extra space
+    ([0174](./decisions/0174-the-board-is-the-readers.md)). The fix is one
+    conditional: the fragment exists only while editing. ⚠ The same shape bites
+    anywhere a component branches on `children`/`payload` being present — an array,
+    a fragment and a `null`-returning child are all truthy to that test.
+
 ---
 
 ## Where things stand
@@ -2419,6 +2550,24 @@ Plus 9 warnings (unused vars, duplicate imports). `--fix` handles 2.
 The five screens are built and running on live data, but several designed states
 are unbuilt or stubbed. Audited 2026-08-25 against `handoff_AG-ios/SPEC.md`.
 Ordered by what a user would notice first.
+
+### 0 · The Board's two unbuilt cards — `table` and `season` (2026-09-14)
+
+[0174](./decisions/0174-the-board-is-the-readers.md) shipped edit mode with a
+SEVEN-card catalogue, two of which this app cannot draw yet: **Table snapshot**
+(*your club and its neighbours*) and **Season so far** (*form, goals and clean
+sheets*). Both are default-OFF, both are already in `BOARD_CARDS` with
+`built: false`, and both already have EN + ES names and tray copy.
+
+Building one is: an organism, a `cards` entry in `(tabs)/index.tsx`, its query
+gated on the card being visible (`useStandings` / `useTeamStats` both take
+`enabled` already), and flipping its flag. ⚠ Nothing else — the flag is what
+keeps it out of the stack, the tray and the `N OF M` count today, so flipping it
+resets nobody's arrangement and needs no store change.
+
+⚠ Until then a fresh install opens edit mode on an EMPTY tray
+(`Every card is on your board.`), which is a correct state but a thin
+introduction to a feature whose whole point is that cards can come back.
 
 ### 1 · ~~The Today board is missing two of its three lead states~~ — DONE 2026-08-25
 
