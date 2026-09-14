@@ -35,9 +35,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { Avatar, MeshGround, PremierCrest } from '@/components/atoms';
+import {
+  Avatar,
+  BundesligaKicker,
+  HondurasColibri,
+  LaLigaGlyph,
+  MeshGround,
+  PremierCrest,
+  PuertoRicoBall,
+  SerieADiamond,
+  UclStarball,
+} from '@/components/atoms';
 import { ScreenOverlayContext } from '@/hooks/use-screen-overlay';
-import { leagueCrownTheme } from '@/lib/cronogol/league-theme';
+import {
+  leagueCrownTheme,
+  type CrownArt as CrownArtKind,
+} from '@/lib/cronogol/league-theme';
 import {
   BottomTabInset,
   Colors,
@@ -57,6 +70,22 @@ import { Crown } from './crown';
  * onboarding picker (ADR 0099), which needs its own pinned footer.
  */
 export const BRIGHT_BAND = 0.42;
+
+/**
+ * The bled mark per art key (ADR 0165/0167/0169). All four atoms share the
+ * `{height, alpha}` contract, and each is sized below by its OWN
+ * `CrownArt.height` row — the marks disagree about shape (crest 0.78 portrait,
+ * kicker 1.33 landscape), which is why the height is per mark at all.
+ */
+const ART_MARK = {
+  'premier-league': PremierCrest,
+  laliga: LaLigaGlyph,
+  bundesliga: BundesligaKicker,
+  'champions-league': UclStarball,
+  'serie-a': SerieADiamond,
+  'liga-nacional-apertura': HondurasColibri,
+  'lpr-pro-clausura': PuertoRicoBall,
+} as const satisfies Record<CrownArtKind, (p: { height: number; alpha?: number }) => ReactNode>;
 
 export interface ScreenScaffoldProps {
   title: string;
@@ -101,8 +130,11 @@ export interface ScreenScaffoldProps {
    * the conversion.
    *
    * ⚠ Omitted is the CORRECT state for a screen with no single league — Today
-   * and News are multi-league by construction — and for a competition with no
-   * `LeagueBand` entry. Both wear the brand crown.
+   * and News are multi-league by construction. Every catalogue competition is
+   * banded now (ADR 0173), so the brand fallback's remaining league-screen job
+   * is a slug with no row yet — the next league before its band lands. ⚠ The
+   * UCL is banded via `UCL_LEAGUE_PHASE.slug` — `LeagueBand`'s one non-API-slug
+   * key (ADR 0168).
    */
   tintLeague?: string | null;
   children: ReactNode;
@@ -162,6 +194,12 @@ export function ScreenScaffold({
   const theme = leagueCrownTheme(tintLeague);
   /** Whether this screen wears a league's dark head rather than the brand's lime. */
   const deepCrown = theme.tone === 'deep';
+  /** The bled mark for this crown, or null — see `ART_MARK`. */
+  const Mark = theme.art === null ? null : ART_MARK[theme.art];
+  const art =
+    Mark === null || theme.art === null ? null : (
+      <Mark height={CrownRamp * CrownArt.height[theme.art]} alpha={CrownArt.alpha} />
+    );
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setOverBright(e.nativeEvent.contentOffset.y < threshold);
@@ -220,7 +258,7 @@ export function ScreenScaffold({
           padBottom={crownPadBottom}
           stops={theme.stops}
           tone={theme.tone}
-          art={theme.art === 'premier-league' ? <PremierCrest height={CrownRamp * CrownArt.height} alpha={CrownArt.alpha} /> : null}
+          art={art}
           banner={banner}
           metaLine={metaLine}
           metaTone={metaTone}

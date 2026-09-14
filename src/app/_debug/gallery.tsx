@@ -9,7 +9,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BAND_COLOR, BookmarkGlyph, Button, ChipButton, Hairline, PlusGlyph, PremierCrest, Score, Switch, Text, WashGradient } from '@/components/atoms';
+import { BAND_COLOR, BookmarkGlyph, BundesligaKicker, Button, ChipButton, Hairline, HondurasColibri, LaLigaGlyph, PlusGlyph, PremierCrest, PuertoRicoBall, Score, SerieADiamond, Switch, Text, UclStarball, WashGradient } from '@/components/atoms';
 import {
   ClubBubble,
   ClubRow,
@@ -375,6 +375,30 @@ function TintColumn({ label, apiSlug }: { label: string; apiSlug: string | null 
           <View style={styles.tintArt}>
             <PremierCrest height={CrownRamp * 0.7} />
           </View>
+        ) : theme.art === 'laliga' ? (
+          <View style={styles.tintArt}>
+            <LaLigaGlyph height={CrownRamp * 0.55} />
+          </View>
+        ) : theme.art === 'bundesliga' ? (
+          <View style={styles.tintArt}>
+            <BundesligaKicker height={CrownRamp * 0.46} />
+          </View>
+        ) : theme.art === 'champions-league' ? (
+          <View style={styles.tintArt}>
+            <UclStarball height={CrownRamp * 0.58} />
+          </View>
+        ) : theme.art === 'serie-a' ? (
+          <View style={styles.tintArt}>
+            <SerieADiamond height={CrownRamp * 0.62} />
+          </View>
+        ) : theme.art === 'liga-nacional-apertura' ? (
+          <View style={styles.tintArt}>
+            <HondurasColibri height={CrownRamp * 0.5} />
+          </View>
+        ) : theme.art === 'lpr-pro-clausura' ? (
+          <View style={styles.tintArt}>
+            <PuertoRicoBall height={CrownRamp * 0.55} />
+          </View>
         ) : null}
         <Text variant="eyebrowSm" color={deep ? 'onDeepDim' : 'onCrownDim'}>
           {label.toUpperCase()}
@@ -413,10 +437,16 @@ function Case({ label, children }: { label: string; children: React.ReactNode })
  * The per-league crown and mesh (ADR 0164), every case the app can produce.
  *
  * ⚠ Keyed by **`apiSlug`**, which is what `leagueCrown`/`leagueMesh` take —
- * `laliga`, not `la-liga` (trap 34). The last two rows are the ones worth
- * checking: both must come back IDENTICAL to the first, because neither the UCL
- * nor Honduras has a `LeagueBand` entry and the brand crown is their correct
- * answer, not a failure.
+ * `laliga`, not `la-liga` (trap 34) — except the UCL, whose key is its TAB slug
+ * (`champions-league`, ADR 0168: a competition has no API slug). The LAST row
+ * is the one worth checking: it must come back IDENTICAL to the first — its
+ * slug is SYNTHETIC, because every real competition is banded now (ADR 0173),
+ * and an unknown slug falling back to the brand crown is the behaviour the
+ * next league depends on before its band row lands. ⚠ Serie A and Honduras
+ * share a HUE (≈217°); their columns must read as two different navies.
+ * ⚠ Serie A and LPR are GRADIENT bands (ADR 0172): their ramps shift hue down
+ * the ladder — steel→vivid blue, and blue→red — where every other column holds
+ * one hue.
  */
 const TINTS: readonly { label: string; apiSlug: string | null }[] = [
   { label: 'brand', apiSlug: null },
@@ -424,8 +454,10 @@ const TINTS: readonly { label: string; apiSlug: string | null }[] = [
   { label: 'premier', apiSlug: 'premier-league' },
   { label: 'bundesliga', apiSlug: 'bundesliga' },
   { label: 'serie a', apiSlug: 'serie-a' },
-  { label: '⚠ ucl', apiSlug: 'champions-league' },
-  { label: '⚠ honduras', apiSlug: 'liga-nacional-apertura' },
+  { label: 'ucl', apiSlug: 'champions-league' },
+  { label: 'honduras', apiSlug: 'liga-nacional-apertura' },
+  { label: 'puerto rico', apiSlug: 'lpr-pro-clausura' },
+  { label: '⚠ unbanded', apiSlug: 'zz-no-band' },
 ];
 
 /** Counted once — the fixture array is a module constant, not props. */

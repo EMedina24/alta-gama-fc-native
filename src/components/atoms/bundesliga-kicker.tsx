@@ -1,0 +1,82 @@
+/**
+ * The Bundesliga kicker, as background art for the deep crown (ADR 0169) — the
+ * badge's player-and-ball figure alone, on `PremierCrest`/`LaLigaGlyph`'s
+ * pattern (ADR 0165/0167).
+ *
+ * ⚠ **Drawn, not loaded** — no SVG transformer is configured, so the geometry
+ * lives here verbatim. The master is `assets/images/BL.svg` (design source;
+ * no build step reads it, and nothing `require`s it): path 2 of 3 of
+ * Wikipedia's `Bundesliga logo (2017).svg`, the red rounded box and the
+ * BUNDESLIGA wordmark dropped — Ed's call, the same cut LALIGA's wordmark got.
+ *
+ * ⚠ **No transform, though the source has one.** The master's group carries
+ * `translate(-253.32 -1660.1) scale(2.1856)`; it is uniform, so instead of
+ * applying it the viewBox is the figure's sampled bounding box in the path's
+ * OWN coordinate space — the data passes through untouched, which is the whole
+ * point of the drawn-not-loaded rule.
+ *
+ * ⚠ Two subpaths in one `d` — figure and ball — and the second starts
+ * RELATIVE (`m`), legal only while both live in the same path element. The
+ * leading `m` on the first subpath is absolute by the SVG grammar (a relative
+ * moveto opening a path is taken as absolute).
+ *
+ * ⚠ **The widest mark in the catalogue** (ratio ≈ 1.33, vs the crest's 0.78
+ * and the LaLiga glyph's 1.07) — its `CrownArt.height` entry is what keeps its
+ * visible fragment near the others'. The ball sits top-right, so the
+ * screen-edge bleed cuts into it first and leaves the player readable.
+ *
+ * ⚠ No `fillRule` — the figure and the ball are disjoint blobs with no
+ * counters, so the default `nonzero` is correct.
+ *
+ * ⚠ **The fade IS the fill** (ADR 0165): a vertical gradient running to zero,
+ * so the foot dissolves inside one `Svg` and only the physical screen edge
+ * hard-clips (ADR 0098).
+ *
+ * ⚠ Translucency rides `stopOpacity`, never an rgba stop colour (trap 42).
+ *
+ * ⚠ Decorative. The league is named in the pill beside it, so this is
+ * `accessible` false with no label — announcing it would say the name twice.
+ */
+import { useId } from 'react';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+
+/** The figure's own sampled bounding box — the master's viewBox. */
+const BOX = { x: 118.04, y: 762.01, width: 30.07, height: 22.66 } as const;
+
+/**
+ * Landscape — the widest of the four marks — and exported so a caller sizing
+ * the art off its height never re-derives it — `PL_CREST_RATIO`'s contract.
+ */
+export const BUNDESLIGA_KICKER_RATIO = BOX.width / BOX.height;
+
+const PATH =
+  'm146.23 769.42c-1.0391 0-1.8828 0.84375-1.8828 1.8789 0 1.0391 0.84375 1.8828 1.8828 1.8828 1.0352 0 1.8789-0.84375 1.8789-1.8828 0-1.0352-0.84375-1.8789-1.8789-1.8789m-2.1836 4.6367c0.0195 0.0664-0.043 0.10938-0.16406 0.20313l-0.0742 0.0391 0.0273 0.0508c0.0156 0.0274-0.0117 0.0781-0.0625 0.10156l-0.11328 0.0586c-0.0508 0.0234-0.10547 0.0195-0.1211-0.0117l-0.0234-0.0469-0.14062 0.0703 0.0234 0.0469c0.0156 0.0312-0.0156 0.0781-0.0664 0.10156l-0.11328 0.0547c-0.0547 0.0234-0.10938 0.0156-0.125-0.0156l-0.0195-0.043c-0.4336 0.20312-0.91797 0.41797-1.418 0.65234l0.0273 0.0664c0.0156 0.0273-0.0156 0.0742-0.0664 0.10156l-0.11328 0.0508c-0.0508 0.0234-0.10547 0.0156-0.1211-0.0156l-0.0273-0.0625-0.16406 0.0781 0.0312 0.0625c0.0156 0.0352-0.0156 0.082-0.0664 0.10547l-0.11328 0.0508c-0.0508 0.0234-0.10547 0.0195-0.1211-0.0156l-0.0273-0.0625c-0.23047 0.0937-0.47656 0.1289-0.65625-0.20703-0.0781-0.15625-0.082-0.51563-0.14062-0.70704-0.0312-0.10156-0.14844-0.11718-0.14844-0.11718-2.2031-0.42188-2.9492 0.0469-4.3633-0.30078-0.44141-0.10938-0.6836-0.51954-1.2305-0.52344-1.1914-0.0352-1.5469-0.0195-2.8398-0.0703-0.0547 0.1914-0.0625 0.23046-0.0625 0.23046l-4.5469-0.0234 0.69141 0.34375 0.22656 2.0039s-0.18359 0.0547-0.23828 0.0625c0.043 0.40235 0.0859 0.94141 0.10937 1.4258 0.0195 0.4375 0.043 0.89454 0.0391 1.1875-4e-3 0.0898-4e-3 0.30469-0.12891 0.53907-0.082 0.15625-0.22656 0.28515-0.34375 0.37109-0.0391 0.0312-0.21484 0.14844-0.41797 0.26953-0.21094 0.1211-0.44531 0.2461-0.57031 0.3086 0.0117 0.0547 0.0508 0.10937 0.0625 0.15234-2.7656 1.3359-6.1914 1.793-7.3008 3.918-0.12891 0.24609-0.58203 0.11719-0.59375-0.14844-4e-3 -0.12109-4e-3 -0.32031 4e-3 -0.42578l-0.043-4e-3c-0.0352 0-0.0625-0.0508-0.0586-0.10547l4e-3 -0.125c4e-3 -0.0586 0.0352-0.10156 0.0703-0.10156l0.0469 4e-3c0.0156-0.125 0.0391-0.2461 0.0703-0.36328l-0.043-0.0156c-0.0312-0.0117-0.043-0.0664-0.0234-0.12109l0.0391-0.11719c0.0234-0.0547 0.0625-0.0859 0.0977-0.0742l0.043 0.0117c0.19531-0.46094 0.57812-0.66406 0.7539-1.0977l-0.0273-0.0117c-0.0352-0.0117-0.0469-0.0664-0.0273-0.1211l0.0391-0.11719c0.0234-0.0508 0.0664-0.0859 0.0977-0.0742l0.0312 8e-3c0.0273-0.0625 0.0586-0.13281 0.0937-0.19922l-0.0391-0.0273c-0.0312-0.0195-0.0312-0.0742 0-0.1211l0.0664-0.10547c0.0312-0.0469 0.082-0.0703 0.10937-0.0508l0.0156 8e-3 0.0195 4e-3c8e-3 0 0.0117-4e-3 0.0195-8e-3 0.0195-0.0195 0.0391-0.0391 0.0586-0.0547 0.17968-0.14062 0.40234-0.11719 0.58593-8e-3 0.17188 0.10547 0.85157 0.49219 1.5039-0.0977 1.0781-0.96484 2.3398-2.2812 3.2891-2.3242-0.25781-0.55859-0.70312-1.7188-0.7539-2.1484l-0.32032-0.0664c-0.16406-0.35547-0.57031-2.0039-0.68359-3.2422 0 0-0.13281-1.3359-4e-3 -1.8047-0.0742-8e-3 -0.20703 0.10157-0.24609 0.10157-0.17188-0.42578 0.39062-4.0234 0.94922-5.0703l0.85547-0.33984c-0.0898-0.0117-0.70703-0.0391-2.332-0.17187-0.90625 0.80078-1.957 1.668-2.4883 2.1406-0.0898 0.0664-0.24218 0.57813-0.24218 0.57813s-0.26953 0.23828-0.51563 0.41015c-0.33203 0.23438-1.1367 0.41016-1.3086 0.13672-0.043-0.0664-0.0352-0.0977 4e-3 -0.13672 0.125-0.1289 0.59375-0.35547 0.75391-0.65234-0.25391 0.1289-0.54297 0.26562-0.76953 0.24219-0.0977-4e-3 -0.14453-0.2461-0.0195-0.28907 0.33984-0.14453 0.61328-0.20703 0.8125-0.49218 0.19531-0.26954 0.42969-0.45313 0.74219-0.46094 0 0 1.5117-1.9727 2.4023-2.9102 0.24609-0.25781 0.70312-0.17187 0.70312-0.17187l0.0781-0.30078s3.0547-0.36329 4.4766 0.10937c-0.0352-0.86719 0.35547-2.0117 1.7031-2.0117 0.69531 0 1.7188 0.61328 1.8555 1.3594 0.043 0.23047-0.0898 0.38281-0.16015 0.67187-0.1211 0.44141 0.0469 0.92578-4e-3 1.0781-0.0391 0.1289-0.18359 0.11718-0.30469 0.28906-0.13281 0.18359-0.28125 0.52734-0.28125 0.52734l-0.18359 0.41407-0.95312-0.0703c-0.34766 0.75-1.0625 2.2852-1.3125 3.8008 0.75 0.0664 4.1367 0.55469 4.1367 0.55469l0.082 0.27735s1.4297 0.17187 2.5976 0.72656c0.26172 0.0625 0.91797-0.0352 1.3477 0.16406 0.0312-0.0195 0.10156-0.0898 0.1289-0.10937 1.5234 0.46875 2.7812 1.2656 4.2539 1.6211 0 0 0.68359 0.16797 0.91797 0.21484 0.54297 0.10547 0.89062 0.12891 1.1758 0.15235 0.47266 0.0351 0.73438 0.0273 1.0781 0.0469 0.24218 0.0156 0.53906-0.0234 0.63671 0.33203';
+
+export interface BundesligaKickerProps {
+  /** The drawn height in points; the width follows `BUNDESLIGA_KICKER_RATIO`. */
+  height: number;
+  /** Peak opacity, at the top of the mark. It fades to nothing at the foot. */
+  alpha?: number;
+}
+
+export function BundesligaKicker({ height, alpha = 0.1 }: BundesligaKickerProps) {
+  // ⚠ `useId`, never a literal: two of these in one tree would resolve both
+  // `url(#…)` fills to whichever mounted first (trap 40).
+  const id = `bundesliga-kicker-${useId().replace(/:/g, '')}`;
+  return (
+    <Svg
+      width={height * BUNDESLIGA_KICKER_RATIO}
+      height={height}
+      viewBox={`${BOX.x} ${BOX.y} ${BOX.width} ${BOX.height}`}
+      accessible={false}>
+      <Defs>
+        <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset={0} stopColor="#ffffff" stopOpacity={alpha} />
+          <Stop offset={0.55} stopColor="#ffffff" stopOpacity={alpha * 0.55} />
+          <Stop offset={1} stopColor="#ffffff" stopOpacity={0} />
+        </LinearGradient>
+      </Defs>
+      <Path d={PATH} fill={`url(#${id})`} />
+    </Svg>
+  );
+}

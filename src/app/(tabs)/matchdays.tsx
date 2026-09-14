@@ -358,12 +358,12 @@ export default function MatchdaysScreen() {
 
   return (
     <ScreenScaffold
-      /* ⚠⚠ **`isCup ? null : league.apiSlug`, and the guard is the point.** On
-         the cup tab `league` is the LaLiga FALLBACK this file warns about above,
-         so `league.apiSlug` alone would paint the Champions League crown LaLiga
-         red. Null is also the right answer on its own merits: the UCL has no
-         `LeagueBand` row, so it wears the brand (ADR 0164). */
-      tintLeague={isCup ? null : league.apiSlug}
+      /* ⚠⚠ **The `isCup` guard is the point.** On the cup tab `league` is the
+         LaLiga FALLBACK this file warns about above, so `league.apiSlug` alone
+         would paint the Champions League crown LaLiga red. The cup's own answer
+         is its TAB slug — the one non-API-slug key `LeagueBand` carries (ADR
+         0168; it was `null`/brand until the UCL was banded at #041181). */
+      tintLeague={isCup ? UCL_LEAGUE_PHASE.slug : league.apiSlug}
       title={matchweek === null ? '' : copy.matchdays.title(matchweek)}
       eyebrow={
         isCup

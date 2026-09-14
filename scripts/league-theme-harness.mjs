@@ -144,14 +144,19 @@ try {
   assert.equal(leagueHue(undefined), null);
   assert.equal(leagueHue(''), null, 'an empty slug is "no league", not a lookup');
 
-  // The three competitions in the catalogue with no band row (ADR 0105/0150/0159).
-  for (const slug of ['lpr-pro-clausura', 'liga-nacional-apertura', 'champions-league']) {
+  // ⚠ EVERY catalogue competition is banded now (ADR 0173 banded the last,
+  // LPR), so the slug here is SYNTHETIC — exactly what 0170's warning demanded
+  // when this loop's last real occupant left. It is not a formality: an
+  // unknown slug falling back to the brand crown with dark ink is the
+  // behaviour every FUTURE league depends on in the gap before its band row
+  // lands, and this loop is that contract's only proof.
+  for (const slug of ['zz-no-band']) {
     assert.equal(leagueHue(slug), null, `${slug} has no band and must wear the brand`);
     assert.equal(leagueCrown(slug), CrownGrad, `${slug} must get the literal crown`);
     assert.equal(leagueMesh(slug), Mesh, `${slug} must get the literal mesh`);
-    // ⚠⚠ THE coupling this file exists to pin: an unbanded competition wears the
+    // ⚠⚠ THE coupling this file exists to pin: an unbanded slug wears the
     // BRAND ramp, so its ink must stay DARK. Derive ink from "do I have a
-    // league?" instead of from the ramp and these three go white on lime.
+    // league?" instead of from the ramp and this case goes white on lime.
     assert.equal(
       leagueCrownTheme(slug).tone,
       'bright',
@@ -171,28 +176,46 @@ try {
   assert.notEqual(leagueCrown('laliga')[0].color, CrownGrad[0].color);
   assert.equal(leagueCrown('la-liga')[0].color, CrownGrad[0].color);
 
-  /* ── 3 · Hue-only mutation, over every entry in the table ────────────────── */
+  /* ── 3 · Hue/sat mutation, over every entry in the table ─────────────────── */
 
   const last = CrownDeep.length - 1;
   const ground = CrownGrad[CrownGrad.length - 1].color;
+
+  /**
+   * The expected ink per position, MIRRORED independently of the module (ADR
+   * 0172): a solid band is one clamped {h,s} everywhere; a gradient band lerps
+   * hue along the SHORTEST arc and saturation linearly, endpoints clamped —
+   * the window is convex, so lerped saturation needs no re-clamp.
+   */
+  const clampSat = (s) => Math.min(Math.max(s, CrownDeepSat.min), CrownDeepSat.max);
+  const lerpHue = (a, b, t) => {
+    const delta = ((b - a + 540) % 360) - 180;
+    return (((a + delta * t) % 360) + 360) % 360;
+  };
+  const bandInks = (slug) => {
+    const band = LeagueBand[slug];
+    const ends = 'solid' in band ? [band.solid, band.solid] : band.gradient;
+    return ends.map((hex) => {
+      const p = parseHex(hex);
+      return { h: p.h, s: clampSat(p.s) };
+    });
+  };
+  const lastOpaqueOffset = CrownDeep[CrownDeep.length - 2].offset;
 
   for (const slug of entried) {
     const hue = leagueHue(slug);
     assert.equal(typeof hue, 'number', `${slug} is in LeagueBand so it must resolve a hue`);
 
+    const [inkA, inkB] = bandInks(slug);
+    const inkAt = (t) => ({ h: lerpHue(inkA.h, inkB.h, t), s: inkA.s + (inkB.s - inkA.s) * t });
+    // `leagueHue` stays the FIRST stop's hue — the gradient never moves it.
+    assert.ok(Math.abs(hue - inkA.h) < 1.5, `${slug}'s leagueHue is the band's first stop`);
+
     /* The CROWN follows `CrownDeep`: the ladder's lightness and opacity, the
-       band's hue, and a saturation pulled into `CrownDeepSat`. */
+       band's hue and saturation — lerped down the ladder for a gradient band
+       (ADR 0172), constant for a solid one. */
     const crown = leagueCrown(slug);
     assert.equal(crown.length, CrownDeep.length, `${slug} crown keeps every stop`);
-
-    const bandSat = parseHex(
-      'solid' in LeagueBand[slug] ? LeagueBand[slug].solid : LeagueBand[slug].gradient[0],
-    ).s;
-    const wantSat = Math.min(Math.max(bandSat, CrownDeepSat.min), CrownDeepSat.max);
-    assert.ok(
-      wantSat >= CrownDeepSat.min && wantSat <= CrownDeepSat.max,
-      `${slug}'s saturation must land inside the window`,
-    );
 
     crown.forEach((stop, i) => {
       const source = CrownDeep[i];
@@ -206,13 +229,15 @@ try {
         return;
       }
 
+      const want = inkAt(source.offset / lastOpaqueOffset);
       const to = parseHex(stop.color);
       nearL(to.l, source.light, `${slug} stop ${i} takes the ladder's lightness`);
-      nearSat(to.s, wantSat, `${slug} stop ${i} takes the clamped saturation`);
-      nearHue(to.h, hue, `${slug} stop ${i} takes the league hue`);
+      nearSat(to.s, want.s, `${slug} stop ${i} takes the clamped (lerped) saturation`);
+      nearHue(to.h, want.h, `${slug} stop ${i} takes the league hue at its ladder position`);
     });
 
-    /* The MESH keeps ADR 0164's hue-only rule — S and L survive untouched. */
+    /* The MESH keeps ADR 0164's hue-only rule — S and L survive untouched; a
+       gradient band spreads its arc across the pools (pool i at t = i/(n-1)). */
     const mesh = leagueMesh(slug);
     assert.equal(mesh.length, Mesh.length, `${slug} mesh keeps all three pools`);
     mesh.forEach((pool, i) => {
@@ -222,13 +247,28 @@ try {
       }
       const from = parseHex(source.color);
       const to = parseHex(pool.color);
+      const want = inkAt(Mesh.length > 1 ? i / (Mesh.length - 1) : 0);
       exact(to.s, from.s, `${slug} pool ${i} holds saturation`);
       exact(to.l, from.l, `${slug} pool ${i} holds lightness`);
-      nearHue(to.h, hue, `${slug} pool ${i} takes the league hue`);
+      nearHue(to.h, want.h, `${slug} pool ${i} takes the league hue at its position`);
     });
 
     /* And the ink family travels with the ramp. */
     assert.equal(leagueCrownTheme(slug).tone, 'deep', `${slug} has a band, so its ink is WHITE`);
+  }
+
+  /* ⚠ And the gradient must have ACTUALLY happened — a lerp that quietly
+     collapsed to its first stop would pass every per-stop check above on a
+     wrong implementation whose t is always 0. Serie A's two hues are ~7°
+     apart; LPR's cross half the wheel. */
+  for (const slug of ['serie-a', 'lpr-pro-clausura']) {
+    const stops = leagueCrown(slug);
+    const top = parseHex(stops[0].color).h;
+    const foot = parseHex(stops[stops.length - 2].color).h;
+    assert.ok(
+      Math.abs(((foot - top + 540) % 360) - 180) > 3,
+      `${slug}'s ramp must shift hue down the ladder (top ${top.toFixed(1)}°, foot ${foot.toFixed(1)}°)`,
+    );
   }
 
   /* ── 4 · The ink reads on every league's DEEP band ───────────────────────── */
@@ -317,11 +357,28 @@ try {
   // Bundesliga are 5° apart, so they must NOT.
   assert.deepEqual(leagueCrown('laliga'), leagueCrown('segunda'), 'segunda shares LaLiga red (0062)');
   assert.notDeepEqual(leagueCrown('laliga'), leagueCrown('bundesliga'));
+  // ⚠ Serie A and Honduras share a HUE (≈217°) and differ only in saturation
+  // (62 vs 85 after the CrownDeepSat clamp) — this is the pin that says the
+  // clamp keeps two same-hue leagues distinguishable (ADR 0170).
+  assert.notDeepEqual(leagueCrown('serie-a'), leagueCrown('liga-nacional-apertura'));
 
-  /* ── 6 · The bled crest is the Premier League's alone ────────────────────── */
+  /* ── 6 · The bled mark belongs to exactly the slugs with bundled art ─────── */
 
-  assert.equal(leagueCrownTheme('premier-league').art, 'premier-league');
-  for (const slug of [...entried.filter((l) => l !== 'premier-league'), 'champions-league', null]) {
+  const ART_SLUGS = [
+    'premier-league',
+    'laliga',
+    'bundesliga',
+    'champions-league',
+    'serie-a',
+    'liga-nacional-apertura',
+    'lpr-pro-clausura',
+  ];
+  for (const slug of ART_SLUGS) {
+    assert.equal(leagueCrownTheme(slug).art, slug, `${slug} carries its own mark`);
+  }
+  // ⚠ segunda shares LaLiga's RAMP (asserted above) but must NOT inherit its
+  // art through that: the ART map is keyed by slug, not by colour.
+  for (const slug of [...entried.filter((l) => !ART_SLUGS.includes(l)), null]) {
     assert.equal(
       leagueCrownTheme(slug).art,
       null,

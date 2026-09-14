@@ -269,10 +269,11 @@ export default function TableScreen() {
 
   return (
     <ScreenScaffold
-      /* ⚠ Null on the cup tab: `active.league` is the `?? LEAGUES[0]` fallback
-         there, and the UCL has no `LeagueBand` row anyway, so it wears the
-         brand crown (ADR 0164). */
-      tintLeague={active.kind === 'league' ? active.league.apiSlug : null}
+      /* ⚠ The guard still matters on the cup tab: `active.league` is the
+         `?? LEAGUES[0]` fallback there, so its `apiSlug` would paint the wrong
+         league. The cup passes its own TAB slug — `LeagueBand`'s one
+         non-API-slug key (ADR 0168; null/brand before the UCL was banded). */
+      tintLeague={active.kind === 'league' ? active.league.apiSlug : UCL_LEAGUE_PHASE.slug}
       title={copy.table.title}
       /* ⚠ UNDER the title, never a right-shoulder block (ADR 0100): beside the
          title, "Clasificación" got ~130pt and wrapped MID-WORD. */

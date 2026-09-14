@@ -307,6 +307,12 @@ export type ThemeColor = keyof typeof dark;
  * fixtures for, keyed by **API slug** (`laliga`, not `la-liga`; `segunda`; see
  * `lib/cronogol/leagues.ts`). Never key on the provider's `name`.
  *
+ * ⚠ ONE exception to the API-slug rule (ADR 0168): `champions-league` is a
+ * COMPETITION (ADR 0150) with no API slug at all — no `/cronogol/leagues` row,
+ * no standings row — so its key is `UCL_LEAGUE_PHASE.slug`, the tab key every
+ * screen already passes around. Nothing here reaches the wire, so
+ * `Competition.slug`'s "never sent to the API" contract holds.
+ *
  * ⚠ These are the leagues' own brand colours, deliberately NOT `LeagueRef.accentColor`
  * from the backend — that is null on Serie A and segunda and cannot carry a
  * gradient (ADR 0062). Segunda shares LaLiga's red by choice. ⚠ LaLiga's is a
@@ -321,6 +327,20 @@ export const LeagueBand = {
   'premier-league': { solid: '#37003C' },
   bundesliga: { solid: '#FF404A' },
   'serie-a': { gradient: ['#225696', '#0D8EFE'] },
+  // ⚠ The UCL's is Ed's own call (2026-09-14, ADR 0168) — there is no wire hex
+  // to disagree with. It also banded the UCL for the first time: the deep crown
+  // and this header's blue arrived as one decision.
+  'champions-league': { solid: '#041181' },
+  // ⚠ Honduras' is Ed's call too (2026-09-14, ADR 0170): the wire's accentColor
+  // is null and ADR 0159 recorded no brand colour. ⚠ Same HUE as Serie A's
+  // (both ≈217°) — the crowns stay distinct through saturation alone (85 vs 62
+  // after the CrownDeepSat clamp), and the harness pins that they differ.
+  'liga-nacional-apertura': { solid: '#012D76' },
+  // ⚠ The flag gradient, Ed's call (2026-09-14, ADR 0173) — the mark's own two
+  // colours, chosen over either solid because BOTH collide: the red sits ~4°
+  // from the Bundesliga's hue and the blue ~6° from Honduras'. The LAST
+  // competition banded; the whole catalogue wears a deep crown now.
+  'lpr-pro-clausura': { gradient: ['#0A417A', '#CF1728'] },
 } as const satisfies Record<string, LeagueBandSpec>;
 export type LeagueBandSpec = { solid: string } | { gradient: readonly [string, string] };
 
@@ -460,8 +480,8 @@ export const CrownDeep = [
 export const CrownDeepSat = { min: 45, max: 85 } as const;
 
 /**
- * The deep crown's background art (ADR 0165/0167): the bled league crest's peak
- * opacity, and its drawn height as a fraction of `CrownRamp`.
+ * The deep crown's background art (ADR 0165/0167): the bled league mark's peak
+ * opacity, and its drawn height as a fraction of `CrownRamp`, per mark.
  *
  * ⚠⚠ **`alpha` lives here, not at the call site, because the INK depends on it.**
  * The art is white, so it lightens the band the head's text sits on: at 0.095
@@ -469,11 +489,30 @@ export const CrownDeepSat = { min: 45, max: 85 } as const;
  * has far less room than the bare ramp. `scripts/league-theme-harness.mjs`
  * asserts both inks with this value composited under them, so a later nudge
  * upward fails the harness instead of quietly pushing the quiet ink under AA.
+ * One alpha for every mark, because the harness rates every banded ramp
+ * against it — a per-mark alpha would need a per-mark assertion.
  *
- * ⚠ `height` was pulled back with the bleed (Ed, 2026-09-13): a bigger mark
- * moved left would crowd the title rather than sit beside it.
+ * ⚠ `height` is PER MARK because the marks disagree about shape: the PL crest
+ * is portrait (ratio ≈ 0.78) where the other three run landscape — LaLiga's
+ * glyph ≈ 1.07, the UCL starball ≈ 1.01, the Bundesliga kicker ≈ 1.33 — so one
+ * shared height would draw them up to ~70% wider than the crest: exactly the
+ * "second subject crowding the title" that 0165's first cut shipped. Each
+ * entry is device-judged: the crest's 0.55 was pulled back with the bleed
+ * (Ed, 2026-09-13); the rest land each mark's visible fragment at roughly the
+ * crest's width.
  */
-export const CrownArt = { alpha: 0.095, height: 0.55 } as const;
+export const CrownArt = {
+  alpha: 0.095,
+  height: {
+    'premier-league': 0.55,
+    laliga: 0.42,
+    bundesliga: 0.36,
+    'champions-league': 0.45,
+    'serie-a': 0.5,
+    'liga-nacional-apertura': 0.4,
+    'lpr-pro-clausura': 0.44,
+  },
+} as const;
 
 /**
  * The crown gradient's FIXED height, in points (ADR 0094/0095) — the mock's
