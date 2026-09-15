@@ -198,7 +198,8 @@ const dark = {
   // chrome switches to ON a wash: white, not lime, so the club colour and the
   // brand accent never share a frame.
   washGraphite: '#2b323b',
-  washInk: 'rgba(255,255,255,0.72)',
+  // ⚠ `washInk` (white 0.72) lived here for the full-alpha wash's legibility;
+  // it retired with the opaque deck card (ADR 0176).
   washRing: 'rgba(255,255,255,0.35)',
   washBadge: 'rgba(255,255,255,0.10)',
 
@@ -487,6 +488,33 @@ export const CrownDeep = [
 export const CrownDeepSat = { min: 45, max: 85 } as const;
 
 /**
+ * The club crown's LIGHTNESS pull-down for high-luma hues (ADR 0175).
+ *
+ * ⚠⚠ **The league ladder alone is not safe for an arbitrary hex.** `CrownDeep`'s
+ * lightness band was proven over the league catalogue — reds, blues, one
+ * purple — and those are the LOW-luma hues: at the same HSL lightness a yellow,
+ * green or cyan band is brighter to the eye and to the contrast maths, and the
+ * harness's club sweep failed AA across roughly hue 20–205 the moment an
+ * arbitrary club hex was allowed in. Even neutral grey at L 22 passes by 0.02.
+ *
+ * So the club path scales the WHOLE ladder's lightness by hue: 1 outside the
+ * window, dipping through these control points inside it — `ClubWash`'s
+ * `lightMaxBright` move ("yellow and green read a step lighter") at crown
+ * scale, as a curve because the crown's AA margin is measured, not eyeballed.
+ * Piecewise-LINEAR between points; hue wraps nowhere (the window is interior).
+ *
+ * ⚠ Numbers from `scripts/league-theme-harness.mjs`'s exhaustive sweep (every
+ * hue × the `CrownDeepSat` window, 8-bit round-tripped): worst case 4.53:1
+ * against AA 4.5. Move a point, re-run the harness.
+ */
+export const CrownClubDim = [
+  [12, 1],
+  [60, 0.52],
+  [180, 0.54],
+  [212, 1],
+] as const;
+
+/**
  * The deep crown's background art (ADR 0165/0167): the bled league mark's peak
  * opacity, and its drawn height as a fraction of `CrownRamp`, per mark.
  *
@@ -519,6 +547,46 @@ export const CrownArt = {
     'liga-nacional-apertura': 0.4,
     'lpr-pro-clausura': 0.44,
   },
+} as const;
+
+/**
+ * The Board's CLUB WATERMARK, head-left (ADR 0180, revising 0179): with a
+ * club background on, the crown's eyebrow + title step aside and the crest
+ * takes their PLACE — but as the SAME bled translucent watermark 0175 drew
+ * (0177's alpha, 0178's bands), anchored top-LEFT and running down BEHIND
+ * the payload card. 0179's solid 64pt mark read as a logo, not a wash.
+ *
+ * ⚠ `alpha` is bound to the harness's two-tier club proof (0177's shape,
+ * restored): white ink rated over the crest-lit band at THIS alpha, quiet
+ * ink on the bare band — no quiet ink sits in the crest's region (the head
+ * is EMPTY under a club background). Ceiling ≈ 0.30; the harness fails past
+ * it. ⚠ `bands` is coupled to `alpha` (0178): raise one, raise the other.
+ * `height` is a fraction of `CrownRamp`; `fadeFrom`/`fadeTo` are
+ * `FadeOutImage`'s fractions.
+ */
+export const CrownClubArt = {
+  alpha: 0.18,
+  height: 0.5,
+  fadeFrom: 0.25,
+  fadeTo: 0.92,
+  bands: 12,
+} as const;
+
+/**
+ * The EMPTY head spacer under a club background (ADR 0180): the VoiceOver
+ * carrier for the heading the visible words no longer state (the board
+ * labels it with the club's name), and the lead card's top clearance.
+ *
+ * ⚠ `size` began as the eyebrow+title stack's 64 and grew +20, with the
+ * SAME 20 taken off `padBottom` (the crown's `Spacing.eight` default minus
+ * 20) — Ed's call (2026-09-14, "move this card down a bit … reduce bottom
+ * margin or padding"): the card drops 20pt deeper into the fade and the gap
+ * under it shrinks 20pt, while the body below does not move. Move one of
+ * these numbers and move the other by the same amount, or the body shifts.
+ */
+export const CrownClubHead = {
+  size: 84,
+  padBottom: 24,
 } as const;
 
 /**
@@ -564,93 +632,32 @@ export const BubbleGlass = [
 ] as const;
 
 /**
- * The 0087 pair-wash geometry for the next/last cards (consumed from P2 by
- * `match-board`, replacing `ClubWash.seam`'s diagonal): near-horizontal at
- * 100°, each club's colour strongest at its own edge (`edge`), down to `mid`
- * by `midAt`, and dead-transparent through `gapStart`–`gapEnd` so the opaque
- * `card` base shows between the two colours.
+ * The 0087 pair-wash geometry for the NEXT UP card: near-horizontal at 100°,
+ * each club's colour strongest at its own edge, down to the mid alpha by
+ * `midAt`, and dead-transparent through `gapStart`–`gapEnd` so the two
+ * colours never mix. ⚠ The full-alpha `edge`/`mid` pair (0.24/0.05) retired
+ * with the opaque deck card (ADR 0176) — the WHISPER is the only strength
+ * left: on a translucent shell the wash double-blends with whatever is
+ * behind it, so it must stay at "tint", never "wash" (ADR 0096).
  */
 export const ClubWash2 = {
-  angle: 100, edge: 0.24, mid: 0.05, midAt: 0.3, gapStart: 0.46, gapEnd: 0.54,
-  /**
-   * The WHISPER pair (ADR 0096): the same geometry on the liquid-glass NEXT UP
-   * card, where the full alphas were the dark slab the glass replaced. On a
-   * translucent shell the wash double-blends with whatever is behind it, so it
-   * must stay at "tint", never "wash".
-   */
+  angle: 100, midAt: 0.3, gapStart: 0.46, gapEnd: 0.54,
   edgeOnGlass: 0.1, midOnGlass: 0.02,
 } as const;
 
 /**
- * The NEXT UP deck (ADR 0113) — the crown's stack of same-day cards.
- *
- * Geometry: each waiting layer shows `peek` pt below the layer above and sits
- * `inset` pt narrower per side (the scale step is derived from `inset` at the
- * measured card width). At most `layers` are DRAWN; deeper cards stay mounted
- * at opacity 0 — their countdowns are the only thing that can observe a hidden
- * kickoff (ADR 0052/0078).
- *
- * ⚠⚠ Deck cards are OPAQUE (`NextUpCard surface="opaque"`), and that is what
- * lets real cards stack: anything behind a GLASS card shows through it —
- * text ghosts, featureless fills glow (trap 59) — which had forced the peeks
- * down to near-black slivers Ed rejected. On the opaque lead, the waiting
- * cards are simply VISIBLE, dimmed by a black scrim (`scrimNext`/`scrimBack`
- * of `scrimColor`) that fades off the next card as the drag reveals it —
- * the approved mock's exact look. The scrim lands the 0.45 `accentRing` at
- * ≈0.26 / ≈0.14 effective on the waiting rings.
- *
- * Gesture: the pan activates at `activateX` pt of horizontal travel and FAILS
- * at `failY` pt of vertical — the scaffold's scroll wins a mostly-vertical
- * drag (the app's first scroll-contended gesture). A release commits past
- * `commitFraction` of the card's width, or on a flick above `flickVelocity`.
- *
- * `spring` is the app's FIRST spring (every other settle is `withTiming` off
- * `Motion`) — it lives here rather than on `Motion`, whose contract is
- * "durations, in milliseconds". Tuned calm, the `orbit` lesson.
- */
-export const Deck = {
-  peek: 10,
-  inset: 8,
-  layers: 3,
-  scrimColor: '#000000',
-  scrimNext: 0.42,
-  scrimBack: 0.69,
-  /** The top card's max tilt while dragged, in degrees. */
-  tiltDeg: 4,
-  commitFraction: 0.4,
-  /** pt/s of horizontal velocity — a flick commits below the distance bar. */
-  flickVelocity: 800,
-  activateX: 10,
-  failY: 8,
-  /**
-   * How far past one card width the commit exit flies, as a factor. ⚠ At
-   * exactly one width the tilted card's corner hung at the screen edge for
-   * the spring's settle tail (seen on device); the overshoot clears it.
-   */
-  exitFactor: 1.25,
-  spring: { damping: 18, stiffness: 180, mass: 1 },
-  /**
-   * Loose rest thresholds for the commit EXIT only — the callback that swaps
-   * the deck fires the moment the card is effectively off-screen instead of
-   * waiting out the spring's invisible settle tail, which read as the next
-   * peek appearing late (Ed). ⚠ Never on the spring-back: a 24pt rest there
-   * would visibly stop the card short of home.
-   */
-  exitRest: { restDisplacementThreshold: 24, restSpeedThreshold: 400 },
-} as const;
-
-/**
  * The CONTROL GLIDE (ADR 0117) — the league rail's liquid-glass plate sliding
- * between chips. The app's SECOND spring, beside `Deck.spring` and for the
- * same reason: `Motion`'s contract is durations-only. Tighter than the deck's
- * (zeta ≈ 0.70, settles ~300ms) — a control snapping to the finger, echoing
- * the system tab bar, not a card in flight.
+ * between chips. The app's spring lives here rather than on `Motion`, whose
+ * contract is durations-only. Tuned tight (zeta ≈ 0.70, settles ~300ms) — a
+ * control snapping to the finger, echoing the system tab bar, not a card in
+ * flight. (The card DECK that once held the app's first, calmer spring
+ * retired with ADR 0176 — the carousel is a native scroll.)
  */
 export const Glide = {
   spring: { damping: 26, stiffness: 340, mass: 1 },
   /**
-   * The plate DRAG's gesture thresholds (ADR 0118) — the deck's numbers, for
-   * the deck's reason: the pan activates at `activateX` pt of horizontal
+   * The plate DRAG's gesture thresholds (ADR 0118) — the canonical pair since
+   * the deck retired (ADR 0176): the pan activates at `activateX` pt of horizontal
    * travel so taps fall through to the chips, and FAILS at `failY` pt of
    * vertical so the screen's scroll wins a mostly-vertical drag.
    */
@@ -683,34 +690,13 @@ export const Glide = {
 } as const;
 
 /**
- * The opaque deck card's ground (ADR 0113): the crown, BAKED. `card`'s flat
- * charcoal read as a black slab on the bright band ("waay too dark" — Ed);
- * the glass card looked right precisely because the crown's green showed
- * through it. The deck card sits at a FIXED place in the crown (the payload
- * slot), so a vertical ramp echoing the gradient behind it — the glass
- * look's brightness, sampled from the pre-deck card — holds at every scroll
- * position. Opaque stops, deliberately: translucency here would re-open
- * trap 59.
- *
- * ⚠ Calibrated against the glass single card's rendered colours, not
- * derived from `CrownGrad` — re-measure against a screenshot before moving
- * any stop.
- */
-export const DeckGround = [
-  { offset: 0, color: '#446340', opacity: 1 },
-  { offset: 0.42, color: '#2a4b40', opacity: 1 },
-  { offset: 0.78, color: '#1b332e', opacity: 1 },
-  { offset: 1, color: '#132523', opacity: 1 },
-] as const;
-
-/**
  * The LAUNCH SPLASH (ADR 0134) — design's handoff in `handoff_splashscreen/`,
  * transcribed value-for-value. `SPLASH.md` there is the source of truth; the
  * reference HTML refines it (the 190ms strike rise, the soft sweep gradient,
  * the base black dissolving under the collapse) and those refinements are
  * carried here too.
  *
- * The TIMELINE (`t`) lives HERE, not on `Motion`, for `Deck.spring`'s reason:
+ * The TIMELINE (`t`) lives HERE, not on `Motion`, for `Glide.spring`'s reason:
  * `Motion` is a vocabulary of reusable durations, and these sixteen numbers
  * are one feature's choreography — no other animation may read them.
  *
@@ -814,7 +800,7 @@ export const Splash = {
  * ⚠ **A feature group, not an extension of `Motion`.** `Motion`'s contract is
  * the app's vocabulary of SHORT durations for a control settling; a breathing
  * loop is neither short nor a settle, and putting it there would invite it onto
- * a chip. Same split `Deck.spring`, `Splash.t` and `SeasonStats.count` make.
+ * a chip. Same split `Glide.spring`, `Splash.t` and `SeasonStats.count` make.
  *
  * ⚠⚠ **The THIRD looping animation in the app**, after `skeleton.tsx` and the
  * signed-out avatar's orbit (ADR 0101), whose docblock calls itself a sanctioned
@@ -844,7 +830,7 @@ export const Pulse = {
  *
  * ⚠ **A feature group, not an extension of `Spacing`/`Radius`.** The row cap and
  * the 10pt gap are off the 4-point scale on purpose: they are one screen's
- * mechanics, like `Deck`'s peek and `Splash`'s timeline, and putting them on the
+ * mechanics, like `Splash`'s timeline, and putting them on the
  * shared scale would invite a 104 somewhere it means nothing. Everything here
  * that DOES have a shared token — the 24 radius (`Radius.cardLg`), the hint
  * bar's 14 (`Radius.control`), the handle's 11 (`Radius.crownControl`), the
@@ -928,6 +914,20 @@ export const BoardEdit = {
   edge: 96,
   /** pt per frame of auto-scroll at the edge. */
   edgeSpeed: 9,
+} as const;
+
+/**
+ * The Board's BACKGROUND picker (ADR 0175) — the edit tray's row and the
+ * sheet's option rows. A feature group, `BoardEdit`'s sibling: sizes shared
+ * with the rest of the app (radii, hairlines, touch minimums) are read from
+ * their own tables and deliberately absent here.
+ */
+export const BoardBg = {
+  /** The mini crown swatch — a rounded rect of the theme's opaque stops. */
+  swatchW: 44,
+  swatchH: 30,
+  /** The picker's club-row crest. */
+  crest: 24,
 } as const;
 
 /** 4-point scale. Screen gutter is 20; cards pad 16–18; sheets pad 20. */
@@ -1513,7 +1513,7 @@ export const Motion = {
  * ⚠ **A feature group, not an extension of `Motion`.** `Motion`'s contract is
  * the app's shared vocabulary of short durations; a 1500 ms count-up is not a
  * control settling and putting it there would invite it onto a chip. Same
- * split `Deck.spring`, `Glide.spring` and `Splash.t` already make.
+ * split `Glide.spring` and `Splash.t` already make.
  *
  * ⚠ **The card entrances deliberately do NOT read from here.** They use
  * `Motion.enter` / `Motion.stagger` like every other staggered section in the

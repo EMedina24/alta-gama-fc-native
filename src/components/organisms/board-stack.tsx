@@ -45,6 +45,7 @@ import { BoardEdit, Spacing } from '@/constants/theme';
 import { hapticLift, hapticReorder, hapticToggle } from '@/lib/haptics';
 import type { BoardCardId } from '@/lib/board-layout';
 import { AddTray } from './board-stack/add-tray';
+import { BackgroundRow, type BackgroundRowProps } from './board-stack/background-row';
 import { EditRow, SLOT, type DragState } from './board-stack/edit-row';
 
 export { BoardEditHint } from './board-stack/hint-bar';
@@ -103,6 +104,13 @@ export interface BoardStackProps {
   };
   /** A row is up. The screen freezes the scroll view while this is true. */
   onDragging: (dragging: boolean) => void;
+  /**
+   * The BACKGROUND row (ADR 0175), edit mode only — its own section between
+   * the stack and the add tray. ⚠ ABOVE the tray, deliberately: the tray and
+   * its reset button are one unit about the LAYOUT, and a row wedged between
+   * them would read the reset as covering the background too (it does not).
+   */
+  background?: BackgroundRowProps;
 }
 
 export function BoardStack({
@@ -116,6 +124,7 @@ export function BoardStack({
   onReset,
   scroll,
   onDragging,
+  background,
 }: BoardStackProps) {
   const ids = sections.map((section) => section.id);
 
@@ -298,6 +307,8 @@ export function BoardStack({
           />
         ))}
       </View>
+
+      {background ? <BackgroundRow {...background} /> : null}
 
       <AddTray
         cards={tray.map((id) => ({ id, ...copy.cards[id] }))}

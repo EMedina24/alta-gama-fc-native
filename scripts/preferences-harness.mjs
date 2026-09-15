@@ -121,6 +121,7 @@ try {
     leagueSlug: 'la-liga',
     bdOrder: ['last', 'news', 'results', 'upcoming', 'counters', 'table', 'season'],
     bdHidden: ['table', 'season'],
+    bdBg: 'league:la-liga',
   });
 
   /* ── 1 · Identity ────────────────────────────────────────────────────────── */
@@ -155,6 +156,24 @@ try {
     if (typeof v === 'number') return v + 1;
     return v === null ? 'not-null' : `${v}-changed`;
   };
+
+  /* ── 2b · The background grammar (ADR 0175) ─────────────────────────────── */
+
+  const { parseBoardBackground, decodeBoardBackground } = require(
+    join(out, 'lib/board-background.js'),
+  );
+  assert.equal(parseBoardBackground('default'), 'default');
+  assert.equal(parseBoardBackground('league:la-liga'), 'league:la-liga');
+  assert.equal(parseBoardBackground('club:real-madrid'), 'club:real-madrid');
+  // A league we have since dropped must reset — `parseLeagueSlug`'s own rule.
+  assert.equal(parseBoardBackground('league:dropped-league'), 'default');
+  // A club slug is validated for SHAPE only; garbage shapes reset.
+  assert.equal(parseBoardBackground('club:UPPER!'), 'default');
+  assert.equal(parseBoardBackground('club:'), 'default');
+  assert.equal(parseBoardBackground(42), 'default');
+  assert.equal(parseBoardBackground(undefined), 'default');
+  assert.deepEqual(decodeBoardBackground('club:betis'), { kind: 'club', slug: 'betis' });
+  assert.deepEqual(decodeBoardBackground('nonsense'), { kind: 'default' });
 
   const keys = Object.keys(base);
   assert.ok(keys.length >= 16, `expected the full shape, got ${keys.length} keys`);

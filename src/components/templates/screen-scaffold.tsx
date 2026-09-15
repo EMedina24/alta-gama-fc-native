@@ -50,6 +50,7 @@ import { ScreenOverlayContext } from '@/hooks/use-screen-overlay';
 import {
   leagueCrownTheme,
   type CrownArt as CrownArtKind,
+  type CrownTheme,
 } from '@/lib/cronogol/league-theme';
 import {
   BottomTabInset,
@@ -137,6 +138,22 @@ export interface ScreenScaffoldProps {
    * key (ADR 0168).
    */
   tintLeague?: string | null;
+  /**
+   * A crown that is NOT a league's (ADR 0175) — the Board wearing a club.
+   * Outranks `tintLeague`. Theme, art and head travel TOGETHER, extending
+   * the "tone ships with the stops" rule to what sits on the ramp: `art` is
+   * a bled watermark node for the layer (omitting it draws none — the
+   * `ART_MARK` derivation is `leagueCrownTheme`'s and never applies to an
+   * override), and `head` replaces the crown's eyebrow+title stack (ADR
+   * 0179 — the club crest as the screen's identity mark).
+   */
+  crownOverride?: {
+    theme: CrownTheme;
+    art?: ReactNode;
+    /** Where the override's art hangs — see `Crown.artAnchor` (ADR 0180). */
+    artAnchor?: 'right' | 'headLeft';
+    head?: ReactNode;
+  };
   children: ReactNode;
   onRefresh?: () => void;
   refreshing?: boolean;
@@ -170,6 +187,7 @@ export function ScreenScaffold({
   metaLine,
   metaTone,
   tintLeague,
+  crownOverride,
   children,
   onRefresh,
   refreshing = false,
@@ -209,15 +227,16 @@ export function ScreenScaffold({
    * same commit as the content it belongs to, which is what makes it read as
    * "the screen changed" rather than as a transition that hitched.
    */
-  const theme = leagueCrownTheme(tintLeague);
+  const theme = crownOverride?.theme ?? leagueCrownTheme(tintLeague);
   /** Whether this screen wears a league's dark head rather than the brand's lime. */
   const deepCrown = theme.tone === 'deep';
   /** The bled mark for this crown, or null — see `ART_MARK`. */
   const Mark = theme.art === null ? null : ART_MARK[theme.art];
-  const art =
-    Mark === null || theme.art === null ? null : (
-      <Mark height={CrownRamp * CrownArt.height[theme.art]} alpha={CrownArt.alpha} />
-    );
+  const art = crownOverride
+    ? (crownOverride.art ?? null)
+    : Mark === null || theme.art === null ? null : (
+        <Mark height={CrownRamp * CrownArt.height[theme.art]} alpha={CrownArt.alpha} />
+      );
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
@@ -274,6 +293,8 @@ export function ScreenScaffold({
           eyebrow={eyebrow}
           title={title}
           titleVariant={titleVariant}
+          headLead={crownOverride?.head}
+          artAnchor={crownOverride?.artAnchor}
           subtitle={subtitle}
           meta={meta}
           accessory={accessory}

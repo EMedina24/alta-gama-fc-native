@@ -121,10 +121,12 @@ try {
     return resolve.call(this, request, ...rest);
   };
 
-  const { Colors, CrownArt, CrownDeep, CrownDeepSat, CrownGrad, LeagueBand, Mesh } =
+  const { Colors, CrownArt, CrownClubArt, CrownClubDim, CrownDeep, CrownDeepSat, CrownGrad, LeagueBand, Mesh } =
     require(join(out, 'constants/theme.js'));
-  const { parseHex } = require(join(out, 'lib/cronogol/club-wash.js'));
-  const { leagueCrownTheme, leagueHue } = require(join(out, 'lib/cronogol/league-theme.js'));
+  const { parseHex, TINT_FALLBACK_ENTRIES } = require(join(out, 'lib/cronogol/club-wash.js'));
+  const { clubCrownTheme, leagueCrownTheme, leagueHue } = require(
+    join(out, 'lib/cronogol/league-theme.js'),
+  );
 
   // The API is one call returning ramp + mesh + ink + art together; these keep
   // the assertions below readable.
@@ -386,6 +388,143 @@ try {
         `rather than a gap — do not substitute the wire's lockup`,
     );
   }
+
+
+  /* ── 7 · The CLUB crown (ADR 0175) — an arbitrary hex on the same ladder ── */
+
+  /**
+   * ⚠⚠ **The club crest's alpha carries its own two-tier proof** (0177's
+   * shape, restored by ADR 0180 when the watermark moved head-LEFT):
+   *
+   *  - **WHITE ink over the crest-lit band, at `CrownClubArt.alpha`** — the
+   *    conservative model for the one ink that could ever meet the crest.
+   *  - **QUIET ink (`onDeepDim`) over the BARE band only.** ⚠ The LAYOUT
+   *    premise moved with the crest: under a club background the head is
+   *    EMPTY (no eyebrow, no title, no metaLine — a spacer), so no quiet
+   *    ink sits in the crest's top-left region. Put quiet ink back into a
+   *    club-background head and this rating changes FIRST — it has no
+   *    headroom for any composite (4.53:1 bare at the ladder's worst hue).
+   *
+   * The league marks are untouched: section 4 still rates BOTH inks against
+   * the composite at `CrownArt.alpha`.
+   */
+  assert.ok(
+    CrownClubArt.alpha >= CrownArt.alpha,
+    'a club crest fainter than the league marks would re-open the too-faint report (ADR 0177)',
+  );
+
+  /** hsl → hex, mirrored locally — the sweep needs sources the app never made. */
+  const hslHex = (h, sat, l) => {
+    const S = sat / 100;
+    const L = l / 100;
+    const c = (1 - Math.abs(2 * L - 1)) * S;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = L - c / 2;
+    const [r, g, b] =
+      h < 60 ? [c, x, 0]
+      : h < 120 ? [x, c, 0]
+      : h < 180 ? [0, c, x]
+      : h < 240 ? [0, x, c]
+      : h < 300 ? [x, 0, c]
+      : [c, 0, x];
+    return `#${[r, g, b].map((v) => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('')}`;
+  };
+
+  /** The two-tier club proof — see the alpha block above for why the tiers. */
+  const proveClubInk = (label, theme) => {
+    assert.equal(theme.tone, 'deep', `${label} wears the deep crown's white ink`);
+    assert.equal(theme.art, null, `${label} carries no bundled mark — the crest is a node`);
+    assert.equal(
+      theme.stops[theme.stops.length - 1].color,
+      ground,
+      `${label} holds the ground seam verbatim`,
+    );
+    for (const i of [0, 1]) {
+      const bare = theme.stops[i].color;
+      const lit = over(Colors.dark.onDeep, bare, CrownClubArt.alpha);
+      // WHITE ink: bare and crest-lit — the one ink that can meet the crest.
+      for (const bg of [bare, lit]) {
+        const ratio = contrast(Colors.dark.onDeep, bg);
+        assert.ok(
+          ratio >= AA,
+          `onDeep on ${label}'s stop ${i} (${bg}) is ${ratio.toFixed(2)}:1, under AA ${AA} — ` +
+            `CrownClubArt.alpha ${CrownClubArt.alpha} is past the white ink's ceiling`,
+        );
+      }
+      // QUIET ink: the BARE band only — the layout premise above.
+      const dim = over(Colors.dark.onDeep, bare, 0.62);
+      const ratio = contrast(dim, bare);
+      assert.ok(
+        ratio >= AA,
+        `onDeepDim on ${label}'s stop ${i} (${bare}) is ${ratio.toFixed(2)}:1, under AA ${AA}`,
+      );
+    }
+  };
+
+  /** `clubDim`, mirrored independently: piecewise-linear over `CrownClubDim`. */
+  const clubDim = (hue) => {
+    const h = ((hue % 360) + 360) % 360;
+    if (h <= CrownClubDim[0][0] || h >= CrownClubDim[CrownClubDim.length - 1][0]) return 1;
+    for (let i = 1; i < CrownClubDim.length; i += 1) {
+      const [h1, s1] = CrownClubDim[i];
+      if (h <= h1) {
+        const [h0, s0] = CrownClubDim[i - 1];
+        return s0 + ((s1 - s0) * (h - h0)) / (h1 - h0);
+      }
+    }
+    return 1;
+  };
+
+  /**
+   * ⚠ The sweep is the PROOF for every possible club hex: a hex's own L never
+   * reaches the ramp (the ladder's lightness × `clubDim`'s hue scale is what
+   * paints), and saturation is clamped into `CrownDeepSat`'s window — so a
+   * dense hue sweep × the window's ends and middle covers the input space.
+   * 5°, not 10°: the high-luma valley's edges move a whole AA step in 10°.
+   */
+  for (let h = 0; h < 360; h += 5) {
+    const dim = clubDim(h);
+    for (const sat of [CrownDeepSat.min, (CrownDeepSat.min + CrownDeepSat.max) / 2, CrownDeepSat.max]) {
+      const theme = clubCrownTheme(hslHex(h, sat, 50));
+      proveClubInk(`club hue ${h}° sat ${sat}`, theme);
+      const top = parseHex(theme.stops[0].color);
+      nearHue(top.h, h, `club hue ${h}° survives to the ramp`);
+      nearSat(top.s, sat, `club sat ${sat} survives inside the window`);
+      nearL(
+        top.l,
+        CrownDeep[0].light * dim,
+        `club ramp takes the ladder's lightness × clubDim(${h}°), never the hex's`,
+      );
+    }
+  }
+
+  // The pull-down bites where it must and holds off where it must not: a blue
+  // club keeps the league ladder's own lightness, a yellow one is pulled down.
+  assert.equal(clubDim(230), 1, 'blue is outside the high-luma window');
+  assert.ok(clubDim(60) < 0.6, 'yellow takes the deepest pull-down');
+
+  // Saturation OUTSIDE the window is clamped to it, both ends.
+  for (const [sat, want] of [[100, CrownDeepSat.max], [10, CrownDeepSat.min]]) {
+    const top = parseHex(clubCrownTheme(hslHex(200, sat, 50)).stops[0].color);
+    nearSat(top.s, want, `club sat ${sat} clamps to ${want}`);
+  }
+
+  // Every fallback tint the catalogue actually serves, plus graphite itself —
+  // the colour a club with nothing usable wears (steel-blue by design).
+  for (const [slug, hex] of TINT_FALLBACK_ENTRIES) {
+    proveClubInk(`TINT_FALLBACK ${slug}`, clubCrownTheme(hex));
+  }
+  proveClubInk('graphite', clubCrownTheme(Colors.dark.washGraphite));
+
+  // Garbage in, brand out — by REFERENCE, the no-league path's own contract.
+  for (const junk of ['', 'not-a-hex', '#12', 'rgb(1,2,3)']) {
+    const theme = clubCrownTheme(junk);
+    assert.equal(theme.stops, CrownGrad, `'${junk}' must return the literal CrownGrad`);
+    assert.equal(theme.pools, Mesh, `'${junk}' must return the literal Mesh`);
+    assert.equal(theme.tone, 'bright', `'${junk}' wears the brand ramp, so DARK ink`);
+  }
+
+  console.log(`  club crown: hue sweep, ${TINT_FALLBACK_ENTRIES.length} fallbacks, graphite ok.`);
 
   console.log(`\nleague-theme: all assertions passed over ${entried.length} banded leagues.`);
 } finally {

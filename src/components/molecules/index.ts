@@ -38,6 +38,7 @@ export { StepDots, type StepDotsProps } from './step-dots';
 export { SearchField, type SearchFieldProps } from './search-field';
 export { Tray, type TrayProps } from './tray';
 export { ClubNextCard, type ClubNextCardProps } from './club-next-card';
+export { CrownSwatch, type CrownSwatchProps } from './crown-swatch';
 export { ClubStatsStrip, type ClubStatsStripProps } from './club-stats-strip';
 export { ClubBubble, type ClubBubbleProps } from './club-bubble';
 export { ClubLine, type ClubLineProps } from './club-line';

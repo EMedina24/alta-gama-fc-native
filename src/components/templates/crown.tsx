@@ -69,6 +69,15 @@ import {
  */
 const ART_DROP = 76;
 const ART_OFF = 44;
+/**
+ * The HEAD-LEFT anchor (ADR 0180) — the Board's club watermark. It began at
+ * `inner`'s own top padding and the league mark's `ART_OFF`; both nudged on
+ * Ed's eye (2026-09-14, "just a bit up and to the right"): the crown's tip
+ * now rides 6pt into the safe-area inset, and only 24pt hangs off the left
+ * edge. ⚠ Device-judged — move them by screenshot, not arithmetic.
+ */
+const ART_HEAD_DROP = -6;
+const ART_HEAD_OFF = 24;
 
 export interface CrownProps {
   eyebrow?: string;
@@ -82,6 +91,15 @@ export interface CrownProps {
   titleVariant?: 'crownTitle' | 'crownTitleLg';
   /** A quiet line UNDER the title — Clubs' `{n} clubs followed` (ADR 0082). */
   subtitle?: string;
+  /**
+   * REPLACES the whole eyebrow/title/subtitle/metaLine stack (ADR 0179) —
+   * the Board's club-crest head: with a club background on, the crest IS the
+   * screen's identity mark and the words step aside. `meta` and `accessory`
+   * keep their row. ⚠ The caller owns the node's accessibility: the stack it
+   * replaces carried the screen's heading, so the node must speak (the board
+   * labels it with the club's name, role `header`).
+   */
+  headLead?: ReactNode;
   /** A right-aligned block beside the title — Table's "AFTER MD n" lines. */
   meta?: ReactNode;
   /** Right of the title — the account avatar (`AvatarButton tone="crown"`). */
@@ -123,6 +141,13 @@ export interface CrownProps {
    */
   art?: ReactNode;
   /**
+   * Where `art` hangs (ADR 0180): `right` is the league marks' spot (below
+   * the banner row, bled off the right edge); `headLeft` is the Board's club
+   * watermark — top-LEFT in the title's own place, bled off the left edge,
+   * running down BEHIND the payload card.
+   */
+  artAnchor?: 'right' | 'headLeft';
+  /**
    * A control row ABOVE the head — the banner pill and the avatar (ADR 0165).
    *
    * ⚠ Rendered OUTSIDE the `title` gate below, deliberately. Matchdays passes
@@ -159,6 +184,8 @@ export function Crown({
   eyebrow,
   title,
   titleVariant = 'crownTitle',
+  headLead,
+  artAnchor = 'right',
   subtitle,
   meta,
   accessory,
@@ -217,33 +244,45 @@ export function Crown({
         {/* Above the ramp, below the head — and inside the layer, so it cannot
             be raised over the body (this component may never take a z-index). */}
         {art ? (
-          <View style={[styles.art, { top: topInset + ART_DROP, right: -ART_OFF }]}>{art}</View>
+          <View
+            style={[
+              styles.art,
+              artAnchor === 'headLeft'
+                ? { top: topInset + ART_HEAD_DROP, left: -ART_HEAD_OFF }
+                : { top: topInset + ART_DROP, right: -ART_OFF },
+            ]}>
+            {art}
+          </View>
         ) : null}
       </View>
       <View
         style={[styles.inner, { paddingTop: topInset + Spacing.two + 2, paddingBottom: pad }]}>
         {banner}
-        {title ? (
+        {title || headLead ? (
           <View style={styles.head}>
             <View style={styles.headings}>
-              {eyebrow ? <Eyebrow color={inkDim}>{eyebrow}</Eyebrow> : null}
-              <Text variant={titleVariant} color={ink}>
-                {title}
-              </Text>
-              {subtitle ? (
-                <Text variant="caption" color={inkDim} style={styles.subtitle}>
-                  {subtitle}
-                </Text>
-              ) : null}
-              {metaLine ? (
-                <Text
-                  variant="eyebrowSm"
-                  color={metaTone === 'strong' ? ink : inkDim}
-                  tabular
-                  style={styles.metaLine}>
-                  {metaLine}
-                </Text>
-              ) : null}
+              {headLead ?? (
+                <>
+                  {eyebrow ? <Eyebrow color={inkDim}>{eyebrow}</Eyebrow> : null}
+                  <Text variant={titleVariant} color={ink}>
+                    {title}
+                  </Text>
+                  {subtitle ? (
+                    <Text variant="caption" color={inkDim} style={styles.subtitle}>
+                      {subtitle}
+                    </Text>
+                  ) : null}
+                  {metaLine ? (
+                    <Text
+                      variant="eyebrowSm"
+                      color={metaTone === 'strong' ? ink : inkDim}
+                      tabular
+                      style={styles.metaLine}>
+                      {metaLine}
+                    </Text>
+                  ) : null}
+                </>
+              )}
             </View>
             {meta}
             {accessory}

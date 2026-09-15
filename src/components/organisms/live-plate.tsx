@@ -33,9 +33,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Pill, Text, WashGradient } from '@/components/atoms';
+import { Pill, Text } from '@/components/atoms';
 import { EventsDisclosure, FeedAge, ScoreLine, type ScoreSide } from '@/components/molecules';
-import { Colors, DeckGround, Radius, Size, Spacing } from '@/constants/theme';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import type { TeamRef, TimelineEventView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
 import { MatchEvents } from './match-events';
@@ -100,16 +100,6 @@ export interface LivePlateProps {
   /** The KICKED-OFF path (ADR 0078) — drops `FeedAge` and the disclosure. */
   awaitingUpdate?: boolean;
   /**
-   * The plate's ground (ADR 0126, mirroring `NextUpCard`'s 0113 prop).
-   * `glass` is the solo plate's translucent `plateDark` paint; `opaque` is
-   * the DECK's variant — the same paint over the baked crown (`DeckGround`),
-   * so it composites to the very pixels the solo plate shows, with nothing
-   * behind it able to ghost through. ⚠ Stacked layers must be opaque: text
-   * showed through a translucent card and the deck scrim over one re-opened
-   * trap 59.
-   */
-  surface?: 'glass' | 'opaque';
-  /**
    * The events panel, CONTROLLED (ADR 0126) — the live deck owns which single
    * card may hold it open and collapses it on a shuffle. Absent, the plate
    * keeps its own state, and the solo path is exactly what it always was.
@@ -129,7 +119,6 @@ export interface LivePlateProps {
 export function LivePlate({
   copy,
   events,
-  surface = 'glass',
   eventsOpen,
   onToggleEvents,
   ...live
@@ -138,24 +127,7 @@ export function LivePlate({
   const showEvents = eventsOpen ?? ownOpen;
   const toggleEvents = onToggleEvents ?? (() => setOwnOpen((open) => !open));
   return (
-    <View style={[styles.plate, surface === 'opaque' ? styles.plateOpaque : null]}>
-      {/* The deck's opaque ground (ADR 0126): the crown, baked (`DeckGround`),
-          under the plate's own translucent paint — the composite the glass
-          plate produces live, produced once, so waiting layers ghost nothing.
-
-          ⚠⚠ The FLOOR under the ramp is what makes "opaque" true (ADR 0138).
-          This plate is the one card in the app that GROWS after its first
-          layout — the events panel — and the gradient is the only layer that
-          cannot be trusted to grow with it. `bodyTint` is 80% paint, so
-          without a solid floor the panel showed the waiting card straight
-          through the timeline. ⚠ The floor is `DeckGround`'s own last stop:
-          the ramp lands on exactly that colour, so the two never seam. */}
-      {surface === 'opaque' ? (
-        <View pointerEvents="none" style={[styles.body, styles.bodyFloor]}>
-          <WashGradient angle="vertical" stops={DeckGround} />
-          <View style={[styles.body, styles.bodyTint]} />
-        </View>
-      ) : null}
+    <View style={styles.plate}>
       {/* The lit top edge — a border on an overlay, the repo's inset-highlight
           idiom (React Native has no inset shadow; see `molecules/tray.tsx`). */}
       <View pointerEvents="none" style={styles.plateTop} />
@@ -217,12 +189,6 @@ const styles = StyleSheet.create({
     // its ground from squaring the two bottom corners.
     overflow: 'hidden',
   },
-  /** The deck variant (ADR 0126): the ground moves into `body`'s layers. */
-  plateOpaque: { backgroundColor: 'transparent' },
-  body: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  /** See the ground above — `NextUpCard`'s `bodyOpaque` floor, for 0138's reason. */
-  bodyFloor: { backgroundColor: DeckGround[DeckGround.length - 1].color },
-  bodyTint: { backgroundColor: Colors.dark.plateDark },
   plateTop: {
     position: 'absolute',
     top: 0,

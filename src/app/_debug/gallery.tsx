@@ -29,11 +29,11 @@ import {
 } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
 import { NewsCard } from '@/components/organisms/news-card';
-import { LiveDeck, type LiveDeckCard } from '@/components/organisms/live-deck';
+import { LiveCarousel, type LiveCarouselCard } from '@/components/organisms/live-carousel';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
-import { NextUpDeck } from '@/components/organisms/next-up-deck';
+import { NextUpCarousel } from '@/components/organisms/next-up-carousel';
 import { Colors, CrownRamp, Radius, Size, Spacing } from '@/constants/theme';
 import {
   detailLine,
@@ -730,18 +730,18 @@ export default function GalleryScreen() {
 
   const nextDeck = (
     <>
-      <SectionHeader title="Next up deck" meta="same-day stack (ADR 0113)" />
-      <Case label="two cards — one peek layer, two dots; the smallest deck">
-        <NextUpDeck cards={DECK_TWO.map(deckCard)} copy={copy.today} />
+      <SectionHeader title="Next up carousel" meta="same-day pages (ADR 0176)" />
+      <Case label="two cards — two dots; the smallest carousel">
+        <NextUpCarousel cards={DECK_TWO.map(deckCard)} copy={copy.today} />
       </Case>
-      <Case label="three cards — max drawn layers; the washes must not bleed ids (trap 40)">
-        <NextUpDeck cards={DECK_THREE.map(deckCard)} copy={copy.today} />
+      <Case label="three cards — the washes must not bleed ids (trap 40)">
+        <NextUpCarousel cards={DECK_THREE.map(deckCard)} copy={copy.today} />
       </Case>
-      <Case label="five cards — still 3 layers drawn, 5 dots; the cap, drawn (trap 56)">
-        <NextUpDeck cards={DECK_FIVE.map(deckCard)} copy={copy.today} />
+      <Case label="five cards — 5 dots; every page mounted for its countdown">
+        <NextUpCarousel cards={DECK_FIVE.map(deckCard)} copy={copy.today} />
       </Case>
       <Case label="all-TBD pair — --:-- lead, the tbd note, no countdown">
-        <NextUpDeck cards={DECK_TBD.map(deckCard)} copy={copy.today} />
+        <NextUpCarousel cards={DECK_TBD.map(deckCard)} copy={copy.today} />
       </Case>
     </>
   );
@@ -1038,8 +1038,8 @@ export default function GalleryScreen() {
     id: string,
     home: ReturnType<typeof LIVE_SIDE>,
     away: ReturnType<typeof LIVE_SIDE>,
-    over: Partial<Omit<LiveDeckCard, 'id'>> = {},
-  ): LiveDeckCard => ({
+    over: Partial<Omit<LiveCarouselCard, 'id'>> = {},
+  ): LiveCarouselCard => ({
     id,
     homeTeam: EV_HOME,
     awayTeam: EV_AWAY,
@@ -1077,18 +1077,18 @@ export default function GalleryScreen() {
 
   const liveDecks = (
     <>
-      <SectionHeader title="Live deck" meta="concurrent matches stack (ADR 0126)" />
-      <Case label="two route cards — different minutes; lead expandable, waiting layer inert">
-        <LiveDeck cards={liveDeckRoute} copy={copy.today} events={copy.events} />
+      <SectionHeader title="Live carousel" meta="concurrent matches page (ADR 0176)" />
+      <Case label="two route cards — different minutes; current page expandable, off-page inert">
+        <LiveCarousel cards={liveDeckRoute} copy={copy.today} events={copy.events} />
       </Case>
-      <Case label="route + kicked off — ⚠ the waiting card keeps its dashes and no chevron">
-        <LiveDeck cards={[liveDeckRoute[0], liveDeckKickoff]} copy={copy.today} events={copy.events} />
+      <Case label="route + kicked off — ⚠ page 2 keeps its dashes and no chevron">
+        <LiveCarousel cards={[liveDeckRoute[0], liveDeckKickoff]} copy={copy.today} events={copy.events} />
       </Case>
       <Case label="route + sweep — ⚠ the union (ADR 0126): the cadence note rides behind the minute">
-        <LiveDeck cards={[liveDeckRoute[0], liveDeckSweep]} copy={copy.today} events={copy.events} />
+        <LiveCarousel cards={[liveDeckRoute[0], liveDeckSweep]} copy={copy.today} events={copy.events} />
       </Case>
-      <Case label="three cards — max drawn layers, three dots; the opaque ground must not ghost">
-        <LiveDeck
+      <Case label="three cards — three dots; glass pages over the crown">
+        <LiveCarousel
           cards={[...liveDeckRoute, liveDeckSweep]}
           copy={copy.today}
           events={copy.events}
@@ -1105,7 +1105,8 @@ export default function GalleryScreen() {
     );
   }
 
-  // ⚠ `?only=live-deck` joined the list with ADR 0126.
+  // ⚠ `?only=live-deck` joined the list with ADR 0126; the NAME outlives
+  // the stack (ADR 0176) — it is a saved deep link, not a description.
   if (only === 'live-deck') {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>

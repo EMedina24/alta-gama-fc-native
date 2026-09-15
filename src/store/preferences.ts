@@ -21,6 +21,7 @@ import { getLocales } from 'expo-localization';
 import { useSyncExternalStore } from 'react';
 
 import { effectiveZone } from '@/lib/timezones';
+import { DEFAULT_BOARD_BG, parseBoardBackground } from '@/lib/board-background';
 import {
   DEFAULT_HIDDEN,
   DEFAULT_ORDER,
@@ -37,12 +38,13 @@ const STORAGE_KEY = 'altagama:preferences';
  * Bump when the stored SHAPE changes.
  *
  * ⚠ 2 added `reminderLeads` (ADR 0040); 5 added `savedStories` (ADR 0129);
- * 6 added `leagueSlug` (ADR 0164); 7 added `bdOrder`/`bdHidden` (ADR 0174).
+ * 6 added `leagueSlug` (ADR 0164); 7 added `bdOrder`/`bdHidden` (ADR 0174);
+ * 8 added `bdBg` (ADR 0175).
  * Bumping is safe precisely because `FOLLOWED_RULE_VERSION` did NOT move —
  * that separation is what stops a shape bump from emptying every reader's
  * follow list.
  */
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -224,6 +226,20 @@ export interface Preferences {
   bdOrder: readonly BoardCardId[];
   /** The cards put away, a subset of `bdOrder` (ADR 0174). */
   bdHidden: readonly BoardCardId[];
+  /**
+   * The Board's background (ADR 0175): `'default'`, `'league:{slug}'` (our
+   * ROUTE slug, `leagueSlug`'s convention) or `'club:{slug}'`.
+   *
+   * ⚠ A SCALAR string, deliberately — `same()` covers scalars by walking keys,
+   * where an object here would compare by reference and re-ship the ADR 0166
+   * bug. `lib/board-background.ts` owns the grammar.
+   *
+   * ⚠ A club pick is validated syntactically only (the catalogue is remote).
+   * A slug the catalogue no longer answers renders as the brand default at
+   * the screen, which never rewrites this field — a transient network failure
+   * must not destroy the pick.
+   */
+  bdBg: string;
 }
 
 const DEFAULTS: Preferences = {
@@ -244,6 +260,7 @@ const DEFAULTS: Preferences = {
   leagueSlug: DEFAULT_LEAGUE.slug,
   bdOrder: DEFAULT_ORDER,
   bdHidden: DEFAULT_HIDDEN,
+  bdBg: DEFAULT_BOARD_BG,
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -297,6 +314,10 @@ function parse(raw: string | null): Preferences {
       // order it points into.
       bdOrder: layout.order,
       bdHidden: layout.hidden,
+      // Absent on every v1–v7 payload; absent means "the brand default". A
+      // league pick is checked against the catalogue (`parseLeagueSlug`'s
+      // rule); a club pick only for shape — see the field's docblock.
+      bdBg: parseBoardBackground(data.bdBg),
     };
   } catch {
     return DEFAULTS;
@@ -582,9 +603,23 @@ export function setBoardCardHidden(id: BoardCardId, hidden: boolean) {
   update({ bdOrder: layout.order, bdHidden: layout.hidden });
 }
 
-/** Back to the order and the hidden set the app ships with. Immediate, no confirm. */
+/**
+ * Back to the order and the hidden set the app ships with. Immediate, no confirm.
+ *
+ * ⚠ Deliberately does NOT touch `bdBg` (ADR 0175): this button restores the
+ * LAYOUT, and the picker's own Default row is the way back for the background.
+ */
 export function resetBoardLayout() {
   update({ bdOrder: DEFAULT_ORDER, bdHidden: DEFAULT_HIDDEN });
+}
+
+/**
+ * The Board's background pick (ADR 0175). Takes the encoded string —
+ * `encodeBoardBackground`'s output — and re-parses it on the way in, so a
+ * malformed caller cannot persist a value `parse` would throw away on read.
+ */
+export function setBoardBackground(bdBg: string) {
+  update({ bdBg: parseBoardBackground(bdBg) });
 }
 
 /** The reader opened the News screen — everything filed before `iso` is seen. */

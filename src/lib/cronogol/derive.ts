@@ -145,6 +145,10 @@ export function abbreviate(
  *
  * So this is a preference order across all four vocabularies rather than one
  * league's sizes, and `CrestSize` stays the *semantic* ask.
+ *
+ * ⚠ The vocabularies GROW: LaLiga rows now also carry `large` (740px) and
+ * `xlarge` (900px), probed live 2026-09-14 (ADR 0178). A new ask should
+ * re-probe the wire before trusting this comment's sizes.
  */
 const CREST_KEYS = {
   /** Row crests, the fixture pair, tiles — 40–76px slots. */
@@ -161,6 +165,18 @@ const CREST_KEYS = {
    * from this list on purpose, not by oversight.
    */
   card: ["medium", "100", "large", "small", "70", "xsmall", "50", "25", "20", "teamLogo"],
+  /**
+   * FULL-BLEED watermark art (ADR 0178) — the Board's club-background crest,
+   * drawn at ~216pt (648 device px). Biggest raster first: the wire's crest
+   * vocabulary has GROWN `large`/`xlarge` keys the other lists predate
+   * (Real Madrid measured 740/900px on 2026-09-14), and the `card` ask's
+   * `medium` (420px) upscaled visibly at this size. `svg` right after the
+   * big rasters — vector is ideal here, and `FadeOutImage` exists precisely
+   * because an svg crest can be band-rendered but not masked. ⚠ Do NOT
+   * "tidy" `card` to match: its raster-first, svg-free order is the
+   * Starting XI export canvas's contract.
+   */
+  hero: ["xlarge", "large", "svg", "medium", "100", "teamLogo", "70", "small", "50", "xsmall", "25", "20"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type CrestSize = keyof typeof CREST_KEYS;

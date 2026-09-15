@@ -16,16 +16,17 @@ import {
   ChipButton,
   competitionMarkKind,
   Crest,
+  FadeOutImage,
   SkeletonRows,
   Text,
 } from '@/components/atoms';
 import { SectionHeader, StatTile, UpcomingCard } from '@/components/molecules';
 import { FinishedToday } from '@/components/organisms/finished-today';
-import { LiveDeck } from '@/components/organisms/live-deck';
+import { LiveCarousel } from '@/components/organisms/live-carousel';
 import { LivePlate } from '@/components/organisms/live-plate';
 import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
-import { NextUpDeck } from '@/components/organisms/next-up-deck';
+import { NextUpCarousel } from '@/components/organisms/next-up-carousel';
 import { NewsCard } from '@/components/organisms/news-card';
 import { BoardEditHint, BoardStack, type BoardSection } from '@/components/organisms/board-stack';
 import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
@@ -35,11 +36,15 @@ import {
   BoardEdit,
   BottomTabInset,
   Colors,
+  CrownClubArt,
+  CrownClubHead,
+  CrownRamp,
   Radius,
   Size,
   Spacing,
   Surfaces,
 } from '@/constants/theme';
+import { decodeBoardBackground } from '@/lib/board-background';
 import {
   applyVisibleOrder,
   BUILT_COUNT,
@@ -54,7 +59,7 @@ import {
   nextUpDeck,
   upcomingRow,
 } from '@/lib/cronogol/board';
-import { pairWash } from '@/lib/cronogol/club-wash';
+import { clubTint, pairWash } from '@/lib/cronogol/club-wash';
 import {
   boardLives,
   isStalled,
@@ -64,6 +69,8 @@ import {
   type BoardLive,
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
+import { clubCrownTheme, leagueCrownTheme } from '@/lib/cronogol/league-theme';
+import { findLeague } from '@/lib/cronogol/leagues';
 import { upcomingBounds } from '@/lib/cronogol/fixture-window';
 import { matchEventsCapable, mergeWindows, sliceWindow } from '@/lib/cronogol/team-window';
 import {
@@ -121,7 +128,7 @@ export default function TodayScreen() {
   const { copy, phrases } = useI18n();
   const zone = useZone();
   const initials = useIdentityInitials();
-  const { followed, clock, newsSeenAt, bdOrder, bdHidden } = usePreferences();
+  const { followed, clock, newsSeenAt, bdOrder, bdHidden, bdBg } = usePreferences();
 
   const finished = useFinishedToday(zone);
   const upcoming = useUpcoming(zone);
@@ -806,6 +813,70 @@ export default function TodayScreen() {
   /** The reader's arrangement. ⚠ Already normalised — `parse` does it on read. */
   const layout = { order: bdOrder, hidden: bdHidden };
 
+  /**
+   * The board's BACKGROUND (ADR 0175), resolved per render — never state
+   * (trap 72). Three shapes:
+   *
+   *  - `default` → the brand crown; no `tintLeague`, no override.
+   *  - `league:{slug}` → the league's own deep crown via `tintLeague`, exactly
+   *    the Matchdays/Table path — bundled mark and all.
+   *  - `club:{slug}` → `crownOverride`: the club's colour on the deep ladder
+   *    and its crest bled through `FadeOutImage`, `CrownClubArt`'s numbers.
+   *
+   * ⚠ A club slug the catalogue cannot answer YET (query loading, offline) or
+   * ANY MORE (club dropped) renders the brand default and NEVER rewrites the
+   * stored pick — a transient network failure must not destroy it.
+   */
+  const bgChoice = decodeBoardBackground(bdBg);
+  const bgTeam =
+    bgChoice.kind === 'club'
+      ? ((teams.data ?? []).find((team) => team.slug === bgChoice.slug) ?? null)
+      : null;
+  const bgLeague = bgChoice.kind === 'league' ? findLeague(bgChoice.slug) : undefined;
+  /** Re-derived for the avatar's ink and the edit row's swatch — same inputs
+   *  the scaffold themes from, so the two cannot disagree. */
+  const bgTheme = bgTeam
+    ? clubCrownTheme(clubTint(bgTeam))
+    : leagueCrownTheme(bgLeague?.apiSlug ?? null);
+  const bgCrest = bgTeam ? crestSrc(bgTeam.logoUrls, bgTeam.logoUrl, 'hero') : null;
+  /**
+   * The club background's crown furniture (ADR 0180): "MONDAY / Board" steps
+   * aside and the crest takes its PLACE — as the bled translucent watermark
+   * (0175's style, 0177/0178's tuning), anchored head-LEFT and running down
+   * behind the lead card. `head` is the empty spacer that keeps the
+   * accessory row and payload where the title-era layout put them, and the
+   * VoiceOver carrier for the heading the words no longer state.
+   */
+  const crownOverride = bgTeam
+    ? {
+        theme: bgTheme,
+        artAnchor: 'headLeft' as const,
+        art: bgCrest ? (
+          <FadeOutImage
+            uri={bgCrest}
+            size={CrownRamp * CrownClubArt.height}
+            fadeFrom={CrownClubArt.fadeFrom}
+            fadeTo={CrownClubArt.fadeTo}
+            bands={CrownClubArt.bands}
+            style={{ opacity: CrownClubArt.alpha }}
+          />
+        ) : undefined,
+        head: (
+          <View
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={displayName(bgTeam.name)}
+            style={{ height: CrownClubHead.size }}
+          />
+        ),
+      }
+    : undefined;
+  /** What the edit row names: the club, the league, or the brand — matching
+   *  what is DRAWN, so an unresolved club says the default it renders as. */
+  const bgValueLabel = bgTeam
+    ? displayName(bgTeam.name)
+    : (bgLeague?.name ?? copy.board.backgroundDefault);
+
   /** What the body draws, in the reader's order: on the board, and eligible. */
   const sections = visibleCards(layout).flatMap<BoardSection>((id) => {
     const node = cards[id];
@@ -823,7 +894,7 @@ export default function TodayScreen() {
    * can be dragged to.
    */
   const lead = !hasClubs ? undefined : boards.length > 1 ? (
-    <LiveDeck
+    <LiveCarousel
       key={boards.map((b) => b.fixture.id).join('|')}
       cards={boards.map(liveCard)}
       copy={copy.today}
@@ -832,7 +903,7 @@ export default function TodayScreen() {
   ) : boards.length === 1 ? (
     <LivePlate {...liveCard(boards[0])} copy={copy.today} events={copy.events} />
   ) : deck.length > 1 ? (
-    <NextUpDeck
+    <NextUpCarousel
       key={`${zone}:${deck.map((f) => f.id).join('|')}`}
       cards={deck.map(nextCardProps)}
       copy={copy.today}
@@ -845,6 +916,13 @@ export default function TodayScreen() {
     <ScreenScaffold
       title={copy.today.title}
       eyebrow={copy.today.eyebrow(formatWeekdayLong(new Date().toISOString(), zone, phrases))}
+      // The reader's background (ADR 0175): a league pick rides the same rail
+      // as Matchdays/Table; a resolved club pick overrides theme + crest art.
+      tintLeague={bgLeague?.apiSlug ?? null}
+      crownOverride={crownOverride}
+      // ⚠ Only under a club background — paired with `CrownClubHead.size`
+      // (see its docblock): the lead card sits 20pt lower, the body does not.
+      crownPadBottom={bgTeam ? CrownClubHead.padBottom : undefined}
       /**
        * The crown's top-right slot (ADR 0174).
        *
@@ -878,7 +956,15 @@ export default function TodayScreen() {
                 onPress={() => setEditing(true)}
               />
             ) : null}
-            <AvatarButton initials={initials} onPress={() => router.push('/(sheets)/account')} />
+            <AvatarButton
+              initials={initials}
+              onPress={() => router.push('/(sheets)/account')}
+              /* ⚠ `ground` on a deep background — the crown tone's near-black
+                 ink is invisible on a dark band (ADR 0165), and the board can
+                 wear one now (ADR 0175). Derived from the SAME theme the
+                 scaffold paints, so the two cannot disagree (trap 72). */
+              tone={bgTheme.tone === 'deep' ? 'ground' : 'crown'}
+            />
           </View>
         )
       }
@@ -972,6 +1058,13 @@ export default function TodayScreen() {
         onReset={resetBoardLayout}
         scroll={dragScroll}
         onDragging={setDragging}
+        background={{
+          title: copy.board.background,
+          valueLabel: bgValueLabel,
+          stops: bgTheme.stops,
+          accessibilityLabel: copy.board.backgroundRow(bgValueLabel),
+          onPress: () => router.push('/(sheets)/board-background'),
+        }}
       />
 
       {/* ⚠ The no-subscriptions state: the follow card REPLACES the board. */}

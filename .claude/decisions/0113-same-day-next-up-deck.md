@@ -4,6 +4,7 @@
 - **Status:** Accepted
 - **Decided by:** Ed (direction and mock approved; spring / haptic / round-dots picked over the alternatives when asked; "remove transparency from this card only" on seeing the stack)
 - **Amends:** [0096](./0096-next-up-goes-liquid-glass.md) — liquid glass is now the SINGLE card's surface; a deck card is opaque
+- **Amended by [0176](./0176-the-deck-becomes-a-carousel.md)** — the stack, the opaque surface and the wrap retire for a full-width glass carousel (the pager this entry rejected, viable once ADR 0175 made the crown themeable); the membership-key reset and every-card-mounted rules survive
 
 ## Context
 

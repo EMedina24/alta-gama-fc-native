@@ -4,6 +4,7 @@
 - **Status:** Accepted
 - **Decided by:** Ed (asked for the stack — "just like the up-coming cards"; picked tier merge, global earliest-kickoff order, and top-card-only events when asked)
 - **Amends:** [0066](./0066-live-card-reads-the-live-route-directly.md) / [0078](./0078-kicked-off-lead-card.md) — the tiers MERGE now, they no longer cascade to a single winner · [0088](./0088-live-match-is-the-crown-payload.md) — the payload may be a deck of plates · [0113](./0113-same-day-next-up-deck.md) — the deck mechanics are extracted and shared
+- **Amended by [0176](./0176-the-deck-becomes-a-carousel.md)** — the stack mechanics retire for the shared carousel; the tier union, one-panel-on-the-lead, collapse-on-commit and the `activate` action survive
 
 ## Context
 

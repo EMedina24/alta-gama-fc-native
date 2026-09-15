@@ -34,6 +34,7 @@
  * stay mirrorable (ADR 0018). Nothing here exists on the web.
  */
 import {
+  CrownClubDim,
   CrownDeep,
   CrownDeepSat,
   CrownGrad,
@@ -208,9 +209,77 @@ const ART: Record<string, CrownArt> = {
 export function leagueCrownTheme(apiSlug: string | null | undefined): CrownTheme {
   const inks = leagueInks(apiSlug);
   if (inks === null) {
-    return { stops: CrownGrad, pools: Mesh, tone: 'bright', art: null };
+    return BRAND_THEME;
   }
   const [from, to = from] = inks;
+  return deepTheme(from, to, ART[apiSlug as string] ?? null);
+}
+
+/**
+ * A CLUB's crown (ADR 0175) — the Board wearing the reader's picked club.
+ *
+ * The same `CrownDeep` ladder as a league's, off an arbitrary brand hex — the
+ * ladder is hue-agnostic, which is the whole reason it exists (see the file
+ * header). The caller passes `clubTint(team)`, so the primary → secondary →
+ * fallback → graphite order stays `club-wash.ts`'s one rule in one place.
+ *
+ * ⚠ SOLID, never a primary+secondary gradient: most secondaries are white,
+ * black or otherwise unusable (`clubTint`'s own finding), and the wash's
+ * precedent holds — Barcelona is blue, never purple.
+ *
+ * ⚠ Graphite input takes the `CrownDeepSat` clamp like any hex — the sat floor
+ * exists exactly because a desaturated crown "reads as a rendering fault", so
+ * a colourless club wears a deliberate steel-blue rather than grey.
+ *
+ * ⚠ An unparseable hex returns the LITERAL brand tables, the same identity
+ * contract as the no-league path — garbage in, brand out, provably.
+ *
+ * ⚠ `art` is always null here: a club's watermark is a REMOTE crest, which the
+ * screen supplies as a node (`FadeOutImage`) — see `ScreenScaffold`'s
+ * `crownOverride`. `CrownArt` keys name bundled drawings only.
+ */
+export function clubCrownTheme(hex: string): CrownTheme {
+  const parsed = parseHex(hex);
+  if (!parsed) return BRAND_THEME;
+  const ink = { h: parsed.h, s: clamp(parsed.s, CrownDeepSat.min, CrownDeepSat.max) };
+  return deepTheme(ink, ink, null, clubDim(ink.h));
+}
+
+/**
+ * The lightness scale for a club hue — 1 outside `CrownClubDim`'s window,
+ * piecewise-linear through its control points inside it. See the table's
+ * docblock for why the league ladder alone cannot carry an arbitrary hex.
+ */
+function clubDim(hue: number): number {
+  const h = ((hue % 360) + 360) % 360;
+  const first = CrownClubDim[0];
+  const last = CrownClubDim[CrownClubDim.length - 1];
+  if (h <= first[0] || h >= last[0]) return 1;
+  for (let i = 1; i < CrownClubDim.length; i += 1) {
+    const [h1, s1] = CrownClubDim[i];
+    if (h <= h1) {
+      const [h0, s0] = CrownClubDim[i - 1];
+      return s0 + ((s1 - s0) * (h - h0)) / (h1 - h0);
+    }
+  }
+  return 1;
+}
+
+/** The brand's own crown — the LITERAL tables, by reference (see above). */
+const BRAND_THEME: CrownTheme = { stops: CrownGrad, pools: Mesh, tone: 'bright', art: null };
+
+/**
+ * The deep crown, painted: one or two inks down the `CrownDeep` ladder, the
+ * mesh re-hued to match. Shared by `leagueCrownTheme` and `clubCrownTheme` —
+ * the geometry is identical, only where the ink comes from differs.
+ */
+function deepTheme(
+  from: { h: number; s: number },
+  to: { h: number; s: number },
+  art: CrownArt | null,
+  /** The club path's high-luma pull-down (`clubDim`); leagues stay at 1. */
+  lightScale = 1,
+): CrownTheme {
   /**
    * A gradient band interpolates hue and saturation DOWN the ladder (ADR
    * 0172): stop i sits at `t = offset / lastOpaqueOffset`, so the top stop is
@@ -231,7 +300,7 @@ export function leagueCrownTheme(apiSlug: string | null | undefined): CrownTheme
     color:
       'ground' in stop
         ? CrownGrad[CrownGrad.length - 1].color
-        : toHex({ ...inkAt(stop.offset / lastOpaque), l: stop.light }),
+        : toHex({ ...inkAt(stop.offset / lastOpaque), l: stop.light * lightScale }),
     opacity: stop.opacity,
   }));
   return {
@@ -244,6 +313,6 @@ export function leagueCrownTheme(apiSlug: string | null | undefined): CrownTheme
       color: reHue(pool.color, inkAt(Mesh.length > 1 ? i / (Mesh.length - 1) : 0).h),
     })),
     tone: 'deep',
-    art: ART[apiSlug as string] ?? null,
+    art,
   };
 }

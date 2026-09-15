@@ -124,6 +124,13 @@ export default function RootLayout() {
             options={{ ...sheet, sheetAllowedDetents: [1] }}
           />
           <Stack.Screen name="(sheets)/alerts" options={sheet} />
+          {/* The Board background picker (ADR 0175). ⚠ 0.72, `calendar-ucl`'s
+              detent: the board's crown must stay visible above the sheet —
+              the pick recolouring it live is the preview. */}
+          <Stack.Screen
+            name="(sheets)/board-background"
+            options={{ ...sheet, sheetAllowedDetents: [0.72] }}
+          />
           <Stack.Screen name="(sheets)/calendar" options={sheet} />
           <Stack.Screen name="(sheets)/calendar-jornada" options={sheet} />
           {/* ⚠ Its own detent: this sheet is a scope control and a longer body

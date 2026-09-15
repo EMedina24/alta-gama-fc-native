@@ -382,6 +382,19 @@ export interface Copy {
      * reworded, reword this with it.
      */
     cards: Record<BoardCardId, { label: string; body: string }>;
+    /**
+     * The BACKGROUND picker (ADR 0175): the edit tray's row heading and the
+     * sheet's title share one word — they name the same thing.
+     */
+    background: string;
+    /**
+     * The brand default's row label. ⚠ The brand's own NAME, not
+     * "Predeterminado" — which truncates at the row's clamp and explains
+     * nothing the swatch beside it doesn't.
+     */
+    backgroundDefault: string;
+    /** The tray row, spoken: "Fondo: Barcelona". */
+    backgroundRow: (current: string) => string;
   };
   today: {
     title: string;
@@ -1234,6 +1247,9 @@ export const esCopy: Copy = {
       table: { label: 'Clasificación', body: 'Tu club y sus vecinos' },
       season: { label: 'La temporada', body: 'Forma, goles y porterías a cero' },
     },
+    background: 'Fondo',
+    backgroundDefault: 'Alta Gama',
+    backgroundRow: (current: string): string => `Fondo: ${current}`,
   },
 
   today: {
@@ -1791,6 +1807,9 @@ export const enCopy: Copy = {
       table: { label: 'Table snapshot', body: 'Your club and its neighbours' },
       season: { label: 'Season so far', body: 'Form, goals and clean sheets' },
     },
+    background: 'Background',
+    backgroundDefault: 'Alta Gama',
+    backgroundRow: (current: string): string => `Background: ${current}`,
   },
 
   today: {
