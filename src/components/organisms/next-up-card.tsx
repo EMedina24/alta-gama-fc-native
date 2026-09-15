@@ -11,13 +11,12 @@
  * card's width — a row layout truncated both sides of Real Madrid v Real
  * Sociedad to "Real…" against "Real…", which names neither club.
  *
- * ⚠ The card is LIQUID GLASS (ADR 0096, the bubbles' 0090 treatment at card
- * size): a `GlassView` where liquid glass exists, a flat translucent fill
- * where not, both under the same overlays — so the crown's gradient shows
- * THROUGH the card rather than stopping at a dark slab. The club-colour pair
- * survives only as a WHISPER (`ClubWash2.edgeOnGlass`): a translucent tint
- * over a translucent shell double-blends with whatever is behind it, so the
- * full-alpha wash and the opaque base it needed are both gone.
+ * ⚠ The card is NEUTRAL LIQUID GLASS (ADR 0184): a `GlassView` where liquid
+ * glass exists, a flat translucent fill where not, both under the light
+ * `recess` scrim — 0096's see-through treatment stands (Ed judged LivePlate's
+ * `plateDark` "too dark"), so the crown still shows through. What went is the
+ * COLOUR the card added itself: the club wash (0068) and the lime ring. The
+ * only lime left is content (label, seconds, Vs badge).
  *
  * ⚠ Glass is the ONLY surface now (ADR 0176): the deck's `opaque` variant —
  * a baked BRAND crown under the full-alpha wash — retired with the stack.
@@ -36,8 +35,7 @@ import {
   type CompetitionMarkKind,
 } from '@/components/atoms';
 import { Countdown, type ScoreSide } from '@/components/molecules';
-import { ClubWash2, Colors, Radius, Size, Spacing } from '@/constants/theme';
-import type { PairWash } from '@/lib/cronogol/club-wash';
+import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 /** Decided once at module scope — the gate must pick a path BEFORE mount (0090). */
 const LIQUID = isLiquidGlassAvailable();
@@ -66,16 +64,6 @@ export interface NextUpCardProps {
   zoneLabel: string;
   venue: string | null;
   /**
-   * The two-club colour wash behind the card (ADR 0068): home top-left, away
-   * bottom-right, already TAMED by `lib/cronogol/club-wash.ts` — the screen
-   * resolves, this organism only paints (ADR 0013).
-   *
-   * ⚠ `null` / absent is a real state, not a degradation: neither club has a
-   * usable colour (every Premier League and Serie A club today) and the card
-   * renders exactly as it did before the wash existed — lime ring and all.
-   */
-  wash?: PairWash | null;
-  /**
    * Kickoff, announced by this card's own countdown (ADR 0052).
    *
    * ⚠ **Nothing else on the screen can detect it.** The fixture windows behind
@@ -101,7 +89,6 @@ export function NextUpCard({
   dateLabel,
   zoneLabel,
   venue,
-  wash = null,
   onKickoff,
   copy,
 }: NextUpCardProps) {
@@ -115,8 +102,8 @@ export function NextUpCard({
       )}
       {/* A dark scrim over the glass — the card must sit a step BELOW the
           crown it refracts, or the ink loses its ground ("a bit darker",
-          ADR 0096). `recess` is the translucent black that works on any
-          ground, which is exactly the job. */}
+          ADR 0096). `recess`, NOT LivePlate's `plateDark`: Ed judged the
+          plate "too dark", the card stays see-through (ADR 0184). */}
       <View pointerEvents="none" style={[styles.body, styles.dim]} />
       {/* A gentle top sheen — the card's one lit surface, not a colour. */}
       <View pointerEvents="none" style={styles.body}>
@@ -127,22 +114,6 @@ export function NextUpCard({
             { offset: 0.4, color: '#ffffff', opacity: 0 },
           ]}
         />
-        {/* ⚠ The club pair at WHISPER strength (ADR 0096) — a tint over a
-            translucent shell double-blends. The dead-transparent middle
-            still keeps the two colours from mixing. */}
-        {wash ? (
-          <WashGradient
-            angle="pair"
-            stops={[
-              { offset: 0, color: wash.home, opacity: ClubWash2.edgeOnGlass },
-              { offset: ClubWash2.midAt, color: wash.home, opacity: ClubWash2.midOnGlass },
-              { offset: ClubWash2.gapStart, color: wash.home, opacity: 0 },
-              { offset: ClubWash2.gapEnd, color: wash.away, opacity: 0 },
-              { offset: 1 - ClubWash2.midAt, color: wash.away, opacity: ClubWash2.midOnGlass },
-              { offset: 1, color: wash.away, opacity: ClubWash2.edgeOnGlass },
-            ]}
-          />
-        ) : null}
       </View>
       {/* The lit top edge, over the washes — the tray/plate idiom. */}
       <View pointerEvents="none" style={styles.topEdge} />
@@ -154,7 +125,7 @@ export function NextUpCard({
         {venue ? (
           // ⚠ One ink (ADR 0096): `washInk` existed for legibility on the
           // full-alpha wash, which retired with the opaque deck card
-          // (ADR 0176); the whisper does not move the ground enough to need it.
+          // (ADR 0176); the neutral plate needs no special ink.
           <Text
             variant="eyebrowSm"
             color="textFaint"
@@ -232,10 +203,10 @@ export function NextUpCard({
 
 const styles = StyleSheet.create({
   /**
-   * The liquid-glass shell (ADR 0096). ⚠ `overflow: 'hidden'` clips the glass
-   * body and both washes to the corners — the `flush` trap — and the lime ring
-   * is back on BOTH variants: 0068 swapped it for white ON a wash, and the
-   * whisper is no longer a wash to defer to.
+   * The liquid-glass shell (ADR 0096/0184). ⚠ `overflow: 'hidden'` clips the
+   * glass body and the sheen to the corners — the `flush` trap. The ring is
+   * LivePlate's neutral `plateLine` at `glassBorder`, not the lime
+   * `accentRing`: the two crown-slot cards share one plate idiom (0184).
    */
   card: {
     position: 'relative',
@@ -243,9 +214,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.card,
     padding: Spacing.four,
     gap: Spacing.three,
-    // ⚠ 1pt, not `Size.glassBorder`: at 0.5 the ring stops reading as one.
-    borderWidth: 1,
-    borderColor: Colors.dark.accentRing,
+    borderWidth: Size.glassBorder,
+    borderColor: Colors.dark.plateLine,
   },
   body: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   /** The floor where liquid glass is not available — the spec's own fallback. */

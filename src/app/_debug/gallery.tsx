@@ -46,7 +46,6 @@ import {
   minuteLabel,
   type EventGroup,
 } from '@/lib/cronogol/events';
-import { pairWash } from '@/lib/cronogol/club-wash';
 import { leagueCrownTheme } from '@/lib/cronogol/league-theme';
 import { STALL_AFTER_MS, isStalled, liveMinute, minutesSinceSeen } from '@/lib/cronogol/live';
 import type {
@@ -213,36 +212,24 @@ const UCL_EVENTS: MatchEventView[] = [
 ];
 
 /**
- * The next-up card's four wash states (ADR 0068), on REAL club hexes copied
- * from `/cronogol/teams` on 2026-08-29 — the point is the awkward ones.
+ * Pairings for the next-up card and its deck. The four wash-state cases these
+ * carried retired with the wash itself (ADR 0184 — the card is neutral glass
+ * now); the pairings stay because the deck steps through them.
  *
- * ⚠ Crests are null here on purpose: the monogram tile is the case where a
- * grey plate sits on a coloured wash, which is the collision to look at.
+ * ⚠ Crests are null here on purpose: the monogram tile is the awkward case
+ * to keep on screen.
  */
-const WASH_TEAM = (primary: string | null, secondary: string | null) => ({
-  colorPrimary: primary,
-  colorSecondary: secondary,
-});
 const NEXT_SIDE = (name: string, abbr: string) => ({ name, crest: null, abbr, goals: null });
 const NEXT_CASES = [
-  { label: 'Real Madrid v Barcelona — both colours; ⚠ Barça is BLUE, never purple',
-    home: NEXT_SIDE('Real Madrid', 'RMA'), away: NEXT_SIDE('Barcelona', 'BAR'),
-    wash: pairWash(WASH_TEAM('#0f39b8', '#ffffff'), WASH_TEAM('#0f39b8', '#bc161c')) },
-  { label: 'Villarreal v Betis — #ffd301 clamped to gold',
-    home: NEXT_SIDE('Villarreal', 'VIL'), away: NEXT_SIDE('Real Betis', 'BET'),
-    wash: pairWash(WASH_TEAM('#ffd301', '#ffffff'), WASH_TEAM('#038316', '#ffffff')) },
-  { label: 'Athletic v Valencia — #000000 → graphite, the card leans red',
-    home: NEXT_SIDE('Athletic Club', 'ATH'), away: NEXT_SIDE('Valencia', 'VAL'),
-    wash: pairWash(WASH_TEAM('#f21e27', '#ffffff'), WASH_TEAM('#000000', '#ffffff')) },
-  { label: 'Arsenal v Liverpool — no colours on file: ⚠ must be TODAY\'S card, lime ring',
-    home: NEXT_SIDE('Arsenal', 'ARS'), away: NEXT_SIDE('Liverpool', 'LIV'),
-    wash: pairWash(WASH_TEAM(null, null), WASH_TEAM(null, null)) },
+  { home: NEXT_SIDE('Real Madrid', 'RMA'), away: NEXT_SIDE('Barcelona', 'BAR') },
+  { home: NEXT_SIDE('Villarreal', 'VIL'), away: NEXT_SIDE('Real Betis', 'BET') },
+  { home: NEXT_SIDE('Athletic Club', 'ATH'), away: NEXT_SIDE('Valencia', 'VAL') },
+  { home: NEXT_SIDE('Arsenal', 'ARS'), away: NEXT_SIDE('Liverpool', 'LIV') },
 ];
 
 /**
  * The DECK's fabricated same-day fixtures (ADR 0113), built on `NEXT_CASES`'
- * pairings so a stack of washes proves the gradients keep their own SVG ids
- * (trap 40). Kickoffs step off `SOON` two hours apart — every countdown in a
+ * pairings. Kickoffs step off `SOON` two hours apart — every countdown in a
  * stack ticks a different figure, and all of them are real `Countdown`s.
  */
 const DECK_AT = (hours: number) =>
@@ -257,7 +244,6 @@ const DECK_CARD = (
   id,
   home: from.home,
   away: from.away,
-  wash: from.wash,
   kickoffUtc: DECK_AT(hoursAfter),
   kickoffTbd: false,
   kickoffLabel,
@@ -596,28 +582,24 @@ export default function GalleryScreen() {
 
   const nextUp = (
     <>
-      <SectionHeader title="Next up" meta="the club-colour wash (ADR 0068)" />
-      {NEXT_CASES.map(({ label, home, away, wash }) => (
-        <Case key={label} label={label}>
-          <NextUpCard
-            home={home}
-            away={away}
-            kickoffUtc={SOON}
-            kickoffTbd={false}
-            meta={copy.today.nextUp}
-            kickoffLabel="21:00"
-            dateLabel="SAT 5 SEP"
-            zoneLabel={`CEST · ${copy.today.yourTime}`}
-            venue="Santiago Bernabéu"
-            wash={wash}
-            copy={copy.today}
-          />
-        </Case>
-      ))}
+      <SectionHeader title="Next up" meta="the neutral glass card (ADR 0184)" />
+      <Case label="Real Madrid v Barcelona — the base card; null crests, monogram tiles">
+        <NextUpCard
+          home={NEXT_CASES[0].home}
+          away={NEXT_CASES[0].away}
+          kickoffUtc={SOON}
+          kickoffTbd={false}
+          meta={copy.today.nextUp}
+          kickoffLabel="21:00"
+          dateLabel="SAT 5 SEP"
+          zoneLabel={`CEST · ${copy.today.yourTime}`}
+          venue="Santiago Bernabéu"
+          copy={copy.today}
+        />
+      </Case>
       {/* ⚠ A CUP tie names its competition beside the label (ADR 0132) — as
           the UCL LOCKUP where we hold one (ADR 0133). Real wire values —
-          Barcelona v Feyenoord, UCL jornada 1, real Barça hexes; the opponent
-          has no colours on file, so the wash leans one-sided. */}
+          Barcelona v Feyenoord, UCL jornada 1. */}
       <Case label="Barcelona v Feyenoord — CUP with a mark: the UCL lockup beside NEXT UP (ADR 0133)">
         <NextUpCard
           home={NEXT_SIDE('Barcelona', 'BAR')}
@@ -630,7 +612,6 @@ export default function GalleryScreen() {
           dateLabel="WED 9 SEP"
           zoneLabel={`CEST · ${copy.today.yourTime}`}
           venue="Spotify Camp Nou"
-          wash={pairWash(WASH_TEAM('#0f39b8', '#bc161c'), WASH_TEAM(null, null))}
           copy={copy.today}
         />
       </Case>
@@ -647,7 +628,6 @@ export default function GalleryScreen() {
           dateLabel="SAT 5 SEP"
           zoneLabel={`CEST · ${copy.today.yourTime}`}
           venue="Spotify Camp Nou"
-          wash={pairWash(WASH_TEAM('#0f39b8', '#bc161c'), WASH_TEAM('#f21e27', '#ffffff'))}
           copy={copy.today}
         />
       </Case>
@@ -733,9 +713,6 @@ export default function GalleryScreen() {
       <SectionHeader title="Next up carousel" meta="same-day pages (ADR 0176)" />
       <Case label="two cards — two dots; the smallest carousel">
         <NextUpCarousel cards={DECK_TWO.map(deckCard)} copy={copy.today} />
-      </Case>
-      <Case label="three cards — the washes must not bleed ids (trap 40)">
-        <NextUpCarousel cards={DECK_THREE.map(deckCard)} copy={copy.today} />
       </Case>
       <Case label="five cards — 5 dots; every page mounted for its countdown">
         <NextUpCarousel cards={DECK_FIVE.map(deckCard)} copy={copy.today} />

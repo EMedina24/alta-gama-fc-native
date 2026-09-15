@@ -78,7 +78,7 @@ export const BRIGHT_BAND = 0.42;
  * `CrownArt.height` row — the marks disagree about shape (crest 0.78 portrait,
  * kicker 1.33 landscape), which is why the height is per mark at all.
  */
-const ART_MARK = {
+export const ART_MARK = {
   'premier-league': PremierCrest,
   laliga: LaLigaGlyph,
   bundesliga: BundesligaKicker,

@@ -1,7 +1,7 @@
 # 0068 — A club-colour wash behind the next-up card and the club header, tamed from `colorPrimary` on the front end
 
 - **Date:** 2026-08-29
-- **Status:** Accepted — harness-proven (16 assertions), verified on the simulator (gallery + Real Madrid / Valencia / Arsenal club pages)
+- **Status:** Superseded by [0184](./0184-the-next-up-card-goes-neutral-glass.md) on the next-up card (the wash is removed; the club-page header tint and the taming rule stand). Was: Accepted — harness-proven (16 assertions), verified on the simulator (gallery + Real Madrid / Valencia / Arsenal club pages)
 - **Decided by:** Ed Medina
 
 ## Context

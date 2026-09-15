@@ -62,8 +62,9 @@ export interface WashGradientProps {
   stops: readonly WashStop[];
   /**
    * `diagonal`: top-left → bottom-right. `vertical`: top → bottom.
-   * `pair`: the 0087 two-club wash line — near-horizontal with a slight fall,
-   * the mock's 100° drawn across a card-shaped box (`ClubWash2`).
+   * `pair`: the 0087 near-horizontal line with a slight fall, the mock's 100°
+   * drawn across a card-shaped box. (Named for the two-club wash it carried
+   * until ADR 0184; the splash sweep still rides it.)
    * `splash`: the launch sheet's near-vertical line with a slight rightward
    * lean, the handoff's 168° (ADR 0134) — `pair`'s treatment of a CSS angle.
    */

@@ -18,6 +18,7 @@ import {
   Crest,
   Eyebrow,
   FadeOutImage,
+  PencilGlyph,
   SkeletonRows,
   Text,
 } from '@/components/atoms';
@@ -30,13 +31,14 @@ import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpCarousel } from '@/components/organisms/next-up-carousel';
 import { NewsCard } from '@/components/organisms/news-card';
 import { BoardEditHint, BoardStack, type BoardSection } from '@/components/organisms/board-stack';
-import { AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
+import { ART_MARK, AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { applyWidgetLive } from '@/features/widgets/live';
 import {
   BoardEdit,
   BottomTabInset,
   Colors,
+  CrownArt,
   CrownClubArt,
   CrownClubHead,
   CrownRamp,
@@ -60,7 +62,7 @@ import {
   nextUpDeck,
   upcomingRow,
 } from '@/lib/cronogol/board';
-import { clubTint, pairWash } from '@/lib/cronogol/club-wash';
+import { clubTint } from '@/lib/cronogol/club-wash';
 import {
   boardLives,
   isStalled,
@@ -524,16 +526,6 @@ export default function TodayScreen() {
   });
 
   /**
-   * The club-colour wash behind the next-up card (ADR 0068). `TeamRef` carries
-   * no colour, so each side is joined to the club catalogue by slug — the same
-   * join `boardFromRoute` makes for the live card's crests. An opponent-only
-   * club is not in the catalogue and resolves to nothing, which `pairWash`
-   * treats as "no colour on this side".
-   */
-  const catalogueTeam = (team: WindowFixtureView['homeTeam']) =>
-    team ? ((teams.data ?? []).find((t) => t.slug === team.slug) ?? null) : null;
-
-  /**
    * One NEXT UP card's props — the single card and every deck layer share this
    * builder verbatim (ADR 0113), so a deck card can never drift from the card
    * it generalises.
@@ -561,7 +553,6 @@ export default function TodayScreen() {
     dateLabel: formatFixtureDate(fixture.kickoffUtc, zone, phrases),
     zoneLabel: `${zoneAbbreviation(zone)} · ${copy.today.yourTime}`,
     venue: fixture.venue,
-    wash: pairWash(catalogueTeam(fixture.homeTeam), catalogueTeam(fixture.awayTeam)),
     /**
      * Kick-off, announced by the card's own countdown (ADR 0052).
      *
@@ -840,18 +831,37 @@ export default function TodayScreen() {
     ? clubCrownTheme(clubTint(bgTeam))
     : leagueCrownTheme(bgLeague?.apiSlug ?? null);
   const bgCrest = bgTeam ? crestSrc(bgTeam.logoUrls, bgTeam.logoUrl, 'hero') : null;
-  /**
-   * The club background's crown furniture (ADR 0180): "MONDAY / Board" steps
-   * aside and the crest takes its PLACE — as the bled translucent watermark
-   * (0175's style, 0177/0178's tuning), anchored head-LEFT and running down
-   * behind the lead card. `head` is the empty spacer that keeps the
-   * accessory row and payload where the title-era layout put them, and the
-   * VoiceOver carrier for the heading the words no longer state.
-   */
-  /** The day line — the scaffold's eyebrow, and the club head's first line. */
+  /** The day line — the scaffold's eyebrow, and every wallpaper head's one line. */
   const eyebrowText = copy.today.eyebrow(
     formatWeekdayLong(new Date().toISOString(), zone, phrases),
   );
+  /**
+   * The reduced head every WALLPAPER wears (ADR 0180, widened on Ed's report
+   * — a league pick reverting to the full title read as a bug, not a scope):
+   * the DAY LINE alone, in the STRONG ink (the words sit ON the mark, and
+   * the dim family fails AA over the club crest — `CrownClubHead`'s
+   * docblock). Fixed height so the lead card's position never moves with
+   * the text; the label still names what the mark states only visually.
+   */
+  const bgHead = (name: string) => (
+    <View
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={`${name} · ${eyebrowText}`}
+      style={{ height: CrownClubHead.size }}>
+      <Eyebrow color="onDeep">{eyebrowText}</Eyebrow>
+    </View>
+  );
+  /** The league mark, head-left — the same drawn atom the league screens bleed
+   *  at the right, `CrownArt`'s own sizing. */
+  const BgMark = !bgTeam && bgLeague && bgTheme.art ? ART_MARK[bgTheme.art] : null;
+  /**
+   * The wallpaper's crown furniture (ADR 0180): "MONDAY / Board" steps aside
+   * and the pick's mark takes its place — the club crest as the bled
+   * translucent watermark (0175's style, 0177/0178's tuning), or the
+   * league's drawn mark at its own alpha — anchored head-LEFT and running
+   * down behind the lead card. The brand default keeps the full title.
+   */
   const crownOverride = bgTeam
     ? {
         theme: bgTheme,
@@ -866,26 +876,19 @@ export default function TodayScreen() {
             style={{ opacity: CrownClubArt.alpha }}
           />
         ) : undefined,
-        /**
-         * The reduced head over the crest (Ed, 2026-09-14): the DAY LINE
-         * alone — "Board" tried a smaller size and was dropped the same day.
-         * STRONG ink, never dim: the words sit ON the crest, and the dim
-         * family fails AA over it at the crest's alpha (`CrownClubHead`'s
-         * docblock has the number). Fixed height so the lead card's
-         * position does not move with the text. The heading still names
-         * the club for VoiceOver — the crest states it only visually.
-         */
-        head: (
-          <View
-            accessible
-            accessibilityRole="header"
-            accessibilityLabel={`${displayName(bgTeam.name)} · ${eyebrowText}`}
-            style={{ height: CrownClubHead.size }}>
-            <Eyebrow color="onDeep">{eyebrowText}</Eyebrow>
-          </View>
-        ),
+        head: bgHead(displayName(bgTeam.name)),
       }
-    : undefined;
+    : bgLeague
+      ? {
+          theme: bgTheme,
+          artAnchor: 'headLeft' as const,
+          art:
+            BgMark && bgTheme.art ? (
+              <BgMark height={CrownRamp * CrownArt.height[bgTheme.art]} alpha={CrownArt.alpha} />
+            ) : undefined,
+          head: bgHead(bgLeague.name),
+        }
+      : undefined;
   /** What the edit row names: the club, the league, or the brand — matching
    *  what is DRAWN, so an unresolved club says the default it renders as. */
   const bgValueLabel = bgTeam
@@ -931,13 +934,13 @@ export default function TodayScreen() {
     <ScreenScaffold
       title={copy.today.title}
       eyebrow={eyebrowText}
-      // The reader's background (ADR 0175): a league pick rides the same rail
-      // as Matchdays/Table; a resolved club pick overrides theme + crest art.
-      tintLeague={bgLeague?.apiSlug ?? null}
+      // The reader's background (ADR 0175/0180): every wallpaper — club or
+      // league — travels as a crownOverride now; the brand default passes
+      // nothing and keeps the bright crown.
       crownOverride={crownOverride}
-      // ⚠ Only under a club background — paired with `CrownClubHead.size`
-      // (see its docblock): the lead card sits 20pt lower, the body does not.
-      crownPadBottom={bgTeam ? CrownClubHead.padBottom : undefined}
+      // ⚠ Only under a wallpaper — paired with `CrownClubHead.size` (see its
+      // docblock): the lead card sits 20pt lower, the body does not.
+      crownPadBottom={crownOverride ? CrownClubHead.padBottom : undefined}
       /**
        * The crown's top-right slot (ADR 0174).
        *
@@ -964,12 +967,18 @@ export default function TodayScreen() {
         ) : (
           <View style={styles.crownControls}>
             {hasClubs ? (
-              <ChipButton
-                label={copy.board.edit}
-                shape="pill"
-                tone="crown"
-                onPress={() => setEditing(true)}
-              />
+              /* ⚠ Icon-only (ADR 0182): the pencil says "edit" in any locale;
+                 the string survives as the VoiceOver label. DONE stays TEXT —
+                 it is the only way out of the mode (ADR 0174 §13). */
+              <View style={styles.editNudge}>
+                <ChipButton
+                  leading={<PencilGlyph color="accent" size={13} strokeWidth={1.6} />}
+                  shape="pill"
+                  tone="crown"
+                  accessibilityLabel={copy.board.edit}
+                  onPress={() => setEditing(true)}
+                />
+              </View>
             ) : null}
             <AvatarButton
               initials={initials}
@@ -1127,8 +1136,12 @@ const styles = StyleSheet.create({
   crownControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
+  // ⚠ The pencil circle sits a touch BELOW the row's centre line (Ed's eye —
+  // dead-centre beside the avatar's larger halo it read as riding high).
+  // Transform, not margin: the row's layout and hit target stay put.
+  editNudge: { transform: [{ translateY: Spacing.half }] },
   // ⚠ Each fixture draws its own surface (ADR 0043); this only spaces them.
   upcoming: { gap: Spacing.three },
   // ⚠ The gap is the only thing separating the two tiles — they share a fill

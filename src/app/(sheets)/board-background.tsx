@@ -6,9 +6,11 @@
  * card). Detent 0.72, `calendar-ucl`'s: the board's crown stays visible above
  * the sheet, and the recolour landing on it live is the picker's preview.
  *
- * ⚠ Picking writes the store and STAYS OPEN — `usePreferences` re-renders the
- * board behind this sheet on the same emit. Close is the only way out, and
- * nothing is pending when it goes: every tap committed as it was made.
+ * ⚠ Picking writes the store and DISMISSES (ADR 0183, reversing 0175's
+ * stay-open clause): the commit lands before `back()`, so nothing is pending
+ * when the sheet goes, and `usePreferences` re-renders the board on the same
+ * emit — the recolour is what the dismissal reveals. Close remains the
+ * no-change exit.
  */
 import { useRouter } from 'expo-router';
 
@@ -96,6 +98,7 @@ export default function BoardBackgroundSheetRoute() {
       onPick={(id) => {
         void hapticToggle();
         setBoardBackground(id);
+        router.back();
       }}
       onClose={() => router.back()}
     />

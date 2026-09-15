@@ -38,7 +38,12 @@ import { Text } from './text';
 import { Colors, Pulse, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface ChipButtonProps {
-  label: string;
+  /**
+   * ⚠ Omitting it makes an ICON-ONLY pill (ADR 0182, the Board's EDIT pencil):
+   * the chip draws only `leading`, and `accessibilityLabel` becomes REQUIRED —
+   * VoiceOver has nothing else to read.
+   */
+  label?: string;
   onPress: () => void;
   /** Selected/subscribed state — accent wash and ring. */
   active?: boolean;
@@ -141,6 +146,7 @@ export function ChipButton({
         shape === 'pill' && !trailing && !!leading && styles.pillLed,
         quiet && styles.quiet,
         onCrown && styles.crown,
+        shape === 'pill' && !label && !!leading && styles.pillIconOnly,
         pulse && styles.ringed,
         active && styles.active,
         pressed && !disabled && (shape === 'pill' ? styles.pressedPill : styles.pressed),
@@ -150,9 +156,11 @@ export function ChipButton({
           past the edge without growing the press target or clipping. */}
       {pulse ? <Animated.View pointerEvents="none" style={[styles.halo, halo]} /> : null}
       {leading}
-      <Text variant="eyebrowSm" color={active ? 'onAccent' : quiet ? 'textSecondary' : 'accent'}>
-        {label}
-      </Text>
+      {label ? (
+        <Text variant="eyebrowSm" color={active ? 'onAccent' : quiet ? 'textSecondary' : 'accent'}>
+          {label}
+        </Text>
+      ) : null}
       {trailing ? <View style={styles.disc}>{trailing}</View> : null}
     </Pressable>
   );
@@ -184,6 +192,19 @@ const styles = StyleSheet.create({
   },
   /** A labelled pill with no disc — see the header. */
   pillBare: { paddingLeft: Spacing.three, paddingRight: Spacing.three, gap: 0 },
+  /**
+   * An ICON-ONLY pill (ADR 0182, the Board's EDIT pencil): a circle the pill's
+   * own height — beside the round avatar a ~38pt capsule read as a misprint —
+   * ringed SOLID lime. ⚠ After `crown` in the style array: the full-strength
+   * ring is what keeps a glyph with no word legible as a control, so it
+   * outranks the crown tone's hairline.
+   */
+  pillIconOnly: {
+    width: Size.followPillH,
+    paddingLeft: 0,
+    paddingRight: 0,
+    borderColor: Colors.dark.accent,
+  },
   /** ...unless it carries a leading glyph, which needs the gap back (ADR 0165). */
   pillLed: { gap: Spacing.two },
   disc: {

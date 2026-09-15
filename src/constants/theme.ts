@@ -636,20 +636,6 @@ export const BubbleGlass = [
 ] as const;
 
 /**
- * The 0087 pair-wash geometry for the NEXT UP card: near-horizontal at 100°,
- * each club's colour strongest at its own edge, down to the mid alpha by
- * `midAt`, and dead-transparent through `gapStart`–`gapEnd` so the two
- * colours never mix. ⚠ The full-alpha `edge`/`mid` pair (0.24/0.05) retired
- * with the opaque deck card (ADR 0176) — the WHISPER is the only strength
- * left: on a translucent shell the wash double-blends with whatever is
- * behind it, so it must stay at "tint", never "wash" (ADR 0096).
- */
-export const ClubWash2 = {
-  angle: 100, midAt: 0.3, gapStart: 0.46, gapEnd: 0.54,
-  edgeOnGlass: 0.1, midOnGlass: 0.02,
-} as const;
-
-/**
  * The CONTROL GLIDE (ADR 0117) — the league rail's liquid-glass plate sliding
  * between chips. The app's spring lives here rather than on `Motion`, whose
  * contract is durations-only. Tuned tight (zeta ≈ 0.70, settles ~300ms) — a

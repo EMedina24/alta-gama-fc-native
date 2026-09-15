@@ -15,8 +15,7 @@
  *  2. A near-white or near-black primary (`ClubWash.extreme*`) is unusable too —
  *     it would paint a white or an invisible wash. Try the secondary.
  *  3. Nothing usable on this side → `tameClubColor` returns null and the caller
- *     decides: `clubWash` hands back graphite, `pairWash` returns null only when
- *     BOTH sides are null (a card with no colour at all renders exactly as today).
+ *     decides: `clubWash` hands back graphite.
  *  4. A usable hue is clamped into one lightness band and given a floor of
  *     saturation so every club lands on the card with the same weight.
  */
@@ -92,30 +91,6 @@ export function clubWash(
   secondary: string | null | undefined,
 ): string {
   return tameClubColor(primary, secondary) ?? Colors.dark.washGraphite;
-}
-
-export interface WashSource {
-  colorPrimary: string | null;
-  colorSecondary: string | null;
-}
-
-export interface PairWash {
-  home: string;
-  away: string;
-}
-
-/**
- * The two-club diagonal's endpoints, or null when NEITHER side has a colour —
- * in which case the caller paints no wash and the card is today's card.
- *
- * ⚠ One side null (an opponent-only club, a Premier League club beside a LaLiga
- * one) still washes: that side is graphite and the other carries the card.
- */
-export function pairWash(home: WashSource | null, away: WashSource | null): PairWash | null {
-  const h = home ? tameClubColor(home.colorPrimary, home.colorSecondary) : null;
-  const a = away ? tameClubColor(away.colorPrimary, away.colorSecondary) : null;
-  if (h === null && a === null) return null;
-  return { home: h ?? Colors.dark.washGraphite, away: a ?? Colors.dark.washGraphite };
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

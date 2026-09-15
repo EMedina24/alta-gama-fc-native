@@ -7,6 +7,8 @@
 - **Decided by:** Ed, correcting 0179's reading — *"the position is correct
   top left, however parts of it should still be behind the card and larger.
   exact same style as before just to the left."*
+- **Amended by [0181](./0181-every-wallpaper-wears-the-reduced-head.md)** —
+  scope widened the same day: league wallpapers wear this head too.
 - **Amends:** [0179](./0179-the-crest-takes-the-head.md) — the title's
   retirement, `Crown.headLead`, and the a11y contract survive; the SOLID
   64pt mark does not. [0177](./0177-the-club-crest-steps-forward.md)'s
