@@ -573,9 +573,13 @@ export const CrownClubArt = {
 } as const;
 
 /**
- * The EMPTY head spacer under a club background (ADR 0180): the VoiceOver
- * carrier for the heading the visible words no longer state (the board
- * labels it with the club's name), and the lead card's top clearance.
+ * The club-background head's FIXED height (ADR 0180): it began as an empty
+ * spacer, grew a reduced title for one look, and settled on the DAY LINE
+ * alone (Ed, 2026-09-14) over the crest watermark. Fixed so the lead
+ * card's position does not move with the text. ⚠⚠ STRONG ink (`onDeep`),
+ * never the dim family: the words sit ON the crest, and the quiet ink
+ * fails AA over it at the crest's alpha (3.74:1 measured) — the harness's
+ * club premise says exactly this.
  *
  * ⚠ `size` began as the eyebrow+title stack's 64 and grew +20, with the
  * SAME 20 taken off `padBottom` (the crown's `Spacing.eight` default minus

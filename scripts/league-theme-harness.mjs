@@ -399,11 +399,12 @@ try {
    *  - **WHITE ink over the crest-lit band, at `CrownClubArt.alpha`** — the
    *    conservative model for the one ink that could ever meet the crest.
    *  - **QUIET ink (`onDeepDim`) over the BARE band only.** ⚠ The LAYOUT
-   *    premise moved with the crest: under a club background the head is
-   *    EMPTY (no eyebrow, no title, no metaLine — a spacer), so no quiet
-   *    ink sits in the crest's top-left region. Put quiet ink back into a
-   *    club-background head and this rating changes FIRST — it has no
-   *    headroom for any composite (4.53:1 bare at the ladder's worst hue).
+   *    premise: the club-background head carries STRONG ink ONLY — its day
+   *    line is forced `onDeep`, because it sits ON the crest and the quiet
+   *    ink fails AA over it (3.74:1 measured at
+   *    alpha 0.18). Put quiet ink into that head and this rating changes
+   *    FIRST — it has no headroom for any composite (4.53:1 bare at the
+   *    ladder's worst hue).
    *
    * The league marks are untouched: section 4 still rates BOTH inks against
    * the composite at `CrownArt.alpha`.

@@ -16,6 +16,7 @@ import {
   ChipButton,
   competitionMarkKind,
   Crest,
+  Eyebrow,
   FadeOutImage,
   SkeletonRows,
   Text,
@@ -847,6 +848,10 @@ export default function TodayScreen() {
    * accessory row and payload where the title-era layout put them, and the
    * VoiceOver carrier for the heading the words no longer state.
    */
+  /** The day line — the scaffold's eyebrow, and the club head's first line. */
+  const eyebrowText = copy.today.eyebrow(
+    formatWeekdayLong(new Date().toISOString(), zone, phrases),
+  );
   const crownOverride = bgTeam
     ? {
         theme: bgTheme,
@@ -861,13 +866,23 @@ export default function TodayScreen() {
             style={{ opacity: CrownClubArt.alpha }}
           />
         ) : undefined,
+        /**
+         * The reduced head over the crest (Ed, 2026-09-14): the DAY LINE
+         * alone — "Board" tried a smaller size and was dropped the same day.
+         * STRONG ink, never dim: the words sit ON the crest, and the dim
+         * family fails AA over it at the crest's alpha (`CrownClubHead`'s
+         * docblock has the number). Fixed height so the lead card's
+         * position does not move with the text. The heading still names
+         * the club for VoiceOver — the crest states it only visually.
+         */
         head: (
           <View
             accessible
             accessibilityRole="header"
-            accessibilityLabel={displayName(bgTeam.name)}
-            style={{ height: CrownClubHead.size }}
-          />
+            accessibilityLabel={`${displayName(bgTeam.name)} · ${eyebrowText}`}
+            style={{ height: CrownClubHead.size }}>
+            <Eyebrow color="onDeep">{eyebrowText}</Eyebrow>
+          </View>
         ),
       }
     : undefined;
@@ -915,7 +930,7 @@ export default function TodayScreen() {
   return (
     <ScreenScaffold
       title={copy.today.title}
-      eyebrow={copy.today.eyebrow(formatWeekdayLong(new Date().toISOString(), zone, phrases))}
+      eyebrow={eyebrowText}
       // The reader's background (ADR 0175): a league pick rides the same rail
       // as Matchdays/Table; a resolved club pick overrides theme + crest art.
       tintLeague={bgLeague?.apiSlug ?? null}
