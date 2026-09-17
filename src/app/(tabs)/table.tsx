@@ -25,8 +25,8 @@
  *    answer it with different functions over different payloads, and the
  *    organism just draws what it is handed.
  */
-import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, SkeletonRows, Text, competitionMarkKind } from '@/components/atoms';
@@ -45,9 +45,7 @@ import {
 import { hasCompleteSchedule } from '@/lib/cronogol/derive';
 import {
   LEAGUES,
-  byEditorialOrder,
   findLeague,
-  findLeagueByApiSlug,
   roundCount,
   type League,
 } from '@/lib/cronogol/leagues';
@@ -56,6 +54,7 @@ import {
   bandRangeLabel,
   bandsApply,
   completedMatchweek,
+  editorialTables,
   usedZones,
   zoneFor,
 } from '@/lib/cronogol/standings';
@@ -85,6 +84,31 @@ export default function TableScreen() {
   const jornadas = useAllSeasonJornadas();
 
   /**
+   * `altagamafc://table?league=<slug>` — the STANDINGS widget's tap (ADR 0185).
+   *
+   * ⚠⚠ **Written INTO the shared, persisted pick, and that is not trap 72.**
+   * A copy-into-state effect is the bug when the param and the state describe
+   * the same fact; here the tap is the reader CHOOSING a league, the same act
+   * as picking it in `LeagueMenu`, so Matchdays and Clubs follow it (ADR 0164).
+   * Deriving the active tab from the param instead would show one league while
+   * the store — and every other tab — still held another.
+   *
+   * ⚠ The param is cleared once applied: this tab stays mounted, so a stale
+   * `league` would re-assert itself over the reader's next pick in the menu.
+   * Unknown slugs are dropped, never stored — the store must only ever hold a
+   * value this screen can show.
+   */
+  const params = useLocalSearchParams<{ league?: string }>();
+  useEffect(() => {
+    const requested = params.league;
+    if (!requested) return;
+    if (requested === UCL_LEAGUE_PHASE.slug || findLeague(requested)) {
+      setLeagueSlug(requested);
+    }
+    router.setParams({ league: undefined });
+  }, [params.league, router]);
+
+  /**
    * The pick is SHARED with Matchdays and Clubs and persisted (ADR 0164). No
    * clamp here: this screen lists the WHOLE catalogue plus the cup, so every
    * value the store can hold is one this screen can show.
@@ -100,21 +124,8 @@ export default function TableScreen() {
   // never pay for it.
   const ucl = useUclStandings(active.kind === 'ucl');
 
-  /**
-   * ⚠ Filtered to leagues we hold config for, and sorted editorially. The API
-   * returns five tables including `segunda`, which has no `League` entry — and a
-   * table with no config cannot be banded, so showing it would be a tab whose
-   * rails silently never appear.
-   */
-  const tables = useMemo(() => {
-    const rows = standings.data?.tables ?? [];
-    return rows
-      .map((table) => ({ table, league: findLeagueByApiSlug(table.league.slug) }))
-      .filter((entry): entry is { table: (typeof rows)[number]; league: League } =>
-        Boolean(entry.league),
-      )
-      .sort((a, b) => byEditorialOrder(a.league, b.league));
-  }, [standings.data]);
+  /** Configured leagues only, editorially ordered — see `editorialTables`. */
+  const tables = useMemo(() => editorialTables(standings.data?.tables), [standings.data]);
 
   const current = active.kind === 'league'
     ? tables.find((entry) => entry.league.slug === active.league.slug)

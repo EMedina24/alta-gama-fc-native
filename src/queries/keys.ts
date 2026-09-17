@@ -61,6 +61,13 @@ export const keys = {
    */
   uclStandings: (season: number) => ['ucl-standings', season] as const,
   /**
+   * Every crest URL in one competition (`GET /cronogol/crests`, ADR 0185).
+   * Keyed on the WIRE slug — `laliga`, `champions-league` — plus the season the
+   * cup set is pinned to (null for a domestic league, which takes none).
+   */
+  crests: (leagueApiSlug: string, season: number | null) =>
+    ['crests', leagueApiSlug, season] as const,
+  /**
    * The Champions League season index and one of its rounds (§124).
    *
    * ⚠ Separate prefixes from `seasonJornadas`/`jornada` for the same reason

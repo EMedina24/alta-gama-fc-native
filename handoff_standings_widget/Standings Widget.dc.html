@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+  body{margin:0;background:#0a0b0c}
+  a{color:#c8f25a;text-decoration:none}
+  a:hover{color:#dcff7a}
+</style>
+</helmet>
+
+<section style="padding:56px 64px 72px;background:#0a0b0c;color:#f4f6f6;font-family:-apple-system,system-ui,sans-serif">
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:40px">
+    <div style="font:600 12px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#7c858b">Standings · systemLarge</div>
+    <div style="font:640 30px/1.1 -apple-system,system-ui;letter-spacing:-.025em">The whole table, your clubs lit</div>
+    <div style="font:400 15px/1.55 -apple-system,system-ui;color:#a3abb0;max-width:820px;text-wrap:pretty">The large tile is the biggest Home Screen widget iOS offers (338×354pt). It holds all twenty clubs. Followed rows sit on a lime wash; the 3pt band at the left of the position carries the qualification zone. Drawn at 2×.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+    <div id="5a" style="display:flex;flex-direction:column;gap:16px;width:676px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.12em;color:#101806;background:#c8f25a;border-radius:6px;padding:6px 9px">5A</span>
+        <span style="font:600 14px/1 -apple-system,system-ui;color:#f4f6f6">Large · all twenty clubs</span>
+      </div>
+      <div style="width:676px;height:708px;border-radius:46px;padding:4px;box-sizing:border-box;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);box-shadow:0 30px 70px rgba(0,0,0,.55)">
+        <div style="width:100%;height:100%;border-radius:42px;background:#0b0d0f;box-shadow:inset 0 1px 0 rgba(255,255,255,.10);position:relative;overflow:hidden;box-sizing:border-box;padding:20px 28px 16px;display:flex;flex-direction:column">
+          <div style="position:absolute;inset:0;background:radial-gradient(58% 60% at 100% -10%,rgba(200,242,90,.16),rgba(11,13,15,0) 64%);pointer-events:none"></div>
+          <div style="position:relative;display:grid;grid-template-columns:22px 82px minmax(0,1fr) 36px 44px 44px;gap:0 10px;align-items:center;height:26px;flex:none;margin-bottom:6px">
+            <img src="brand/mark-accent.svg" alt="" style="width:20px;height:auto;display:block;opacity:.92">
+            <span style="font:700 15px/1 -apple-system,system-ui;letter-spacing:.2em;color:#c8f25a">{{ t.table }}</span>
+            <span style="font:500 13px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;white-space:nowrap">{{ t.laliga }} · {{ t.afterMd }}</span>
+            <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;text-align:right">{{ t.pl }}</span>
+            <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;text-align:right">{{ t.gd }}</span>
+            <span style="font:800 12px/1 -apple-system,system-ui;letter-spacing:.14em;color:#59626a;text-align:right">{{ t.pts }}</span>
+          </div>
+          <div style="position:relative;flex:1;display:flex;flex-direction:column;justify-content:space-between">
+            <sc-for list="{{ allRows }}" as="r" hint-placeholder-count="20">
+              <div style="display:grid;grid-template-columns:30px 22px minmax(0,1fr) 36px 44px 44px;gap:0 10px;align-items:center;height:30px;border-radius:8px;padding:0 8px;margin:0 -8px;background:{{ r.bg }};border-top:{{ r.divider }}">
+                <span style="display:flex;align-items:center;gap:7px;font:700 15px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:{{ r.posInk }}"><span style="width:3px;height:16px;border-radius:2px;background:{{ r.band }};flex:none"></span>{{ r.pos }}</span>
+                {{ r.img }}
+                <span style="font:600 16px/1 -apple-system,system-ui;letter-spacing:-.01em;color:{{ r.nameInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                <span style="font:500 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#6b747b;text-align:right">{{ r.pld }}</span>
+                <span style="font:500 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#6b747b;text-align:right">{{ r.gd }}</span>
+                <span style="font:800 16px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:{{ r.nameInk }};text-align:right">{{ r.pts }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;padding-top:34px">
+      <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">All twenty clubs at 15pt rows: 8pt names, 7pt numbers, crests at 11pt. The column header is folded into the title line and the legend is dropped — the 1.5pt zone band at the left of the position carries it (lime Champions League, sky Europa, dim red relegation) with hairlines at 6th/7th and 17th/18th.</div>
+      <div style="font:400 13px/1.55 -apple-system,system-ui;color:#8fa0a6;text-wrap:pretty">Followed rows: lime wash at 12%, lime position and points. Everyone else keeps the app's table greys.</div>
+      <div style="font:400 12px/1.5 -apple-system,system-ui;color:#59626a;text-wrap:pretty">Payload: <code style="color:#8fa0a6">rows[20]</code> of <code style="color:#8fa0a6">position · crestSlot · shortName · played · goalDiff · points · followed · zone</code>. Furniture (<code style="color:#8fa0a6">TABLE</code>, <code style="color:#8fa0a6">LALIGA · AFTER MD 4</code>) comes pre-formatted in the snapshot's <code style="color:#8fa0a6">Copy</code> struct. Under Larger Text the 20-row layout clips — fall back to a 10-row head-of-table with a seam for followed clubs. Tapping any row deep-links to that club; the header opens the Table tab.</div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;es&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'es'&quot;,&quot;section&quot;:&quot;Snapshot&quot;},&quot;followed&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;barcelona,athletic,levante&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Snapshot&quot;}}">
+class Component extends DCLogic {
+  CR = {barcelona:'7a3efd69d6a531bca5b9302d377bb4312268afff566f80f9d9e0b94744258006',
+    'real-madrid':'4290c089c722beb802ae124d63c4287f1274f14fe093a0c39ecc3bc81e3bf858',
+    atletico:'08eeee63b3528d564505dfcec064d31600380c0c53a30ab95d7c37bb26b9707a',
+    athletic:'7095530d2649d3d804fdd931954b2006e365bf98a41944743c6eca3d1438aa5d',
+    villarreal:'dd4e531a6722f5526b8870d2f5febf3812e5a70fdc80740a39a4de2e424e1c63',
+    betis:'031f7dd63003b4b12e1bfd5834b821e2fb76cbd1e6001e6a4529492111b9d921',
+    sevilla:'187c6c09c22f7c3f09c57e8bcda2ae528237770ed30a63de38de7a5fd4d7e89a',
+    valencia:'f6423dae22fc057c1732a1feae1021627ac44066e5be13d5b704230b24b915c5',
+    rayo:'681bb69bca062923424e79db1a9398e696a25ead4667ae19141f71a2c1bae9b3',
+    celta:'65ce11743027ab96a7193d7490403c4b43d200ae0d23ad8ee19116e3025ca9e7',
+    osasuna:'7f2d02469662b42632daa7f49123ec511cbbea7c23d1aab18382447d6af98553',
+    getafe:'f83b1f13181443f96193c3c8e77ace37d5de4801d6a4053aa369a7f2674f2252',
+    espanyol:'2a0bb68074176d128681cc91453365e0b073fdac7138a71735493b47347ef65c',
+    'real-sociedad':'6f0d19a078886eaa6f155247b0759caa47ca90a67184579844e9a516108c50a4',
+    alaves:'5b2dae24a0ea76cd51dc78481a752bfef6b3096961bde09d0b9e0a33ac5412f4',
+    elche:'9def8da16cc51e1f11eabab6f034daf5b9ec0134c7107a35bf92c0658b1c9883',
+    levante:'6cc26fb50d3c69c13099d524e17ae0be482f009ea2de233e13f20bd32e0b941a',
+    malaga:'4757b355704ca40444b8e72af33fbce9dfb6084e8b56b559482f7c2f29d830cb',
+    racing:'1ecb299106255c9100237c35979be3b97100d9621f2f2c4ad953fcfe3c675730',
+    deportivo:'c8094c935117ba5ada9a5381b30ab852c987861575690215859ed0ef9795a452'};
+
+  N = {barcelona:['Barcelona','BAR'],'real-madrid':['R. Madrid','RMA'],villarreal:['Villarreal','VIL'],atletico:['Atlético','ATM'],valencia:['Valencia','VAL'],athletic:['Athletic','ATH'],betis:['Betis','BET'],celta:['Celta','CEL'],sevilla:['Sevilla','SEV'],rayo:['Rayo','RAY'],osasuna:['Osasuna','OSA'],getafe:['Getafe','GET'],espanyol:['Espanyol','ESP'],'real-sociedad':['R. Sociedad','RSO'],elche:['Elche','ELC'],alaves:['Alavés','ALA'],deportivo:['Deportivo','DEP'],racing:['Racing','RAC'],levante:['Levante','LEV'],malaga:['Málaga','MLG']};
+
+  // id, pld, gf, ga, pts — mirrors ROWS in the app
+  ROWS = [['barcelona',4,12,3,12],['real-madrid',4,9,3,10],['villarreal',4,7,4,10],['atletico',4,8,4,9],['valencia',4,7,3,9],['athletic',4,6,4,8],['betis',4,6,5,7],['celta',4,4,3,6],['sevilla',4,5,6,6],['rayo',4,4,4,5],['osasuna',4,3,4,5],['getafe',4,3,4,4],['espanyol',4,4,6,4],['real-sociedad',4,3,5,4],['elche',4,2,4,3],['alaves',4,3,6,3],['deportivo',4,2,5,3],['racing',4,3,6,2],['levante',4,2,6,2],['malaga',4,2,10,1]];
+
+  img(id, size){
+    const abbr = this.N[id][1];
+    if (!this.CR[id]) return React.createElement('span', {style:{width:size, height:size, borderRadius:Math.round(size*.3), background:'#1e2126', border:'1px solid rgba(255,255,255,.14)', boxSizing:'border-box', display:'flex', alignItems:'center', justifyContent:'center', font:'900 ' + Math.round(size*.4) + 'px -apple-system,system-ui', color:'#a3abb0', flexShrink:0}}, abbr);
+    return React.createElement('img', {src:'https://altagamafc.crono-gol.com/storage/v1/object/public/team-assets/crests/' + this.CR[id] + '.png', alt:'', style:{width:size, height:size, objectFit:'contain', display:'block', flexShrink:0}});
+  }
+
+  renderVals(){
+    const es = (this.props.lang ?? 'en') === 'es';
+    const followed = String(this.props.followed ?? 'barcelona,athletic,levante').split(',').map(s => s.trim()).filter(Boolean);
+    const budget = 10;
+    const t = es
+      ? {table:'TABLA', laliga:'LALIGA', afterMd:'TRAS J4', club:'CLUB', pl:'PJ', gd:'DG', pts:'PTS', ucl:'Champions', uel:'Europa League', updated:'Actualizado 22:41'}
+      : {table:'TABLE', laliga:'LALIGA', afterMd:'AFTER MD 4', club:'CLUB', pl:'PL', gd:'GD', pts:'PTS', ucl:'Champions League', uel:'Europa League', updated:'Updated 22:41'};
+
+    // Head of the table, then any followed club below the cut arrives under a seam.
+    const idx = this.ROWS.map((r, i) => i);
+    const lowFollowed = idx.filter(i => followed.includes(this.ROWS[i][0]));
+    // Count followed clubs below the cut; each one costs a head row. Bounded pass, no loop.
+    const sortedLow = [...lowFollowed].sort((a, b) => b - a);
+    let head = budget;
+    for (const i of sortedLow) { if (i >= head) head -= 1; }
+    head = Math.max(0, head);
+    const tailFinal = lowFollowed.filter(i => i >= head);
+    const picks = [...idx.slice(0, head), ...tailFinal];
+
+    const rows = picks.map((i, k) => {
+      const [id, pld, gf, ga, pts] = this.ROWS[i];
+      const f = followed.includes(id);
+      const gd = gf - ga;
+      const seam = k > 0 && picks[k-1] !== i - 1;
+      return {
+        pos: i + 1, name: this.N[id][0], pld, pts,
+        gd: (gd > 0 ? '+' : '') + gd,
+        img: this.img(id, 30),
+        bg: f ? 'rgba(200,242,90,.12)' : 'transparent',
+        posInk: f ? '#c8f25a' : '#7c858b',
+        nameInk: f ? '#c8f25a' : '#e7ebec',
+        band: i < 4 ? '#c8f25a' : i < 6 ? '#5ac8fa' : 'transparent',
+        seam: seam ? '2px dotted rgba(255,255,255,.22)' : '1px solid transparent'
+      };
+    });
+    const allRows = this.ROWS.map((row, i) => {
+      const [id, pld, gf, ga, pts] = row;
+      const f = followed.includes(id);
+      const gd = gf - ga;
+      return {
+        pos: i + 1, name: this.N[id][0], pld, pts,
+        gd: (gd > 0 ? '+' : '') + gd,
+        img: this.img(id, 22),
+        bg: f ? 'rgba(200,242,90,.12)' : 'transparent',
+        posInk: f ? '#c8f25a' : '#7c858b',
+        nameInk: f ? '#c8f25a' : '#e7ebec',
+        band: i < 4 ? '#c8f25a' : i < 6 ? '#5ac8fa' : i >= 17 ? 'rgba(255,92,92,.7)' : 'transparent',
+        divider: (i === 6 || i === 17) ? '1px solid rgba(255,255,255,.10)' : '1px solid transparent'
+      };
+    });
+    return {t, rows, allRows};
+  }
+}
+</script>
+</body>
+</html>

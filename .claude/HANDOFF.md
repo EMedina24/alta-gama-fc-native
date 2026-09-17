@@ -25,7 +25,46 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-14 (latest) — THE BOARD IS THE READER'S: it has an EDIT MODE
+> ⭐ **NEW 2026-09-17 (latest) — A FOURTH WIDGET: STANDINGS, a league table in
+> the large tile ([0185](./decisions/0185-the-standings-widget.md)).** From
+> `handoff_standings_widget/`. Long-press → pick a league (the six domestic
+> tables plus the Champions League); tap anywhere → the Table tab on that league.
+>
+> ⚠⚠ **The handoff's Swift is NOT the ancestor** — wrong scheme, image-asset mark,
+> `AsyncImage` crests, hardcoded hairlines, 20-row assumption, unconditional
+> bands. `targets/widget/StandingsWidget.swift` was built from the mock CSS ÷2.
+>
+> ⚠⚠ **Swift decides NOTHING.** `src/features/standings/snapshot.ts` (pure) runs
+> the Table tab's own `bandsApply`/`cupBandsApply`, `completedMatchweek`, the
+> data-driven hairlines and the Champions League's 36→20-slot window, and writes
+> EVERY table to `widget/standings.json` — the widget's Edit sheet never tells
+> the app which league a tile shows. Harness: `node
+> scripts/standings-widget-harness.mjs` (33 assertions, real payloads).
+>
+> ⚠⚠ **The tap WRITES the shared league pick** (`?league=` → `setLeagueSlug`,
+> then the param is cleared). Matchdays and Clubs follow it. Deliberate — see
+> 0185 §6 — and not a trap-72 violation.
+>
+> ⚠ **Crests are per CLUB, in `standings-crests/`, NOT `crests/`.** URLs from
+> `GET /cronogol/crests?league=` (backend §135), resized on-device to ≤33px
+> (`src/features/standings/crests.ts`). WebP decodes directly; SVG goes through
+> `expo-image`'s coder (`Image.loadAsync` → the manipulator), so **Serie A and
+> the Bundesliga have real crests here and nowhere else in the widgets**. Own
+> sweep, only once every crest set answered.
+>
+> ⚠ **Names are `displayName`, not `widgetName`** — `widgetName`'s last-word
+> fallback printed two `Barcelona`s. Numbers may shrink, never truncate (PR's
+> `-204`).
+>
+> ⚠ No network in the extension and a `.never` policy: the tile is as fresh as
+> the reader's last app foreground; the meta line names the round.
+> `_debug/widgets` has a Standings section with a force-write.
+>
+> ⚠ **Not verified by hand yet** — the Edit-sheet picker, tinted/clear
+> home-screen modes (trap 60), and the cold deep link (trap 57; the dev client
+> fell to its launcher). A placed Bundesliga tile IS verified, crests included.
+
+> ⭐ **NEW 2026-09-14 — THE BOARD IS THE READER'S: it has an EDIT MODE
 > ([0174](./decisions/0174-the-board-is-the-readers.md)).** From
 > `handoff_edit-homescreen/`. An `EDIT` chip in the crown collapses every body
 > card to a 104pt row under a scrim; drag to reorder, tap `−` to remove, add it

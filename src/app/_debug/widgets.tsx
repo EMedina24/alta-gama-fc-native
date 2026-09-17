@@ -37,6 +37,15 @@ import { applyWidgetSnapshot, forgetWidgetSnapshot } from '@/features/widgets/sy
 import { newsImageExists } from '@/features/news/images';
 import { newsSnapshotFile, type NewsSnapshot } from '@/features/news/snapshot';
 import { applyNewsSnapshot, forgetNewsSnapshot } from '@/features/news/sync';
+import { standingsCrestExists } from '@/features/standings/crests';
+import type { StandingsSnapshot } from '@/features/standings/snapshot';
+import {
+  applyStandingsSnapshot,
+  forgetStandingsSnapshot,
+  standingsSnapshotFile,
+} from '@/features/standings/sync';
+import { useCrestSets } from '@/queries/use-crests';
+import { useAllSeasonJornadas, useStandings, useUclStandings } from '@/queries/use-standings';
 import { useNews } from '@/queries/use-news';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import type { WindowFixtureView } from '@/lib/cronogol/types';
@@ -53,6 +62,11 @@ export default function DebugWidgets() {
   const { copy, locale, phrases } = useI18n();
   const widgetWindow = useWidgetWindow(zone);
   const news = useNews();
+  // The STANDINGS widget's inputs (ADR 0185) — the same queries `usePushSync` runs.
+  const standings = useStandings();
+  const uclStandings = useUclStandings(true);
+  const jornadas = useAllSeasonJornadas();
+  const crestSets = useCrestSets(true);
 
   /**
    * ⭐ ADR 0080 — `?sample=live` / `?sample=ft` writes a FABRICATED in-play
@@ -83,6 +97,8 @@ export default function DebugWidgets() {
   const [liveOnDisk, setLiveOnDisk] = useState<string>('…');
   const [newsOnDisk, setNewsOnDisk] = useState<string>('…');
   const [newsImages, setNewsImages] = useState<string[]>([]);
+  const [standingsOnDisk, setStandingsOnDisk] = useState<string>('…');
+  const [standingsTables, setStandingsTables] = useState<string[]>([]);
   const [written, setWritten] = useState<string>('…');
   const [crests, setCrests] = useState<string[]>([]);
   const [allCrests, setAllCrests] = useState<string[]>([]);
@@ -120,6 +136,9 @@ export default function DebugWidgets() {
     const nextNews = await readNews();
     setNewsOnDisk(nextNews.summary);
     setNewsImages(nextNews.images);
+    const nextStandings = await readStandings();
+    setStandingsOnDisk(nextStandings.summary);
+    setStandingsTables(nextStandings.tables);
   }, []);
 
   // The `?sample=` auto-writer — see the param's docblock above.
@@ -305,6 +324,50 @@ export default function DebugWidgets() {
           forgetNewsSnapshot();
           await applyNewsSnapshot(news.data.articles, new Date(), copy);
           setStatus('news written');
+          await inspect();
+        }}
+      />
+
+      <Text variant="title">Standings</Text>
+      <Row
+        label="tables · cup · crest sets"
+        value={`${standings.data ? standings.data.tables.length : standings.isLoading ? '…' : 'error'} · ${
+          uclStandings.data ? `${uclStandings.data.rows.length} rows` : '—'
+        } · ${crestSets.crests.length} crests${crestSets.complete ? '' : ' (incomplete)'}`}
+      />
+      {/* ⚠ Read back from DISK, same argument as the fixture snapshot above. */}
+      <Row label="standings.json on disk" value={standingsOnDisk} />
+
+      <Text variant="eyebrowSm" color="textFaint">
+        Tables as written · rows · crests on disk / named · seam
+      </Text>
+      <View style={styles.box}>
+        <Text variant="micro" color="textSecondary" style={styles.mono}>
+          {standingsTables.length ? standingsTables.join('\n') : '(none)'}
+        </Text>
+      </View>
+
+      <Button
+        label="Write standings.json + warm crests + reload"
+        tone="secondary"
+        onPress={async () => {
+          if (!standings.data) return;
+          setStatus('writing standings… (first run downloads ~150 crests)');
+          forgetStandingsSnapshot();
+          await applyStandingsSnapshot(
+            {
+              tables: standings.data.tables,
+              ucl: uclStandings.data ?? null,
+              jornadas: jornadas.byLeague,
+              followed: prefs.followed,
+              leagueSlug: prefs.leagueSlug,
+              crestSets: crestSets.crests,
+              crestSetsComplete: crestSets.complete,
+            },
+            new Date(),
+            copy,
+          );
+          setStatus('standings written');
           await inspect();
         }}
       />
@@ -659,6 +722,34 @@ async function readNews(): Promise<{ summary: string; images: string[] }> {
     return {
       summary: `unreadable: ${error instanceof Error ? error.message : String(error)}`,
       images: [],
+    };
+  }
+}
+
+/** `standings.json` as it sits on disk, one line per table. */
+async function readStandings(): Promise<{ summary: string; tables: string[] }> {
+  const file = standingsSnapshotFile();
+  if (!file) return { summary: '(no App Group container)', tables: [] };
+  if (!file.exists) return { summary: '(not written yet)', tables: [] };
+
+  try {
+    const raw = await file.text();
+    const parsed = JSON.parse(raw) as StandingsSnapshot;
+    return {
+      summary: `${raw.length} B · v${parsed.v} · default ${parsed.defaultSlug} · ${parsed.writtenAt.replace('T', ' ').replace(/\.\d+Z$/, 'Z')}`,
+      tables: parsed.tables.map((table) => {
+        const named = table.rows.filter((row) => row.crestFile);
+        const present = named.filter((row) => row.crestFile && standingsCrestExists(row.crestFile));
+        const seam = table.rows.find((row) => row.seamAbove);
+        return `${table.slug.padEnd(22)} ${String(table.rows.length).padStart(2)} · ${present.length}/${named.length} · ${
+          seam ? `seam@${seam.rank}` : '-'
+        }\n  ${table.meta}`;
+      }),
+    };
+  } catch (error) {
+    return {
+      summary: `unreadable: ${error instanceof Error ? error.message : String(error)}`,
+      tables: [],
     };
   }
 }

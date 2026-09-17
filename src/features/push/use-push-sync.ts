@@ -12,7 +12,9 @@ import { upcomingBounds } from '@/lib/cronogol/fixture-window';
 import { mergeWindows, sliceWindow } from '@/lib/cronogol/team-window';
 import { formatKickoffTime, formatWidgetKickoff, formatWidgetKickoffParts } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/use-i18n';
+import { useCrestSets } from '@/queries/use-crests';
 import { useNews } from '@/queries/use-news';
+import { useAllSeasonJornadas, useStandings, useUclStandings } from '@/queries/use-standings';
 import { useTeamWindows } from '@/queries/use-team-windows';
 import { UPCOMING_DAYS, useUpcoming, useWidgetWindow } from '@/queries/use-today';
 import { useLocale, usePreferences, useZone } from '@/store/preferences';
@@ -20,6 +22,7 @@ import { useSession } from '@/store/session';
 import { useRouter } from 'expo-router';
 
 import { scheduleNewsSync } from '@/features/news/sync';
+import { scheduleStandingsSync } from '@/features/standings/sync';
 import { pinWidgetCrests } from '@/features/widgets/pins';
 import { buildSnapshot } from '@/features/widgets/snapshot';
 import { scheduleWidgetSync } from '@/features/widgets/sync';
@@ -50,6 +53,14 @@ export function usePushSync(): void {
   const teamWindows = useTeamWindows(zone, prefs.followed);
   // The NEWS widget's feed (ADR 0061). Global, one request, `STALE.feed`.
   const news = useNews();
+  // The STANDINGS widget's tables and artwork (ADR 0185). ⚠ `useStandings` and
+  // the jornada indexes are the SAME cache entries the Table tab reads, so a
+  // reader who opens that tab pays nothing extra; the cup table and the crest
+  // sets are gated on the widget capability.
+  const standings = useStandings();
+  const uclStandings = useUclStandings(WIDGETS_AVAILABLE);
+  const jornadas = useAllSeasonJornadas();
+  const crestSets = useCrestSets(WIDGETS_AVAILABLE);
   const session = useSession();
 
   // ⚠⚠ **The latest-value refs, and they are a BUG FIX, not a style choice
@@ -271,6 +282,25 @@ export function usePushSync(): void {
       // ⚠ Same re-arm, own file, own debounce and own change guard — the two
       // snapshots refresh on different clocks and must not hold each other up.
       if (WIDGETS_AVAILABLE && news.data) scheduleNewsSync(news.data.articles, now, copy);
+
+      // ⚠ Gated on the domestic tables ALONE: a failed cup table or crest set
+      // must not keep six leagues off the tile. The cup table simply joins on
+      // the next foreground; missing crests draw lettered tiles.
+      if (WIDGETS_AVAILABLE && standings.data) {
+        scheduleStandingsSync(
+          {
+            tables: standings.data.tables,
+            ucl: uclStandings.data ?? null,
+            jornadas: jornadas.byLeague,
+            followed: prefs.followed,
+            leagueSlug: prefs.leagueSlug,
+            crestSets: crestSets.crests,
+            crestSetsComplete: crestSets.complete,
+          },
+          now,
+          copy,
+        );
+      }
     };
 
     sync();
@@ -291,6 +321,14 @@ export function usePushSync(): void {
     // an `isRefetching` flip does NOT re-arm anything here; new DATA does.
     teamWindows.rows,
     news.data,
+    standings.data,
+    uclStandings.data,
+    // ⚠ Both identity-stable through `combine`'s structural sharing, like
+    // `teamWindows.rows` above.
+    jornadas.byLeague,
+    crestSets.crests,
+    crestSets.complete,
+    prefs.leagueSlug,
     prefs.followed,
     prefs.alertReminder,
     prefs.reminderLeads,

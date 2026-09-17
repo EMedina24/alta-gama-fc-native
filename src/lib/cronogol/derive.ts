@@ -177,6 +177,15 @@ const CREST_KEYS = {
    * Starting XI export canvas's contract.
    */
   hero: ["xlarge", "large", "svg", "medium", "100", "teamLogo", "70", "small", "50", "xsmall", "25", "20"],
+  /**
+   * The STANDINGS widget's 11pt row crest (ADR 0185), downscaled on the device
+   * to 33px before a widget ever decodes it. Smallest RASTER first, and `svg`
+   * is absent on purpose: a raster decodes straight through
+   * `expo-image-manipulator`, while an SVG needs `expo-image`'s coder first —
+   * the slower path, kept for clubs that publish nothing else. Those reach it
+   * through `crestSrc`'s terminal `logoUrl` (every Bundesliga club).
+   */
+  widget: ["xsmall", "small", "50", "70", "25", "20", "100", "medium", "teamLogo"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type CrestSize = keyof typeof CREST_KEYS;

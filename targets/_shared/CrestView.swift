@@ -58,6 +58,14 @@ struct CrestView: View {
 
   var tone: Tone = .solid
 
+  /// A path under the App Group to read INSTEAD of `crests/{fixtureId}/{slot}.png`.
+  ///
+  /// ⚠ The STANDINGS widget's rows (ADR 0185) have no fixture: their crests are
+  /// per CLUB, pre-resized by `src/features/standings/crests.ts` into
+  /// `standings-crests/`, and the snapshot names the exact file. Nil everywhere
+  /// else, so every existing caller reads the fixture layout unchanged.
+  var groupPath: String? = nil
+
   var body: some View {
     if let image = loaded {
       artwork(image)
@@ -114,13 +122,13 @@ struct CrestView: View {
 
   private var loaded: UIImage? {
     guard
-      let fixtureId,
+      let path = groupPath ?? fixtureId.map({ "crests/\($0)/\(slot).png" }),
       let container = FileManager.default.containerURL(
         forSecurityApplicationGroupIdentifier: "group.com.altagamafc.app"
       )
     else { return nil }
 
-    let url = container.appendingPathComponent("crests/\(fixtureId)/\(slot).png")
+    let url = container.appendingPathComponent(path)
     guard let data = try? Data(contentsOf: url) else { return nil }
     return UIImage(data: data)
   }

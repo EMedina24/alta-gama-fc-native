@@ -18,6 +18,7 @@
  */
 
 import type {
+  CrestSetView,
   FixtureEventsView,
   FixtureWindowView,
   JornadaView,
@@ -210,6 +211,28 @@ export async function getTeamSquad(slug: string): Promise<TeamSquadView | null> 
  */
 export async function getLeagues(): Promise<LeagueRef[]> {
   return get<LeagueRef[]>('/cronogol/leagues', toQuery({}));
+}
+
+/**
+ * `GET /cronogol/crests` — exactly one of `league` or `club`.
+ *
+ * - `league`: a slug from `getLeagues()`, or `champions-league` (the only one
+ *   that takes `season`).
+ * - `club`: answers that club's DOMESTIC league, never the Champions League.
+ */
+export type GetCrestsParams =
+  | { league: string; season?: number }
+  | { club: string };
+
+/**
+ * Every club crest in one competition (CRONOGOL.md §135). Smaller than
+ * `getTeams` — no venue, colours or sync metadata.
+ *
+ * 404 answers `null` — an unknown league or club, or a club with no published
+ * league. `expo-image` draws all four `format`s; pick URLs through `crestSrc`.
+ */
+export async function getCrests(params: GetCrestsParams): Promise<CrestSetView | null> {
+  return getOrNull<CrestSetView>('/cronogol/crests', toQuery({ ...params }));
 }
 
 // ---------------------------------------------------------------- jornadas

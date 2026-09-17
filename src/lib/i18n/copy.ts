@@ -127,6 +127,19 @@ export interface Copy {
     news: string;
     /** The feed is empty, or every story aged past 48h. */
     noHeadlines: string;
+    /**
+     * The STANDINGS widget's furniture (ADR 0185). ⚠ Column heads and the meta
+     * line are eyebrow-short on purpose — the header shares one 13pt line of a
+     * 338pt tile with the mark, the title and three numeric columns.
+     */
+    standings: string;
+    standingsPlayed: string;
+    standingsGoalDiff: string;
+    standingsPoints: string;
+    /** `AFTER MD 4` / `TRAS J4` — the meta line's round, uppercase in both. */
+    standingsAfter: (n: number) => string;
+    /** No table for this league yet — the app has not written one. */
+    noTable: string;
   };
   onboarding: {
     pickTitle: string;
@@ -1088,6 +1101,12 @@ export const esCopy: Copy = {
     fullTime: 'FIN',
     news: 'NOTICIAS',
     noHeadlines: 'Aún no hay titulares',
+    standings: 'TABLA',
+    standingsPlayed: 'PJ',
+    standingsGoalDiff: 'DG',
+    standingsPoints: 'PTS',
+    standingsAfter: (n: number) => `TRAS J${n}`,
+    noTable: 'Abre la app para cargar la tabla',
   },
 
   onboarding: {
@@ -1648,6 +1667,12 @@ export const enCopy: Copy = {
     fullTime: 'FT',
     news: 'NEWS',
     noHeadlines: 'No headlines yet',
+    standings: 'TABLE',
+    standingsPlayed: 'PL',
+    standingsGoalDiff: 'GD',
+    standingsPoints: 'PTS',
+    standingsAfter: (n: number) => `AFTER MD ${n}`,
+    noTable: 'Open the app to load the table',
   },
 
   onboarding: {

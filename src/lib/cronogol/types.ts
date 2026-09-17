@@ -258,6 +258,40 @@ export interface LeagueRef {
   accentColor: string | null;
 }
 
+// ---------------------------------------------------------------- crest sets
+
+/**
+ * A crest's file type, from its URL's extension (CRONOGOL.md §135).
+ * ⚠ `webp` (every Serie A club) and `svg` (every Bundesliga club) are normal.
+ * Satori cannot draw `webp` — the `/og/*` routes must fall back to the tile.
+ */
+export type CrestFormat = 'png' | 'svg' | 'webp' | 'jpg';
+
+/** One club in `CrestSetView.crests`. */
+export interface ClubCrestView {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  /** Null → draw the monogram tile. */
+  logoUrl: string | null;
+  /** The provider's own keys, exactly as `TeamView.logoUrls` — pick via `crestSrc`. */
+  logoUrls: Record<string, string> | null;
+  format: CrestFormat | null;
+}
+
+/** `GET /cronogol/crests` — every club crest in one competition. */
+export interface CrestSetView {
+  /** `LeagueRef` minus `accentColor`. `champions-league` has null logos. */
+  league: Omit<LeagueRef, 'accentColor'>;
+  /** The Champions League season served; null for a domestic league. */
+  season: number | null;
+  /** Echoes `club` when asked by club; null when asked by league. */
+  club: string | null;
+  count: number;
+  /** Sorted by name (provider display copy) — key on `slug`. */
+  crests: ClubCrestView[];
+}
+
 /**
  * ⚠ NOT `FixtureView`. A club page asks "what are *my* fixtures" and gets
  * `homeAway`/`opponent`/`goalsFor`/`goalsAgainst`; a jornada page has no

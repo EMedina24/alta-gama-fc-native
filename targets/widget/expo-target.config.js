@@ -35,7 +35,9 @@ module.exports = {
     // `news/{id}.jpg`, and since ADR 0080 `widget/live.json` — which it also
     // WRITES, alongside the app and the notification service extension. Since
     // 0080 the container is no longer the *only* channel: the provider makes
-    // one rationed network call (`/cronogol/live`, match windows only).
+    // one rationed network call (`/cronogol/live`, match windows only). Since
+    // ADR 0185 it also reads `widget/standings.json` and
+    // `standings-crests/{slug}.{hash}.png` (per CLUB, not per fixture).
     'com.apple.security.application-groups': ['group.com.altagamafc.app'],
   },
 };

@@ -8,7 +8,7 @@
  * suppressed) and `completedMatchweek` (why the caption is measured against the
  * table's own `lastMatchUtc` and not the wall clock).
  */
-import { findLeagueByApiSlug } from "./leagues";
+import { byEditorialOrder, findLeagueByApiSlug } from "./leagues";
 import type { League, ZoneKind } from "./leagues";
 import type { StandingsRowView, StandingsTableView } from "./types";
 
@@ -72,6 +72,26 @@ export function zoneFor(rank: number, league: League): ZoneKind | null {
  */
 export function bandsApply(table: StandingsTableView, league: League): boolean {
   return table.clubs === league.clubCount && table.matchesPlayed > 0;
+}
+
+/**
+ * The published tables this app can draw, in editorial order.
+ *
+ * ⚠ Filtered to leagues we hold config for, and sorted editorially. The API
+ * returns tables including `segunda`, which has no `League` entry — and a table
+ * with no config cannot be banded, so showing it would be a tab whose rails
+ * silently never appear. Shared by the Table screen and the standings widget
+ * snapshot (ADR 0185), which must list the same leagues in the same order.
+ */
+export function editorialTables(
+  tables: readonly StandingsTableView[] | undefined,
+): { table: StandingsTableView; league: League }[] {
+  return (tables ?? [])
+    .map((table) => ({ table, league: findLeagueByApiSlug(table.league.slug) }))
+    .filter((entry): entry is { table: StandingsTableView; league: League } =>
+      Boolean(entry.league),
+    )
+    .sort((a, b) => byEditorialOrder(a.league, b.league));
 }
 
 /**
