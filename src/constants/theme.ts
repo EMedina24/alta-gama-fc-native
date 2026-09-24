@@ -45,6 +45,23 @@ const dark = {
   plateDark: 'rgba(4,9,8,0.8)',
   plateLine: 'rgba(255,255,255,0.18)',
   plateTop: 'rgba(255,255,255,0.12)',
+  /**
+   * The BODY plate (ADR 0186) — LAST RESULT's ground, one step lighter than
+   * `plateDark`. That card is the first body card, and on an idle board (no
+   * live match, no NEXT UP) the crown collapses to eyebrow + title while its
+   * gradient layer keeps its 432pt (`CrownRamp`, ADR 0094) — so the card sits
+   * on the lime→green band wearing dark-theme inks. Measured on 6 % glass
+   * there: `text` 2.7, the losing side's `textDim` 1.1. At 0.6 black `text`
+   * clears 8–13, `textDim` 3.3–5.1, `textSecondary` 3.9–5.9.
+   *
+   * ⚠ `textFaint` does NOT survive it (≤ 2.2). A quiet ink on EITHER plate
+   * steps up to `textSecondary`: the card's label, the outcome pill's `plate`
+   * tone, the events disclosure.
+   *
+   * ⚠ Not `plateDark`: Ed's known-too-dark ceiling for a card that is not the
+   * live match (ADR 0184). Not `recess`: 0.28 black leaves `textDim` under 2.
+   */
+  plateBody: 'rgba(4,9,8,0.6)',
 
   /**
    * Ink ON THE CROWN — the app's one inverted surface (ADR 0087).

@@ -25,7 +25,24 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-17 (latest) — A FOURTH WIDGET: STANDINGS, a league table in
+> ⭐ **NEW 2026-09-24 (latest) — LAST RESULT IS A DARK PLATE, and the board
+> pair STACKS ([0186](./decisions/0186-the-last-result-card-goes-dark-plate.md)).**
+> Ed, off the idle Board: the card's text was unreadable and `Atlético de Madrid`
+> shrank. On an idle board (no live match, no NEXT UP) the crown collapses but its
+> 432pt gradient does not, so the first body card sits ON the bright band.
+>
+> ⚠ **`plateBody` (0.6 near-black) is the card's ground now**, one step lighter
+> than LivePlate's `plateDark`. `textFaint` still fails on it, so quiet inks on
+> either plate are `textSecondary`: `Pill tone="plate"`, and `EventsDisclosure`
+> changed in place (both its consumers are plates).
+>
+> ⚠⚠ **`ScoreLine`'s board size is NEXT UP's crest-over-name pair**, so the LIVE
+> plate changed too. Names wrap to two lines and never shrink. The shrink's root
+> cause is **trap 77**: Fabric ignores `minimumFontScale`. `Mönchengladbach` still
+> loses two letters on a 375pt phone. The card is a plate on EVERY day, including
+> under NEXT UP where it sits on the mesh.
+
+> ⭐ **NEW 2026-09-17 — A FOURTH WIDGET: STANDINGS, a league table in
 > the large tile ([0185](./decisions/0185-the-standings-widget.md)).** From
 > `handoff_standings_widget/`. Long-press → pick a league (the six domestic
 > tables plus the Champions League); tap anywhere → the Table tab on that league.
@@ -2076,6 +2093,22 @@ documented at the code that handles them; this is the index.
     conditional: the fragment exists only while editing. ⚠ The same shape bites
     anywhere a component branches on `children`/`payload` being present — an array,
     a fragment and a `null`-returning child are all truthy to that test.
+
+77. **⚠⚠ On Fabric, `minimumFontScale` is a NO-OP — the shrink floor is 4pt.**
+    RN 0.86 parses it (`node_modules/react-native/ReactCommon/react/renderer/attributedstring/conversions.h:1025`),
+    but the iOS layout manager reads only `paragraphAttributes.minimumFontSize`
+    (`…/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm:247`,
+    `!isnan(minimumFontSize) ? minimumFontSize : 4.0`), and JS never sends that:
+    `TextProps` has no such prop. Paper computed `MAX(minimumFontScale × pointSize, 4)`
+    (`Libraries/Text/Text/RCTTextShadowView.mm:236`). The board's club names
+    rendered at 8–13pt behind a `0.7` floor, which is why they stack and wrap now
+    ([0186](./decisions/0186-the-last-result-card-goes-dark-plate.md)).
+    ⚠ Still floorless: `atoms/crest.tsx` (0.7), `molecules/rail-card.tsx` (0.6 ×2),
+    `molecules/event-row.tsx` (0.8), `atoms/slot-token.tsx` (0.6 ×2),
+    `organisms/player-sheet.tsx` (0.8). Each is bounded by its box today, not by
+    the floor. Read `adjustsFontSizeToFit` as "shrinks without limit": give the
+    text a box it can fill, or let it wrap. This qualifies trap 33. `tsc`, lint
+    and the type defs all accept the prop; only the simulator shows the size.
 
 ---
 

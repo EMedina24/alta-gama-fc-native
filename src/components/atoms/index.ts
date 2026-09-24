@@ -13,7 +13,7 @@ export { FormChip, type FormResult } from './form-chip';
 export { Grabber } from './grabber';
 export { Hairline } from './hairline';
 export { HandleGlyph, type HandleGlyphProps } from './handle-glyph';
-export { Pill } from './pill';
+export { Pill, type PillTone } from './pill';
 export { PlayerPhoto, type PlayerPhotoProps } from './player-photo';
 export { Score, type ScoreProps, type ScoreSize } from './score';
 export { Skeleton, SkeletonRows } from './skeleton';

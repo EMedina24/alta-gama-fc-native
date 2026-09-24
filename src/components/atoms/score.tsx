@@ -33,6 +33,10 @@ export interface ScoreProps {
    * `board` is the Today hero, `rowLg` the jornada row's column, `row` a list
    * line. ⚠ `Type.numeral` is pinned at 16 by `theme.ts` — size the rule, not
    * the type, if one of these needs to change.
+   *
+   * ⚠ At `board` the atom sits in `ScoreLine`'s crest-high column (ADR 0186);
+   * its ≈ 45pt line box overflows the 40pt box on purpose. Pin a `lineHeight`
+   * on `scoreLarge` and re-check that centring.
    */
   size?: ScoreSize;
   /**

@@ -12,8 +12,8 @@
  * ⚠ Not in SPEC §5's molecule list; added because the screen's own spec (§3.2)
  * describes it in detail and it is reused by the prev/next pair.
  */
-import { useEffect, useRef, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
@@ -28,8 +28,9 @@ export interface MatchdayStripProps {
   label: (n: number) => string;
   /**
    * A control PINNED to the row's right end, outside the scroller — the Calendar
-   * pill (ADR 0165). Absent keeps the original full-bleed strip, whose last
-   * round runs off the screen edge.
+   * pill (ADR 0165). The scroller beside it then shows WHOLE pills only (ADR
+   * 0187). Absent keeps the original full-bleed strip, whose last round runs
+   * off the screen edge.
    */
   trailing?: ReactNode;
 }
@@ -73,13 +74,40 @@ export function MatchdayStrip({
     scroller.current?.scrollTo({ x: Math.max(0, (current - 1 - LEAD) * SLOT), animated: true });
   }, [current]);
 
+  /**
+   * The width the scroller may take beside a pinned `trailing`, measured.
+   *
+   * ⚠ **A pinned strip shows WHOLE pills only** (ADR 0187). Left to fill the
+   * row, the viewport ended wherever the Calendar pill began, so the last round
+   * was drawn sliced against it — the right-hand twin of the `SLOT` bug above. The
+   * viewport is snapped DOWN to a whole number of slots and the remainder (under
+   * one slot) stays empty, reading as part of the gap before the pill.
+   *
+   * ⚠ `null` until the first layout, which renders the scroller unconstrained
+   * rather than empty — one frame of the old look beats a blank row.
+   */
+  const [room, setRoom] = useState<number | null>(null);
+  const fit = room === null ? null : Math.max(1, Math.floor((room + Spacing.two) / SLOT));
+  const onRoom = (e: LayoutChangeEvent) => setRoom(e.nativeEvent.layout.width);
+
   return (
     <View style={styles.row}>
+    <View style={styles.scroller} onLayout={trailing ? onRoom : undefined}>
     <ScrollView
       ref={scroller}
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={styles.scroller}
+      style={trailing && fit !== null ? { width: fit * SLOT - Spacing.two } : undefined}
+      /**
+       * ⚠ The drag's twin of the `SLOT` rule: a hand-scroll comes to rest on a
+       * pill edge too, never mid-pill. With `trackPinned` (no tail pad) the end
+       * of the track is also a whole number of slots, so the last round lands
+       * flush. The full-bleed strip keeps free scrolling — its tail pad is off
+       * the grid by design.
+       */
+      snapToInterval={trailing ? SLOT : undefined}
+      decelerationRate={trailing ? 'fast' : 'normal'}
+      disableIntervalMomentum={!!trailing}
       contentContainerStyle={[styles.track, trailing ? styles.trackPinned : styles.trackBleed]}>
       {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
         const active = n === current;
@@ -104,6 +132,7 @@ export function MatchdayStrip({
         );
       })}
       </ScrollView>
+    </View>
       {trailing}
     </View>
   );
@@ -115,9 +144,12 @@ const styles = StyleSheet.create({
    * beside it rather than scrolling away with the chips, which the mock's own
    * row shows. `flexShrink` on the scroller is what keeps the pill at its
    * intrinsic width — content with an intrinsic width gets flex: 0, never a share.
+   *
+   * ⚠ `scroller` is now the WRAPPER that measures the room (ADR 0187); the
+   * ScrollView inside it takes a whole-slot width, not the wrapper's.
    */
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  scroller: { flexGrow: 1, flexShrink: 1 },
+  scroller: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
   track: { gap: Spacing.two },
   /** Full-bleed: the tail pad lets the last round clear the screen's own edge. */
   trackBleed: { paddingRight: Spacing.five },

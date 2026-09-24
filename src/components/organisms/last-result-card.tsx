@@ -11,6 +11,23 @@
  * 3-hourly, finished-only sweep has not reached. The panel says "aren't
  * published yet", which is true in both worlds and must never be tidied into
  * "no goals" (ADR 0045).
+ *
+ * ⚠ A DARK PLATE, not glass (ADR 0186) — LivePlate's shell one step lighter
+ * (`plateBody`). This is the first body card, and on an idle board (no live
+ * match, no NEXT UP) the crown collapses to eyebrow + title while its gradient
+ * layer keeps its 432pt (`CrownRamp`, ADR 0094), so the card sits on the
+ * lime→green band at y ≈ 141–283. On 6 % white glass the inks measured `text`
+ * 2.7 and the losing side's `textDim` 1.1. Quiet inks step up with the ground:
+ * the label, the outcome pill (`tone="plate"`) and the disclosure are
+ * `textSecondary`, because `textFaint` is ≤ 2.2 even on the plate.
+ *
+ * ⚠ It is a plate on EVERY day — under NEXT UP it sits on the mesh and reads a
+ * step darker than the glass cards below it. Ed's call: one card, one surface.
+ *
+ * ⚠ The events panel's `recess` stacks on the plate to ≈ 0.71 black — darker
+ * than the card, lighter than LivePlate's own stack (≈ 0.86) — so the
+ * expansion still reads as recessed and the panel's inks sit on a ground the
+ * live plate has already proved.
  */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -38,7 +55,7 @@ export interface LastResultCardProps {
   meta: string;
   /**
    * A competition lockup between the label and `meta` (ADR 0133), in the
-   * row's faint ink. The screen resolves it (`competitionMarkKind`); a
+   * row's quiet ink. The screen resolves it (`competitionMarkKind`); a
    * competition without a mark keeps its name in `meta` instead.
    */
   mark?: CompetitionMarkKind | null;
@@ -97,6 +114,9 @@ export function LastResultCard({
 
   return (
     <View style={styles.card}>
+      {/* The lit top edge — a border on an overlay, the repo's inset-highlight
+          idiom (`live-plate.tsx`, `next-up-card.tsx`). */}
+      <View pointerEvents="none" style={styles.plateTop} />
       <View style={styles.pad}>
         <View style={styles.headRow}>
           {mark ? (
@@ -104,22 +124,22 @@ export function LastResultCard({
             // spelled (ADR 0133), between the label and the date, with the
             // separators the text form would have worn.
             <View style={styles.metaRow}>
-              <Text variant="eyebrowSm" color="textFaint">
+              <Text variant="eyebrowSm" color="textSecondary">
                 {copy.lastResult} ·
               </Text>
               {/* White like the club names — the mark keeps one voice on both
-                  cards (Ed's call, ADR 0133), even between faint texts. */}
+                  cards (Ed's call, ADR 0133), even between quiet texts. */}
               <CompetitionMark kind={mark} height={Size.competitionMark} color="text" />
-              <Text variant="eyebrowSm" color="textFaint">
+              <Text variant="eyebrowSm" color="textSecondary">
                 · {meta}
               </Text>
             </View>
           ) : (
-            <Text variant="eyebrowSm" color="textFaint">
+            <Text variant="eyebrowSm" color="textSecondary">
               {copy.lastResult} · {meta}
             </Text>
           )}
-          {outcome ? <Pill label={outcome} /> : null}
+          {outcome ? <Pill label={outcome} tone="plate" /> : null}
         </View>
         <ScoreLine home={home} away={away} noScoreLabel={copy.noScore} />
       </View>
@@ -151,19 +171,36 @@ export function LastResultCard({
 
 const styles = StyleSheet.create({
   /**
-   * Glass over the mesh (ADR 0087), and FLUSH: the events panel must run edge
-   * to edge inside the rounded corners, so the padding lives on `pad`.
+   * A dark PLATE (ADR 0186) — LivePlate's shell with `plateBody` for its
+   * ground — and FLUSH: the events panel must run edge to edge inside the
+   * rounded corners, so the padding lives on `pad`.
    *
-   * ⚠ `overflow: 'hidden'` is load-bearing. Without it the panel's ground
-   * squares off the two bottom corners the card just rounded, which reads as a
-   * rendering fault rather than a style choice.
+   * ⚠ `overflow: 'hidden'` is load-bearing twice: without it the panel's
+   * ground squares off the two bottom corners the card just rounded, which
+   * reads as a rendering fault, and `plateTop` would draw past the shell.
    */
   card: {
-    backgroundColor: Colors.dark.glassFill,
+    backgroundColor: Colors.dark.plateBody,
+    borderRadius: Radius.card,
+    borderWidth: Size.glassBorder,
+    borderColor: Colors.dark.plateLine,
+    overflow: 'hidden',
+  },
+  /**
+   * The lit top edge — NEXT UP's `topEdge` form, not LivePlate's: all four
+   * sides at 1pt, three transparent, or the chord runs straight across the
+   * rounded corners.
+   */
+  plateTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: Colors.dark.glassLine,
-    overflow: 'hidden',
+    borderColor: 'transparent',
+    borderTopColor: Colors.dark.plateTop,
   },
   pad: { padding: Spacing.four, gap: Spacing.three },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

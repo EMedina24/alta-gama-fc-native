@@ -643,7 +643,9 @@ export default function GalleryScreen() {
    * elimination rule cresting the slug-less away column. The Copa case keeps
    * the still-closed branch on screen: no chevron (unverified competition),
    * the spelled name (ADR 0133's text fallback), so the UCL flip never reads
-   * as "cups are open now".
+   * as "cups are open now". The last two cases are the long pairings the
+   * stacked pair exists for (ADR 0186): the reported Atlético de Madrid v Real
+   * Madrid, and Borussia Mönchengladbach v Bayern München.
    */
   const lastResultCases = (
     <>
@@ -691,6 +693,40 @@ export default function GalleryScreen() {
           home={LIVE_SIDE('Barcelona', 'BAR', 2, false)}
           away={LIVE_SIDE('Athletic Club', 'ATH', 0, true)}
           meta="Copa del Rey · SAT 5 SEP"
+          outcome={phrases.formLetters.W}
+          copy={copy.today}
+          events={copy.events}
+          matchEvents={false}
+        />
+      </Case>
+      {/* ⚠ The two pairings that broke the ROW layout (ADR 0186): the reported
+          one, and the longest pair in the catalogue. Each name must reach its
+          second line whole — no ellipsis, no scaling, one size both sides.
+          Stand-in ids and `matchEvents={false}`: no panel, so no fetch and no
+          refs. ⚠ The gallery's ground is `background`, not the crown band —
+          the plate's contrast is only judged on the Today tab, idle board. */}
+      <Case label="Atlético de Madrid v Real Madrid — the reported pairing: both wrap, one size (ADR 0186)">
+        <LastResultCard
+          id="gallery-derbi"
+          homeTeam={null}
+          awayTeam={null}
+          home={LIVE_SIDE('Atlético de Madrid', 'ATM', 1, true)}
+          away={LIVE_SIDE('Real Madrid', 'RMA', 2, false)}
+          meta={`${copy.today.md(6)} · SAT 26 SEP`}
+          outcome={phrases.formLetters.L}
+          copy={copy.today}
+          events={copy.events}
+          matchEvents={false}
+        />
+      </Case>
+      <Case label="Borussia Mönchengladbach v Bayern München — the longest pair: second line, no truncation">
+        <LastResultCard
+          id="gallery-gladbach"
+          homeTeam={null}
+          awayTeam={null}
+          home={LIVE_SIDE('Borussia Mönchengladbach', 'BMG', 0, true)}
+          away={LIVE_SIDE('Bayern München', 'FCB', 4, false)}
+          meta={`${copy.today.md(5)} · SAT 26 SEP`}
           outcome={phrases.formLetters.W}
           copy={copy.today}
           events={copy.events}
