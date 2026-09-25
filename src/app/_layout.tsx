@@ -1,4 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import * as Font from 'expo-font';
 import { Stack, useRouter, useSegments, type NativeStackNavigationOptions } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -53,7 +54,18 @@ export default function RootLayout() {
   // already signed in.
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    Promise.all([hydratePreferences(), hydrateSession(), hydrateStartingXi()]).finally(() => setReady(true));
+    // ⚠ The crown-title face (ADR 0188) loads here too, so no screen paints its
+    // title in SF and then swaps. It is ALSO embedded by the `expo-font` plugin;
+    // this runtime load is what lets a dev client built before the font existed
+    // show it, and is a no-op cost once embedded.
+    Promise.all([
+      hydratePreferences(),
+      hydrateSession(),
+      hydrateStartingXi(),
+      Font.loadAsync({
+        'SairaExtraCondensed-ExtraBold': require('../../assets/fonts/SairaExtraCondensed-ExtraBold.ttf'),
+      }).catch(() => {}),
+    ]).finally(() => setReady(true));
   }, []);
 
   // ⚠ This is what makes the `return null` below survivable. Without it the
@@ -171,6 +183,14 @@ export default function RootLayout() {
             options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
           />
           <Stack.Screen name="(sheets)/xi-export" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+          {/* One finished match's stats, from a played club-page row (ADR 0190).
+              Two detents: 0.75 shows the score and the goal flow; the full
+              detent brings the head-to-head and the timeline up without a
+              scroll. */}
+          <Stack.Screen
+            name="(sheets)/match-stats"
+            options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }}
+          />
         </Stack>
         {/* Rendered AFTER the Stack: topmost sibling (it eats every touch until
             it leaves), and the last-mounted status bar entry, so its light bar

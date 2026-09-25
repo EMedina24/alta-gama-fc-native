@@ -17,8 +17,8 @@
  * every away result — and now the emphasis too: the `Score` atom dims whichever
  * DIGIT is lower, so a swap dims the wrong side of an away loss (ADR 0044).
  */
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Crest, Score, Text, WashGradient } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
@@ -49,6 +49,17 @@ export interface SeasonSpineProps {
    * is a real state and not a degradation.
    */
   tint?: string | null;
+  /**
+   * Opens a PLAYED row's match-stats sheet (ADR 0190). Absent keeps every row
+   * inert, as before.
+   *
+   * ⚠ Only a played row becomes a `Pressable`. Wrapping an upcoming one would
+   * give VoiceOver a button that does nothing — worse than no affordance,
+   * because it is one a reader goes looking for (`fixture-list.tsx`'s rule).
+   */
+  onOpen?: (fixture: FixtureView) => void;
+  /** The VoiceOver hint on a played row — what the tap does. */
+  openHint?: string;
 }
 
 function outcomeStyle(result: 'W' | 'D' | 'L' | null) {
@@ -65,6 +76,8 @@ export function SeasonSpine({
   phrases,
   roundPrefix,
   tint = null,
+  onOpen,
+  openHint,
 }: SeasonSpineProps) {
   const next = nextUpIndex(data.fixtures);
   /**
@@ -130,7 +143,17 @@ export function SeasonSpine({
               />
             </View>
 
-            <View style={[styles.card, isNext && styles.cardNext, past && styles.cardPast]}>
+            <CardShell
+              style={[styles.card, isNext && styles.cardNext, past && styles.cardPast]}
+              onPress={played && onOpen ? () => onOpen(fixture) : undefined}
+              label={
+                played
+                  ? `${fixture.homeAway === 'A' ? `${phrases.at} ` : ''}${
+                      fixture.opponent ? displayName(fixture.opponent) : phrases.unknownOpponent
+                    }, ${fixture.goalsFor}–${fixture.goalsAgainst}`
+                  : undefined
+              }
+              hint={openHint}>
               <Crest
                 src={crestSrc(fixture.opponentLogoUrls, fixture.opponentLogoUrl, 'xsmall')}
                 fallback={
@@ -179,7 +202,7 @@ export function SeasonSpine({
                   {fixture.kickoffTbd ? '--:--' : formatKickoffTime(fixture.kickoffUtc, zone, clock)}
                 </Text>
               )}
-            </View>
+            </CardShell>
           </View>
         );
       })}
@@ -187,7 +210,41 @@ export function SeasonSpine({
   );
 }
 
+/**
+ * The card's shell: a `Pressable` when there is something to open, a plain
+ * `View` otherwise — see `onOpen`. ⚠ Pressed state is SCALE, not opacity: a
+ * past card already sits at `cardPast`'s 0.62, and a fade on top of that reads
+ * as the row disabling itself.
+ */
+function CardShell({
+  style,
+  onPress,
+  label,
+  hint,
+  children,
+}: {
+  style: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  label?: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  if (!onPress) return <View style={style}>{children}</View>;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      // One stop for the whole card: "at Girona, 4–1".
+      accessibilityLabel={label}
+      accessibilityHint={hint}
+      style={({ pressed }) => [style, pressed && styles.cardPressed]}>
+      {children}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  cardPressed: { transform: [{ scale: 0.98 }] },
   item: { flexDirection: 'row', alignItems: 'stretch', gap: Spacing.two, minHeight: 72 },
   railColumn: { width: 46, justifyContent: 'center' },
   date: { lineHeight: 13 },

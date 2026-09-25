@@ -953,7 +953,8 @@ export const Radius = {
 } as const;
 
 /**
- * Type: system font (SF Pro) throughout — no expo-font, no licensing, and it
+ * Type: system font (SF Pro) throughout — except the crown titles, on trial in
+ * Saira Extra Condensed (ADR 0188) — no licensing, and it
  * inherits Dynamic Type. Sizes are the iOS scale, not the web app's.
  * Every numeric run sets fontVariant: ['tabular-nums'].
  *
@@ -972,8 +973,30 @@ export const Type = {
    * photo). `crownTitleLg` is the Clubs screen's 48, whose subhead carries
    * the follow count.
    */
-  crownTitle: { fontSize: 40, fontWeight: '300', letterSpacing: -1.6 },
-  crownTitleLg: { fontSize: 48, fontWeight: '300', letterSpacing: -1.9 },
+  /**
+   * ⚠ TRIAL (ADR 0188): the Medina Digital signature face — Saira Extra
+   * Condensed 800, uppercase, −0.005em — replacing 0131's SF 300 on the crown
+   * titles only. `heroTitle` is untouched, so the two voices now differ; that
+   * is the open question the trial is for. `fontFamily` is the POSTSCRIPT name
+   * (a wrong one silently renders SF); no `fontWeight`, the face IS the weight.
+   * ⚠ `lineHeight` must clear an ACCENTED CAP: pinned at ~1.05× it clipped the
+   * acute off `CLASIFICACIÓN`, which then read as a misspelling. ~1.2× keeps
+   * `Ó`/`É` whole.
+   */
+  crownTitle: {
+    fontFamily: 'SairaExtraCondensed-ExtraBold',
+    fontSize: 44,
+    lineHeight: 53,
+    letterSpacing: -0.2,
+    textTransform: 'uppercase',
+  },
+  crownTitleLg: {
+    fontFamily: 'SairaExtraCondensed-ExtraBold',
+    fontSize: 52,
+    lineHeight: 62,
+    letterSpacing: -0.26,
+    textTransform: 'uppercase',
+  },
   /**
    * A hero INSIDE content: the club page's name (ADR 0091) and the welcome
    * screen's two-line statement. 36 because club names run long
@@ -1542,6 +1565,23 @@ export const SeasonStats = {
   draw: 800,
   /** Between neighbouring bars inside ONE chart — not between cards. */
   barStagger: 22,
+} as const;
+
+/**
+ * The match-stats sheet (ADR 0190). Its timings are `SeasonStats`' — one
+ * motion language for every chart in the app — so only geometry lives here.
+ */
+export const MatchStats = {
+  /** The goal-flow plot's own height, axis labels excluded. */
+  flowHeight: 132,
+  /** Room left of the plot for the goal-count ticks. */
+  flowGutter: 18,
+  /** The step lines — `SparkArea`'s weight, so the two charts read as one family. */
+  flowStroke: 2.5,
+  /** A goal's dot radius on the step. */
+  flowDot: 4,
+  /** One head-to-head bar's thickness. */
+  barHeight: 6,
 } as const;
 
 export const BottomTabInset = 80; // matches the designed bar height (ADR 0005 note)

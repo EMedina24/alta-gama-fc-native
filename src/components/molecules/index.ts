@@ -51,3 +51,5 @@ export { BarSeries, type BarEntry, type BarSeriesProps } from './bar-series';
 export { RunStrip, type RunStripProps } from './run-strip';
 export { StatCard, type StatCardProps } from './stat-card';
 export { GoalsLine, type GoalsLineProps } from './goals-line';
+export { GoalFlowChart, type FlowSeries, type GoalFlowChartProps } from './goal-flow-chart';
+export { VersusBars, type VersusBarsProps, type VersusRow } from './versus-bars';

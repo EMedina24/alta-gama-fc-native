@@ -563,6 +563,28 @@ export interface Copy {
     expand: string;
     collapse: string;
   };
+  /**
+   * The match-stats sheet a played club-page row opens (ADR 0190).
+   *
+   * ⚠⚠ **These are EVENT counts, not match statistics** — no possession, shots
+   * or xG exist on the API. Never label a row as if they did.
+   */
+  matchStats: {
+    /** The goal-flow card's eyebrow. */
+    goalFlow: string;
+    /** The head-to-head card's eyebrow. */
+    headToHead: string;
+    goals: string;
+    yellow: string;
+    red: string;
+    subs: string;
+    /** The half-time rule's label on the chart — short, it sits in a 24pt slot. */
+    halfTime: string;
+    /** VoiceOver hint on a played row: what the tap does. */
+    open: string;
+    notFound: string;
+    done: string;
+  };
   club: {
     alertsOn: string;
     alertsOff: string;
@@ -1349,6 +1371,19 @@ export const esCopy: Copy = {
     collapse: 'Ocultar los sucesos del partido',
   },
 
+  matchStats: {
+    goalFlow: 'Evolución del marcador',
+    headToHead: 'Cara a cara',
+    goals: 'Goles',
+    yellow: 'Amarillas',
+    red: 'Rojas',
+    subs: 'Cambios',
+    halfTime: 'Desc.',
+    open: 'Ver las estadísticas del partido',
+    notFound: 'No encontramos este partido.',
+    done: 'Listo',
+  },
+
   club: {
     alertsOn: 'Avisos activados',
     alertsOff: 'Avisos de partido',
@@ -1913,6 +1948,19 @@ export const enCopy: Copy = {
     error: "Couldn't load the events.",
     expand: 'Show match events',
     collapse: 'Hide match events',
+  },
+
+  matchStats: {
+    goalFlow: 'Goal flow',
+    headToHead: 'Head to head',
+    goals: 'Goals',
+    yellow: 'Yellow cards',
+    red: 'Red cards',
+    subs: 'Substitutions',
+    halfTime: 'HT',
+    open: 'Shows the match stats',
+    notFound: 'We could not find this match.',
+    done: 'Done',
   },
 
   club: {

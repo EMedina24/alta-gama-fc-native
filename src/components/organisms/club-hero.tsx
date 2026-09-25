@@ -1,7 +1,7 @@
 /**
  * The club page's hero (ADR 0091): the club's colour as a corner-lit wash, its
- * crest bled huge off the bottom-left, a back pill, the league eyebrow, the
- * name at `heroTitle`, its ground, and the crest at reading size.
+ * crest bled huge off the bottom-right, a back pill, the league eyebrow, the
+ * crest at reading size, then the name at `heroTitle` and its ground (ADR 0189).
  *
  * Replaces `club-header.tsx`'s identity block. The subscribe buttons that
  * organism also carried moved into the club page's alerts+calendar tray.
@@ -41,12 +41,12 @@ import type { FixtureView, TeamView } from '@/lib/cronogol/types';
 /** A 34pt pill is below `minTouch`, and carries hitSlop to make the difference up. */
 const PILL_SLOP = { top: (Size.minTouch - Size.pill) / 2, bottom: (Size.minTouch - Size.pill) / 2 };
 
-/** How far the wallpaper crest hangs off the bottom-left corner. */
+/** How far the wallpaper crest hangs off the bottom-RIGHT corner (ADR 0189). */
 const BLEED_OFF = 96;
 /**
  * Where the hero's `overflow: 'hidden'` cuts the crest, as a fraction of its
  * box — derived from `BLEED_OFF` so the fade and the clip cannot drift apart
- * (ADR 0098). The dissolve completes a hair above the line; only the LEFT
+ * (ADR 0098). The dissolve completes a hair above the line; only the RIGHT
  * edge still hard-clips, at the physical screen edge where a cut reads as
  * intentional.
  */
@@ -174,6 +174,15 @@ export function ClubHero({
       </View>
 
       <View style={styles.identity}>
+        {/* ⚠ Crest LEADS, name follows (ADR 0189) — Ed's call; the mock had them
+            the other way round. */}
+        <View style={styles.crest}>
+          <Crest
+            src={crest}
+            fallback={abbreviate(team.name, team.slug, team.shortName)}
+            size={Size.crestHero}
+          />
+        </View>
         <View style={styles.names}>
           {/* ⚠ No competition eyebrow here — the back pill already carries it,
               and the two stacked read as the same words printed twice. */}
@@ -183,13 +192,6 @@ export function ClubHero({
               {place}
             </Text>
           ) : null}
-        </View>
-        <View style={styles.crest}>
-          <Crest
-            src={crest}
-            fallback={abbreviate(team.name, team.slug, team.shortName)}
-            size={Size.crestHero}
-          />
         </View>
       </View>
     </View>
@@ -205,13 +207,15 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   /**
-   * The club's crest as wallpaper. ⚠ Pushed hard off the bottom-left corner
+   * The club's crest as wallpaper. ⚠ Pushed hard off the bottom-RIGHT corner —
+   * the side opposite the identity crest since that one moved left (ADR 0189),
+   * so the two never stack into a doubled crest —
    * and kept at 6 %: at the mock's 10 % it read as a second crest competing
    * with the identity one, because this block is shorter than the mock's.
    */
   bleedCrest: {
     position: 'absolute',
-    left: -BLEED_OFF,
+    right: -BLEED_OFF,
     bottom: -BLEED_OFF,
     opacity: 0.06,
   },
@@ -242,7 +246,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.dark.accentRing,
   },
-  identity: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
+  /**
+   * Crest then name (ADR 0189). ⚠ `center`, not the old `flex-end`: with the
+   * 80pt crest leading, a bottom-aligned name sat low against it and read as a
+   * caption rather than the page's title.
+   */
+  identity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.four },
   names: { flex: 1, gap: Spacing.one, minWidth: 0 },
   /** The mock's lifted crest — the one shadow 0087 sanctions here. */
   crest: {

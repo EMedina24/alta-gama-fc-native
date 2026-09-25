@@ -328,6 +328,14 @@ export default function ClubScreen() {
                   phrases={phrases}
                   roundPrefix={copy.club.roundPrefix}
                   tint={tameClubColor(data.team.colorPrimary, data.team.colorSecondary)}
+                  // A played row opens its match-stats sheet (ADR 0190).
+                  onOpen={(fixture) =>
+                    router.push({
+                      pathname: '/(sheets)/match-stats',
+                      params: { slug, id: fixture.id },
+                    })
+                  }
+                  openHint={copy.matchStats.open}
                 />
               ) : (
                 <View style={styles.pending}>
