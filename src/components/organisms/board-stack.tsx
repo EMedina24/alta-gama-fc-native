@@ -1,6 +1,6 @@
 /**
  * The Board's body: the reader's cards, in the reader's order — and the mode
- * that lets them change it (ADR 0174).
+ * that lets them change it (ADR 0174; the Medina kit's look since 0199).
  *
  * ⚠⚠ **View mode must be PIXEL-IDENTICAL to the hardcoded stack it replaces.**
  * Each section is wrapped in a `gap: Spacing.four` box and the scaffold's own
@@ -11,56 +11,55 @@
  * in the fixture rows depends on this box not clipping.
  *
  * ⚠⚠ **The lead card is NOT here.** Live and NEXT UP are the crown's payload
- * (ADR 0088/0095) and are pinned: the match being played is the reason the
- * screen exists on a matchday and is not the reader's to move. That is why the
- * catalogue has no `next` card, against the design handoff's eight.
+ * (ADR 0088/0095) and are pinned — Ed kept that when adopting the kit (0199).
  *
- * ⚠ **Only what is on screen can be arranged.** The rows are exactly the
- * sections view mode draws — visible AND eligible. A card whose data has not
- * arrived is not a row and is never a swap target, because a slot the reader
- * cannot see cannot be aimed at.
+ * ⚠ **Only what is on screen can be arranged.** The cards are exactly the
+ * sections view mode draws — visible AND eligible.
  *
- * ⚠ The stack is ABSOLUTELY POSITIONED while editing and every row is the same
- * `BoardEdit.rowHeight`, which is what makes the swap pure arithmetic — the
- * handoff's "measure every height at drag start" is not needed at all.
+ * ⚠⚠ **Edit mode draws the REAL cards (0199, superseding 0174 §9's rows),** so
+ * slots are no longer uniform. The stack is still ABSOLUTELY POSITIONED — at
+ * rest a card's top is arithmetic over the PROPS order, which is what lets a
+ * drop commit without a flicker — but the arithmetic runs on MEASURED heights
+ * (`heights`, fed by each card's `onLayout`). Until every card has reported,
+ * the stack holds invisible: for that one frame every card sits at y = 0.
  *
- * ⚠ **The cards are not RENDERED while editing** — a row is a name and a summary
- * line, not a veiled slice of the card (see `BoardEdit.rowFill` for the
- * measurement that settled that). The screen still BUILDS every card, because a
- * null node is how eligibility is decided; nothing mounts.
+ * ⚠ The editor's other controls — background tiles, Reset, the hidden cards —
+ * are the bottom PANEL, published over the page through the scaffold's
+ * overlay slot (ADR 0163). The stack pads its end by the panel's height.
  *
  * ⚠ No data fetching, and no knowledge of what a card IS (ADR 0013): the screen
  * hands over rendered nodes.
  */
-import { useEffect, useState, type ReactNode, type RefObject } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
-import {
+import Animated, {
   runOnJS,
   useAnimatedReaction,
+  useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 
+import { Text } from '@/components/atoms';
 import { BoardEdit, Spacing } from '@/constants/theme';
+import { useScreenOverlay } from '@/hooks/use-screen-overlay';
 import { hapticLift, hapticReorder, hapticToggle } from '@/lib/haptics';
 import type { BoardCardId } from '@/lib/board-layout';
-import { AddTray } from './board-stack/add-tray';
-import { BackgroundRow, type BackgroundRowProps } from './board-stack/background-row';
-import { EditRow, SLOT, type DragState } from './board-stack/edit-row';
+import { EditCard, topOf, type DragState } from './board-stack/edit-card';
+import { EditPanel, type EditPanelTile } from './board-stack/edit-panel';
 
-export { BoardEditHint } from './board-stack/hint-bar';
+export type { EditPanelTile } from './board-stack/edit-panel';
 
 export interface BoardSection {
   id: BoardCardId;
-  /** The card, already resolved by the screen. Drawn in VIEW mode only. */
+  /** The card, already resolved by the screen. Drawn in BOTH modes. */
   node: ReactNode;
   /**
-   * What the card is holding right now — `3 stories`, `3 matches`. Drawn in EDIT
-   * mode only, under the card's name.
+   * What the card is holding right now — `3 stories`, `3 matches`. Spoken in
+   * EDIT mode with the card's name, the one stop VoiceOver makes per card.
    *
-   * ⚠ The screen owns this because the screen owns the data (ADR 0013). Null is
-   * a real state: a card whose count would be a claim we cannot make says
-   * nothing rather than `0`.
+   * ⚠ Null is a real state: a card whose count would be a claim we cannot make
+   * says nothing rather than `0`.
    */
   summary: string | null;
 }
@@ -72,45 +71,39 @@ export interface BoardStackProps {
   /** The put-away cards, in their remembered order. */
   tray: readonly BoardCardId[];
   copy: {
-    /** Every card's name, and the line the tray explains it with. */
-    cards: Readonly<Record<BoardCardId, { label: string; body: string }>>;
-    addTitle: string;
-    allOn: string;
-    reset: string;
+    /** Every card's name. */
+    cards: Readonly<Record<BoardCardId, { label: string }>>;
+    /** The one-line instruction under the crown — "Drag to reorder · 5 of 5". */
+    caption: string;
     moveUp: string;
     moveDown: string;
     removeCard: (card: string) => string;
     addCard: (card: string) => string;
+    background: string;
+    hiddenTitle: string;
+    resetAll: string;
+    resetAllLabel: string;
   };
+  /** The background tiles, built by the screen (it owns the league marks). */
+  tiles: readonly EditPanelTile[];
   /** The visible order changed. Fired ONCE, on release — see `setBoardOrder`. */
   onOrder: (visible: readonly BoardCardId[]) => void;
   onRemove: (id: BoardCardId) => void;
   onAdd: (id: BoardCardId) => void;
+  /** Order, hidden cards AND background — the panel's Reset (0199). */
   onReset: () => void;
   /**
-   * The page, for the drag's edge auto-scroll.
-   *
-   * ⚠ Seven rows at 114pt do not fit a viewport under a crown carrying a live
-   * plate, so a drag that cannot scroll cannot reach the top of the stack from
-   * the bottom of it. The scaffold owns the scroll view; these are its ref and
-   * its last known offset.
+   * The page, for the drag's edge auto-scroll. The scaffold owns the scroll
+   * view; these are its ref, its last known offset, and the screen-space line
+   * below which the top band starts (the crown's status area).
    */
   scroll: {
     ref: RefObject<ScrollView | null>;
     offset: RefObject<number>;
-    /** Screen-space band at each end where a held row starts scrolling. */
     top: number;
-    bottom: number;
   };
-  /** A row is up. The screen freezes the scroll view while this is true. */
+  /** A card is up. The screen freezes the scroll view while this is true. */
   onDragging: (dragging: boolean) => void;
-  /**
-   * The BACKGROUND row (ADR 0175), edit mode only — its own section between
-   * the stack and the add tray. ⚠ ABOVE the tray, deliberately: the tray and
-   * its reset button are one unit about the LAYOUT, and a row wedged between
-   * them would read the reset as covering the background too (it does not).
-   */
-  background?: BackgroundRowProps;
 }
 
 export function BoardStack({
@@ -118,32 +111,73 @@ export function BoardStack({
   editing,
   tray,
   copy,
+  tiles,
   onOrder,
   onRemove,
   onAdd,
   onReset,
   scroll,
   onDragging,
-  background,
 }: BoardStackProps) {
   const ids = sections.map((section) => section.id);
+  const publish = useScreenOverlay();
+  const { height: screenH } = useWindowDimensions();
+  const [panelH, setPanelH] = useState(0);
+  /**
+   * The panel's height, for the end spacer and the edge band. ⚠ Cannot loop
+   * with the publish effect below: `onLayout` fires only when the panel's
+   * layout CHANGES, and an unchanged height is a React bail-out.
+   */
+  const onPanelHeight = useCallback((height: number) => setPanelH(height), []);
 
   const drag: DragState = {
     active: useSharedValue<string | null>(null),
-    from: useSharedValue(0),
+    startTop: useSharedValue(0),
     offset: useSharedValue(0),
     shift: useSharedValue(0),
     fingerY: useSharedValue(0),
     order: useSharedValue<string[]>(ids),
+    heights: useSharedValue<Record<string, number>>({}),
   };
 
   /**
-   * Which end of the screen a held row is parked at: −1 up, 1 down, 0 neither.
-   * React state because the scroll itself is a JS-side imperative call.
+   * A card reported its height. ⚠ Written HERE, where the value is local.
+   *
+   * ⚠⚠ Accumulated in a JS REF and pushed whole. A shared value written from
+   * the JS thread does not read back on the JS thread until the UI runtime has
+   * taken the write, so `{ ...heights.value, [id]: h }` in five back-to-back
+   * `onLayout`s spread `{}` five times and kept only the last card — the stack
+   * then waited forever for the other four (caught on the simulator).
+   */
+  const measured = useRef<Record<string, number>>({});
+  const measure = (id: string, height: number) => {
+    if (measured.current[id] === height) return;
+    measured.current = { ...measured.current, [id]: height };
+    drag.heights.value = measured.current;
+  };
+
+  /**
+   * The stack's box: every card plus the gaps, and invisible until every card
+   * has a height (see the header).
+   */
+  const stackStyle = useAnimatedStyle(() => {
+    let total = 0;
+    let ready = true;
+    for (const id of ids) {
+      const h = drag.heights.value[id];
+      if (h === undefined) ready = false;
+      total += (h ?? 0) + BoardEdit.gap;
+    }
+    return { height: Math.max(0, total - BoardEdit.gap), opacity: ready ? 1 : 0 };
+  });
+
+  /**
+   * Which end of the screen a held card is parked at: −1 up, 1 down, 0 neither.
+   * The bottom band sits ABOVE the panel — below it there is nothing to aim at.
    */
   const [edge, setEdge] = useState(0);
   const top = scroll.top;
-  const bottom = scroll.bottom;
+  const bottom = screenH - panelH - BoardEdit.edge;
   useAnimatedReaction(
     () => {
       if (drag.active.value === null) return 0;
@@ -169,7 +203,7 @@ export function BoardStack({
         // ⚠ Optimistic: `onScroll` is throttled, and waiting for it would make
         // the loop step on a stale offset and crawl.
         scrollOffset.current = next;
-        // ⚠⚠ The lifted row must travel WITH the page, or the content slides
+        // ⚠⚠ The lifted card must travel WITH the page, or the content slides
         // out from under a finger that has not moved.
         shiftSV.value += moved;
       }
@@ -180,31 +214,28 @@ export function BoardStack({
   }, [edge, scrollRef, scrollOffset, shiftSV]);
 
   /**
-   * One row's drag.
+   * One card's drag.
    *
-   * ⚠⚠ **Built here, not in the row.** The shared values are local to this
-   * component, and the thing that writes them has to be too — a child mutating
-   * a value it reached through its own props is what `react-hooks/immutability`
-   * rejects, and it is right: the writer and the values belong together.
+   * ⚠⚠ **Built here, not in the card** — the shared values are local here, and
+   * the writer belongs with them (`react-hooks/immutability`).
    *
-   * ⚠⚠ **`activateAfterLongPress`, not pointer-down** (Ed's call over the design
-   * handoff's §4). A pan that activates the instant a 34pt target is touched has
-   * to win a race against the scroll view on every touch-down; a hold wins it
-   * outright, and makes a mis-grab mid-scroll impossible. `hapticLift` is the
-   * accommodation for the delay — without it a reader learns the hold by
-   * failing at it.
+   * ⚠⚠ **`activateAfterLongPress`, not pointer-down** (0174 §8).
    *
-   * ⚠ The order is SEEDED at the lift, from the props: at rest the props are the
-   * truth and the shared value is stale, and copying one into the other from an
-   * effect is exactly the two-sources-of-truth bug trap 72 names.
+   * ⚠ The swap rule, for cards of different heights: every OTHER card is
+   * "before" the lifted one when the lifted card's centre is past that card's
+   * midpoint — with `swapBias` of hysteresis against whichever side it is on
+   * now, so a centre resting on a midpoint does not flip back and forth.
+   *
+   * ⚠ The order is SEEDED at the lift, from the props: at rest the props are
+   * the truth and the shared value is stale.
    */
-  const rowGesture = (id: BoardCardId) =>
+  const cardGesture = (id: BoardCardId) =>
     Gesture.Pan()
       .activateAfterLongPress(150)
       .onStart(() => {
         drag.order.value = ids;
         drag.active.value = id;
-        drag.from.value = ids.indexOf(id);
+        drag.startTop.value = topOf(ids, drag.heights.value, id);
         drag.offset.value = 0;
         drag.shift.value = 0;
         runOnJS(lift)();
@@ -213,19 +244,27 @@ export function BoardStack({
         drag.offset.value = e.translationY + drag.shift.value;
         drag.fingerY.value = e.absoluteY;
 
-        const here = drag.order.value.indexOf(id);
-        // The row's position in slot units, measured from where it was lifted.
-        const at = (drag.from.value * SLOT + drag.offset.value) / SLOT;
-        // ⚠ Half a slot PLUS the bias: at exactly half, a row resting on the
-        // boundary swaps back and forth on sub-pixel jitter.
-        if (Math.abs(at - here) < 0.5 + BoardEdit.swapBias / SLOT) return;
+        const order = drag.order.value;
+        const heights = drag.heights.value;
+        const here = order.indexOf(id);
+        const centre = drag.startTop.value + drag.offset.value + (heights[id] ?? 0) / 2;
 
-        const to = Math.max(0, Math.min(ids.length - 1, Math.round(at)));
-        if (to === here) return;
+        const before: string[] = [];
+        const after: string[] = [];
+        for (let i = 0; i < order.length; i++) {
+          const other = order[i];
+          if (other === id) continue;
+          const mid = topOf(order, heights, other) + (heights[other] ?? 0) / 2;
+          const wasBefore = i < here;
+          const isBefore = wasBefore
+            ? centre >= mid - BoardEdit.swapBias
+            : centre > mid + BoardEdit.swapBias;
+          if (isBefore) before.push(other);
+          else after.push(other);
+        }
+        if (before.length === here) return;
 
-        const next = [...drag.order.value];
-        next.splice(to, 0, next.splice(here, 1)[0]);
-        drag.order.value = next;
+        drag.order.value = [...before, id, ...after];
         runOnJS(hapticReorder)();
       })
       .onFinalize(() => {
@@ -241,12 +280,8 @@ export function BoardStack({
     setEdge(0);
 
     const dropped = drag.order.value as BoardCardId[];
-    // ⚠⚠ **Commit only a sequence of exactly the rows that are on screen NOW.**
-    // The stack is seeded at the lift, and the board can change under a finger
-    // that is still down — a kickoff takes LAST RESULT away mid-drag, a refetch
-    // brings FINISHED TODAY back. Committing a sequence for a membership that no
-    // longer exists would fold a card into the wrong slot, silently and
-    // permanently, and the reader would have no idea what they had done.
+    // ⚠⚠ **Commit only a sequence of exactly the cards that are on screen NOW**
+    // (0174 §10) — the board can change under a finger that is still down.
     if (dropped.length !== ids.length || dropped.some((id) => !ids.includes(id))) return;
     onOrder(dropped);
   };
@@ -256,13 +291,7 @@ export function BoardStack({
     void hapticLift();
   };
 
-  /**
-   * VoiceOver's reorder: the same commit the gesture makes, by one place.
-   *
-   * ⚠ Built from the PROPS, not from `drag.order` — that shared value is only
-   * seeded at a lift, so for a reader who has never dragged it still holds the
-   * membership this component first mounted with.
-   */
+  /** VoiceOver's reorder: the same commit the gesture makes, by one place. */
   const move = (id: BoardCardId, to: number) => {
     const next = [...ids];
     next.splice(to, 0, next.splice(next.indexOf(id), 1)[0]);
@@ -270,6 +299,40 @@ export function BoardStack({
     onOrder(next);
     void hapticReorder();
   };
+
+  /**
+   * The panel, over the page. ⚠ `useLayoutEffect` and no deps, the league
+   * menu's pattern (see `useScreenOverlay` for why it cannot loop): it
+   * republishes with every render, so the tiles and chips stay current.
+   */
+  useLayoutEffect(() => {
+    publish(
+      editing ? (
+        <EditPanel
+          title={copy.background}
+          resetLabel={copy.resetAll}
+          resetAccessibilityLabel={copy.resetAllLabel}
+          tiles={tiles}
+          hiddenTitle={copy.hiddenTitle}
+          hidden={tray.map((id) => ({
+            id,
+            label: copy.cards[id].label,
+            accessibilityLabel: copy.addCard(copy.cards[id].label),
+          }))}
+          onAdd={(id) => {
+            void hapticToggle();
+            onAdd(id as BoardCardId);
+          }}
+          onReset={() => {
+            void hapticToggle();
+            onReset();
+          }}
+          onHeight={onPanelHeight}
+        />
+      ) : null,
+    );
+    return () => publish(null);
+  });
 
   if (!editing) {
     return (
@@ -285,46 +348,38 @@ export function BoardStack({
 
   return (
     <>
-      <View style={[styles.stack, { height: Math.max(0, ids.length * SLOT - BoardEdit.gap) }]}>
-        {sections.map((section, index) => (
-          <EditRow
-            key={section.id}
-            id={section.id}
-            label={copy.cards[section.id].label}
-            summary={section.summary}
-            index={index}
-            drag={drag}
-            gesture={rowGesture(section.id)}
-            count={ids.length}
-            removeLabel={copy.removeCard(copy.cards[section.id].label)}
-            moveUpLabel={copy.moveUp}
-            moveDownLabel={copy.moveDown}
-            onRemove={() => {
-              void hapticToggle();
-              onRemove(section.id);
-            }}
-            onMove={(to) => move(section.id, to)}
-          />
-        ))}
-      </View>
+      <Text variant="caption" color="textSecondary">
+        {copy.caption}
+      </Text>
 
-      {background ? <BackgroundRow {...background} /> : null}
+      <Animated.View style={[styles.stack, stackStyle]}>
+        {sections.map((section) => {
+          const label = copy.cards[section.id].label;
+          return (
+            <EditCard
+              key={section.id}
+              id={section.id}
+              ids={ids}
+              drag={drag}
+              gesture={cardGesture(section.id)}
+              accessibilityLabel={section.summary ? `${label}, ${section.summary}` : label}
+              removeLabel={copy.removeCard(label)}
+              moveUpLabel={copy.moveUp}
+              moveDownLabel={copy.moveDown}
+              onRemove={() => {
+                void hapticToggle();
+                onRemove(section.id);
+              }}
+              onMove={(to) => move(section.id, to)}
+              onMeasure={measure}>
+              {section.node}
+            </EditCard>
+          );
+        })}
+      </Animated.View>
 
-      <AddTray
-        cards={tray.map((id) => ({ id, ...copy.cards[id] }))}
-        title={copy.addTitle}
-        emptyLabel={copy.allOn}
-        resetLabel={copy.reset}
-        addLabel={copy.addCard}
-        onAdd={(id) => {
-          void hapticToggle();
-          onAdd(id as BoardCardId);
-        }}
-        onReset={() => {
-          void hapticToggle();
-          onReset();
-        }}
-      />
+      {/* The last card must be able to scroll clear of the panel. */}
+      <View style={{ height: panelH }} />
     </>
   );
 }

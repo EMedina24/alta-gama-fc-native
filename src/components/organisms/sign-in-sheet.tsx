@@ -22,8 +22,8 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, GoogleMark, Text } from '@/components/atoms';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Button, GoogleMark, SHEET_GROUND, Text } from '@/components/atoms';
+import { Radius, Spacing } from '@/constants/theme';
 import type { Copy } from '@/lib/i18n/copy';
 
 /** Apple's button and ours, at one height. See the 4.8 note above. */
@@ -127,7 +127,7 @@ export function SignInSheet({
 }
 
 const styles = StyleSheet.create({
-  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.sheetGround },
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: SHEET_GROUND },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',

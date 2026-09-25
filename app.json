@@ -57,7 +57,8 @@
           "fonts": [
             "./assets/fonts/Archivo-Black.ttf",
             "./assets/fonts/Archivo-ExtraBold.ttf",
-            "./assets/fonts/SairaExtraCondensed-ExtraBold.ttf"
+            "./assets/fonts/SairaExtraCondensed-ExtraBold.ttf",
+            "./assets/fonts/SairaExtraCondensed-Bold.ttf"
           ]
         }
       ],

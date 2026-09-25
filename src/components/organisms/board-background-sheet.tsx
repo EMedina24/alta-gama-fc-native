@@ -3,11 +3,10 @@
  * league, and every catalogue club grouped by league — each row a mini crown
  * swatch of exactly what it paints.
  *
- * ⚠ Picking does NOT close the sheet: the board is the presenting screen and
- * the 0.72 detent leaves its crown visible above this sheet — the recolour
- * landing live up there IS the preview, `xi-look`'s what-you-pick-is-what-you-
- * get rule at screen scale.
- *
+ * ⚠ Picking CLOSES the sheet (ADR 0183, reversing 0175's stay-open clause) —
+ * the route writes the store first, so the recolour is what the dismissal
+ * reveals. Since ADR 0199 this is the full catalogue behind the edit panel's
+ * "More" tile.
  * ⚠ A `ScrollView` with padded content, `stickyHeaderIndices` for the bar —
  * `account-sheet`'s proven formSheet shape. Never `flex: 1` in here: inside a
  * `formSheet` it collapses to zero (trap 19).
@@ -16,7 +15,7 @@
  */
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Crest, Skeleton, Text } from '@/components/atoms';
+import { Button, Crest, SHEET_GROUND, Skeleton, Text } from '@/components/atoms';
 import { CrownSwatch, SectionHeader } from '@/components/molecules';
 import { BoardBg, Colors, Radius, Size, Spacing } from '@/constants/theme';
 import type { CrownStop } from '@/lib/cronogol/league-theme';
@@ -144,7 +143,7 @@ const styles = StyleSheet.create({
    * ground (ADR 0093) — a transparent bar would ghost rows through it.
    * Full-bleed out of the gutter so no row shows past its sides.
    */
-  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.sheetGround },
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: SHEET_GROUND },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',

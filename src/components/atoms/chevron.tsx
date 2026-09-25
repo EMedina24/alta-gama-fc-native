@@ -21,11 +21,13 @@ export interface ChevronProps {
    * `right` is a disclosure INTO a screen (the club-page Starting XI row, ADR
    * 0065) rather than an expand/collapse; it ignores `expanded`.
    */
-  direction?: 'down' | 'right';
+  direction?: 'down' | 'right' | 'left';
 }
 
 export function Chevron({ expanded = false, color = 'textFaint', direction = 'down' }: ChevronProps) {
-  const rotate = direction === 'right' ? '-90deg' : expanded ? '180deg' : null;
+  // `left` is the club page's glass BACK circle (ADR 0202).
+  const rotate =
+    direction === 'right' ? '-90deg' : direction === 'left' ? '90deg' : expanded ? '180deg' : null;
   return (
     <Svg
       width={Size.chevron}

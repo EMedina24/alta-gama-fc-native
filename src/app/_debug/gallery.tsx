@@ -9,7 +9,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BAND_COLOR, BookmarkGlyph, BundesligaKicker, Button, ChipButton, Hairline, HondurasColibri, LaLigaGlyph, PlusGlyph, PremierCrest, PuertoRicoBall, Score, SerieADiamond, Switch, Text, UclStarball, WashGradient } from '@/components/atoms';
+import { BAND_COLOR, BookmarkGlyph, BundesligaKicker, Button, ChipButton, Hairline, HondurasColibri, LaLigaGlyph, Orb, PlusGlyph, PremierCrest, PuertoRicoBall, Score, SerieADiamond, Switch, Text, UclStarball, WashGradient } from '@/components/atoms';
 import {
   ClubBubble,
   ClubRow,
@@ -1110,6 +1110,35 @@ export default function GalleryScreen() {
     </>
   );
 
+  // `?only=orb` (ADR 0197): every orb state at both sizes, both tones, and
+  // the button's loading swap in each tone that can load.
+  if (only === 'orb') {
+    const states = ['working', 'searching', 'solving', 'connecting'] as const;
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <Case label="64 · ink, then accent — working · searching · solving · connecting">
+          <View style={styles.orbRow}>
+            {states.map((st) => <Orb key={st} state={st} size={64} accessibilityLabel={st} />)}
+          </View>
+          <View style={styles.orbRow}>
+            {states.map((st) => <Orb key={st} state={st} size={64} tone="accent" accessibilityLabel={st} />)}
+          </View>
+        </Case>
+        <Case label="20 · inline, ink then accent">
+          <View style={styles.orbRow}>
+            {states.map((st) => <Orb key={st} state={st} accessibilityLabel={st} />)}
+            {states.map((st) => <Orb key={`a${st}`} state={st} tone="accent" accessibilityLabel={st} />)}
+          </View>
+        </Case>
+        <Case label="Button loading — primary · secondary · outline">
+          <Button label="Confirm" onPress={() => {}} loading />
+          <Button label="Calendar" tone="secondary" onPress={() => {}} loading />
+          <Button label="Follow" tone="outline" onPress={() => {}} loading />
+        </Case>
+      </ScrollView>
+    );
+  }
+
   if (only === 'live') {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -1446,6 +1475,7 @@ export default function GalleryScreen() {
 }
 
 const styles = StyleSheet.create({
+  orbRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.four, alignItems: 'center' },
   // ⚠ The league-tint preview. `tintRamp` carries `CrownRamp` verbatim — see
   // the comment at the call site for why a fraction would invalidate it.
   tintRow: { marginHorizontal: -Spacing.five },

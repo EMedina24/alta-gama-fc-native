@@ -19,9 +19,9 @@
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Text } from '@/components/atoms';
+import { Button, SHEET_GROUND, Text } from '@/components/atoms';
 import { FormField, SegmentedControl } from '@/components/molecules';
-import { Colors, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import type { Copy } from '@/lib/i18n/copy';
 
 /** ⚠ Protocol values (they key autofill hints and the route's flow) — never localised. */
@@ -183,7 +183,7 @@ export function EmailAuthSheet({
 }
 
 const styles = StyleSheet.create({
-  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.sheetGround },
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: SHEET_GROUND },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',

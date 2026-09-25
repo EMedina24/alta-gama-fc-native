@@ -4,8 +4,11 @@
  *
  * Usage: first child of a screen's root `View`, BEHIND the scroll view. Never
  * inside the scroll (the mesh does not move), never per card, and never on a
- * modal sheet (ADR 0093 — sheets are opaque `sheetGround`; glass over a scrim
- * reads muddy).
+ * modal sheet (a sheet is `SHEET_GROUND` — system glass or opaque, ADR 0195).
+ *
+ * Since ADR 0196 the brand's three-pool `Mesh` is only the TAB screens' default
+ * (via the scaffold's league theme); plain stack screens draw `LimeGlow`, which
+ * is this component with the one-pool `LimeGlow` table.
  *
  * ⚠ One `Svg`, three `RadialGradient`s, ids from `useId()` — `finished-today`'s
  * hard-coded `"band"` id is the collision this avoids (trap 40). Translucency

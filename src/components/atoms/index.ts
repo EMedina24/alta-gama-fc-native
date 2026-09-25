@@ -10,6 +10,7 @@ export { EventGlyph, type EventGlyphProps } from './event-glyph';
 export { FadeOutImage, type FadeOutImageProps } from './fade-out-image';
 export { Eyebrow } from './eyebrow';
 export { FormChip, type FormResult } from './form-chip';
+export { GlassSurface, LIQUID_GLASS, SHEET_GROUND, type GlassSurfaceProps } from './glass-surface';
 export { Grabber } from './grabber';
 export { Hairline } from './hairline';
 export { HandleGlyph, type HandleGlyphProps } from './handle-glyph';
@@ -32,7 +33,10 @@ export {
   type CompetitionMarkKind,
   type CompetitionMarkProps,
 } from './competition-mark';
+export { LimeGlow } from './lime-glow';
 export { MeshGround } from './mesh-ground';
+export { SceneGround, type SceneGroundProps } from './scene-ground';
+export { Orb, type OrbProps, type OrbState } from './orb';
 export { SearchGlyph } from './search-glyph';
 export { GlobeGlyph } from './globe-glyph';
 export { PL_CREST_RATIO, PremierCrest, type PremierCrestProps } from './premier-crest';
@@ -53,3 +57,6 @@ export { BarsGlyph, type BarsGlyphProps } from './bars-glyph';
 export { MeterBar, type MeterBarProps } from './meter-bar';
 export { RingGauge, type RingGaugeProps, type RingSegment } from './ring-gauge';
 export { SparkArea, sparkY, type SparkAreaProps } from './spark-area';
+export { GlassIconButton, type GlassIconButtonProps } from './glass-icon-button';
+export { ShareGlyph, type ShareGlyphProps } from './share-glyph';
+export { StarGlyph, type StarGlyphProps } from './star-glyph';

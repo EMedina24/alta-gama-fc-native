@@ -1,7 +1,7 @@
 # 0165 — The league crown goes DEEP, the head restructures around a banner pill, and the crest comes back
 
 - **Date:** 2026-09-13
-- **Status:** Accepted — simulator-verified on an iPhone 17 Pro against production:
+- **Status:** Partly superseded — on Matchdays, Table and Clubs the scrolling deep ramp, re-hued mesh and bled crest give way to the fixed league scene of [0201](./0201-league-screens-wear-the-kits-scene.md); the deep crown stands elsewhere. Was: Accepted — simulator-verified on an iPhone 17 Pro against production:
   all seven ramps side by side at true height, the Premier League and LaLiga on the real
   Matchdays screen, the Premier League on Table, LaLiga on Clubs, the `_debug/menu` harness
   on the brand path, and Today unchanged with a league stored.

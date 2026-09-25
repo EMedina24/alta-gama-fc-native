@@ -27,7 +27,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
-import { Button, MeshGround, SkeletonRows, Text, WashGradient } from '@/components/atoms';
+import { Button, LimeGlow, SkeletonRows, Text, WashGradient } from '@/components/atoms';
 import { ClubBubble, LeaguePills, PickStack, SearchField, StepDots } from '@/components/molecules';
 import { BRIGHT_BAND } from '@/components/templates/screen-scaffold';
 import { Crown } from '@/components/templates/crown';
@@ -104,7 +104,7 @@ export default function OnboardingClubs() {
   return (
     <View style={styles.screen}>
       <StatusBar style={overBright ? 'dark' : 'light'} />
-      <MeshGround />
+      <LimeGlow />
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={32}

@@ -16,7 +16,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
-import { type AlertKind, Button, Check, Hairline, MeshGround, Text } from '@/components/atoms';
+import { type AlertKind, Button, Check, Hairline, LimeGlow, Text } from '@/components/atoms';
 import { AlertPreview, AlertTile, StepDots } from '@/components/molecules';
 import { Crown } from '@/components/templates/crown';
 import { Colors, Radius, Spacing, Surfaces } from '@/constants/theme';
@@ -73,7 +73,7 @@ export default function OnboardingAlerts() {
       {/* Statically dark: no scroll, so the crown's bright band never leaves
           the top (ADR 0094's flip, degenerate case — ADR 0099). */}
       <StatusBar style="dark" />
-      <MeshGround />
+      <LimeGlow />
       <Crown
         eyebrow={copy.onboarding.step(2, 2)}
         title={copy.onboarding.alertsTitle}

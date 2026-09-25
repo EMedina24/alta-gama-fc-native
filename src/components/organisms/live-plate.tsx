@@ -137,7 +137,7 @@ export function LivePlate({
           {/* ⚠ `tabular` is not optional: this digit changes every minute, and
               proportional numerals make it shift under the reader's eye. */}
           {live.minute ? (
-            <Text variant="title3" tabular color={live.stalled ? 'textDim' : 'live'}>
+            <Text variant="clockMd" tabular color={live.stalled ? 'textDim' : 'live'}>
               {live.minute}
             </Text>
           ) : null}

@@ -1,7 +1,7 @@
 # 0157 — The calendar CTA becomes a PILL on the strip's own row, and the cup gets two feeds behind it
 
 - **Date:** 2026-09-11
-- **Status:** Accepted — verified on the simulator in EN and ES, both scopes
+- **Status:** Partly superseded — the lime ring by [0200](./0200-matchdays-wear-the-kit.md) (neutral glass pill). Was: Accepted — verified on the simulator in EN and ES, both scopes
 - **Decided by:** Ed (placement, scope, and the lime pill)
 - **Diverges from:** SPEC §3.2, which specifies `Add all N matches` as "outlined-accent"
 - **Closes:** [0156](./0156-the-league-phase-is-a-matchday.md)'s one open item

@@ -40,7 +40,7 @@ export interface ScoreProps {
    */
   size?: ScoreSize;
   /**
-   * The raised container. LIST ROWS ONLY — the board hero is 38pt and needs no
+   * The raised container. LIST ROWS ONLY — the board hero is 48pt and needs no
    * help being found; a chip that big is the loudest object on the screen.
    */
   chip?: boolean;

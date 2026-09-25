@@ -1,3 +1,4 @@
+import CoreText
 import SwiftUI
 import UIKit
 
@@ -35,11 +36,11 @@ enum Tok {
   static let ink32 = Color.white.opacity(0.32)
 
   // Alert types — theme.ts `accent`, `moved`, `postponed`.
-  static let accent = Color(red: 0.784, green: 0.949, blue: 0.353) // #c8f25a
+  static let accent = Color(red: 0.784, green: 1.0, blue: 0.239) // #c8ff3d
   /// theme.ts `accentWash` / `accentRing` — the HOME/AWAY pill on the medium
   /// widget (ADR 0059), the same pair `versus-badge.tsx` draws in the app.
-  static let accentWash = Color(red: 0.784, green: 0.949, blue: 0.353).opacity(0.14)
-  static let accentRing = Color(red: 0.784, green: 0.949, blue: 0.353).opacity(0.45)
+  static let accentWash = Color(red: 0.784, green: 1.0, blue: 0.239).opacity(0.14)
+  static let accentRing = Color(red: 0.784, green: 1.0, blue: 0.239).opacity(0.45)
   /// theme.ts `live` / `liveWash` — the widget ledger's in-play marker
   /// (ADR 0080). ⚠ The same hex as `cardYellow`'s sibling `cardRed` below, and
   /// that is a documented COINCIDENCE in theme.ts, not an alias: a liveness
@@ -86,9 +87,9 @@ enum Tok {
   /// service extension draws the plate with `UIGraphicsImageRenderer` — UIKit,
   /// because a notification ATTACHMENT is a PNG file on disk, not a view. The
   /// SwiftUI values above cannot be handed to a CoreGraphics context.
-  static let plateAccentWash = UIColor(red: 0.784, green: 0.949, blue: 0.353, alpha: 0.13)
-  static let plateAccentRing = UIColor(red: 0.784, green: 0.949, blue: 0.353, alpha: 0.30)
-  static let plateAccent = UIColor(red: 0.784, green: 0.949, blue: 0.353, alpha: 1.0)
+  static let plateAccentWash = UIColor(red: 0.784, green: 1.0, blue: 0.239, alpha: 0.13)
+  static let plateAccentRing = UIColor(red: 0.784, green: 1.0, blue: 0.239, alpha: 0.30)
+  static let plateAccent = UIColor(red: 0.784, green: 1.0, blue: 0.239, alpha: 1.0)
   static let plateOnAccent = UIColor(red: 0.039, green: 0.043, blue: 0.047, alpha: 1.0)
   static let plateRedWash = UIColor(red: 1.0, green: 0.361, blue: 0.278, alpha: 0.13)
   static let plateRedRing = UIColor(red: 1.0, green: 0.361, blue: 0.278, alpha: 0.30)
@@ -216,7 +217,7 @@ enum Tok {
   /// kept for the Live Activity's floodlight only.
   static let mesh: [Pool] = [
     Pool(cx: 0.98, cy: 0.04, rx: 0.72, ry: 0.62,
-         color: accent, alpha: 0.16, fade: 0.72), // #c8f25a
+         color: accent, alpha: 0.16, fade: 0.72), // #c8ff3d
     Pool(cx: -0.02, cy: 0.46, rx: 0.70, ry: 0.76,
          color: Color(red: 0.063, green: 0.361, blue: 0.290), alpha: 0.60, fade: 0.80), // #105c4a
     Pool(cx: 1.00, cy: 1.02, rx: 0.78, ry: 0.68,
@@ -252,6 +253,40 @@ enum Tok {
     .system(size: size, weight: weight).monospacedDigit()
   }
 
+  /// A SCORE in the Medina display face (ADR 0198) — theme.ts
+  /// `DisplayFont.extraBold`, the role `Type.scoreLarge` plays in the app.
+  ///
+  /// `size` is the SF size the call site was tuned at: the helper steps it up
+  /// by `displayStep`, because a condensed digit reads smaller (the same step
+  /// ADR 0194 took in `theme.ts`). Condensed digits are NARROWER than SF's at
+  /// that size, so a fixed slot tuned for SF gains room rather than losing it.
+  ///
+  /// ⚠ Only scores, clocks and kickoffs — the kit's rule. Small numeric
+  /// metadata (a news age, a table's GD column, an event minute) stays on
+  /// `numerals`: a 7.5pt condensed digit is unreadable.
+  static func score(_ size: CGFloat) -> Font {
+    display(DisplayFace.extraBold, size, fallback: .heavy)
+  }
+
+  /// A CLOCK — kickoff time, countdown, live minute clock — in
+  /// `DisplayFont.bold` (theme.ts `Type.kickoff` / `countdownNum`).
+  static func clock(_ size: CGFloat) -> Font {
+    display(DisplayFace.bold, size, fallback: .bold)
+  }
+
+  /// theme.ts's condensed step-up — 38→48 on the app's score is ~1.25, 32→44
+  /// on the kickoff ~1.35; widgets are tighter than screens, so they take the
+  /// low end.
+  static let displayStep: CGFloat = 1.15
+
+  private static func display(_ name: String, _ size: CGFloat, fallback: Font.Weight) -> Font {
+    guard DisplayFace.available else {
+      // ⚠ A missing TTF must not break a Lock Screen: SF, condensed, tabular.
+      return .system(size: size, weight: fallback).width(.condensed).monospacedDigit()
+    }
+    return .custom(name, fixedSize: size * displayStep).monospacedDigit()
+  }
+
   /// The type eyebrow and micro-labels: uppercase, heavily tracked.
   static func micro(_ size: CGFloat) -> Font {
     .system(size: size, weight: .bold)
@@ -277,4 +312,28 @@ enum Rad {
   static let thumb: CGFloat = 13
   /// theme.ts `Radius.chip` — a chip or tag.
   static let chip: CGFloat = 12
+}
+
+/// The Medina display face inside an extension (ADR 0198).
+///
+/// ⚠ An extension is its own bundle: the app's `expo-font` embedding does not
+/// reach it. The TTFs are copied into each extension's synced folder
+/// (`targets/widget/`, `targets/notification-content/`) so they land in its
+/// bundle, and are registered HERE at first use — no `UIAppFonts` entry to keep
+/// in step, and a missing file degrades to SF instead of failing. In the app
+/// target (which also compiles this file) the face is already registered, and
+/// a second registration is a harmless no-op.
+enum DisplayFace {
+  /// theme.ts `DisplayFont` — PostScript names. A wrong one silently falls back.
+  static let extraBold = "SairaExtraCondensed-ExtraBold"
+  static let bold = "SairaExtraCondensed-Bold"
+
+  static let available: Bool = {
+    for name in [extraBold, bold] where UIFont(name: name, size: 12) == nil {
+      if let url = Bundle.main.url(forResource: name, withExtension: "ttf") {
+        CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+      }
+    }
+    return UIFont(name: extraBold, size: 12) != nil && UIFont(name: bold, size: 12) != nil
+  }()
 }

@@ -45,6 +45,7 @@ import {
 import {
   LEAGUES,
   findLeague,
+  leagueSceneLogo,
   roundCount,
   type League,
 } from '@/lib/cronogol/leagues';
@@ -60,6 +61,7 @@ import {
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useStandings, useAllSeasonJornadas, useUclStandings } from '@/queries/use-standings';
 import { useCanOpenClub } from '@/queries/use-teams';
+import { useLeagueArtwork } from '@/queries/use-leagues';
 import { setLeagueSlug, usePreferences } from '@/store/preferences';
 
 /**
@@ -80,6 +82,9 @@ export default function TableScreen() {
   const { copy, phrases } = useI18n();
   const { followed, leagueSlug: activeSlug } = usePreferences();
   const standings = useStandings();
+  // The scene's watermark (ADR 0201) — the same `['leagues']` query Matchdays
+  // and Clubs hold, so a cache hit.
+  const artwork = useLeagueArtwork();
   const jornadas = useAllSeasonJornadas();
 
   /**
@@ -265,6 +270,11 @@ export default function TableScreen() {
          league. The cup passes its own TAB slug — `LeagueBand`'s one
          non-API-slug key (ADR 0168; null/brand before the UCL was banded). */
       tintLeague={active.kind === 'league' ? active.league.apiSlug : UCL_LEAGUE_PHASE.slug}
+      // The kit's fixed league scene (ADR 0201); the cup falls back to the
+      // drawn starball.
+      scene={{
+        logo: active.kind === 'league' ? leagueSceneLogo(artwork.data, active.league.apiSlug) : null,
+      }}
       title={copy.table.title}
       /* ⚠ UNDER the title, never a right-shoulder block (ADR 0100): beside the
          title, "Clasificación" got ~130pt and wrapped MID-WORD. */

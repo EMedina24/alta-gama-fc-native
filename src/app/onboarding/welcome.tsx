@@ -22,7 +22,7 @@ import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
-import { Button, Eyebrow, GlobeGlyph, Mark, MeshGround, Text } from '@/components/atoms';
+import { Button, Eyebrow, GlobeGlyph, Mark, LimeGlow, Text } from '@/components/atoms';
 import { StepDots } from '@/components/molecules';
 import { Crown } from '@/components/templates/crown';
 import { Colors, Size, Spacing } from '@/constants/theme';
@@ -41,7 +41,7 @@ export default function OnboardingWelcome() {
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
-      <MeshGround />
+      <LimeGlow />
       {/* The gradient head alone — its fixed layer runs on behind the hero. */}
       <Crown topInset={insets.top} padBottom={0} />
 
@@ -51,7 +51,7 @@ export default function OnboardingWelcome() {
         <Mark width={Size.markWelcome} />
         <View style={styles.words}>
           <Eyebrow color="accent">Alta Gama FC</Eyebrow>
-          <Text variant="heroTitle" center style={styles.title}>
+          <Text variant="heroTitle" center>
             {copy.onboarding.welcomeTitle}
           </Text>
           <Text variant="body" color="textSecondary" center style={styles.body}>
@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
     gap: Spacing.six + Spacing.one,
   },
   words: { alignItems: 'center', gap: Spacing.three },
-  title: { lineHeight: 39 },
   body: { lineHeight: 21, maxWidth: 300 },
   footer: { paddingHorizontal: Spacing.five, paddingTop: Spacing.three, gap: Spacing.two },
   dots: { alignItems: 'center', paddingBottom: Spacing.three },

@@ -32,6 +32,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -41,14 +42,18 @@ import {
   HondurasColibri,
   LaLigaGlyph,
   MeshGround,
+  Orb,
   PremierCrest,
   PuertoRicoBall,
+  SceneGround,
   SerieADiamond,
   UclStarball,
 } from '@/components/atoms';
 import { ScreenOverlayContext } from '@/hooks/use-screen-overlay';
+import { useI18n } from '@/lib/i18n/use-i18n';
 import {
   leagueCrownTheme,
+  leagueSceneTheme,
   type CrownArt as CrownArtKind,
   type CrownTheme,
 } from '@/lib/cronogol/league-theme';
@@ -57,6 +62,7 @@ import {
   Colors,
   CrownArt,
   CrownRamp,
+  LeagueScene,
   MaxContentWidth,
   Spacing,
 } from '@/constants/theme';
@@ -102,7 +108,7 @@ export interface ScreenScaffoldProps {
    */
   subtitle?: string;
   /** The Clubs screen's 48pt title; everything else takes the default 40. */
-  titleVariant?: 'crownTitle' | 'crownTitleLg';
+  titleVariant?: 'crownTitle' | 'crownTitleLg' | 'crownTitleXl';
   /** A right-aligned block beside the title — Table's caption lines. */
   meta?: ReactNode;
   /** Right of the title — the account avatar, on crown ink. */
@@ -147,6 +153,15 @@ export interface ScreenScaffoldProps {
    * override), and `head` replaces the crown's eyebrow+title stack (ADR
    * 0179 — the club crest as the screen's identity mark).
    */
+  /**
+   * Wear the league SCENE (ADR 0201) — the Medina kit's fixed league
+   * background — in place of the deep crown's scrolling ramp and mesh.
+   * `logo` is the wire's lockup for the watermark (`leagueSceneLogo`); null
+   * falls back to the drawn mark. ⚠ Applies only when `tintLeague` resolves to
+   * a banded league and there is no `crownOverride`; otherwise the crown is
+   * what it always was. The three league tabs opt in.
+   */
+  scene?: { logo: string | null };
   crownOverride?: {
     theme: CrownTheme;
     art?: ReactNode;
@@ -187,6 +202,7 @@ export function ScreenScaffold({
   metaLine,
   metaTone,
   tintLeague,
+  scene,
   crownOverride,
   children,
   onRefresh,
@@ -197,6 +213,7 @@ export function ScreenScaffold({
 }: ScreenScaffoldProps) {
   const insets = useSafeAreaInsets();
   const focused = useIsFocused();
+  const { copy } = useI18n();
 
   /**
    * Whether the crown's bright band is still behind the status bar. The
@@ -238,6 +255,27 @@ export function ScreenScaffold({
         <Mark height={CrownRamp * CrownArt.height[theme.art]} alpha={CrownArt.alpha} />
       );
 
+  /**
+   * The league SCENE (ADR 0201), when the screen asked for one and there IS a
+   * league. Null leaves the crown exactly as it was — the brand screens, a
+   * league slug with no band yet, and the Board's club wallpaper
+   * (`crownOverride`) all keep their ramp.
+   */
+  const sceneTheme = scene && !crownOverride ? leagueSceneTheme(tintLeague) : null;
+  const SceneMark = sceneTheme?.art ? ART_MARK[sceneTheme.art] : null;
+  const sceneMark = !sceneTheme ? null : scene?.logo ? (
+    // The wire's lockup, wordmark and all — the kit's watermark (Ed's call).
+    <Image
+      source={{ uri: scene.logo }}
+      style={styles.sceneLogo}
+      contentFit="contain"
+      accessible={false}
+    />
+  ) : SceneMark ? (
+    // No wire artwork (the UCL): the bundled silhouette, at the scene's alpha.
+    <SceneMark height={LeagueScene.mark.width} alpha={LeagueScene.mark.alpha} />
+  ) : null;
+
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
     setOverBright(y < threshold);
@@ -265,8 +303,14 @@ export function ScreenScaffold({
           position is irrelevant. Asking `overBright` on a deep crown would put
           black glyphs on a near-black band. */}
       <StatusBar style={focused && deepCrown === false && overBright ? 'dark' : 'light'} />
-      {/* The aurora mesh sits BEHIND the scroll and does not move (ADR 0087). */}
-      <MeshGround pools={theme.pools} />
+      {/* The background sits BEHIND the scroll and does not move: the league
+          scene on an opted-in league tab (ADR 0201), the mesh everywhere else
+          (ADR 0087). */}
+      {sceneTheme ? (
+        <SceneGround base={sceneTheme.base} glow={sceneTheme.glow} mark={sceneMark} />
+      ) : (
+        <MeshGround pools={theme.pools} />
+      )}
       <ScrollView
         ref={scrollRef}
         scrollEnabled={scrollEnabled}
@@ -282,10 +326,9 @@ export function ScreenScaffold({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              // ⚠ The spinner spins over the crown's TOP, so its ink follows the
-              // same rule the head's does: dark on the brand's bright band,
-              // white on a league's deep one (ADR 0165).
-              tintColor={deepCrown ? Colors.dark.onDeepDim : Colors.dark.onCrownDim}
+              // ⚠ ADR 0197: the platform spinner is hidden — the thinking orb
+              // below stands in for it while `refreshing`.
+              tintColor="transparent"
             />
           ) : undefined
         }>
@@ -305,11 +348,28 @@ export function ScreenScaffold({
           banner={banner}
           metaLine={metaLine}
           metaTone={metaTone}
-          topInset={insets.top}>
+          topInset={insets.top}
+          // ⚠ The scene IS the crown's colour on these screens — the crown
+          // draws no layer of its own over it (ADR 0201).
+          bare={sceneTheme !== null}>
           {payload}
         </Crown>
         <View style={styles.body}>{children}</View>
       </ScrollView>
+      {/* The refresh orb (ADR 0197), over the crown's top where the spinner
+          was. Its ink follows the spinner's old rule: dark on the brand's
+          bright band, light on a league's deep one (ADR 0165) — and never
+          lime-tipped, because the brand band IS lime. */}
+      {refreshing ? (
+        <View pointerEvents="none" style={[styles.orb, { top: insets.top + Spacing.two }]}>
+          <Orb
+            state="connecting"
+            size={20}
+            on={deepCrown ? 'dark' : 'light'}
+            accessibilityLabel={copy.orb.refreshing}
+          />
+        </View>
+      ) : null}
       {/* ⚠⚠ LAST, and outside the scroll view — the whole point of the slot
           (ADR 0163). Painted over the page, so a control no longer has to lift
           the crown to escape it; and touches land here rather than reaching the
@@ -362,6 +422,12 @@ export function AvatarButton({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.dark.background },
   scroll: { flex: 1 },
+  sceneLogo: {
+    width: LeagueScene.mark.width,
+    height: LeagueScene.mark.width,
+    opacity: LeagueScene.mark.alpha,
+  },
+  orb: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   // ⚠ No horizontal padding here — the crown is full-bleed. The gutter is
   // `body`'s.
   content: {},

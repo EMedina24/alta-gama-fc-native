@@ -32,6 +32,7 @@ import {
   findLeague,
   findLeagueByApiSlug,
   leagueOptions,
+  leagueSceneLogo,
 } from '@/lib/cronogol/leagues';
 import { bandsApply, zoneFor } from '@/lib/cronogol/standings';
 import { foldAccents } from '@/lib/format';
@@ -187,6 +188,8 @@ export default function ClubsScreen() {
          on Matchdays — this screen has no cup — so its `apiSlug` is safe to
          tint from directly (ADR 0164). */
       tintLeague={league.apiSlug}
+      // The kit's fixed league scene (ADR 0201).
+      scene={{ logo: leagueSceneLogo(artwork.data, league.apiSlug) }}
       title={copy.clubs.title}
       // The one 48pt crown: its subhead carries the follow count (ADR 0087).
       titleVariant="crownTitleLg"

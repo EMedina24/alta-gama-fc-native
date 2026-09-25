@@ -6,19 +6,21 @@
  * design's own rule (SPEC §3.1), and it is why this screen is fully buildable
  * before push exists: it is exactly what a new user sees.
  */
-import { useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useFocusEffect, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   Button,
+  Check,
   ChipButton,
   competitionMarkKind,
   Crest,
   Eyebrow,
   FadeOutImage,
   PencilGlyph,
+  PlusGlyph,
   SkeletonRows,
   Text,
 } from '@/components/atoms';
@@ -30,13 +32,12 @@ import { LastResultCard } from '@/components/organisms/last-result-card';
 import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpCarousel } from '@/components/organisms/next-up-carousel';
 import { NewsCard } from '@/components/organisms/news-card';
-import { BoardEditHint, BoardStack, type BoardSection } from '@/components/organisms/board-stack';
+import { BoardStack, type BoardSection, type EditPanelTile } from '@/components/organisms/board-stack';
 import { ART_MARK, AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { applyWidgetLive } from '@/features/widgets/live';
 import {
   BoardEdit,
-  BottomTabInset,
   Colors,
   CrownArt,
   CrownClubArt,
@@ -73,7 +74,7 @@ import {
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
 import { clubCrownTheme, leagueCrownTheme } from '@/lib/cronogol/league-theme';
-import { findLeague } from '@/lib/cronogol/leagues';
+import { findLeague, LEAGUES } from '@/lib/cronogol/leagues';
 import { upcomingBounds } from '@/lib/cronogol/fixture-window';
 import { matchEventsCapable, mergeWindows, sliceWindow } from '@/lib/cronogol/team-window';
 import {
@@ -96,9 +97,18 @@ import { useCanOpenClub, useTeams } from '@/queries/use-teams';
 import { useLive } from '@/queries/use-live';
 import { useNews } from '@/queries/use-news';
 import { useTeamWindows } from '@/queries/use-team-windows';
-import { UPCOMING_DAYS, useFinishedToday, useRecent, useUpcoming } from '@/queries/use-today';
 import {
-  resetBoardLayout,
+  BOARD_AHEAD_DAYS,
+  useFinishedToday,
+  useRecent,
+  useWidgetWindow,
+} from '@/queries/use-today';
+import { clubOption, defaultOption, leagueOption, type BackgroundOption } from '@/features/board/background-options';
+import { hapticToggle } from '@/lib/haptics';
+import { setBoardEditing, useBoardEditing } from '@/store/board-edit';
+import {
+  resetBoard,
+  setBoardBackground,
   setBoardCardHidden,
   setBoardOrder,
   usePreferences,
@@ -134,7 +144,10 @@ export default function TodayScreen() {
   const { followed, clock, newsSeenAt, bdOrder, bdHidden, bdBg } = usePreferences();
 
   const finished = useFinishedToday(zone);
-  const upcoming = useUpcoming(zone);
+  // ⚠ The widget's 21-day window, not `useUpcoming`'s seven (ADR 0192): an
+  // international break must not empty NEXT UP and the upcoming list. The SAME
+  // query `PushSync` already holds — a cache read, no new request.
+  const upcoming = useWidgetWindow(zone);
   const recent = useRecent(zone);
   /**
    * The followed clubs' OWN schedules — cups, European ties, segunda (ADR
@@ -165,18 +178,26 @@ export default function TodayScreen() {
    */
   const params = useLocalSearchParams<{ boardEdit?: string }>();
   const forcedEdit = __DEV__ && params.boardEdit === '1';
-  const [edited, setEdited] = useState(false);
+  // ⚠ In a STORE since ADR 0199, not `useState`: the tab layout reads it to hide
+  // the tab bar while editing (the kit's), and NativeTabs sits above this screen.
+  const edited = useBoardEditing();
   // ⚠ DERIVED, not copied into state by an effect (trap 72: if two pieces of
   // state must agree, compute one from the other). A `useState` initialiser
   // would read the param on MOUNT only, and this tab is already mounted when the
   // deep link arrives — which is exactly the case the hook exists for.
   const editing = edited || forcedEdit;
   const setEditing = (on: boolean) => {
-    setEdited(on);
+    setBoardEditing(on);
     // ⚠ DONE has to be able to close a mode the URL opened, so it clears the
     // param rather than fighting it.
     if (!on && forcedEdit) router.setParams({ boardEdit: undefined });
   };
+  /**
+   * ⚠ Leaving the screen LEAVES the mode (ADR 0199). With the tab bar hidden
+   * while editing, a blur that kept the store's flag up would strand the next
+   * screen without its tabs. The cleanup runs on blur and on unmount alike.
+   */
+  useFocusEffect(useCallback(() => () => setBoardEditing(false), []));
 
   /**
    * The page, handed to the editor so a held card can scroll it (ADR 0174).
@@ -189,12 +210,10 @@ export default function TodayScreen() {
   const scrollOffset = useRef(0);
   const [dragging, setDragging] = useState(false);
   const insets = useSafeAreaInsets();
-  const { height: screenH } = useWindowDimensions();
   const dragScroll = {
     ref: scrollRef,
     offset: scrollOffset,
     top: insets.top + BoardEdit.edge,
-    bottom: screenH - BottomTabInset - BoardEdit.edge,
   };
 
   /**
@@ -378,9 +397,9 @@ export default function TodayScreen() {
     // slice is a bug guard, not tidiness (ADR 0132): the team window reaches
     // 14 days BACK, and a past TBD row would sail through the `kickoffTbd ||`
     // half of the predicate below into the deck as a `--:--` card for a match
-    // long over. It also keeps NEXT UP's horizon at the same seven days —
-    // extending it is a separate decision nobody has made.
-    const { from: upFrom, to: upTo } = upcomingBounds(now, zone, UPCOMING_DAYS);
+    // long over. The far edge is the board's 21 days (ADR 0192), the same
+    // band the window above asks for.
+    const { from: upFrom, to: upTo } = upcomingBounds(now, zone, BOARD_AHEAD_DAYS);
     const merged = mergeWindows(
       upcoming.data.fixtures,
       sliceWindow(teamRows, Date.parse(upFrom), Date.parse(upTo)),
@@ -897,11 +916,63 @@ export default function TodayScreen() {
           head: bgHead(bgLeague.name),
         }
       : undefined;
-  /** What the edit row names: the club, the league, or the brand — matching
-   *  what is DRAWN, so an unresolved club says the default it renders as. */
-  const bgValueLabel = bgTeam
-    ? displayName(bgTeam.name)
-    : (bgLeague?.name ?? copy.board.backgroundDefault);
+  /**
+   * The edit panel's background tiles (ADR 0199) — the common picks, with the
+   * full catalogue behind the last one. Built HERE because the league marks
+   * live with the scaffold (a template the panel may not import).
+   *
+   * The brand default, the reader's own clubs, then every league; the current
+   * pick is slotted in after the default if it is none of those (a club chosen
+   * from the full sheet), so the selection is always on the strip.
+   */
+  const followedTeams = followed.flatMap((slug) => {
+    const team = (teams.data ?? []).find((t) => t.slug === slug);
+    return team ? [team] : [];
+  });
+  const bgOptions: BackgroundOption[] = [
+    defaultOption(copy.board.backgroundDefault, bdBg),
+    ...followedTeams.map((team) => clubOption(team, bdBg)),
+    ...LEAGUES.map((league) => leagueOption(league, bdBg)),
+  ];
+  if (bgTeam && !bgOptions.some((option) => option.selected)) {
+    bgOptions.splice(1, 0, clubOption(bgTeam, bdBg));
+  }
+  const tileMark = (option: BackgroundOption): ReactNode => {
+    if (option.crestFallback !== undefined) {
+      return (
+        <View style={{ opacity: BoardEdit.tileMarkAlpha }}>
+          <Crest src={option.crest} fallback={option.crestFallback} size={BoardEdit.tileMark} />
+        </View>
+      );
+    }
+    if (option.art) {
+      const Mark = ART_MARK[option.art];
+      return <Mark height={BoardEdit.tileMark} alpha={BoardEdit.tileMarkAlpha} />;
+    }
+    return undefined;
+  };
+  const bgTiles: EditPanelTile[] = [
+    ...bgOptions.map((option) => ({
+      key: option.id,
+      label: option.label,
+      stops: option.stops,
+      mark: tileMark(option),
+      markSide: option.art ? ('right' as const) : ('left' as const),
+      selected: option.selected,
+      accessibilityLabel: copy.board.backgroundTile(option.label),
+      onPress: () => {
+        void hapticToggle();
+        setBoardBackground(option.id);
+      },
+    })),
+    {
+      key: 'more',
+      label: copy.board.more,
+      icon: <PlusGlyph color="textSecondary" size={Size.moreGlyph} />,
+      accessibilityLabel: copy.board.more,
+      onPress: () => router.push('/(sheets)/board-background'),
+    },
+  ];
 
   /** What the body draws, in the reader's order: on the board, and eligible. */
   const sections = visibleCards(layout).flatMap<BoardSection>((id) => {
@@ -965,10 +1036,12 @@ export default function TodayScreen() {
           // avatar stood down, this pill is the only control in the crown, and a
           // reader who does not find it is stuck (ADR 0174 §13). It is also the
           // app's third looping animation — see `Pulse`.
+          // ADR 0199: the kit's lime "✓ Done" — solid, not the crown capsule.
           <ChipButton
             label={copy.board.done}
+            leading={<Check color="onAccent" size={Size.doneCheck} />}
             shape="pill"
-            tone="crown"
+            tone="fill"
             pulse
             onPress={() => setEditing(false)}
           />
@@ -1041,19 +1114,10 @@ export default function TodayScreen() {
        * already gaps its children by `Spacing.four`. ⚠⚠ Never by raising the
        * crown over the body to get there (trap 70).
        */
-      payload={
-        editing ? (
-          <>
-            <BoardEditHint
-              hint={copy.board.hint}
-              count={copy.board.count(visibleCards(layout).length, BUILT_COUNT)}
-            />
-            {lead}
-          </>
-        ) : (
-          lead
-        )
-      }
+      // ⚠ `lead` alone in BOTH modes since ADR 0199 — the hint left the crown
+      // for a caption at the top of the body, so there is no fragment to
+      // re-pad an idle crown (trap 76) and the pinned lead card is untouched.
+      payload={lead}
       // ⚠ No pull-to-refresh while arranging: a refetch mid-edit reshuffles the
       // content under the scrims and can take a card out of the stack under the
       // finger, for a reader who is not reading any of it.
@@ -1079,24 +1143,22 @@ export default function TodayScreen() {
         sections={sections}
         editing={editing}
         tray={trayCards(layout)}
-        copy={copy.board}
-        // ⚠ The drag speaks in VISIBLE rows; the store holds the whole
+        copy={{
+          ...copy.board,
+          caption: `${copy.board.hint} · ${copy.board.count(visibleCards(layout).length, BUILT_COUNT)}`,
+        }}
+        tiles={bgTiles}
+        // ⚠ The drag speaks in VISIBLE cards; the store holds the whole
         // catalogue's order. `applyVisibleOrder` is the join — it rewrites only
-        // the slots those rows occupied, so a put-away card keeps the place it
+        // the slots those cards occupied, so a put-away card keeps the place it
         // was put away from (ADR 0174).
         onOrder={(visible) => setBoardOrder(applyVisibleOrder(bdOrder, visible))}
         onRemove={(id) => setBoardCardHidden(id, true)}
         onAdd={(id) => setBoardCardHidden(id, false)}
-        onReset={resetBoardLayout}
+        // Order, hidden cards AND background — the kit's Reset (ADR 0199).
+        onReset={resetBoard}
         scroll={dragScroll}
         onDragging={setDragging}
-        background={{
-          title: copy.board.background,
-          valueLabel: bgValueLabel,
-          stops: bgTheme.stops,
-          accessibilityLabel: copy.board.backgroundRow(bgValueLabel),
-          onPress: () => router.push('/(sheets)/board-background'),
-        }}
       />
 
       {/* ⚠ The no-subscriptions state: the follow card REPLACES the board. */}

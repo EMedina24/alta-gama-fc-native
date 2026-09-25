@@ -24,11 +24,11 @@
  * ground would paint the wrong crown over a league/club background (0175).
  */
 import { StyleSheet, View } from 'react-native';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 
 import {
   CompetitionMark,
   Crest,
+  GlassSurface,
   Text,
   VersusBadge,
   WashGradient,
@@ -36,9 +36,6 @@ import {
 } from '@/components/atoms';
 import { Countdown, type ScoreSide } from '@/components/molecules';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
-
-/** Decided once at module scope — the gate must pick a path BEFORE mount (0090). */
-const LIQUID = isLiquidGlassAvailable();
 
 export interface NextUpCardProps {
   home: ScoreSide;
@@ -95,11 +92,7 @@ export function NextUpCard({
   return (
     <View style={styles.card}>
       {/* The body, then the overlays — all decorative, all clipped. */}
-      {LIQUID ? (
-        <GlassView style={styles.body} glassEffectStyle="clear" />
-      ) : (
-        <View style={[styles.body, styles.bodyFlat]} />
-      )}
+      <GlassSurface style={styles.body} flatStyle={styles.bodyFlat} />
       {/* A dark scrim over the glass — the card must sit a step BELOW the
           crown it refracts, or the ink loses its ground ("a bit darker",
           ADR 0096). `recess`, NOT LivePlate's `plateDark`: Ed judged the

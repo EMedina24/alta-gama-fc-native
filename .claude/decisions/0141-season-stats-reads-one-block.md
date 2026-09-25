@@ -1,7 +1,7 @@
 # 0141 — Season stats reads ONE block: the club's own league, this season
 
 - **Date:** 2026-09-10
-- **Status:** Accepted
+- **Status:** Partly superseded — the club-page entry row superseded by [0202](./0202-the-club-page-wears-the-kit.md) (SEASON SO FAR tiles + See all). Was: Accepted
 - **Decided by:** Ed (scope + the four open questions), Claude (implementation)
 
 ## Context

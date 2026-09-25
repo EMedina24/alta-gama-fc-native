@@ -121,10 +121,21 @@ try {
     return resolve.call(this, request, ...rest);
   };
 
-  const { Colors, CrownArt, CrownClubArt, CrownClubDim, CrownDeep, CrownDeepSat, CrownGrad, LeagueBand, Mesh } =
-    require(join(out, 'constants/theme.js'));
+  const {
+    Colors,
+    ClubScene,
+    CrownArt,
+    CrownClubArt,
+    CrownClubDim,
+    CrownDeep,
+    CrownDeepSat,
+    CrownGrad,
+    LeagueBand,
+    LeagueScene,
+    Mesh,
+  } = require(join(out, 'constants/theme.js'));
   const { parseHex, TINT_FALLBACK_ENTRIES } = require(join(out, 'lib/cronogol/club-wash.js'));
-  const { clubCrownTheme, leagueCrownTheme, leagueHue } = require(
+  const { clubCrownTheme, clubSceneTheme, leagueCrownTheme, leagueHue, leagueSceneTheme } = require(
     join(out, 'lib/cronogol/league-theme.js'),
   );
 
@@ -526,6 +537,139 @@ try {
   }
 
   console.log(`  club crown: hue sweep, ${TINT_FALLBACK_ENTRIES.length} fallbacks, graphite ok.`);
+
+  /* ── 7 · The league SCENE (ADR 0201) ─────────────────────────────────────── */
+
+  /**
+   * ⚠⚠ **The head's two inks over the scene, where each one can actually sit,
+   * watermark included.** The scene is fixed, so the head reads over whatever
+   * the glow and the lockup put under it. The watermark is taken as WHITE at
+   * its alpha (the Premier League's `onDark` lockup is), which is the worst
+   * case for every league.
+   *
+   *  - **White** (`onDeep` — title, range line, banner) is rated at the glow's
+   *    HOTTEST point: the base with the glow at full `alpha`. It must clear AA
+   *    everywhere, so it is rated where it is hardest.
+   *  - **The quiet ink** (`onDeepDim`) is rated where it can reach, and against
+   *    3:1, the large-text floor. It is only ever an EYEBROW, left-aligned
+   *    under the banner: "2026/27", "AFTER MD 5 OF 38", "3 clubs followed" —
+   *    none runs past half the width. `DIM_REACH` is that bound, and the glow
+   *    there is the SVG radial's own linear falloff, not a guess.
+   *
+   *    The first cut rated the quiet ink at the glow centre too, and LaLiga's
+   *    kit glow (`#ff563c`) failed it at 2.99. But that centre is the right
+   *    screen EDGE, behind the avatar and the menu trigger, which carry their
+   *    own grounds. A guard rating ink where no ink sits only teaches the next
+   *    reader to dim the design for nothing.
+   *
+   * ⚠ Iterating `LeagueBand` ITSELF, like §4: a league added later is rated
+   * whether it takes a kit tint or derives one.
+   */
+  const LARGE = 3;
+  /** The furthest a quiet eyebrow reaches: half the width, about 20% down. */
+  const DIM_REACH = { x: 0.5, y: 0.2 };
+  const g = LeagueScene.glow;
+  const glowAt = ({ x, y }) => {
+    const d = Math.hypot((x - g.cx) / g.rx, (y - g.cy) / g.ry);
+    return g.alpha * Math.max(0, 1 - d / g.fade);
+  };
+  for (const slug of entried) {
+    const scene = leagueSceneTheme(slug);
+    assert.ok(scene, `${slug} is banded, so it must wear a scene`);
+    const marked = (alpha) =>
+      over(Colors.dark.onDeep, over(scene.glow, scene.base, alpha), LeagueScene.mark.alpha);
+    const hot = marked(g.alpha);
+    const reach = marked(glowAt(DIM_REACH));
+    const white = contrast(Colors.dark.onDeep, hot);
+    const dim = contrast(over(Colors.dark.onDeep, reach, 0.62), reach);
+    assert.ok(
+      white >= AA,
+      `white over ${slug}'s scene glow (${hot}) is ${white.toFixed(2)}:1, under AA ${AA} — ` +
+        `lower this league's glow, not the ink`,
+    );
+    assert.ok(
+      dim >= LARGE,
+      `onDeepDim at ${slug}'s eyebrow reach (${reach}) is ${dim.toFixed(2)}:1, under ${LARGE}`,
+    );
+    console.log(
+      `  scene ${slug.padEnd(22)} base ${scene.base} glow ${scene.glow}  white ${white.toFixed(2)}  dim ${dim.toFixed(2)}`,
+    );
+  }
+
+  // No league, or no band: no scene — the caller keeps the brand crown.
+  assert.equal(leagueSceneTheme(null), null, 'no league wears no scene');
+  assert.equal(leagueSceneTheme('zz-no-band'), null, 'an unbanded league wears no scene');
+
+  // ⚠ Puerto Rico is deliberately NOT a kit tint (0173's flag beats the kit's
+  // green): it DERIVES, base from the band's first end, glow from its second.
+  {
+    assert.equal(LeagueScene.tints['lpr-pro-clausura'], undefined, 'LPR must not take the kit green');
+    const pr = leagueSceneTheme('lpr-pro-clausura');
+    const [a, b] = bandInks('lpr-pro-clausura');
+    nearHue(parseHex(pr.base).h, a.h, 'LPR scene base takes the band\'s first (blue) end');
+    nearHue(parseHex(pr.glow).h, b.h, 'LPR scene glow takes the band\'s second (red) end');
+    nearL(parseHex(pr.base).l, LeagueScene.base.light, 'a derived base takes the scene lightness');
+    nearL(parseHex(pr.glow).l, LeagueScene.glow.light, 'a derived glow takes the scene lightness');
+  }
+
+  /* ── 8 · The CLUB scene (ADR 0202) ──────────────────────────────────────── */
+
+  /**
+   * ⚠⚠ Same two inks, over a CLUB's scene — two colours now (Ed's call), so the
+   * glow is the club's SECONDARY and can be anything the wire serves. Rated:
+   *  - white at the glow's hottest point (top-LEFT), under a white crest
+   *    watermark at its alpha — the worst case, the back circle's corner;
+   *  - the quiet subline ("LaLiga · 1st · 67 Pts") at its reach, x 0.6 / y 0.3,
+   *    against 3:1, with the radial's own falloff.
+   * Over every fallback tint the catalogue serves, graphite, and a hue sweep
+   * paired with a vivid opposite secondary, a white one and a yellow one (the
+   * `clubDim` pull-down's reason to exist).
+   */
+  const cg = ClubScene.glow;
+  const clubGlowAt = ({ x, y }) => {
+    const d = Math.hypot((x - cg.cx) / cg.rx, (y - cg.cy) / cg.ry);
+    return cg.alpha * Math.max(0, 1 - d / cg.fade);
+  };
+  const SUBLINE = { x: 0.6, y: 0.3 };
+  const proveClubScene = (label, team) => {
+    const scene = clubSceneTheme(team);
+    const marked = (alpha) =>
+      over(Colors.dark.onDeep, over(scene.glow, scene.base, alpha), ClubScene.mark.alpha);
+    const hot = marked(cg.alpha);
+    const reach = marked(clubGlowAt(SUBLINE));
+    const white = contrast(Colors.dark.onDeep, hot);
+    const dim = contrast(over(Colors.dark.onDeep, reach, 0.62), reach);
+    assert.ok(white >= AA, `white over ${label}'s club glow (${hot}) is ${white.toFixed(2)}:1, under AA`);
+    assert.ok(dim >= LARGE, `the subline over ${label}'s scene (${reach}) is ${dim.toFixed(2)}:1, under ${LARGE}`);
+    return { white, dim };
+  };
+  let worstWhite = Infinity;
+  let worstDim = Infinity;
+  const track = ({ white, dim }) => {
+    worstWhite = Math.min(worstWhite, white);
+    worstDim = Math.min(worstDim, dim);
+  };
+  for (const [slug, hex] of TINT_FALLBACK_ENTRIES) {
+    track(proveClubScene(`TINT_FALLBACK ${slug}`, { slug, colorPrimary: hex, colorSecondary: null }));
+  }
+  track(proveClubScene('graphite', { slug: 'zz', colorPrimary: null, colorSecondary: null }));
+  for (let h = 0; h < 360; h += 30) {
+    const primary = hslHex(h, 80, 40);
+    for (const secondary of [hslHex((h + 180) % 360, 85, 50), '#ffffff', hslHex(55, 100, 50)]) {
+      track(proveClubScene(`h${h} + ${secondary}`, { slug: 'zz', colorPrimary: primary, colorSecondary: secondary }));
+    }
+  }
+  // Barcelona, the mock's own pair: blue base, garnet glow.
+  const barca = clubSceneTheme({ slug: 'barcelona', colorPrimary: '#004D98', colorSecondary: '#A50044' });
+  nearHue(parseHex(barca.base).h, parseHex('#004D98').h, 'Barcelona base is its blue');
+  nearHue(parseHex(barca.glow).h, parseHex('#A50044').h, 'Barcelona glow is its garnet');
+  // A white secondary is unusable: the glow falls back to the primary's hue.
+  const mono = clubSceneTheme({ slug: 'zz', colorPrimary: '#c8102e', colorSecondary: '#ffffff' });
+  nearHue(parseHex(mono.glow).h, parseHex('#c8102e').h, 'an unusable secondary falls back to the primary hue');
+  console.log(
+    `  club scene: ${TINT_FALLBACK_ENTRIES.length} fallbacks, graphite, 36-pair sweep — ` +
+      `worst white ${worstWhite.toFixed(2)}, worst subline ${worstDim.toFixed(2)}`,
+  );
 
   console.log(`\nleague-theme: all assertions passed over ${entried.length} banded leagues.`);
 } finally {

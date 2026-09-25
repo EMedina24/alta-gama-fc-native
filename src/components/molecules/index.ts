@@ -37,9 +37,7 @@ export { PickStack, type PickStackItem, type PickStackProps } from './pick-stack
 export { StepDots, type StepDotsProps } from './step-dots';
 export { SearchField, type SearchFieldProps } from './search-field';
 export { Tray, type TrayProps } from './tray';
-export { ClubNextCard, type ClubNextCardProps } from './club-next-card';
 export { CrownSwatch, type CrownSwatchProps } from './crown-swatch';
-export { ClubStatsStrip, type ClubStatsStripProps } from './club-stats-strip';
 export { ClubBubble, type ClubBubbleProps } from './club-bubble';
 export { ClubLine, type ClubLineProps } from './club-line';
 export { ClubRow, type ClubRowProps } from './club-row';
@@ -53,3 +51,6 @@ export { StatCard, type StatCardProps } from './stat-card';
 export { GoalsLine, type GoalsLineProps } from './goals-line';
 export { GoalFlowChart, type FlowSeries, type GoalFlowChartProps } from './goal-flow-chart';
 export { VersusBars, type VersusBarsProps, type VersusRow } from './versus-bars';
+export { SceneTile, type SceneTileProps } from './scene-tile';
+export { FixturePairCard, type FixturePairCardProps, type FixturePairSide } from './fixture-pair-card';
+export { PlayerStatRow, type PlayerStatRowProps } from './player-stat-row';

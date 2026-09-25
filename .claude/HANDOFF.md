@@ -21,11 +21,58 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Stack** | Expo SDK 57 · expo-router · React Query · TypeScript strict · dark-only |
 | **Data** | `senpai-backend` at `crono-gol.com`. **The only gateway** — never Supabase or a football provider directly |
 | **Reference** | `cronogol` (Next.js web app at `altagamafc.com`). Behaviour is inherited from it; **appearance is not** |
-| **Design** | `handoff_AG-ios/` — `SPEC.md` is the screen contract, `screenshots/` shows every state |
+| **Design** | **The Medina Digital design system** (local skill; iOS kit in `ui_kits/medina-ios/` + `templates/medina-ios-rn/`) folded into `@/constants/theme` since [0193](./decisions/0193-medina-digital-becomes-the-design-system.md). `handoff_AG-ios/` — `SPEC.md` is still the screen contract |
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-24 (latest) — LAST RESULT IS A DARK PLATE, and the board
+> ⭐ **NEW 2026-09-25 (latest) — THE CLUB PAGE AND THE LEAGUE TABS WEAR THE KIT
+> ([0200](./decisions/0200-matchdays-wear-the-kit.md)–[0202](./decisions/0202-the-club-page-wears-the-kit.md)).**
+> - **League tabs.** Matchdays, Table and Clubs sit on a FIXED league scene
+>   (`SceneGround`, the kit's tints, and the wire's lockup as the watermark).
+> - **Club page:**
+>   - a club scene: primary base, secondary glow
+>   - glass back and share circles
+>   - Follow is solid when not following and an outline when following; it
+>     always opens the alerts sheet
+>   - Overview / Fixtures / Squad
+> - ⚠ Key players join the squad by NAME: the leaderboard's `playerId` is a
+>   UUID and the squad's `id` is numeric, so they never match.
+> - ⚠ xG and ratings don't exist; Clean sheets and G+A stand in for them.
+
+> ⭐ **NEW 2026-09-25 — THE BOARD EDITS IN PLACE, THE KIT'S WAY
+> ([0199](./decisions/0199-the-board-edits-in-place-the-kits-way.md)).**
+> Edit mode now draws the REAL cards, scaled 0.965 and inert, with a grey `−` and
+> a grip on each. The drag runs on measured heights.
+> - DONE is a lime `fill` pill, and the tab bar hides while editing
+>   (`store/board-edit`).
+> - A glass bottom panel carries the background tiles, a Reset (order, cards
+>   AND background) and the hidden-card chips. The sheet survives as the
+>   "More" tile.
+> - The old add tray, background row, hint bar and 72pt rows are gone, so the
+>   edit-mode description further down (0174/0175) is historical for those
+>   parts.
+> - ⚠ Heights must be pushed to the shared value WHOLE from a JS ref (see
+>   0199 §2).
+
+> ⭐ **NEW 2026-09-25 — THE APP IS ON THE MEDINA DIGITAL SYSTEM
+> ([0193](./decisions/0193-medina-digital-becomes-the-design-system.md)–[0198](./decisions/0198-the-widget-extension-wears-medina.md)).**
+> The kit was folded into our own tokens, not added as a second theme. Kit files
+> are reference only.
+> - **Accent:** lime `#c8ff3d`.
+> - **Numbers:** every number token is Saira Extra Condensed (`DisplayFont`,
+>   tabular and uppercase in the token), and so is `heroTitle`.
+> - **Glass:** sheets and the tab bar are system glass on iOS 26, through
+>   `GlassSurface`, `LIQUID_GLASS` and `SHEET_GROUND`.
+> - **Ground:** stack screens draw `LimeGlow`.
+> - **Loading:** `Orb` (thinking-orbs, drawn in SVG) replaces the spinner in
+>   `Button loading` and pull-to-refresh.
+> - **Extensions:** they use `Tok.score` / `Tok.clock`.
+>
+> ⚠ **Open for Ed:**
+> - The one-lime-per-screen audit (listed in 0193's follow-up), not acted on.
+> - The widget / Lock Screen eyeball, which needs an extension build.
+
+> ⭐ **NEW 2026-09-24 — LAST RESULT IS A DARK PLATE, and the board
 > pair STACKS ([0186](./decisions/0186-the-last-result-card-goes-dark-plate.md)).**
 > Ed, off the idle Board: the card's text was unreadable and `Atlético de Madrid`
 > shrank. On an idle board (no live match, no NEXT UP) the crown collapses but its
@@ -2109,6 +2156,38 @@ documented at the code that handles them; this is the index.
     the floor. Read `adjustsFontSizeToFit` as "shrinks without limit": give the
     text a box it can fill, or let it wrap. This qualifies trap 33. `tsc`, lint
     and the type defs all accept the prop; only the simulator shows the size.
+
+78. **⚠ A number's font lives in its `Type` token, not at the call site**
+    ([0194](./decisions/0194-numbers-speak-in-saira.md)).
+    - Every number token carries `fontFamily`, `fontVariant` and uppercase
+      itself.
+    - Never put a `fontWeight` on a Saira token or its call site. Each face is
+      a single weight, and a weight iOS cannot match can fall back to SF
+      silently.
+    - Never pin a Saira `lineHeight` under about 1.13× the size; use 1.2×.
+      iOS keeps the whole descent (0.439em) and shaves the deficit off the
+      top, so `12:30 PM` lost the tops of its digits at 1.05×.
+    - A new number role needs a new token, not `title3` borrowed. That misuse
+      is exactly what phase 7 of 0193 cleaned up.
+    - `fontVariant` arrays must be the shared `TabularNums`: `as const` makes
+      an inline tuple readonly, and `TextStyle` rejects it.
+79. **⚠ An EXTENSION cannot see the app's fonts**
+    ([0198](./decisions/0198-the-widget-extension-wears-medina.md)).
+    - The TTFs are copied into each synced target folder and registered by
+      `DisplayFace` at first use.
+    - A new extension that uses `Tok.score` / `Tok.clock` needs its own copies,
+      or it renders SF condensed. It won't fail, and it won't warn.
+    - Don't put them in `_shared/`: that folder's target membership is a list
+      only a prebuild regenerates.
+80. **⚠ Glass forks in ONE place** ([0195](./decisions/0195-sheets-and-bars-go-glass.md)).
+    - `isLiquidGlassAvailable()` belongs in `atoms/glass-surface.tsx` only.
+    - Anything that must match a sheet's ground reads `SHEET_GROUND`, never
+      `Colors.dark.sheetGround`. On iOS 26 that value is transparent, so an
+      opaque match paints a slab over the system glass.
+    - Pinned sheet bars are transparent on 26. Content scrolled under them
+      shows through, which is the known risk.
+    - NativeTabs ignores `labelStyle.fontFamily` on the iOS 26 glass bar, so
+      the tab labels are uppercase SF.
 
 ---
 

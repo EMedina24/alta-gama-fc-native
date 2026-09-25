@@ -88,7 +88,7 @@ export interface CrownProps {
    */
   title?: string;
   /** `crownTitleLg` is the Clubs screen's 48pt (its subhead carries the count). */
-  titleVariant?: 'crownTitle' | 'crownTitleLg';
+  titleVariant?: 'crownTitle' | 'crownTitleLg' | 'crownTitleXl';
   /** A quiet line UNDER the title — Clubs' `{n} clubs followed` (ADR 0082). */
   subtitle?: string;
   /**
@@ -178,6 +178,13 @@ export interface CrownProps {
    * fill.
    */
   topInset?: number;
+  /**
+   * No gradient layer at all (ADR 0201) — the screen paints its own fixed
+   * league SCENE behind the scroll, and the crown is only its content: banner,
+   * head and payload. ⚠ `tone` still decides the ink; a bare crown sits on a
+   * dark scene, so its caller passes `deep`.
+   */
+  bare?: boolean;
 }
 
 export function Crown({
@@ -198,6 +205,7 @@ export function Crown({
   metaLine,
   metaTone = 'strong',
   topInset = 0,
+  bare = false,
 }: CrownProps) {
   /**
    * The head's ink, by surface. ⚠ Two families, not one with an override: the
@@ -224,37 +232,39 @@ export function Crown({
 
   return (
     <View style={styles.crown}>
-      <View pointerEvents="none" style={[styles.layer, { height: layerHeight }]}>
-        <WashGradient angle="vertical" stops={stops} />
-        {/* ⚠ The white sheen is the BRIGHT crown's alone. At alpha 0.26 over a
-            deep league ramp it reads as a grey veil across the top-right
-            shoulder — it lifts a lime band and washes out a dark one. */}
-        {deep ? null : (
-          <WashRadial
-            cx={CrownHighlight.cx}
-            cy={CrownHighlight.cy}
-            rx={CrownHighlight.rx}
-            ry={CrownHighlight.ry}
-            stops={[
-              { offset: 0, color: CrownHighlight.color, opacity: CrownHighlight.alpha },
-              { offset: CrownHighlight.fade, color: CrownHighlight.color, opacity: 0 },
-            ]}
-          />
-        )}
-        {/* Above the ramp, below the head — and inside the layer, so it cannot
-            be raised over the body (this component may never take a z-index). */}
-        {art ? (
-          <View
-            style={[
-              styles.art,
-              artAnchor === 'headLeft'
-                ? { top: topInset + ART_HEAD_DROP, left: -ART_HEAD_OFF }
-                : { top: topInset + ART_DROP, right: -ART_OFF },
-            ]}>
-            {art}
-          </View>
-        ) : null}
-      </View>
+      {bare ? null : (
+        <View pointerEvents="none" style={[styles.layer, { height: layerHeight }]}>
+          <WashGradient angle="vertical" stops={stops} />
+          {/* ⚠ The white sheen is the BRIGHT crown's alone. At alpha 0.26 over a
+              deep league ramp it reads as a grey veil across the top-right
+              shoulder — it lifts a lime band and washes out a dark one. */}
+          {deep ? null : (
+            <WashRadial
+              cx={CrownHighlight.cx}
+              cy={CrownHighlight.cy}
+              rx={CrownHighlight.rx}
+              ry={CrownHighlight.ry}
+              stops={[
+                { offset: 0, color: CrownHighlight.color, opacity: CrownHighlight.alpha },
+                { offset: CrownHighlight.fade, color: CrownHighlight.color, opacity: 0 },
+              ]}
+            />
+          )}
+          {/* Above the ramp, below the head — and inside the layer, so it cannot
+              be raised over the body (this component may never take a z-index). */}
+          {art ? (
+            <View
+              style={[
+                styles.art,
+                artAnchor === 'headLeft'
+                  ? { top: topInset + ART_HEAD_DROP, left: -ART_HEAD_OFF }
+                  : { top: topInset + ART_DROP, right: -ART_OFF },
+              ]}>
+              {art}
+            </View>
+          ) : null}
+        </View>
+      )}
       <View
         style={[styles.inner, { paddingTop: topInset + Spacing.two + 2, paddingBottom: pad }]}>
         {banner}

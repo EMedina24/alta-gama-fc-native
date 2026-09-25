@@ -388,7 +388,7 @@ struct LockScreenCard: View {
         // under-reports layout width against painted advance, and on a clock
         // the clipped trailing digit is a wrong time.
         Text(attributes.kickoffUtc, style: .time)
-          .font(.system(size: 21, weight: .semibold))
+          .font(Tok.clock(21)) // Medina display face, ADR 0198
           .monospacedDigit()
           .foregroundStyle(Tok.ink)
           .lineLimit(1)
@@ -603,7 +603,7 @@ struct ScoreDigit: View {
 
   var body: some View {
     Text(goals.map(String.init) ?? "–")
-      .font(.system(size: size, weight: .bold))
+      .font(Tok.score(size)) // Medina display face, ADR 0198
       .monospacedDigit()
       .foregroundStyle(dim ? Tok.ink58 : Tok.ink)
       .lineLimit(1)
@@ -858,7 +858,7 @@ struct IslandSide: View {
       // ⚠ The count wins over the abbreviation — the same rule the scorer band
       // records: a scaled club code is merely smaller, a clipped count is wrong.
       Text(goals.map(String.init) ?? "–")
-        .font(Tok.numerals(20, .bold))
+        .font(Tok.score(20))
         .foregroundStyle(Tok.ink)
         .lineLimit(1)
         .layoutPriority(1)
@@ -875,7 +875,7 @@ struct ScoreLine: View {
 
   var body: some View {
     Text("\(state.homeGoals.map(String.init) ?? "–")–\(state.awayGoals.map(String.init) ?? "–")")
-      .font(Tok.numerals(size, .bold))
+      .font(Tok.score(size))
       .foregroundStyle(Tok.ink)
       // ⚠ Scaled, deliberately NOT `fixedSize` (ADR 0135): in compactTrailing
       // and minimal an overflowing score clips at the sensor housing — hardware,
@@ -903,7 +903,7 @@ struct Clock: View {
         // ⚠ `countsDown: false` — this counts UP from the anchor. The upper
         // bound is only a ceiling the view never reaches.
         Text(timerInterval: from...from.addingTimeInterval(60 * 200), countsDown: false)
-          .font(Tok.numerals(size, .bold))
+          .font(Tok.clock(size))
           .foregroundStyle(Tok.accent)
       } else {
         Text(state.minuteLabel ?? "")

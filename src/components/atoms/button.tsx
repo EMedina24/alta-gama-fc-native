@@ -4,8 +4,9 @@
  * ⚠ Accent is for ONE thing per screen (SPEC §2): "if two things on a screen are
  * lime, one is wrong". A screen with two `primary` buttons is a design bug.
  */
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Orb } from './orb';
 import { Text } from './text';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
@@ -22,6 +23,8 @@ export interface ButtonProps {
   full?: boolean;
   /** `Size.ctaH` instead of `minTouch` — the onboarding footer's primary (ADR 0076). */
   tall?: boolean;
+  /** What the press DOES, when the label only names a state ("Following"). */
+  accessibilityHint?: string;
 }
 
 export function Button({
@@ -33,6 +36,7 @@ export function Button({
   loading = false,
   full = true,
   tall = false,
+  accessibilityHint,
 }: ButtonProps) {
   const inert = disabled || loading;
   return (
@@ -40,7 +44,8 @@ export function Button({
       onPress={onPress}
       disabled={inert}
       accessibilityRole="button"
-      accessibilityState={{ disabled: inert }}
+      accessibilityState={{ disabled: inert, busy: loading }}
+      accessibilityHint={accessibilityHint}
       style={({ pressed }) => [
         styles.base,
         styles[tone],
@@ -50,7 +55,15 @@ export function Button({
         inert && styles.inert,
       ]}>
       {loading ? (
-        <ActivityIndicator color={tone === 'primary' ? Colors.dark.onAccent : Colors.dark.text} />
+        // ADR 0197: the 20pt `solving` orb in place of the platform spinner —
+        // dark ink on the lime fill, lime-tipped on every other tone.
+        <Orb
+          state="solving"
+          size={20}
+          tone={tone === 'primary' ? 'ink' : 'accent'}
+          on={tone === 'primary' ? 'light' : 'dark'}
+          accessibilityLabel={label}
+        />
       ) : (
         <View style={styles.row}>
           {icon}

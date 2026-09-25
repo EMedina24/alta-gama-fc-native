@@ -14,3 +14,12 @@ export const SITE_ORIGIN = 'https://altagamafc.com';
 export function contactUrl(locale: Locale): string {
   return `${SITE_ORIGIN}/${locale}/contact`;
 }
+
+/**
+ * A club's page on the website, in the reader's language (ADR 0202) — what the
+ * club page's share sends. The site's route is `app/[lang]/clubs/[slug]`, and
+ * its slugs are the API's own, so no mapping stands between the two.
+ */
+export function clubUrl(locale: Locale, slug: string): string {
+  return `${SITE_ORIGIN}/${locale}/clubs/${encodeURIComponent(slug)}`;
+}

@@ -1,7 +1,7 @@
 # 0175 — The Board wears the reader's background: club and league crowns as a preference
 
 - **Date:** 2026-09-14
-- **Status:** Accepted — harness-verified (league-theme's new club sweep,
+- **Status:** Partly superseded — the Background row and the layout-only reset superseded by [0199](./0199-the-board-edits-in-place-the-kits-way.md). Was: Accepted — harness-verified (league-theme's new club sweep,
   preferences' grammar cases, board-layout regression), `tsc`/lint clean, and
   **simulator-verified on an iPhone 17 Pro**: the tray row above the add tray;
   the picker at 0.72 with the crown recolouring LIVE behind it (Default → the

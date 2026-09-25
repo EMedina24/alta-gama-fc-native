@@ -37,9 +37,8 @@
  * same width with three transparent — the straight-chord trap from 0082.
  */
 import { Pressable, StyleSheet, View } from 'react-native';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 
-import { Check, Crest, Text, WashGradient, WashRadial } from '@/components/atoms';
+import { Check, Crest, GlassSurface, Text, WashGradient, WashRadial } from '@/components/atoms';
 import { BubbleGlass, Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface ClubBubbleProps {
@@ -63,8 +62,6 @@ export interface ClubBubbleProps {
 }
 
 const RING = Size.clubBubble / 2;
-/** Decided once at module scope — the gate must pick a path BEFORE mount. */
-const LIQUID = isLiquidGlassAvailable();
 
 export function ClubBubble({
   name,
@@ -84,11 +81,7 @@ export function ClubBubble({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [styles.press, pressed && styles.pressed]}>
       <View style={styles.disc}>
-        {LIQUID ? (
-          <GlassView style={styles.glass} glassEffectStyle="clear" />
-        ) : (
-          <View style={[styles.glass, styles.glassFlat]} />
-        )}
+        <GlassSurface style={styles.glass} flatStyle={styles.glassFlat} />
 
         {/* The shared overlay stack — decorative, clipped to the disc. */}
         <View pointerEvents="none" style={styles.overlays}>

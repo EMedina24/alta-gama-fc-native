@@ -100,7 +100,7 @@ private enum Ink {
   static let meta = Color.white.opacity(0.32)
   /// The zone hairlines — mock `rgba(255,255,255,.10)`.
   static let rule = Color.white.opacity(0.10)
-  /// A followed row's wash — mock `rgba(200,242,90,.12)`.
+  /// A followed row's wash — mock `rgba(200,255,61,.12)`.
   static let followedWash = Tok.accent.opacity(0.12)
 }
 
@@ -116,11 +116,11 @@ private enum Ink {
 private enum BandInk {
   static func color(_ band: StandingsSnapshot.Band) -> Color {
     switch band {
-    case .ucl: return Tok.accent // #c8f25a
+    case .ucl: return Tok.accent // #c8ff3d
     case .uel: return Color(red: 111 / 255, green: 201 / 255, blue: 255 / 255) // #6fc9ff
     case .conf: return Color(red: 183 / 255, green: 155 / 255, blue: 255 / 255) // #b79bff
     case .rel: return Color(red: 255 / 255, green: 107 / 255, blue: 94 / 255) // #ff6b5e
-    case .r16: return Tok.accent // #c8f25a
+    case .r16: return Tok.accent // #c8ff3d
     case .playoff: return Color(red: 211 / 255, green: 194 / 255, blue: 255 / 255) // #d3c2ff
     case .out: return Color(red: 255 / 255, green: 122 / 255, blue: 107 / 255) // #ff7a6b
     }

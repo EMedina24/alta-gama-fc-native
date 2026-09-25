@@ -111,7 +111,7 @@ struct MatchCard: View {
 
         VStack(spacing: 5) {
           Text(payload.kickoffLabel ?? payload.time(payload.kickoffUtc))
-            .font(Tok.numerals(26, .bold))
+            .font(Tok.clock(26))
             .tracking(-0.78)
             .foregroundStyle(Tok.ink)
           Text(dayLabel)
@@ -289,7 +289,7 @@ struct MatchCard: View {
 
       if let scoreline = payload.scoreline {
         Text(scoreline)
-          .font(Tok.numerals(30, .bold))
+          .font(Tok.score(30))
           .tracking(-0.9)
           .foregroundStyle(Tok.ink)
           .padding(.top, 12)

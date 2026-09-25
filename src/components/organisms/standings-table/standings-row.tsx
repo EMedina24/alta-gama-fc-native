@@ -45,7 +45,7 @@ export function StandingsRow({ row, zone, followed, expanded, onPress }: Standin
       ]}>
       <BandRail zone={zone} />
 
-      <Text variant="bodyStrong" tabular color="textSecondary" style={styles.pos}>
+      <Text variant="tablePos" tabular color="textSecondary" style={styles.pos}>
         {row.rank}
       </Text>
 
@@ -65,7 +65,7 @@ export function StandingsRow({ row, zone, followed, expanded, onPress }: Standin
       <Text variant="body" tabular color="textDim" style={styles.num}>
         {row.played}
       </Text>
-      <Text variant="bodyStrong" tabular style={styles.num}>
+      <Text variant="tablePos" tabular style={styles.num}>
         {row.points}
       </Text>
     </Pressable>

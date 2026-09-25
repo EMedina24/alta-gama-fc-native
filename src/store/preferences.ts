@@ -614,6 +614,18 @@ export function resetBoardLayout() {
 }
 
 /**
+ * The edit panel's Reset (ADR 0199): the order, the hidden set AND the
+ * background, in one write — the Medina kit's scope. Immediate, no confirm:
+ * every piece is one tap to change back.
+ *
+ * ⚠ `resetBoardLayout` above stays for `_debug/reset-board`, which resets the
+ * layout alone.
+ */
+export function resetBoard() {
+  update({ bdOrder: DEFAULT_ORDER, bdHidden: DEFAULT_HIDDEN, bdBg: DEFAULT_BOARD_BG });
+}
+
+/**
  * The Board's background pick (ADR 0175). Takes the encoded string —
  * `encodeBoardBackground`'s output — and re-parses it on the way in, so a
  * malformed caller cannot persist a value `parse` would throw away on read.

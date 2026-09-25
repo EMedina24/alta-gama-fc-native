@@ -23,6 +23,11 @@ import type { ZoneKind } from '@/lib/cronogol/leagues';
 export interface Copy {
   tabs: { today: string; matchdays: string; table: string; clubs: string };
   /**
+   * The thinking orb's spoken label (ADR 0197) — VoiceOver only; the orb
+   * draws no words. `refreshing` is pull-to-refresh.
+   */
+  orb: { refreshing: string };
+  /**
    * The league DROPDOWN's own words (ADR 0162) — chrome shared by Matchdays,
    * Table and Clubs, so it sits at the top level rather than inside any one of
    * them.
@@ -347,7 +352,7 @@ export interface Copy {
      * The only instruction in the mode — and it names ONE action, not two.
      *
      * ⚠⚠ **Removal is deliberately unsaid** (Ed, 2026-09-14: *"remove the '− to
-     * remove', that's a given already within the UI"*). Every row carries a red
+     * remove', that's a given already within the UI"*). Every card carries a
      * `−` disc in the position iOS has used for exactly that since the first
      * editable list; captioning it spent the bar's whole width teaching what the
      * control already says.
@@ -370,12 +375,18 @@ export interface Copy {
      * tray, and counting it would name a card the reader cannot find.
      */
     count: (on: number, total: number) => string;
-    /** The add tray's heading. ⚠ Stays up when the tray is empty — it is what
-     *  explains the affordance. */
-    addTitle: string;
-    /** The tray with nothing in it. */
-    allOn: string;
-    reset: string;
+    /**
+     * The edit panel's hidden-cards heading (ADR 0199) — shown only when a card
+     * is hidden; each chip under it puts one back.
+     */
+    hiddenTitle: string;
+    /**
+     * The edit panel's Reset (ADR 0199): order, hidden cards AND background —
+     * the kit's scope, wider than 0174's layout-only reset. Short because it
+     * sits beside the panel's title; `resetAllLabel` is what VoiceOver says.
+     */
+    resetAll: string;
+    resetAllLabel: string;
     /**
      * ⚠⚠ **VoiceOver cannot drag.** These are the two accessibility actions
      * every editable row carries, and they are the only way to reorder the
@@ -406,8 +417,10 @@ export interface Copy {
      * nothing the swatch beside it doesn't.
      */
     backgroundDefault: string;
-    /** The tray row, spoken: "Fondo: Barcelona". */
-    backgroundRow: (current: string) => string;
+    /** The last background tile: opens the full catalogue sheet. */
+    more: string;
+    /** A background tile, spoken: "Fondo: Barcelona". */
+    backgroundTile: (name: string) => string;
   };
   today: {
     title: string;
@@ -611,6 +624,36 @@ export interface Copy {
     squadEmpty: string;
     bandLabels: Record<'GK' | 'DEF' | 'MID' | 'FWD', string>;
     roundPrefix: string;
+    /**
+     * The kit's club page (ADR 0202): the three tabs, the Overview's section
+     * heads, the glass controls' spoken names, the follow button's invitation
+     * (`follow`; `following` above is its settled state), and the hero's rank
+     * line — "LaLiga · 1st · 67 Pts" / "LaLiga · 1.º · 67 pts". ⚠ A function:
+     * the ordinal is language-shaped (English suffixes, Spanish `.º`).
+     */
+    overview: string;
+    squad: string;
+    follow: string;
+    followHint: string;
+    form: string;
+    nextMatch: string;
+    seasonSoFar: string;
+    keyPlayers: string;
+    seeAll: string;
+    back: string;
+    share: string;
+    rankLine: (league: string, rank: number, points: number) => string;
+    /** The Fixtures tab's calendar row — the calendar moved in from the alerts tray. */
+    calendarRow: { title: string; body: string };
+    /**
+     * SEASON SO FAR's three tiles. ⚠ Clean sheets stands where the kit shows
+     * xG: xG does not exist at any provider the backend holds (CRONOGOL-API.md).
+     */
+    tiles: Record<'gf' | 'ga' | 'cleanSheets', { label: string; spoken: string }>;
+    /** What a key player's figure counts. ⚠ No rating — ratings do not exist. */
+    keyStat: Record<'goals' | 'assists' | 'involvements', string>;
+    /** ONE player's position — `bandLabels` are the squad's plural group heads. */
+    positionLabels: Record<'GK' | 'DEF' | 'MID' | 'FWD', string>;
     notFound: string;
   };
   /**
@@ -1075,6 +1118,7 @@ export interface Copy {
 
 export const esCopy: Copy = {
   tabs: { today: 'Hoy', matchdays: 'Jornadas', table: 'Clasificación', clubs: 'Clubes' },
+  orb: { refreshing: 'Actualizando' },
   leagueMenu: {
     label: (league) => `Competición: ${league}`,
     hint: 'Elige una competición',
@@ -1277,9 +1321,9 @@ export const esCopy: Copy = {
     done: 'Listo',
     hint: 'Arrastra para ordenar',
     count: (on: number, total: number): string => `${on} de ${total}`,
-    addTitle: 'Tarjetas que puedes añadir',
-    allOn: 'Ya tienes todas las tarjetas.',
-    reset: 'Volver al orden original',
+    hiddenTitle: 'Tarjetas ocultas',
+    resetAll: 'Restablecer',
+    resetAllLabel: 'Restablecer tablero y fondo',
     moveUp: 'Subir',
     moveDown: 'Bajar',
     removeCard: (card: string): string => `Quitar ${card} del tablero`,
@@ -1295,7 +1339,8 @@ export const esCopy: Copy = {
     },
     background: 'Fondo',
     backgroundDefault: 'Alta Gama',
-    backgroundRow: (current: string): string => `Fondo: ${current}`,
+    more: 'Más',
+    backgroundTile: (name: string): string => `Fondo: ${name}`,
   },
 
   today: {
@@ -1407,6 +1452,31 @@ export const esCopy: Copy = {
     squadEmpty: 'La plantilla de este club aún no está publicada.',
     bandLabels: { GK: 'Porteros', DEF: 'Defensas', MID: 'Centrocampistas', FWD: 'Delanteros' },
     roundPrefix: 'J',
+    /* The kit's club page (ADR 0202). */
+    overview: 'Resumen',
+    squad: 'Plantilla',
+    follow: 'Seguir',
+    followHint: 'Abre la confirmación para recibir avisos de este club.',
+    form: 'Forma',
+    nextMatch: 'Próximo partido',
+    seasonSoFar: 'La temporada',
+    keyPlayers: 'Jugadores clave',
+    seeAll: 'Ver todo',
+    back: 'Atrás',
+    share: 'Compartir',
+    rankLine: (league: string, rank: number, points: number): string =>
+      `${league} · ${rank}.º · ${points} pts`,
+    calendarRow: {
+      title: 'Añadir al calendario',
+      body: 'Todos los partidos en tu app de calendario, siempre al día.',
+    },
+    tiles: {
+      gf: { label: 'GF', spoken: 'goles a favor' },
+      ga: { label: 'GC', spoken: 'goles en contra' },
+      cleanSheets: { label: 'Porterías a cero', spoken: 'porterías a cero' },
+    },
+    keyStat: { goals: 'Goles', assists: 'Asistencias', involvements: 'G+A' },
+    positionLabels: { GK: 'Portero', DEF: 'Defensa', MID: 'Centrocampista', FWD: 'Delantero' },
     notFound: 'No encontramos este club.',
   },
   startingXi: {
@@ -1661,6 +1731,7 @@ export const esCopy: Copy = {
 
 export const enCopy: Copy = {
   tabs: { today: 'Today', matchdays: 'Matchdays', table: 'Table', clubs: 'Clubs' },
+  orb: { refreshing: 'Refreshing' },
   leagueMenu: {
     label: (league) => `Competition: ${league}`,
     hint: 'Choose a competition',
@@ -1858,9 +1929,9 @@ export const enCopy: Copy = {
     done: 'Done',
     hint: 'Drag to reorder',
     count: (on: number, total: number): string => `${on} of ${total}`,
-    addTitle: 'Cards you can add',
-    allOn: 'Every card is on your board.',
-    reset: 'Reset to default layout',
+    hiddenTitle: 'Hidden cards',
+    resetAll: 'Reset',
+    resetAllLabel: 'Reset board and background',
     moveUp: 'Move up',
     moveDown: 'Move down',
     removeCard: (card: string): string => `Remove ${card} from your board`,
@@ -1876,7 +1947,8 @@ export const enCopy: Copy = {
     },
     background: 'Background',
     backgroundDefault: 'Alta Gama',
-    backgroundRow: (current: string): string => `Background: ${current}`,
+    more: 'More',
+    backgroundTile: (name: string): string => `Background: ${name}`,
   },
 
   today: {
@@ -1988,6 +2060,33 @@ export const enCopy: Copy = {
     squadEmpty: 'No squad published for this club yet.',
     bandLabels: { GK: 'Goalkeepers', DEF: 'Defenders', MID: 'Midfielders', FWD: 'Forwards' },
     roundPrefix: 'J',
+    /* The kit's club page (ADR 0202). */
+    overview: 'Overview',
+    squad: 'Squad',
+    follow: 'Follow',
+    followHint: 'Opens the confirmation to get alerts for this club.',
+    form: 'Form',
+    nextMatch: 'Next match',
+    seasonSoFar: 'Season so far',
+    keyPlayers: 'Key players',
+    seeAll: 'See all',
+    back: 'Back',
+    share: 'Share',
+    rankLine: (league: string, rank: number, points: number): string => {
+      const tail = rank % 100 >= 11 && rank % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th';
+      return `${league} · ${rank}${tail} · ${points} Pts`;
+    },
+    calendarRow: {
+      title: 'Add to calendar',
+      body: 'Every fixture in your calendar app, kept up to date.',
+    },
+    tiles: {
+      gf: { label: 'GF', spoken: 'goals for' },
+      ga: { label: 'GA', spoken: 'goals against' },
+      cleanSheets: { label: 'Clean sheets', spoken: 'clean sheets' },
+    },
+    keyStat: { goals: 'Goals', assists: 'Assists', involvements: 'G+A' },
+    positionLabels: { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' },
     notFound: 'We could not find this club.',
   },
   startingXi: {

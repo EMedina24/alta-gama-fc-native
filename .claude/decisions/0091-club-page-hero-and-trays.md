@@ -1,7 +1,7 @@
 # 0091 — The club page is rebuilt: a bled hero, a standing strip, a NEXT UP card, and trays
 
 - **Date:** 2026-09-01
-- **Status:** Accepted — verified on the simulator (tinted club, no-tint club); ⚠ the spine and squad sit BELOW the fold and were not seen (taps cannot be scripted here)
+- **Status:** Partly superseded — layout superseded by [0202](./0202-the-club-page-wears-the-kit.md) (the kit's club page). Was: Accepted — verified on the simulator (tinted club, no-tint club); ⚠ the spine and squad sit BELOW the fold and were not seen (taps cannot be scripted here)
 - **Decided by:** Ed Medina, from `handoff_new-paint/` (mockup lines 436–583)
 - **Supersedes:** [0068](./0068-club-colour-wash.md)'s club-page hero geometry (its TAMING rule is untouched) · [0082](./0082-clubs-screen-rail-redesign.md)'s "every CARD on the screen stays one flat surface", for this screen
 - **Amends:** [0065](./0065-starting-xi-builder.md)'s row placement (unchanged in intent, re-grounded)

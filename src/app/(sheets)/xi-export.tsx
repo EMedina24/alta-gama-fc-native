@@ -12,8 +12,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
+import { SHEET_GROUND } from '@/components/atoms';
 import { XiExportSheet, type ExportStatus } from '@/components/organisms/xi-export-sheet';
-import { Colors } from '@/constants/theme';
 import { DEFAULT_EXPORT_SIZE, type ExportSize } from '@/features/starting-xi/card-geometry';
 import { exportLineup, type ExportKind } from '@/features/starting-xi/export';
 import { hapticSaved } from '@/lib/haptics';
@@ -113,5 +113,5 @@ export default function XiExportRoute() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { backgroundColor: Colors.dark.sheetGround },
+  scroll: { backgroundColor: SHEET_GROUND },
 });

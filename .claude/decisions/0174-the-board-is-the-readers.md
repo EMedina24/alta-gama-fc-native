@@ -1,7 +1,7 @@
 # 0174 — The Board is the reader's: an edit mode for the home screen
 
 - **Date:** 2026-09-14
-- **Status:** Accepted — simulator-verified on an iPhone 17 Pro against production
+- **Status:** Partly superseded — §9 (rows), §13 (hint bar) and §14's crown-capsule DONE superseded by [0199](./0199-the-board-edits-in-place-the-kits-way.md). Was: Accepted — simulator-verified on an iPhone 17 Pro against production
   (enter/exit, drag reorder, remove → tray → add-back into the remembered slot,
   reset, and persistence across a cold relaunch); EN **and** ES re-measured at a
   335pt clamp three times — the clamp changed the copy once, Ed's weight pass

@@ -62,8 +62,17 @@ export interface ChipButtonProps {
    * disappears. It is the flat half of the league trigger's own capsule
    * (`triggerShellFlat`) — deliberately not liquid glass, which over a gradient
    * is the trap-59 bind for one small control.
+   *
+   * `fill` is a SOLID lime pill with `onAccent` ink (ADR 0199, the Board's
+   * DONE — the Medina kit's primary pill). It looks like `active` but is not a
+   * state: `active` announces "selected" to VoiceOver, and DONE is an action.
+   *
+   * `glass` is the Medina kit's NEUTRAL glass pill (ADR 0200, the Matchdays
+   * Calendar): a translucent fill and hairline, white ink, at the round pills'
+   * 44pt beside it. No lime — the screen's lime is the current round. The
+   * glyph, the pill and the verb are what say "button" (0200 over 0157).
    */
-  tone?: 'accent' | 'neutral' | 'crown';
+  tone?: 'accent' | 'neutral' | 'crown' | 'fill' | 'glass';
   /**
    * Drawn BEFORE the label, inside the chip — the Calendar pill's glyph (ADR
    * 0165). ⚠ Decorative only, exactly as `trailing` is: it shares the chip's
@@ -104,6 +113,8 @@ export function ChipButton({
 }: ChipButtonProps) {
   const quiet = tone === 'neutral' && !active;
   const onCrown = tone === 'crown' && !active;
+  const filled = tone === 'fill' || active;
+  const glass = tone === 'glass' && !active;
 
   const reduceMotion = useReducedMotion();
   /** 0 → 1 per breath. Opacity and transform only — never a layout property. */
@@ -146,6 +157,8 @@ export function ChipButton({
         shape === 'pill' && !trailing && !!leading && styles.pillLed,
         quiet && styles.quiet,
         onCrown && styles.crown,
+        tone === 'fill' && styles.active,
+        glass && styles.glass,
         shape === 'pill' && !label && !!leading && styles.pillIconOnly,
         pulse && styles.ringed,
         active && styles.active,
@@ -157,7 +170,9 @@ export function ChipButton({
       {pulse ? <Animated.View pointerEvents="none" style={[styles.halo, halo]} /> : null}
       {leading}
       {label ? (
-        <Text variant="eyebrowSm" color={active ? 'onAccent' : quiet ? 'textSecondary' : 'accent'}>
+        <Text
+          variant="eyebrowSm"
+          color={filled ? 'onAccent' : glass ? 'text' : quiet ? 'textSecondary' : 'accent'}>
           {label}
         </Text>
       ) : null}
@@ -218,6 +233,15 @@ const styles = StyleSheet.create({
   active: { backgroundColor: Colors.dark.accent, borderColor: Colors.dark.accent },
   /** The unselected News filter (ADR 0092): a quiet chip, no lime at all. */
   quiet: { backgroundColor: Colors.dark.card, borderColor: Colors.dark.glassLine },
+  /** The kit's neutral glass pill — see `tone`. Height matches the round pills. */
+  glass: {
+    height: Size.roundPill,
+    paddingLeft: Spacing.four,
+    paddingRight: Spacing.four,
+    gap: Spacing.two,
+    backgroundColor: Colors.dark.glassFill,
+    borderColor: Colors.dark.glassLine,
+  },
   /** On the crown's bright band — see `tone`. */
   crown: { backgroundColor: Colors.dark.tabBar, borderColor: Colors.dark.hairlineMid },
   /** The static half of `pulse`: the ring that survives the dimmest frame. */

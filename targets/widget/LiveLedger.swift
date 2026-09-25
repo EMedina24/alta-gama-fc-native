@@ -110,7 +110,7 @@ struct LedgerRows: View {
       Spacer(minLength: 4)
 
       Text(Ledger.score(goals))
-        .font(Tok.numerals(scoreSize, .heavy))
+        .font(Tok.score(scoreSize))
         .foregroundStyle(Ledger.scoreInk(goals, other))
         .lineLimit(1)
     }

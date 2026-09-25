@@ -20,7 +20,7 @@ import { Stack, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BookmarkGlyph, Eyebrow, MeshGround, Text } from '@/components/atoms';
+import { BookmarkGlyph, Eyebrow, LimeGlow, Text } from '@/components/atoms';
 import { NewsRow } from '@/components/molecules';
 import { BottomTabInset, Colors, Size, Spacing } from '@/constants/theme';
 import { openArticle } from '@/features/news/open';
@@ -47,7 +47,7 @@ export default function NewsSavedScreen() {
 
   return (
     <View style={styles.screen}>
-      <MeshGround />
+      <LimeGlow />
       {/* No native header (ADR 0092): the lime back link names where it goes. */}
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView

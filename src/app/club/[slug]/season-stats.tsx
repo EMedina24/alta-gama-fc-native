@@ -57,7 +57,7 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Button, MeshGround, SkeletonRows, Text } from '@/components/atoms';
+import { Button, LimeGlow, SkeletonRows, Text } from '@/components/atoms';
 import {
   ClubView,
   PlayerEmpty,
@@ -264,7 +264,7 @@ export default function SeasonStatsScreen() {
 
   return (
     <View style={styles.screen}>
-      <MeshGround />
+      <LimeGlow />
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentContainerStyle={[

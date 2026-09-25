@@ -1,7 +1,7 @@
 # 0097 — The club hero carries a FOLLOWING pill: the unfollow's visible door
 
 - **Date:** 2026-09-01
-- **Status:** Accepted — verified on the simulator (Real Madrid via deep link; the tap itself cannot be scripted here)
+- **Status:** Partly superseded — the chip superseded by [0202](./0202-the-club-page-wears-the-kit.md)'s full-width follow button; its never-solid-lime-while-following rule survives there. Was: Accepted — verified on the simulator (Real Madrid via deep link; the tap itself cannot be scripted here)
 - **Decided by:** Ed Medina (reported he could not find how to unfollow); implemented same day
 - **Amends:** [0091](./0091-club-page-hero-and-trays.md) (hero layout only)
 - **Upholds:** [0082](./0082-clubs-screen-rail-redesign.md) — no unfollow on the Clubs screen, and every unfollow still confirms through the alerts sheet

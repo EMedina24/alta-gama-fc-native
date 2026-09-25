@@ -34,15 +34,17 @@
  * stay mirrorable (ADR 0018). Nothing here exists on the web.
  */
 import {
+  ClubScene,
   CrownClubDim,
   CrownDeep,
   CrownDeepSat,
   CrownGrad,
   LeagueBand,
+  LeagueScene,
   Mesh,
   type LeagueBandSpec,
 } from '@/constants/theme';
-import { parseHex, type Hsl } from './club-wash';
+import { clubTint, isUnusable, parseHex, type Hsl, type TintSource } from './club-wash';
 
 /** A crown stop. Structurally the atom's `WashStop`, with `opacity` required. */
 export interface CrownStop {
@@ -216,6 +218,41 @@ export function leagueCrownTheme(apiSlug: string | null | undefined): CrownTheme
 }
 
 /**
+ * A league's SCENE (ADR 0201) — the Medina kit's fixed background for the
+ * league tabs: a dark `base` tint washed down the screen, a vivid `glow` pool
+ * top-right, and the drawn `art` as the watermark's fallback.
+ *
+ * The KIT'S tint pair where it authored one (`LeagueScene.tints` — see its
+ * docblock for the measurement and the Puerto Rico exception). Otherwise
+ * derived: hue and saturation are `leagueInks`' — `LeagueBand` through
+ * `CrownDeepSat`, the deep crown's own inputs — and a GRADIENT band gives the
+ * base its first end and the glow its second (Puerto Rico's blue and red).
+ * Lightness is `LeagueScene`'s.
+ *
+ * Null for no league, or a league with no band: the caller keeps the brand
+ * crown there, exactly as `leagueCrownTheme` falls back.
+ */
+export interface SceneTheme {
+  base: string;
+  glow: string;
+  art: CrownArt | null;
+}
+
+export function leagueSceneTheme(apiSlug: string | null | undefined): SceneTheme | null {
+  const inks = leagueInks(apiSlug);
+  if (inks === null) return null;
+  const art = ART[apiSlug as string] ?? null;
+  const kit = LeagueScene.tints[apiSlug as string];
+  if (kit) return { base: kit.base, glow: kit.glow, art };
+  const [from, to = from] = inks;
+  return {
+    base: toHex({ h: from.h, s: from.s, l: LeagueScene.base.light }),
+    glow: toHex({ h: to.h, s: to.s, l: LeagueScene.glow.light }),
+    art,
+  };
+}
+
+/**
  * A CLUB's crown (ADR 0175) — the Board wearing the reader's picked club.
  *
  * The same `CrownDeep` ladder as a league's, off an arbitrary brand hex — the
@@ -243,6 +280,43 @@ export function clubCrownTheme(hex: string): CrownTheme {
   if (!parsed) return BRAND_THEME;
   const ink = { h: parsed.h, s: clamp(parsed.s, CrownDeepSat.min, CrownDeepSat.max) };
   return deepTheme(ink, ink, null, clubDim(ink.h));
+}
+
+/**
+ * A CLUB's scene (ADR 0202) — the club page's fixed background: the club's
+ * primary as the dark `base`, its SECONDARY as the `glow` where both are
+ * usable (Barcelona: blue base, garnet glow — Ed's call, the kit's pairing,
+ * over the club-wash "one colour" rule for this scene only).
+ *
+ * ⚠ The glow falls back to the base's own hue whenever the pair is not two
+ * real colours — an unusable secondary (white, black, missing), or a primary
+ * so unusable that `clubTint` already fell through to the secondary. A club
+ * with nothing usable takes graphite for both, which the `CrownDeepSat` floor
+ * turns into `clubCrownTheme`'s deliberate steel-blue.
+ *
+ * ⚠ The glow's lightness is scaled by `clubDim` — the high-luma pull-down the
+ * club crown already uses — so a yellow secondary cannot blow out the head.
+ */
+export function clubSceneTheme(team: TintSource): { base: string; glow: string } {
+  const primary = parseHex(clubTint(team));
+  if (!primary) {
+    // An unparseable hex (the wire is unvalidated): the page ground, no scene
+    // colour at all — never a guess.
+    const ground = CrownGrad[CrownGrad.length - 1].color;
+    return { base: ground, glow: ground };
+  }
+  const twoColours = !isUnusable(team.colorPrimary) && !isUnusable(team.colorSecondary);
+  const second = twoColours ? parseHex(team.colorSecondary as string) : null;
+  const glowInk = second ?? primary;
+  const sat = (s: number) => clamp(s, CrownDeepSat.min, CrownDeepSat.max);
+  return {
+    base: toHex({ h: primary.h, s: sat(primary.s), l: LeagueScene.base.light }),
+    glow: toHex({
+      h: glowInk.h,
+      s: sat(glowInk.s),
+      l: ClubScene.glow.light * clubDim(glowInk.h),
+    }),
+  };
 }
 
 /**

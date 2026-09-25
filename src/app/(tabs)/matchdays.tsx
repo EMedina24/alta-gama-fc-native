@@ -63,6 +63,7 @@ import {
   ROUND_LEAGUES,
   SEASON,
   leagueOptions,
+  leagueSceneLogo,
   seasonLabel,
   type League,
 } from '@/lib/cronogol/leagues';
@@ -368,7 +369,12 @@ export default function MatchdaysScreen() {
          is its TAB slug — the one non-API-slug key `LeagueBand` carries (ADR
          0168; it was `null`/brand until the UCL was banded at #041181). */
       tintLeague={isCup ? UCL_LEAGUE_PHASE.slug : league.apiSlug}
+      // The kit's fixed league scene (ADR 0201). The cup has no wire row, so
+      // its watermark falls back to the drawn starball.
+      scene={{ logo: isCup ? null : leagueSceneLogo(artwork.data, league.apiSlug) }}
       title={matchweek === null ? '' : copy.matchdays.title(matchweek)}
+      // The kit's 58pt title (ADR 0200): here the title IS the content.
+      titleVariant="crownTitleXl"
       eyebrow={
         isCup
           ? // ⚠ The third segment names the PHASE where a league names its half.
@@ -430,29 +436,15 @@ export default function MatchdaysScreen() {
       {total !== null && matchweek !== null ? (
         <View style={styles.strip}>
           {/**
-           * ⚠ The calendar affordance rides the strip's own LABEL ROW, which was
-           * empty (ADR 0157). It costs no vertical space, and it sits where the
-           * round is chosen — which is what it is scoped to.
+           * ⚠ The calendar affordance sits in the strip's row, where the round is
+           * chosen — which is what it is scoped to (ADR 0157/0165).
            *
-           * ⚠ A `ChipButton` pill, NOT `Button tone="quiet"`: that atom carries
-           * `minHeight: Size.minTouch` (44) and would nearly triple an eyebrow
-           * row. The chip draws at 32 and buys its 44pt target with `hitSlop`.
-           *
-           * ⚠⚠ **It IS lime, and that is Ed's call over SPEC §2's one-lime
-           * rule** (ADR 0157). The first cut was a neutral `eyebrowSm` line and
-           * it read as a LABEL — a row that says MATCHDAY on the left does not
-           * teach you that the word on the right is a button. The distinction
-           * the app already draws is weight, not presence: a SOLID lime pill is
-           * a marker ("you are here" — the strip's current round), a lime RING
-           * is an invitation to act, which is `ChipButton`'s own header rule.
-           * Two different lime weights doing two different jobs.
+           * ⚠⚠ **NEUTRAL glass since ADR 0200** (Ed's call, the Medina kit's),
+           * superseding 0157's lime ring. The screen's one lime is the CURRENT
+           * ROUND. What says "button" now is the pill itself — the calendar
+           * glyph, the capsule at the round pills' 44pt, and the verb — the
+           * three things 0165 already leaned on once the MATCHDAY label went.
            */}
-          {/* ⚠⚠ **The MATCHDAY label row is gone and the pill moved INTO the
-              strip's row** (ADR 0165). The label was what taught the reader that
-              the lime word opposite it was a button — the note above says so —
-              and with the label deleted that lesson has to come from the pill
-              itself, which is why it gains the calendar glyph. Ring plus glyph
-              plus verb reads as a control with nothing to lean on. */}
           <MatchdayStrip
             total={total}
             current={matchweek}
@@ -464,8 +456,9 @@ export default function MatchdaysScreen() {
                 <ChipButton
                   label={copy.matchdays.calendar}
                   shape="pill"
+                  tone="glass"
                   onPress={openCalendar}
-                  leading={<CalendarGlyph size={14} />}
+                  leading={<CalendarGlyph size={Size.calendarGlyph} color="text" />}
                 />
               ) : null
             }

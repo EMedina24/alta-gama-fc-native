@@ -24,7 +24,7 @@
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { Button, PlayerPhoto, SkeletonRows, Text } from '@/components/atoms';
+import { Button, PlayerPhoto, SHEET_GROUND, SkeletonRows, Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 import { leagueOfClub } from '@/lib/cronogol/standings';
 import { statsSlug } from '@/lib/cronogol/stats';
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   state: { padding: Spacing.five, paddingTop: Spacing.six, gap: Spacing.four },
   content: { padding: Spacing.five, paddingTop: 0, gap: Spacing.one, paddingBottom: Spacing.six },
   head: {
-    backgroundColor: Colors.dark.sheetGround,
+    backgroundColor: SHEET_GROUND,
     paddingTop: Spacing.five,
     paddingBottom: Spacing.three,
   },

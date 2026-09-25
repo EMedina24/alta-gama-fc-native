@@ -8,8 +8,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SHEET_GROUND } from '@/components/atoms';
 import { SplashOverlay } from '@/components/templates/splash-overlay';
-import { Colors } from '@/constants/theme';
+import { Colors, DisplayFont } from '@/constants/theme';
 import { AUTH_REQUIRED } from '@/features/auth/capability';
 import { usePushSync } from '@/features/push/use-push-sync';
 import { watchAppStateForRefresh } from '@/lib/supabase/client';
@@ -54,7 +55,7 @@ export default function RootLayout() {
   // already signed in.
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    // ⚠ The crown-title face (ADR 0188) loads here too, so no screen paints its
+    // ⚠ The display faces (ADRs 0188, 0193) load here too, so no screen paints its
     // title in SF and then swaps. It is ALSO embedded by the `expo-font` plugin;
     // this runtime load is what lets a dev client built before the font existed
     // show it, and is a no-op cost once embedded.
@@ -63,7 +64,8 @@ export default function RootLayout() {
       hydrateSession(),
       hydrateStartingXi(),
       Font.loadAsync({
-        'SairaExtraCondensed-ExtraBold': require('../../assets/fonts/SairaExtraCondensed-ExtraBold.ttf'),
+        [DisplayFont.extraBold]: require('../../assets/fonts/SairaExtraCondensed-ExtraBold.ttf'),
+        [DisplayFont.bold]: require('../../assets/fonts/SairaExtraCondensed-Bold.ttf'),
       }).catch(() => {}),
     ]).finally(() => setReady(true));
   }, []);
@@ -221,9 +223,10 @@ const sheet: NativeStackNavigationOptions = {
   presentation: 'formSheet',
   sheetGrabberVisible: true,
   sheetAllowedDetents: [0.6],
-  // ⚠ `sheetGround`, opaque, NOT the mesh or glass (ADR 0093): a sheet sits
-  // over a scrim, and glass over a scrim reads muddy.
-  contentStyle: { backgroundColor: Colors.dark.sheetGround },
+  // ⚠ ADR 0195: transparent where liquid glass exists, so iOS 26 draws the
+  // formSheet in system glass; opaque `sheetGround` below 26, as 0093 had it.
+  // Never a colour literal here — `SHEET_GROUND` is what the pinned bars match.
+  contentStyle: { backgroundColor: SHEET_GROUND },
 };
 
 /**

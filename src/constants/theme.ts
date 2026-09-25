@@ -164,10 +164,10 @@ const dark = {
   textGhost: '#3d444a',
 
   // Brand + status
-  accent: '#c8f25a',            // the ONE carry-over from the web app
+  accent: '#c8ff3d',            // Medina Digital lime (ADR 0193); was the web app's #c8f25a
   onAccent: '#101806',
-  accentWash: 'rgba(200,242,90,0.14)',
-  accentRing: 'rgba(200,242,90,0.45)',
+  accentWash: 'rgba(200,255,61,0.14)',
+  accentRing: 'rgba(200,255,61,0.45)',
   /**
    * A disc nested INSIDE an accent control (ADR 0091's alerts row): the dark
    * one for a solid-lime row, the lighter lime for a wash row. ⚠ `onAccentFill`
@@ -175,7 +175,7 @@ const dark = {
    * in the lime rather than a second colour.
    */
   onAccentFill: 'rgba(16,24,6,0.13)',
-  accentWashStrong: 'rgba(200,242,90,0.18)',
+  accentWashStrong: 'rgba(200,255,61,0.18)',
   live: '#ff5c47',              // in-progress marker, destructive
   liveWash: 'rgba(255,92,71,0.14)',
   danger: '#ff5c47',
@@ -260,10 +260,10 @@ const dark = {
   /** Bars that are present but not the point — the non-final conceded bands. */
   chartMuted: 'rgba(255,255,255,0.22)',
   /** Accent at a rank below first — the runners-up in a sorted bar series. */
-  accentDim: 'rgba(200,242,90,0.38)',
+  accentDim: 'rgba(200,255,61,0.38)',
 
   // Qualification bands (per-league CONFIG, never position arithmetic)
-  bandUcl: '#c8f25a',
+  bandUcl: '#c8ff3d',
   bandUel: '#6fc9ff',
   bandConf: '#b79bff',
   bandRel: '#ff6b5e',
@@ -284,12 +284,12 @@ const dark = {
   // ⚠ Do NOT port the poster's lighter `CORAL_INK #ff9b8f`. That exists because
   //   the poster inks band LABELS in the band colour and coral fails contrast
   //   there; our `Legend` inks labels `textFaint`, so the problem never arises.
-  bandR16: '#c8f25a',
+  bandR16: '#c8ff3d',
   bandPlayoff: '#d3c2ff',
   bandOut: '#ff7a6b',
 
   // Form chips
-  formWin: '#c8f25a',
+  formWin: '#c8ff3d',
   formDraw: '#3a4652',
   formLossBorder: 'rgba(255,107,94,0.7)',
 
@@ -297,9 +297,9 @@ const dark = {
   // `xi-pitch` / `xi-turf`; lines and stripes are washes over them.
   pitchArt: '#0f1216',
   pitchTurf: '#17301d',
-  pitchLineArt: 'rgba(200,242,90,0.34)',
+  pitchLineArt: 'rgba(200,255,61,0.34)',
   pitchLineTurf: 'rgba(255,255,255,0.34)',
-  pitchStripeArt: 'rgba(200,242,90,0.05)',
+  pitchStripeArt: 'rgba(200,255,61,0.05)',
   pitchStripeTurf: 'rgba(255,255,255,0.045)',
   // An EMPTY slot token: a dark scrim so the label reads on turf, and a dashed ring.
   slotEmpty: 'rgba(10,11,12,0.42)',
@@ -319,7 +319,7 @@ const dark = {
    * bookmark's lime plate — the Saved screen's un-save control, the story
    * sheet's toggled Save — and the meta line's separator dot.
    */
-  savedFill: 'rgba(200,242,90,0.9)',        // saved bookmark's fill; ink is `onAccent`
+  savedFill: 'rgba(200,255,61,0.9)',        // saved bookmark's fill; ink is `onAccent`
   /** The News meta line's 3pt separator dot (ADR 0130) — lead card and rows. */
   newsMetaDot: 'rgba(255,255,255,0.35)',
 } as const;
@@ -411,9 +411,21 @@ export const ClubWash = {
  * colour (trap 42).
  */
 export const Mesh = [
-  { cx: 0.92, cy: 0.22, rx: 0.64, ry: 0.4, color: '#c8f25a', alpha: 0.16, fade: 0.62 },
+  { cx: 0.92, cy: 0.22, rx: 0.64, ry: 0.4, color: '#c8ff3d', alpha: 0.16, fade: 0.62 },
   { cx: -0.12, cy: 0.48, rx: 0.78, ry: 0.46, color: '#105c4a', alpha: 0.6, fade: 0.66 },
   { cx: 1.08, cy: 0.86, rx: 0.72, ry: 0.42, color: '#1c546c', alpha: 0.5, fade: 0.66 },
+] as const;
+
+/**
+ * The Medina ground (ADR 0196): ONE lime pool, top-right, on `background` — the
+ * kit's `LimeGlow`. Drawn by `MeshGround` like any pool table (so the
+ * `stopOpacity` rule, trap 42, is already kept), on the plain stack screens
+ * that used the brand `Mesh`. Tab screens keep their league-hued mesh under
+ * the crown (0164/0175). Ambient — it does not count as a screen's one lime
+ * element.
+ */
+export const LimeGlow = [
+  { cx: 0.88, cy: 0, rx: 0.7, ry: 0.38, color: '#c8ff3d', alpha: 0.11, fade: 0.7 },
 ] as const;
 
 /**
@@ -440,7 +452,7 @@ export const Mesh = [
  * so one table serves small, medium and large; only the composition differs.
  */
 export const MeshTile = [
-  { cx: 0.98, cy: 0.04, rx: 0.72, ry: 0.62, color: '#c8f25a', alpha: 0.16, fade: 0.72 },
+  { cx: 0.98, cy: 0.04, rx: 0.72, ry: 0.62, color: '#c8ff3d', alpha: 0.16, fade: 0.72 },
   { cx: -0.02, cy: 0.46, rx: 0.7, ry: 0.76, color: '#105c4a', alpha: 0.6, fade: 0.8 },
   { cx: 1.0, cy: 1.02, rx: 0.78, ry: 0.68, color: '#1c546c', alpha: 0.5, fade: 0.8 },
 ] as const;
@@ -451,7 +463,7 @@ export const MeshTile = [
  * Shaped as `WashStop`s so translucency can only travel as `opacity` (trap 42).
  */
 export const CrownGrad = [
-  { offset: 0, color: '#c8f25a', opacity: 1 },
+  { offset: 0, color: '#c8ff3d', opacity: 1 },
   { offset: 0.26, color: '#8ac768', opacity: 1 },
   { offset: 0.5, color: '#2f8f78', opacity: 1 },
   { offset: 0.68, color: '#176e60', opacity: 0.72 },
@@ -459,6 +471,78 @@ export const CrownGrad = [
   { offset: 0.92, color: '#0a2828', opacity: 0.14 },
   { offset: 1, color: '#0f1316', opacity: 0 },
 ] as const;
+
+/**
+ * The LEAGUE SCENE (ADR 0201) — the Medina kit's league background, worn by
+ * the three league tabs (Matchdays, Table, Clubs) in place of the deep crown's
+ * scrolling ramp and mesh. A FIXED layer behind the scroll: the header and the
+ * rows move over it, the colour stays put.
+ *
+ * Three layers, the kit's `Scene` (`ui_kits/medina-ios/ios-scenes.jsx`):
+ *  - `wash`: the league's dark tint (`base`) down the screen — opaque at the
+ *    top, 0.8 by a third, handed to the page ground by 80%. Fractions of the
+ *    SCREEN, not of a crown: that is what keeps the purple under the rows.
+ *  - `glow`: the league's vivid tint at 0.5, a radial pool top-right.
+ *  - `mark`: the league's own lockup (the wire's artwork) as a watermark.
+ *
+ * ⚠⚠ **The tints are the KIT'S, per league (`tints`)** — measured against the
+ * kit's screenshot, the first cut's `LeagueBand`-derived purple matched its
+ * lightness to a point but sat 18° magenta of it (h294 against the kit's
+ * h276) and 15–20 points more saturated. Where the kit authored a tint in the
+ * SAME colour family as Ed's band, the scene wears the kit's. ⚠ Puerto Rico is
+ * deliberately NOT listed: the kit's green contradicts Ed's blue→red flag call
+ * (ADR 0173), so it derives from its band like any future league — hue and
+ * saturation from `LeagueBand` through `CrownDeepSat`, lightness from `base`
+ * and `glow` below (the middle of the kit's L13–18 and L49–62 bands).
+ *
+ * ⚠ `glow.light` and every `tints` glow are bound to the harness's scene
+ * contrast pass: white ink over the pool is what it rates.
+ */
+export const LeagueScene = {
+  /** The kit's own `LEAGUES` tints (`ios-scenes.jsx`), keyed by API slug. */
+  tints: {
+    'premier-league': { base: '#3a0b50', glow: '#9b2bd1' },
+    laliga: { base: '#3a120b', glow: '#ff563c' },
+    'serie-a': { base: '#0a2456', glow: '#2f6bff' },
+    bundesliga: { base: '#3d0b0f', glow: '#d8202c' },
+    // The UCL's key is its TAB slug, `LeagueBand`'s one non-API key (ADR 0168).
+    'champions-league': { base: '#0a1446', glow: '#3a4dff' },
+    'liga-nacional-apertura': { base: '#0a2a52', glow: '#2d6bd6' },
+  } as Record<string, { base: string; glow: string }>,
+  base: { light: 16 },
+  glow: { light: 50, alpha: 0.5, cx: 1, cy: 0.18, rx: 0.9, ry: 0.46, fade: 0.7 },
+  /** The base tint's opacity down the screen; the last stop is the ground. */
+  wash: [
+    { offset: 0, opacity: 1 },
+    { offset: 0.34, opacity: 0.8 },
+    { offset: 0.8, ground: true },
+  ],
+  /**
+   * The watermark: 330pt wide, bled 80pt off the right edge, 140pt down, at
+   * 0.15 — the kit's numbers. ⚠ The kit greys its logo 30% with a CSS filter;
+   * React Native has none, so a colour lockup (LaLiga, the Bundesliga) tints
+   * faintly. Accepted with the logo choice (Ed, ADR 0201).
+   */
+  mark: { width: 330, right: -80, top: 140, alpha: 0.15 },
+} as const;
+
+/**
+ * The CLUB SCENE (ADR 0202) — the league scene's geometry turned for a club:
+ * the glow top-LEFT and the crest watermarked behind the hero there, the
+ * kit's `Scene kind: 'club'`. The wash and the base lightness are
+ * `LeagueScene`'s, so a club page and a league tab read as one system.
+ *
+ * ⚠⚠ **Two colours** (Ed's call over the club-wash "one colour" rule, for this
+ * scene only): the base is the club's primary, the glow its SECONDARY where
+ * usable — Barcelona's blue with a garnet glow. `light` is scaled by
+ * `clubDim` for high-luma hues, so a yellow glow never blows out the head.
+ * ⚠ Bound to the harness's club scene pass.
+ */
+export const ClubScene = {
+  glow: { light: 45, alpha: 0.5, cx: 0, cy: 0.06, rx: 0.9, ry: 0.46, fade: 0.7 },
+  /** The crest watermark: 290pt, 56pt off the LEFT, 66pt down, at 0.15. */
+  mark: { left: -56, top: 66, width: 290, alpha: 0.15 },
+} as const;
 
 /**
  * The DEEP crown's ladder (ADR 0165) — the league-scoped head's lightness and
@@ -727,7 +811,7 @@ export const Splash = {
   /** The lime sheet, the spec's 168° linear ramp. */
   sheet: [
     { offset: 0, color: '#d6f96a', opacity: 1 },
-    { offset: 0.36, color: '#c8f25a', opacity: 1 },
+    { offset: 0.36, color: '#c8ff3d', opacity: 1 },
     { offset: 1, color: '#9bd96b', opacity: 1 },
   ],
   /**
@@ -736,9 +820,9 @@ export const Splash = {
    * (deviation recorded in 0134).
    */
   glowStops: [
-    { offset: 0, color: '#c8f25a', opacity: 0.55 },
-    { offset: 0.45, color: '#c8f25a', opacity: 0.3 },
-    { offset: 0.7, color: '#c8f25a', opacity: 0 },
+    { offset: 0, color: '#c8ff3d', opacity: 0.55 },
+    { offset: 0.45, color: '#c8ff3d', opacity: 0.3 },
+    { offset: 0.7, color: '#c8ff3d', opacity: 0 },
   ],
   glowSize: 440,
   /**
@@ -851,76 +935,71 @@ export const Pulse = {
  */
 export const BoardEdit = {
   /**
-   * One editable row.
-   *
-   * ⚠ **72, not the design's 104.** That number existed to hold a slice of the
-   * card behind the row, and the slice is gone (see `rowFill`). A name over a
-   * summary line needs 72; the other 32 were paying for empty space, and seven
-   * cards at 114 apiece were most of why a drag needed edge auto-scroll at all.
+   * The Board's edit mode, the Medina kit's way (ADR 0199): the REAL cards,
+   * scaled a step back, with a remove disc and a grip on each — superseding
+   * 0174 §9's 72pt name rows. (0174's veiled card failed because it was a fixed
+   * WINDOW onto a card; a whole card, scaled, has no window to land
+   * mid-sentence in.)
    */
-  rowHeight: 72,
-  /** Between rows while editing; view mode keeps the body's own `Spacing.four`. */
-  gap: 10,
+  editScale: 0.965,
+  /** The lifted card: back to full size — the kit's pop, off a page at 0.965. */
+  dragScale: 1,
+  /** Between cards while editing; view mode keeps the body's own `Spacing.four`. */
+  gap: 18,
   /**
-   * How far past the half-way mark a drag must travel before the rows swap.
-   * ⚠ Non-zero on purpose: at exactly half, a row resting on the boundary
-   * swaps back and forth on sub-pixel jitter.
+   * How far past a neighbour's midpoint the lifted card's centre must travel
+   * before they swap. ⚠ Non-zero on purpose: at exactly the midpoint a card
+   * resting on the boundary swaps back and forth on sub-pixel jitter.
    */
   swapBias: 6,
-  /**
-   * An editable row's ground. OPAQUE — there is nothing behind it.
-   *
-   * ⚠⚠ **The design's veiled card was built, measured and DROPPED. Do not put it
-   * back from the handoff**, which still specifies it. The row used to render the
-   * live card clipped to its height under a scrim; two rounds of Ed reporting the
-   * rows looked wrong ended in the measurement that settled it. Ghost contrast
-   * above the row's ground, on the News row:
-   *
-   *     design's own screenshot      9 levels
-   *     our first build (0.93)      15 levels
-   *     our last build (0.985)       4 levels
-   *
-   * We were already more than twice as faint as the thing we were copying, and it
-   * still read wrong — so the defect was never how MUCH showed. It was WHAT: a
-   * fixed window onto a card of some other height lands mid-sentence (a headline
-   * cut through its x-height), and every section begins with its own
-   * `SectionHeader`, so the row printed its name twice — once ghosted, once solid.
-   * No alpha fixes a sliced word; it only makes a faint one.
-   *
-   * ⚠ Judge anything in this range by MEASUREMENT, never by a screenshot: every
-   * viewer in the chain lifts shadows, and at these levels the eye is shown a
-   * picture the device never draws.
-   */
-  rowFill: '#070c0b',
-  /**
-   * The hint bar's ground, ON the crown.
-   *
-   * ⚠ **Nearly opaque, and that is the point** (Ed, 2026-09-14: *"give this a bit
-   * more importance so the user recognizes it and sees it quicker"*). At the
-   * first cut's 0.5 the lime read straight through it and the bar sat back as
-   * wallpaper on the band — it is the one instruction in the mode and the first
-   * thing that should land after the title. The last 8 % of transparency is what
-   * keeps it reading as a plate ON the crown rather than a hole cut in it.
-   */
-  hintFill: 'rgba(6,11,10,0.92)',
-  /** The remove disc, and the tray's add disc. */
+  /** The remove disc: the kit's grey, opaque — it sits half off the card. */
   remove: 26,
-  /** The drag handle's square. ⚠ Below `Size.minTouch` — it carries `hitSlop`. */
-  handle: 34,
-  /** The lifted row: just off the page, never a card-sized pop. */
-  dragScale: 1.015,
+  removeInset: -9,
+  removeFill: '#3c4048',
+  /**
+   * The grip, top-right on each card. ⚠ Below `Size.minTouch` — it carries
+   * `hitSlop`. ⚠ It STRADDLES the top edge like the remove disc (both at
+   * `removeInset`), not the kit's 10pt inside: four of our five cards open on a
+   * bare `SectionHeader`, whose title and meta sit exactly where an inside
+   * badge would land. `chromeTop` pushes the content clear of both.
+   */
+  grip: 28,
+  gripRadius: 9,
+  /** The content's drop under the two badges: the lower badge's bottom edge. */
+  chromeTop: 19,
   dragShadow: {
     shadowColor: '#000000',
     shadowOpacity: 0.55,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 22 },
   },
-  /** The settle when a row is released, and when a neighbour steps aside. */
+  /** The settle when a card is released, and when a neighbour steps aside. */
   spring: { damping: 20, stiffness: 220, mass: 1 },
-  /** Auto-scroll while a lifted row is held within this of a screen edge. */
+  /** Auto-scroll while a lifted card is held within this of the scroll's edges. */
   edge: 96,
   /** pt per frame of auto-scroll at the edge. */
   edgeSpeed: 9,
+  /**
+   * The bottom panel (the kit's): background tiles, reset, hidden cards.
+   * `panelFill` is its opaque stand-in where liquid glass does not exist.
+   */
+  panelRadius: 40,
+  panelFill: '#181a1e',
+  /** A background tile — the kit's 62×100 phone-shaped swatch. */
+  tileW: 62,
+  tileH: 100,
+  tileRadius: 16,
+  /** The selected tile's ring. */
+  tileRing: 2,
+  /**
+   * How much of a tile the crown ramp covers — the crown's share of a phone
+   * (`CrownRamp` 432 of ~852pt), so the tile reads as a tiny board.
+   */
+  tileCrown: 0.55,
+  /** The pick's mark on a tile: the kit's 0.15 watermark, a step up at 62pt. */
+  tileMarkAlpha: 0.2,
+  /** The mark's size on a tile — about the tile's width, bled off one side. */
+  tileMark: 58,
 } as const;
 
 /**
@@ -944,6 +1023,8 @@ export const Spacing = {
 
 export const Radius = {
   sheet: 28, card: 22, group: 20, tile: 18, control: 14, chip: 12, seg: 9, chipSm: 6, rail: 2, pill: 999,
+  /** The Matchdays pill (ADR 0200) — the kit's 44pt rounded square. */
+  roundPill: 13,
   // The 0087 shell's additions. `tray`/`trayLg` are OUTER radii — a tray's
   // inner surface is always `outer − Size.trayPad`, so the two curves stay
   // concentric (ADR 0090/0091). `thumb` is the segmented thumb and the
@@ -953,10 +1034,30 @@ export const Radius = {
 } as const;
 
 /**
- * Type: system font (SF Pro) throughout — except the crown titles, on trial in
- * Saira Extra Condensed (ADR 0188) — no licensing, and it
+ * The Medina Digital display face (ADR 0193): Saira Extra Condensed, bundled in
+ * `assets/fonts/`, embedded by the `expo-font` plugin and runtime-loaded in the
+ * root layout. Values are POSTSCRIPT names — a wrong one silently renders SF.
+ * Each face is a single weight, so a `Type` entry using one sets no
+ * `fontWeight`. `extraBold` is titles, scores and KPIs; `bold` is clocks,
+ * table positions and tab labels.
+ */
+/**
+ * `fontVariant` for the number tokens in `Type`. Hoisted out of the `as const`
+ * object so the array stays mutable — React Native's `TextStyle` rejects a
+ * `readonly` tuple.
+ */
+const TabularNums: ('tabular-nums')[] = ['tabular-nums'];
+
+export const DisplayFont = {
+  extraBold: 'SairaExtraCondensed-ExtraBold',
+  bold: 'SairaExtraCondensed-Bold',
+} as const;
+
+/**
+ * Type: system font (SF Pro) throughout — except the crown titles, in
+ * Saira Extra Condensed (ADRs 0188, 0193; `DisplayFont`) — no licensing, and it
  * inherits Dynamic Type. Sizes are the iOS scale, not the web app's.
- * Every numeric run sets fontVariant: ['tabular-nums'].
+ * Every numeric run sets fontVariant: ['tabular-nums'] (the number tokens carry it themselves, ADR 0194).
  *
  * ⚠ SCREEN TITLES SHARE ONE DISPLAY VOICE (ADR 0131): weight 300, tracking
  * −0.04em of the size — the crown's look, now the rule everywhere a screen
@@ -974,7 +1075,7 @@ export const Type = {
    * the follow count.
    */
   /**
-   * ⚠ TRIAL (ADR 0188): the Medina Digital signature face — Saira Extra
+   * ADR 0188 (accepted by 0193): the Medina Digital signature face — Saira Extra
    * Condensed 800, uppercase, −0.005em — replacing 0131's SF 300 on the crown
    * titles only. `heroTitle` is untouched, so the two voices now differ; that
    * is the open question the trial is for. `fontFamily` is the POSTSCRIPT name
@@ -984,17 +1085,30 @@ export const Type = {
    * `Ó`/`É` whole.
    */
   crownTitle: {
-    fontFamily: 'SairaExtraCondensed-ExtraBold',
+    fontFamily: DisplayFont.extraBold,
     fontSize: 44,
     lineHeight: 53,
     letterSpacing: -0.2,
     textTransform: 'uppercase',
   },
   crownTitleLg: {
-    fontFamily: 'SairaExtraCondensed-ExtraBold',
+    fontFamily: DisplayFont.extraBold,
     fontSize: 52,
     lineHeight: 62,
     letterSpacing: -0.26,
+    textTransform: 'uppercase',
+  },
+  /**
+   * The Matchdays title (ADR 0200) — the Medina kit's 58pt `MATCHDAY 6`, the
+   * one screen whose title IS its content (the round you are looking at).
+   * `lineHeight` 1.2× keeps an accented cap whole (0188/0194: `JORNADA` has
+   * none, but the cup's titles may).
+   */
+  crownTitleXl: {
+    fontFamily: DisplayFont.extraBold,
+    fontSize: 58,
+    lineHeight: 70,
+    letterSpacing: -0.29,
     textTransform: 'uppercase',
   },
   /**
@@ -1003,10 +1117,18 @@ export const Type = {
    * (`Espanyol de Barcelona`); 300 since 0131 — the 700 first cut read as a
    * different typeface beside the crown screens.
    */
-  heroTitle: { fontSize: 36, fontWeight: '300', letterSpacing: -1.45 },
+  /**
+   * ⚠ Since ADR 0194 the Medina display face, like the crown titles: Saira
+   * Extra Condensed 800, uppercase. 40 not 36 — a condensed cap reads smaller,
+   * and the narrower set is what lets `ESPANYOL DE BARCELONA` grow without
+   * wrapping further. `lineHeight` ~1.2× keeps an accented cap whole (0188).
+   */
+  heroTitle: { fontFamily: DisplayFont.extraBold, fontSize: 40, lineHeight: 48, letterSpacing: -0.2, textTransform: 'uppercase' },
   title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.8 },
   title3: { fontSize: 22, fontWeight: '700', letterSpacing: -0.55 },
   headline: { fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },
+  /** The kit's club name in a fixture row (ADR 0200) — `headline`'s size, a weight lighter. */
+  headlineMd: { fontSize: 17, fontWeight: '500', letterSpacing: -0.2 },
   bodyStrong: { fontSize: 15, fontWeight: '600', letterSpacing: -0.15 },
   body: { fontSize: 15, fontWeight: '400' },
   callout: { fontSize: 14.5, fontWeight: '600', letterSpacing: -0.15 },
@@ -1023,9 +1145,24 @@ export const Type = {
    * read as the stadium's local time (ADR 0034).
    */
   eyebrowLg: { fontSize: 12.5, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
-  /** Scores, kickoff times, countdowns. */
-  scoreLarge: { fontSize: 38, fontWeight: '700', letterSpacing: -1.5 },
-  kickoff: { fontSize: 32, fontWeight: '700', letterSpacing: -1.1 },
+  /**
+   * Scores, kickoff times, countdowns.
+   *
+   * ⚠ ADR 0194: every NUMBER token below — scores, kickoffs, the countdown,
+   * `numeral*`, `eventMinute`, `rankBadge`, `stat*` — is Saira Extra Condensed
+   * (`DisplayFont`), tabular and uppercase BY THE TOKEN, so a caller that
+   * forgets `tabular` still lines up. No `fontWeight`: each face is one weight
+   * (`extraBold` for scores and KPIs, `bold` for clocks and positions). Sizes
+   * stepped up from the SF values because a condensed digit reads smaller.
+   * ⚠ `lineHeight` is ~1.2× the size, like the crown titles — NEVER tighter
+   * than ~1.13×. Saira's metrics are ascent 1.135 / descent 0.439 em (natural
+   * 1.574); given a shorter line, iOS keeps the whole descent and takes the
+   * deficit off the TOP, so a line under cap (0.688) + descent (0.439) =
+   * 1.127em shears the tops off the digits. The first cut used 1.05× and cut
+   * `12:30 PM` flat on NEXT UP.
+   */
+  scoreLarge: { fontFamily: DisplayFont.extraBold, fontSize: 48, lineHeight: 58, letterSpacing: -0.24, fontVariant: TabularNums, textTransform: 'uppercase' },
+  kickoff: { fontFamily: DisplayFont.bold, fontSize: 44, lineHeight: 53, letterSpacing: -0.2, fontVariant: TabularNums, textTransform: 'uppercase' },
   /**
    * The upcoming card's kickoff (ADR 0043). `kickoff` at 32pt is the next-up
    * HERO's size — six list cards setting it would out-shout the card the
@@ -1033,25 +1170,25 @@ export const Type = {
    * it. Shares its metrics with `countdownNum` today and must NOT borrow that
    * name: the countdown is free to move without dragging every kickoff along.
    */
-  kickoffSm: { fontSize: 26, fontWeight: '700', letterSpacing: -0.9 },
+  kickoffSm: { fontFamily: DisplayFont.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.16, fontVariant: TabularNums, textTransform: 'uppercase' },
   /**
    * The countdown's digits and its unit letters. Smaller than `kickoff` because
    * the row carries four groups (`1d 18h 04m 12s`), not one time (ADR 0034).
    */
-  countdownNum: { fontSize: 26, fontWeight: '700', letterSpacing: -0.8 },
+  countdownNum: { fontFamily: DisplayFont.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.16, fontVariant: TabularNums, textTransform: 'uppercase' },
   countdownUnit: { fontSize: 12, fontWeight: '800', letterSpacing: 0.4 },
-  numeral: { fontSize: 16, fontWeight: '800', letterSpacing: -0.3 },
+  numeral: { fontFamily: DisplayFont.bold, fontSize: 20, lineHeight: 24, letterSpacing: 0, fontVariant: TabularNums, textTransform: 'uppercase' },
   /**
    * The jornada row's score/kickoff (ADR 0035). At `numeral` the number sat at
    * the same weight as the two club names beside it and the row had no anchor;
    * 19pt against 15pt names makes the number the thing you scan down. Lighter
    * than `numeral` (700 vs 800) because it is bigger — the two read the same.
    *
-   * ⚠ `numeral` stays at 16: `ScoreLine size='row'` and `SeasonSpine` are
+   * ⚠ `numeral` is pinned (16 SF, 20 Saira since 0194): `ScoreLine size='row'` and `SeasonSpine` are
    * both sized against it. (The upcoming cards left it for `kickoffSm` in
    * ADR 0043 — they are cards now, not rows.)
    */
-  numeralLg: { fontSize: 19, fontWeight: '700', letterSpacing: -0.5 },
+  numeralLg: { fontFamily: DisplayFont.bold, fontSize: 24, lineHeight: 29, letterSpacing: 0, fontVariant: TabularNums, textTransform: 'uppercase' },
   /**
    * The match-events timeline (ADR 0045). Two steps of its own because the
    * panel is a dense list inside a row: `bodyStrong` (15) at eleven rows deep
@@ -1063,7 +1200,7 @@ export const Type = {
    */
   eventName: { fontSize: 13, fontWeight: '600', letterSpacing: -0.13 },
   /** Always `tabular` — the minute column is read as a column. */
-  eventMinute: { fontSize: 11, fontWeight: '700' },
+  eventMinute: { fontFamily: DisplayFont.bold, fontSize: 14, lineHeight: 17, fontVariant: TabularNums, textTransform: 'uppercase' },
   /**
    * The events panel's group tabs (ADR 0046).
    *
@@ -1106,7 +1243,7 @@ export const Type = {
    * word, and `#11` at 1.3 puts a visible gap inside the number.
    */
   railName: { fontSize: 12, fontWeight: '600', letterSpacing: -0.18 },
-  rankBadge: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.4 },
+  rankBadge: { fontFamily: DisplayFont.bold, fontSize: 12, lineHeight: 14, letterSpacing: 0.2, fontVariant: TabularNums, textTransform: 'uppercase' },
   /**
    * The News lead card's headline (ADR 0130) — between `title` (26) and the
    * mock's drawn ~28: a quote two lines deep on a glass card over the hero.
@@ -1125,16 +1262,48 @@ export const Type = {
    * `102` at 44pt is much wider than `9` — the same shape as the 30pt minute
    * column that truncated `45+2′` and that only the simulator caught.
    *
-   * ⚠ These are VALUES, not titles. Screen titles stay in ADR 0131's three
-   * display sizes at weight 300; nothing here may be used for one.
+   * ⚠ These are VALUES, not titles; nothing here may be used for one. Saira
+   * Extra Condensed since ADR 0194 (the kit's `kpi`), 44/34/30 → 54/42/36.
    */
-  statHero: { fontSize: 44, fontWeight: '700', letterSpacing: -2 },
-  statLg: { fontSize: 34, fontWeight: '700', letterSpacing: -1.2 },
-  statMd: { fontSize: 30, fontWeight: '700', letterSpacing: -1 },
+  statHero: { fontFamily: DisplayFont.extraBold, fontSize: 54, lineHeight: 65, letterSpacing: -0.27, fontVariant: TabularNums, textTransform: 'uppercase' },
+  statLg: { fontFamily: DisplayFont.extraBold, fontSize: 42, lineHeight: 50, letterSpacing: -0.2, fontVariant: TabularNums, textTransform: 'uppercase' },
+  statMd: { fontFamily: DisplayFont.extraBold, fontSize: 36, lineHeight: 43, letterSpacing: -0.18, fontVariant: TabularNums, textTransform: 'uppercase' },
+  /**
+   * The small KPI and the small clock (ADR 0194, phase 7 of 0193): numbers
+   * that sat in `title3` (SF 22/700) — the club stats strip's #/PTS/GD, the
+   * stat tile's value, the live plate's minute. `title3` stays SF for the
+   * headings it is named for. 26: 22 SF stepped up for the condensed face.
+   */
+  statSm: { fontFamily: DisplayFont.extraBold, fontSize: 26, lineHeight: 31, letterSpacing: -0.13, fontVariant: TabularNums, textTransform: 'uppercase' },
+  clockMd: { fontFamily: DisplayFont.bold, fontSize: 26, lineHeight: 31, letterSpacing: -0.13, fontVariant: TabularNums, textTransform: 'uppercase' },
+  /**
+   * The standings row's position and points (ADR 0194) — the kit's `pos`.
+   * Played stays SF `body`: the kit spends the display face on the two numbers
+   * a table is read by, not every column.
+   */
+  tablePos: { fontFamily: DisplayFont.bold, fontSize: 18, lineHeight: 22, fontVariant: TabularNums, textTransform: 'uppercase' },
+  /**
+   * The tab bar's labels (ADR 0194) — the kit's `tab`. Read by
+   * `(tabs)/_layout.tsx` for `labelStyle`, which takes only family and size;
+   * the uppercasing is done on the string there.
+   */
+  tabLabel: { fontFamily: DisplayFont.bold, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
 export const Size = {
+  /** The Board's DONE tick (ADR 0199) and the edit panel's "More" tile glyph. */
+  doneCheck: 13, moreGlyph: 16,
+  /** The Matchdays round pill and the Calendar pill beside it (ADR 0200). */
+  roundPill: 44,
+  /** The club page's glass back/share circles (ADR 0202). */
+  glassIcon: 44,
+  /** A key player's shirt-number disc (ADR 0202). */
+  shirtDisc: 38,
+  /** The club page's share glyph and the follow button's star (ADR 0202). */
+  shareGlyph: 19, starGlyph: 17,
+  /** The Calendar pill's glyph, at the kit's 17 (ADR 0200). */
+  calendarGlyph: 17,
   minTouch: 44, rowSkeleton: 44, pill: 34, switchW: 51, switchH: 31, switchKnob: 27,
   crestRow: 26, crestList: 30, crestCard: 40,
   /** The club hero's identity crest — 80, not the mock's 58: sized up on Ed's call (2026-09-01). */
@@ -1318,9 +1487,9 @@ export const Size = {
    * as tall as the line box reads as a table border, and one as short as the
    * gap reads as a stray pixel. It wants to be a little under the cap.
    */
-  scoreRuleBoard: 30,
-  scoreRuleRowLg: 17,
-  scoreRuleRow: 14,
+  scoreRuleBoard: 38, // scaled with 0194's Saira digits (was 30/17/14)
+  scoreRuleRowLg: 21,
+  scoreRuleRow: 17,
   /**
    * Its thickness. ⚠ NOT `hairlineWidth`: at 0.33pt beside a 38pt numeral the
    * rule disappears and the score reads as two unrelated numbers. The board
@@ -1535,6 +1704,14 @@ export const Motion = {
   /** One lap of the signed-out avatar's attention ring (ADR 0101). Tuned from 2800 — Ed wanted it calmer. */
   orbit: 4600,
 } as const;
+
+/**
+ * The thinking orb's clock (ADR 0197) — a feature group like `Glide`, not a
+ * `Motion` duration. `fps` caps its re-render rate (a 20pt spinner gains
+ * nothing from 60); `still` is the engine time (seconds) of the one frame
+ * Reduce Motion freezes on — the kit's representative pose.
+ */
+export const OrbMotion = { fps: 30, still: 0.6 } as const;
 
 /**
  * The Season stats screen's own choreography (ADR 0141/0142) — the numbers

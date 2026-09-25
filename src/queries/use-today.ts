@@ -33,6 +33,13 @@ import { STALE } from './stale';
 // EXACTLY these horizons at each consumer, which is what keeps pure-league
 // behavior byte-identical to the window routes alone.
 export const UPCOMING_DAYS = 7;
+/**
+ * How far ahead the Today board's NEXT UP and upcoming list reach (ADR 0192).
+ * ⚠ Tied to the widget window on purpose: the board reads `useWidgetWindow`,
+ * and the team windows' ahead edge is this same number, so one cached query
+ * and one slice feed all three surfaces.
+ */
+export const BOARD_AHEAD_DAYS = WIDGET_WINDOW_DAYS;
 /** Two weeks back covers an international break; nothing older is a "last result". */
 export const RECENT_DAYS = 14;
 
@@ -50,7 +57,7 @@ export function useFinishedToday(zone: string) {
   });
 }
 
-/** The next week, for "upcoming from your clubs". */
+/** The next week, for the REMINDERS (the Today board reads `useWidgetWindow` — ADR 0192). */
 export function useUpcoming(zone: string) {
   const { from } = upcomingBounds(new Date(), zone, UPCOMING_DAYS);
   return useQuery({
@@ -73,9 +80,9 @@ export function useUpcoming(zone: string) {
  * 400 rather than clamping (`fixtureWindowMaxDays` in the backend's
  * `configuration.ts`). Do not raise this without checking that number.
  *
- * ⚠ A separate query, not a widened `useUpcoming` — that one feeds the Today
- * board's seven-day band, and widening it would change what every reader
- * downloads on launch to serve a surface most of them cannot see.
+ * ⚠ A separate query, not a widened `useUpcoming` — that one feeds the
+ * reminders' seven-day band. The Today board reads THIS one since ADR 0192, so
+ * NEXT UP and the upcoming list see past an international break too.
  */
 export function useWidgetWindow(zone: string) {
   const { from } = upcomingBounds(new Date(), zone, WIDGET_WINDOW_DAYS);

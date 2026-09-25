@@ -61,7 +61,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 
-import { Button, Crest, Hairline, Switch, Text } from '@/components/atoms';
+import { Button, Crest, Hairline, SHEET_GROUND, Switch, Text } from '@/components/atoms';
 import { AlertTile, SectionHeader, StatusBanner } from '@/components/molecules';
 import { Colors, Motion, Radius, Size, Spacing } from '@/constants/theme';
 import type { Copy } from '@/lib/i18n/copy';
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   // it is pinned.
   // ⚠ Matches the sheet's own ground (ADR 0093) — the bar must be invisible
   // until content scrolls under it.
-  bar: { marginHorizontal: -Spacing.five, backgroundColor: Colors.dark.sheetGround },
+  bar: { marginHorizontal: -Spacing.five, backgroundColor: SHEET_GROUND },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',

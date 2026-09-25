@@ -241,7 +241,9 @@ export function FixtureList({
                         // 17pt, not FINISHED TODAY's 15: dropping the 95pt
                         // pairing column gave this name ~60pt back, and there is
                         // no goal column on the right taking it away again.
-                        variant="headline"
+                        // ADR 0200: the kit's 500 — the name reads as a list
+                        // entry, the Saira kickoff beside it carries the weight.
+                        variant="headlineMd"
                         lines={2}
                         // ⚠ Only the crest links (ADR 0191); on a finished
                         // row the rest of the line still expands the timeline.
@@ -374,8 +376,13 @@ const styles = StyleSheet.create({
     // The quiet full-bleed slab the 0087 shell uses for a day header — a
     // charcoal band here would be the last `card` slab on the mesh.
     backgroundColor: Colors.dark.glassFillDim,
+    // The kit's glass band (ADR 0200): a hairline top and bottom, so the band
+    // reads as a surface rather than a tint.
+    borderTopWidth: Size.glassBorder,
+    borderBottomWidth: Size.glassBorder,
+    borderColor: Colors.dark.glassLine,
     paddingHorizontal: Spacing.five,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.three + 2,
     marginHorizontal: -Spacing.five,
   },
   row: {

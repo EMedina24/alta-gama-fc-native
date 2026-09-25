@@ -67,7 +67,6 @@
  * dim alone; selection is the lozenge, the brightened ink and the check.
  */
 import { Image } from 'expo-image';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -85,6 +84,7 @@ import {
   Chevron,
   COMPETITION_MARK_RATIO,
   CompetitionMark,
+  GlassSurface,
   Text,
   type CompetitionMarkKind,
 } from '@/components/atoms';
@@ -156,8 +156,6 @@ export interface LeagueMenuProps {
    */
   motionScale?: number;
 }
-
-const LIQUID = isLiquidGlassAvailable();
 
 /** An idle row recedes a step, exactly as an idle chip did (ADR 0117/0123). */
 const IDLE_ROW_OPACITY = 0.72;
@@ -586,11 +584,7 @@ function Trigger({
       accessibilityHint={disclosed ? hint : undefined}>
       {({ pressed }) => (
         <View style={[styles.trigger, { height }]}>
-          {LIQUID ? (
-            <GlassView style={styles.triggerShell} glassEffectStyle="regular" colorScheme="dark" />
-          ) : (
-            <View style={[styles.triggerShell, styles.triggerShellFlat]} />
-          )}
+          <GlassSurface style={styles.triggerShell} flatStyle={styles.triggerShellFlat} glass="regular" />
           <View style={[styles.triggerRow, pressed && styles.pressed]}>
             <View style={[styles.triggerMark, { width: column }]}>
               {league && box ? (

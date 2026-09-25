@@ -35,7 +35,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BookmarkGlyph, ChipButton, MeshGround, SkeletonRows, Text, WashGradient } from '@/components/atoms';
+import { BookmarkGlyph, ChipButton, LimeGlow, SkeletonRows, Text, WashGradient } from '@/components/atoms';
 import { NewsLeadCard, NewsRow } from '@/components/molecules';
 import { BottomTabInset, Colors, NewsHero, Size, Spacing } from '@/constants/theme';
 import { openArticle } from '@/features/news/open';
@@ -245,7 +245,7 @@ export default function NewsScreen() {
 
   return (
     <View style={styles.screen}>
-      <MeshGround />
+      <LimeGlow />
       {/* ⚠ No native header (ADR 0092, kept by 0130): the screen draws its own
           lime back link, which can NAME where it goes. */}
       <Stack.Screen options={{ headerShown: false }} />

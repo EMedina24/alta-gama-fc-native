@@ -214,14 +214,14 @@ struct NextFixtureView: View {
         timerInterval: entry.date...max(entry.date.addingTimeInterval(1), row.kickoffUtc),
         countsDown: true
       )
-      .font(Tok.numerals(22, .heavy))
+      .font(Tok.clock(22))
       .foregroundStyle(Tok.ink)
       .multilineTextAlignment(.center)
       .lineLimit(1)
       .minimumScaleFactor(0.5)
     } else {
       Text(Cadence.countdown(from: entry.date, to: row.kickoffUtc))
-        .font(Tok.numerals(22, .heavy))
+        .font(Tok.clock(22))
         .foregroundStyle(Tok.ink)
         .lineLimit(1)
         .minimumScaleFactor(0.6)

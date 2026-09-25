@@ -42,7 +42,7 @@ export interface MatchdayStripProps {
  * the strip on a pill boundary; scrolling by a multiple of `Size.pill` alone
  * does not, and drifts further out of step with every round.
  */
-const SLOT = Size.pill + Spacing.two;
+const SLOT = Size.roundPill + Spacing.two;
 
 /** Whole rounds kept visible BEFORE the active one, so it has context on its left. */
 const LEAD = 2;
@@ -125,7 +125,10 @@ export function MatchdayStrip({
               active && styles.active,
               pressed && { opacity: 0.7 },
             ]}>
-            <Text variant="bodyStrong" tabular color={active ? 'onAccent' : 'textSecondary'}>
+            <Text
+              variant="numeral"
+              tabular
+              color={active ? 'onAccent' : played(n) ? 'textSecondary' : 'text'}>
               {n}
             </Text>
           </Pressable>
@@ -159,15 +162,24 @@ const styles = StyleSheet.create({
    * read as a gap in the row rather than as bleed.
    */
   trackPinned: { paddingRight: 0 },
+  /**
+   * The Medina kit's round pill (ADR 0200): 44pt, a translucent fill and a
+   * hairline over the league crown. ⚠ A FILL, not `GlassView` — a dozen glass
+   * views scrolling over the crown is traps 59/74, and the kit's own `GLASS2`
+   * is a fill and a hairline anyway. The played rounds keep their step back
+   * (dimmer fill, `textSecondary` ink); the current round is the screen's lime.
+   */
   pill: {
-    width: Size.pill,
-    height: Size.pill,
-    minWidth: Size.pill,
-    borderRadius: Radius.chip,
-    backgroundColor: Colors.dark.card,
+    width: Size.roundPill,
+    height: Size.roundPill,
+    minWidth: Size.roundPill,
+    borderRadius: Radius.roundPill,
+    backgroundColor: Colors.dark.glassFill,
+    borderWidth: Size.glassBorder,
+    borderColor: Colors.dark.glassLine,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  played: { backgroundColor: Colors.dark.raised },
-  active: { backgroundColor: Colors.dark.accent },
+  played: { backgroundColor: Colors.dark.glassFillDim },
+  active: { backgroundColor: Colors.dark.accent, borderColor: Colors.dark.accent },
 });

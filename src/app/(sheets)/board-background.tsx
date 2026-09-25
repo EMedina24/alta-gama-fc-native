@@ -1,5 +1,8 @@
 /**
- * The Board background picker's route (ADR 0175).
+ * The Board background picker's route (ADR 0175) — since ADR 0199 the FULL
+ * catalogue behind the edit panel's "More" tile; the panel's own tiles carry
+ * the common picks. Options come from `features/board/background-options`,
+ * the one builder both surfaces share.
  *
  * ⚠ Declared in the ROOT stack in `_layout.tsx` like every sheet (ADR 0030;
  * trap 19 — a `(sheets)/_layout.tsx` would silently demote it to a full-screen
@@ -16,14 +19,10 @@ import { useRouter } from 'expo-router';
 
 import {
   BoardBackgroundSheet,
-  type BackgroundOption,
   type BackgroundSection,
 } from '@/components/organisms/board-background-sheet';
-import { clubTint } from '@/lib/cronogol/club-wash';
-import { abbreviate, crestSrc, displayName } from '@/lib/cronogol/derive';
-import { clubCrownTheme, leagueCrownTheme } from '@/lib/cronogol/league-theme';
-import { LEAGUES, type League } from '@/lib/cronogol/leagues';
-import { encodeBoardBackground } from '@/lib/board-background';
+import { clubOption, defaultOption, leagueOption } from '@/features/board/background-options';
+import { LEAGUES } from '@/lib/cronogol/leagues';
 import { hapticToggle } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTeams } from '@/queries/use-teams';
@@ -53,46 +52,19 @@ export default function BoardBackgroundSheetRoute() {
     useTeams(LEAGUES[5].apiSlug),
   ];
 
-  const leagueOption = (league: League): BackgroundOption => {
-    const id = encodeBoardBackground({ kind: 'league', slug: league.slug });
-    return {
-      id,
-      label: league.name,
-      stops: leagueCrownTheme(league.apiSlug).stops,
-      selected: bdBg === id,
-    };
-  };
-
-  const clubOption = (team: TeamView): BackgroundOption => {
-    const id = encodeBoardBackground({ kind: 'club', slug: team.slug });
-    return {
-      id,
-      label: displayName(team.name),
-      stops: clubCrownTheme(clubTint(team)).stops,
-      crest: crestSrc(team.logoUrls, team.logoUrl, 'xsmall'),
-      crestFallback: abbreviate(team.name, team.slug, team.shortName),
-      selected: bdBg === id,
-    };
-  };
-
   const sections: BackgroundSection[] = LEAGUES.map((league, i) => ({
     title: league.name,
-    league: leagueOption(league),
+    league: leagueOption(league, bdBg),
     // ⚠ A failed roster shows the league row alone — a league pick never
     // depends on the club catalogue, so the section stays useful offline.
-    clubs: (rosters[i].data ?? []).map(clubOption),
+    clubs: (rosters[i].data ?? []).map((team) => clubOption(team, bdBg)),
     pending: rosters[i].isPending,
   }));
 
   return (
     <BoardBackgroundSheet
       title={copy.board.background}
-      defaultOption={{
-        id: encodeBoardBackground({ kind: 'default' }),
-        label: copy.board.backgroundDefault,
-        stops: leagueCrownTheme(null).stops,
-        selected: bdBg === 'default',
-      }}
+      defaultOption={defaultOption(copy.board.backgroundDefault, bdBg)}
       sections={sections}
       closeLabel={copy.sheets.close}
       onPick={(id) => {

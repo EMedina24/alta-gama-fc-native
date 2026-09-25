@@ -1,7 +1,7 @@
 # 0188 — Crown titles trial Saira Extra Condensed
 
 - **Date:** 2026-09-24
-- **Status:** Accepted (trial)
+- **Status:** Accepted (trial) — accepted by [0193](./0193-medina-digital-becomes-the-design-system.md)
 - **Decided by:** Ed: *"see what font we're using [in the Medina Digital design
   system] … replace the crown titles like 'jornada' and 'matchday' to see if
   they look better with the font"*.

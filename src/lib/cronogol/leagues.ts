@@ -415,6 +415,25 @@ export function leagueOptions(
   });
 }
 
+/**
+ * The league SCENE's watermark (ADR 0201): the wire's FULL lockup, wordmark
+ * and all — the Medina kit draws `league.logoUrl` there.
+ *
+ * ⚠ Not `leagueOptions`' chip precedence: that reaches for LaLiga's `icon`
+ * (the icon-only mark) because a chip is small; a 330pt watermark wants the
+ * lockup. `onDark` first — the Premier League's white lockup, the one the
+ * kit's screenshot shows.
+ */
+export function leagueSceneLogo(
+  artwork: Record<string, { logoUrl?: string | null; logoUrls?: Record<string, string> | null }>
+    | undefined,
+  apiSlug: string | null | undefined,
+): string | null {
+  if (!apiSlug) return null;
+  const art = artwork?.[apiSlug];
+  return art?.logoUrls?.onDark ?? art?.logoUrls?.primary ?? art?.logoUrl ?? null;
+}
+
 /** `2026` → `"2026/27"`. */
 export function seasonLabel(season: number): string {
   return `${season}/${String((season + 1) % 100).padStart(2, '0')}`;

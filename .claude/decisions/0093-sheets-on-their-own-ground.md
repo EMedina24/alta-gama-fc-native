@@ -1,7 +1,7 @@
 # 0093 — Sheets sit on `#101316`, opaque, with glass groups
 
 - **Date:** 2026-09-01
-- **Status:** Accepted — verified on the simulator (alerts sheet over the News screen; account sheet over Today)
+- **Status:** Accepted — verified on the simulator (alerts sheet over the News screen; account sheet over Today). §1, §3 and §5 superseded by [0195](./0195-sheets-and-bars-go-glass.md) where liquid glass exists (iOS 26+); unchanged below it
 - **Decided by:** Ed Medina, from `handoff_new-paint/` (APP-SHELL "Modal sheets stay opaque"; mockup lines 627+)
 - **Amends:** [0030](./0030-sheets-are-presented-by-the-root-stack.md)'s `contentStyle` · [0081](./0081-account-sheet-redesign.md)'s group surfaces
 - **Reaffirms:** [0081](./0081-account-sheet-redesign.md)'s platform `Switch`
