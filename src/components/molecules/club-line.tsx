@@ -20,7 +20,7 @@
  * ⚠ `minWidth: 0` on the name is load-bearing. Without it RN refuses to shrink
  * the text and the row overflows its parent instead of wrapping or ellipsing.
  */
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Crest, Text, type TypeVariant } from '@/components/atoms';
 import { Size, Spacing } from '@/constants/theme';
@@ -38,6 +38,17 @@ export interface ClubLineProps {
   variant?: TypeVariant;
   /** `numberOfLines` on the name. See the header before raising it. */
   lines?: number;
+  /**
+   * Makes the CREST — only the crest — a link to the club (ADR 0191).
+   *
+   * ⚠ Not the name: on an expandable row the rest of the line is the row's own
+   * press target, and a whole-line link would leave nothing to expand with.
+   * The organism decides whether the club HAS a page (`useCanOpenClub`) and
+   * omits this when it does not — an inert crest, never a dead link.
+   */
+  onCrestPress?: () => void;
+  /** VoiceOver's name for the crest link — "Open Brentford". */
+  crestLabel?: string;
 }
 
 export function ClubLine({
@@ -48,10 +59,26 @@ export function ClubLine({
   size = Size.crestRow,
   variant = 'bodyStrong',
   lines = 1,
+  onCrestPress,
+  crestLabel,
 }: ClubLineProps) {
+  const crest = <Crest src={src} fallback={fallback} size={size} />;
+  /** Grows the drawn crest's target to `minTouch` without resizing it (SPEC §2). */
+  const slop = Math.max(0, (Size.minTouch - size) / 2);
   return (
     <View style={styles.line}>
-      <Crest src={src} fallback={fallback} size={size} />
+      {onCrestPress ? (
+        <Pressable
+          onPress={onCrestPress}
+          hitSlop={slop}
+          accessibilityRole="link"
+          accessibilityLabel={crestLabel}
+          style={({ pressed }) => pressed && styles.crestPressed}>
+          {crest}
+        </Pressable>
+      ) : (
+        crest
+      )}
       <Text
         variant={variant}
         color={muted ? 'textDim' : 'text'}
@@ -65,5 +92,7 @@ export function ClubLine({
 
 const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  /** Scale, not opacity — a faded crest on a dimmed losing line would vanish. */
+  crestPressed: { transform: [{ scale: 0.9 }] },
   name: { flex: 1, minWidth: 0 },
 });

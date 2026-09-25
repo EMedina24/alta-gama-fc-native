@@ -75,11 +75,15 @@ import {
   useUclJornada,
   useUclSeasonRounds,
 } from '@/queries/use-jornada';
+import { useCanOpenClub } from '@/queries/use-teams';
 import { useLeagueArtwork } from '@/queries/use-leagues';
 import { setLeagueSlug, useZone, usePreferences } from '@/store/preferences';
 
 export default function MatchdaysScreen() {
   const router = useRouter();
+  /** ⚠ Object form: typed routes check the pathname and params separately. */
+  const openClub = (slug: string) => router.push({ pathname: '/club/[slug]', params: { slug } });
+  const canOpenClub = useCanOpenClub();
   const initials = useIdentityInitials();
   const { copy, phrases } = useI18n();
   const zone = useZone();
@@ -527,6 +531,10 @@ export default function MatchdaysScreen() {
             finalLabel={copy.matchdays.final}
             inProgressLabel={copy.matchdays.inProgress}
             eventsCopy={copy.events}
+            // A crest opens its club, when it has a page (ADR 0191).
+            onOpenClub={openClub}
+            canOpenClub={canOpenClub}
+            openClubLabel={copy.clubLink.open}
           />
         </>
       ) : null}

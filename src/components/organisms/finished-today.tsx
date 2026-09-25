@@ -50,6 +50,7 @@ import { findLeagueByApiSlug } from '@/lib/cronogol/leagues';
 import { scoreEmphasis } from '@/lib/cronogol/scores';
 import type { FixtureWindowView, LeagueRef, WindowFixtureView } from '@/lib/cronogol/types';
 import type { Copy } from '@/lib/i18n/copy';
+import { clubLinkA11y } from './club-link-a11y';
 import { MatchEvents } from './match-events';
 
 /** Leagues with no artwork of their own that draw a sister league's mark. */
@@ -58,9 +59,24 @@ const SISTER_MARK = { segunda: 'laliga' } as const;
 export interface FinishedTodayProps {
   window: FixtureWindowView;
   eventsCopy: Copy['events'];
+  /**
+   * A crest opens its club (ADR 0191). Both halves travel together, as on
+   * `StandingsTable`: the screen owns navigation, `useCanOpenClub` owns whether
+   * a club HAS a page. Absent keeps every crest inert.
+   */
+  onOpenClub?: (slug: string) => void;
+  canOpenClub?: (slug: string) => boolean;
+  /** `Open {club}` — the crest's VoiceOver label and the row's rotor action. */
+  openClubLabel?: (name: string) => string;
 }
 
-export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) {
+export function FinishedToday({
+  window: data,
+  eventsCopy,
+  onOpenClub,
+  canOpenClub,
+  openClubLabel = (name) => name,
+}: FinishedTodayProps) {
   /** ⚠ One row open at a time — a single id, not a set (ADR 0045). */
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -156,6 +172,15 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
                     accessibilityHint={
                       canExpand ? (expanded ? eventsCopy.collapse : eventsCopy.expand) : undefined
                     }
+                    {...clubLinkA11y(
+                      [
+                        { team: fixture.homeTeam, name: homeName },
+                        { team: fixture.awayTeam, name: awayName },
+                      ],
+                      onOpenClub,
+                      canOpenClub,
+                      openClubLabel,
+                    )}
                     style={({ pressed }) => [
                       styles.row,
                       pressed && canExpand && { opacity: 0.75 },
@@ -173,6 +198,14 @@ export function FinishedToday({ window: data, eventsCopy }: FinishedTodayProps) 
                           fallback={team ? abbreviate(team.name, team.slug, team.shortName) : '?'}
                           name={name}
                           muted={muted}
+                          // ⚠ Only the crest links (ADR 0191); the rest of the
+                          // row stays the expand target.
+                          onCrestPress={
+                            team && onOpenClub && canOpenClub?.(team.slug)
+                              ? () => onOpenClub(team.slug)
+                              : undefined
+                          }
+                          crestLabel={openClubLabel(name)}
                         />
                       ))}
                     </View>

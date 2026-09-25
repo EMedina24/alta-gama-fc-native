@@ -42,7 +42,6 @@ import {
   usedCupBands,
   type Competition,
 } from '@/lib/cronogol/competitions';
-import { hasCompleteSchedule } from '@/lib/cronogol/derive';
 import {
   LEAGUES,
   findLeague,
@@ -60,7 +59,7 @@ import {
 } from '@/lib/cronogol/standings';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useStandings, useAllSeasonJornadas, useUclStandings } from '@/queries/use-standings';
-import { useTeams } from '@/queries/use-teams';
+import { useCanOpenClub } from '@/queries/use-teams';
 import { setLeagueSlug, usePreferences } from '@/store/preferences';
 
 /**
@@ -240,27 +239,8 @@ export default function TableScreen() {
       }));
   }, [current, copy]);
 
-  /**
-   * Whether a club has a page worth opening (ADR 0154).
-   *
-   * ⚠ **Half the Champions League field has none.** 18 of the 36 are absent
-   * from `GET /cronogol/teams`; their club route answers `200` with
-   * `lastSyncedAt: null`, which is trap 1 — a hero, a squad and a standing
-   * strip with nothing in them. `undefined` data (loading, or a failed
-   * catalogue fetch) resolves to FALSE: never draw a link you cannot honour.
-   *
-   * ⚠ `hasCompleteSchedule` rather than mere membership, and rather than a
-   * hardcoded list: it is the field that already means this, and it self-corrects
-   * the day the backend widens coverage.
-   */
-  const teams = useTeams();
-  const canOpenClub = useMemo(() => {
-    const bySlug = new Map((teams.data ?? []).map((team) => [team.slug, team]));
-    return (slug: string) => {
-      const team = bySlug.get(slug);
-      return team ? hasCompleteSchedule(team) : false;
-    };
-  }, [teams.data]);
+  /** Whether a club has a page worth opening — see the hook (ADR 0154). */
+  const canOpenClub = useCanOpenClub();
 
   const query = active.kind === 'ucl' ? ucl : standings;
   const tableCopy = {

@@ -77,6 +77,7 @@ import { formatFixtureDate } from '@/lib/format';
 import type { Copy } from '@/lib/i18n/copy';
 import type { Phrases } from '@/lib/i18n/phrases';
 import type { ClockFormat } from '@/store/preferences';
+import { clubLinkA11y } from './club-link-a11y';
 import { MatchEvents } from './match-events';
 import type { FixtureEventsSource } from '@/queries/use-fixture-events';
 
@@ -112,6 +113,14 @@ export interface FixtureListProps {
    * thing and one of them wrong.
    */
   eventsSource?: FixtureEventsSource;
+  /**
+   * A crest opens its club (ADR 0191) — see `FinishedToday`'s identical pair.
+   * Absent keeps every crest inert.
+   */
+  onOpenClub?: (slug: string) => void;
+  canOpenClub?: (slug: string) => boolean;
+  /** `Open {club}` — the crest's VoiceOver label and the row's rotor action. */
+  openClubLabel?: (name: string) => string;
 }
 
 export function FixtureList({
@@ -123,6 +132,9 @@ export function FixtureList({
   inProgressLabel,
   eventsCopy,
   eventsSource = 'league',
+  onOpenClub,
+  canOpenClub,
+  openClubLabel = (name) => name,
 }: FixtureListProps) {
   const groups = dayGroups(fixtures, zone);
   /**
@@ -231,6 +243,14 @@ export function FixtureList({
                         // no goal column on the right taking it away again.
                         variant="headline"
                         lines={2}
+                        // ⚠ Only the crest links (ADR 0191); on a finished
+                        // row the rest of the line still expands the timeline.
+                        onCrestPress={
+                          team && onOpenClub && canOpenClub?.(team.slug)
+                            ? () => onOpenClub(team.slug)
+                            : undefined
+                        }
+                        crestLabel={openClubLabel(name)}
                       />
                     ))}
                   </View>
@@ -302,6 +322,17 @@ export function FixtureList({
                     // the time, the pairing, both names and the venue as five.
                     accessibilityLabel={`${homeName} ${fixture.goalsHome}, ${awayName} ${fixture.goalsAway}`}
                     accessibilityHint={expanded ? eventsCopy.collapse : eventsCopy.expand}
+                    // The crests nested in this one-stop row are unfocusable;
+                    // their links ride the rotor instead (ADR 0191).
+                    {...clubLinkA11y(
+                      [
+                        { team: fixture.homeTeam, name: homeName },
+                        { team: fixture.awayTeam, name: awayName },
+                      ],
+                      onOpenClub,
+                      canOpenClub,
+                      openClubLabel,
+                    )}
                     style={({ pressed }) => [
                       styles.row,
                       inPlay && styles.live,

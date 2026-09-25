@@ -92,7 +92,7 @@ import {
 } from '@/lib/format';
 import { zoneAbbreviation } from '@/lib/timezones';
 import { useI18n } from '@/lib/i18n/use-i18n';
-import { useTeams } from '@/queries/use-teams';
+import { useCanOpenClub, useTeams } from '@/queries/use-teams';
 import { useLive } from '@/queries/use-live';
 import { useNews } from '@/queries/use-news';
 import { useTeamWindows } from '@/queries/use-team-windows';
@@ -146,6 +146,7 @@ export default function TodayScreen() {
   const teamWindows = useTeamWindows(zone, followed);
   const teamRows = teamWindows.rows;
   const teams = useTeams();
+  const canOpenClub = useCanOpenClub();
   // ⚠ The SAME query `PushSync` already holds for the widget — a cache read.
   const news = useNews();
 
@@ -664,7 +665,14 @@ export default function TodayScreen() {
           <SkeletonRows count={3} height={Size.rowSkeleton} />
         ) : finished.data && finishedCount > 0 ? (
           <>
-            <FinishedToday window={finished.data} eventsCopy={copy.events} />
+            <FinishedToday
+              window={finished.data}
+              eventsCopy={copy.events}
+              // A crest opens its club, when it has a page (ADR 0191).
+              onOpenClub={(slug) => router.push({ pathname: '/club/[slug]', params: { slug } })}
+              canOpenClub={canOpenClub}
+              openClubLabel={copy.clubLink.open}
+            />
             <Text variant="footnote" color="textFaint">
               {copy.today.settleNote}
             </Text>

@@ -569,6 +569,11 @@ export interface Copy {
    * ⚠⚠ **These are EVENT counts, not match statistics** — no possession, shots
    * or xG exist on the API. Never label a row as if they did.
    */
+  /**
+   * A crest as a link to its club (ADR 0191) — the crest's VoiceOver label and
+   * the row's rotor action. Takes the display name.
+   */
+  clubLink: { open: (name: string) => string };
   matchStats: {
     /** The goal-flow card's eyebrow. */
     goalFlow: string;
@@ -1371,6 +1376,8 @@ export const esCopy: Copy = {
     collapse: 'Ocultar los sucesos del partido',
   },
 
+  clubLink: { open: (name: string) => `Abrir ${name}` },
+
   matchStats: {
     goalFlow: 'Evolución del marcador',
     headToHead: 'Cara a cara',
@@ -1949,6 +1956,8 @@ export const enCopy: Copy = {
     expand: 'Show match events',
     collapse: 'Hide match events',
   },
+
+  clubLink: { open: (name: string) => `Open ${name}` },
 
   matchStats: {
     goalFlow: 'Goal flow',
