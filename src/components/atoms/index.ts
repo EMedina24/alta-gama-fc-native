@@ -60,3 +60,4 @@ export { SparkArea, sparkY, type SparkAreaProps } from './spark-area';
 export { GlassIconButton, type GlassIconButtonProps } from './glass-icon-button';
 export { ShareGlyph, type ShareGlyphProps } from './share-glyph';
 export { StarGlyph, type StarGlyphProps } from './star-glyph';
+export { SweepRing, type SweepRingProps } from './sweep-ring';

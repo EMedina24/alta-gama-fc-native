@@ -1,7 +1,14 @@
 /**
- * The account sheet's two-option preference control — language and clock
- * (ADR 0081). The selection is a thumb that SLIDES rather than a background
- * that repaints.
+ * A two-option preference control that sits INSIDE a row — language and clock
+ * (ADR 0081; a molecule since ADR 0208, when Settings replaced the account
+ * sheet that owned it). The selection is a thumb that SLIDES rather than a
+ * background that repaints.
+ *
+ * ⚠ Two tones. `accent` is the original lime thumb. `neutral` (ADR 0208, Ed's
+ * Settings mock) is a dark thumb on a lighter track with the label in plain
+ * ink — it spends no lime, which matters on a screen whose switches already
+ * do. `SegmentedControl` is the OTHER segmented: full-width, every option
+ * `flex: 1`, for a view switch rather than a setting in a row.
  *
  * ⚠ This does not reopen ADR 0045's "no animation" call on `event-tabs`, and
  * that control is deliberately left alone. The events panel's tabs are a dense
@@ -31,12 +38,21 @@ export interface SegmentedProps<T extends string> {
   options: readonly { key: T; label: string }[];
   value: T;
   onChange: (next: T) => void;
+  tone?: 'accent' | 'neutral';
+  /** Names the control as a whole — the row's title. */
+  accessibilityLabel?: string;
 }
 
 /** The track's inset. The thumb sits inside it on all four sides. */
 const PAD = 2;
 
-export function Segmented<T extends string>({ options, value, onChange }: SegmentedProps<T>) {
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  tone = 'accent',
+  accessibilityLabel,
+}: SegmentedProps<T>) {
   const reduceMotion = useReducedMotion();
   const index = Math.max(
     0,
@@ -60,8 +76,14 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
 
   return (
-    <View style={styles.track}>
-      <Animated.View pointerEvents="none" style={[styles.thumb, thumbStyle]} />
+    <View
+      style={[styles.track, tone === 'neutral' && styles.trackNeutral]}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={accessibilityLabel}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.thumb, tone === 'neutral' && styles.thumbNeutral, thumbStyle]}
+      />
       {options.map((option) => (
         <Pressable
           key={option.key}
@@ -73,7 +95,7 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
           style={styles.segment}>
           <Text
             variant="callout"
-            color={option.key === value ? 'onAccent' : 'textSecondary'}
+            color={option.key === value ? (tone === 'neutral' ? 'text' : 'onAccent') : 'textSecondary'}
             tabular>
             {option.label}
           </Text>
@@ -102,6 +124,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.chipSm,
     backgroundColor: Colors.dark.accent,
   },
+  // The mock's pair: a lifted track and a thumb pressed INTO it — the page
+  // ground, the darkest neutral there is, so the selection reads without lime.
+  trackNeutral: {
+    backgroundColor: Colors.dark.raisedAlt,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.dark.hairlineStrong,
+  },
+  thumbNeutral: { backgroundColor: Colors.dark.background },
   segment: {
     width: Size.segOption,
     alignItems: 'center',

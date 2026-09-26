@@ -4,7 +4,7 @@
  * from the web's `auth-form.tsx`.
  *
  * ⚠ Two-view-deep sticky bar and `flex: 1` collapsing inside a `formSheet`:
- * see the header comment in [`account-sheet.tsx`](./account-sheet.tsx). The
+ * see the header comment in [`board-background-sheet.tsx`](./board-background-sheet.tsx). The
  * same two traps apply here.
  *
  * ⚠ The NOTICE region is not the ERROR region. An unconfirmed account, a sent

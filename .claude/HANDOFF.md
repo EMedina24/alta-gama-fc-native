@@ -25,7 +25,26 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-25 (latest) — THE CLUB PAGE AND THE LEAGUE TABS WEAR THE KIT
+> ⭐ **NEW 2026-09-25 (latest) — THE ACCOUNT SHEET IS NOW A SETTINGS SCREEN
+> ([0208](./decisions/0208-the-account-sheet-becomes-settings.md)–[0210](./decisions/0210-expo-application-for-the-version.md)).**
+> - Ed's Medina mock. `/settings` is a PUSHED screen; `(sheets)/account` is gone.
+>   Every avatar button pushes it.
+> - The page wears the reader's `bdBg` pick as its scene, so a tile tap
+>   repaints it.
+> - New: a Favourite club (prefs v9, always a followed club, 0209), Edit
+>   profile, a time-zone picker, Privacy, and Version (`expo-application`,
+>   0210).
+> - Every old row is kept, restyled, including the two-step Delete.
+> - ⚠ **Backlog from the mock, deliberately NOT drawn:** "Member since" and
+>   followed LEAGUES (both need `senpai-backend`), separate Full-time / Live
+>   Activities switches (one `alertGoals` today), and Hide scores.
+> - ⚠ **Unverified:** saving a name / Sign out / Delete against a real
+>   account, and `en`. The signed-in half is `/_debug/settings?state=in`
+>   (`&bg=…&y=…` for the scene and the scroll).
+> - ⚠ The formSheet sticky-bar write-up moved from `account-sheet.tsx` into
+>   `board-background-sheet.tsx`'s header.
+
+> ⭐ **NEW 2026-09-25 — THE CLUB PAGE AND THE LEAGUE TABS WEAR THE KIT
 > ([0200](./decisions/0200-matchdays-wear-the-kit.md)–[0202](./decisions/0202-the-club-page-wears-the-kit.md)).**
 > - **League tabs.** Matchdays, Table and Clubs sit on a FIXED league scene
 >   (`SceneGround`, the kit's tints, and the wire's lockup as the watermark).
@@ -2648,9 +2667,10 @@ documented at the code that handles them; this is the index.
        Crear cuenta with a throwaway address must show the neutral "Revisa tu
        correo…" notice with the resend button locked, NOT an error; the mail's
        link lands on `altagamafc.com/{locale}/auth/callback`; back in the app,
-       Entrar must dismiss both sheets onto a signed-in account sheet.
+       Entrar must dismiss both sheets onto a signed-in Settings screen (the
+       account sheet became the pushed `/settings` in ADR 0208).
        ⚠ If dismissing the two stacked sheets at once misbehaves, the fallback
-       is `router.dismissTo('/(sheets)/account')` in `(sheets)/sign-in-email.tsx`.
+       is `router.dismissTo('/settings')` in `(sheets)/sign-in-email.tsx`.
    11. **Unconfirmed branch** — Entrar before confirming must render the
        neutral `confirmFirst` notice + resend (60s lock), never a red error.
        Wrong password and an unknown address must both print the SAME
@@ -2664,10 +2684,11 @@ documented at the code that handles them; this is the index.
    `altagamafc://auth-callback`, and `GET /cronogol/me` correctly throwing
    `NotSignedInError` while signed out.
 
-   ⚠ **Not on the list but worth a look while testing:** the account sheet signed
-   IN — the identity block, Sign out, and the two-step Delete account — has only
-   been seen in `/_debug/sheets?which=account-in` with a stub, never against a
-   real account.
+   ⚠ **Not on the list but worth a look while testing:** Settings signed IN
+   (ADR 0208, the account sheet's successor) — the profile header, Edit profile's
+   save against the live `PATCH /cronogol/me`, Sign out, and the two-step Delete
+   account — has only been seen in `/_debug/settings?state=in` with a stub, never
+   against a real account.
 
 
 ---

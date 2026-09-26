@@ -17,7 +17,7 @@ import {
   type CrownArt,
   type CrownStop,
 } from '@/lib/cronogol/league-theme';
-import type { League } from '@/lib/cronogol/leagues';
+import { LEAGUES, type League } from '@/lib/cronogol/leagues';
 import type { TeamView } from '@/lib/cronogol/types';
 import { encodeBoardBackground } from '@/lib/board-background';
 
@@ -56,4 +56,30 @@ export function clubOption(team: TeamView, bdBg: string): BackgroundOption {
     crestFallback: abbreviate(team.name, team.slug, team.shortName),
     selected: bdBg === id,
   };
+}
+
+/**
+ * The common picks, in the strip's order (ADR 0199; shared by the Board's edit
+ * panel and Settings' Appearance group since ADR 0208): the brand default, the
+ * reader's own clubs, then every league.
+ *
+ * ⚠ The CURRENT pick is slotted in after the default when it is none of those
+ * (a club chosen from the full sheet), so the selection is always on the strip
+ * — a selected tile nobody can find is a setting nobody can undo.
+ */
+export function stripOptions(
+  defaultLabel: string,
+  bdBg: string,
+  followedTeams: readonly TeamView[],
+  current: TeamView | null,
+): BackgroundOption[] {
+  const options: BackgroundOption[] = [
+    defaultOption(defaultLabel, bdBg),
+    ...followedTeams.map((team) => clubOption(team, bdBg)),
+    ...LEAGUES.map((league) => leagueOption(league, bdBg)),
+  ];
+  if (current && !options.some((option) => option.selected)) {
+    options.splice(1, 0, clubOption(current, bdBg));
+  }
+  return options;
 }

@@ -4,9 +4,10 @@
  * email/password form (ADR 0103; ADR 0038 rejected that form partly because
  * this molecule did not exist).
  *
- * ⚠ Always `autoCapitalize="none"` and no autocorrect: every caller so far is
- * an email address or a password, and iOS "helpfully" capitalising either is a
- * failed sign-in that looks like a wrong credential.
+ * ⚠ `autoCapitalize="none"` and no autocorrect BY DEFAULT: the first callers
+ * were an email address and a password, and iOS "helpfully" capitalising either
+ * is a failed sign-in that looks like a wrong credential. A NAME is the opposite
+ * case (Settings' Edit profile, ADR 0208) and opts back in with `words`.
  */
 import type { Ref } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
@@ -30,6 +31,9 @@ export interface FormFieldProps {
   editable?: boolean;
   /** For focus hand-off (email → password) — React 19 ref-as-prop. */
   ref?: Ref<TextInput>;
+  /** `'none'` unless the field holds prose — see the header. */
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  maxLength?: number;
 }
 
 export function FormField({
@@ -44,6 +48,8 @@ export function FormField({
   onSubmitEditing,
   editable = true,
   ref,
+  autoCapitalize = 'none',
+  maxLength,
 }: FormFieldProps) {
   return (
     <View style={styles.field}>
@@ -61,8 +67,9 @@ export function FormField({
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmitEditing}
         editable={editable}
-        autoCapitalize="none"
+        autoCapitalize={autoCapitalize}
         autoCorrect={false}
+        maxLength={maxLength}
         accessibilityLabel={label}
         style={styles.input}
         placeholderTextColor={Colors.dark.textFaint}

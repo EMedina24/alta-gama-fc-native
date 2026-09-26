@@ -426,7 +426,7 @@ export default function MatchdaysScreen() {
           </View>
           <AvatarButton
             initials={initials}
-            onPress={() => router.push('/(sheets)/account')}
+            onPress={() => router.push('/settings')}
             /* ⚠ `ground`, not `crown`: this head is a league's DARK band, where
                the crown tone's near-black ink is invisible (ADR 0165). */
             tone="ground"

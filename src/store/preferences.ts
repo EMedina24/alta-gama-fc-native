@@ -39,12 +39,12 @@ const STORAGE_KEY = 'altagama:preferences';
  *
  * ⚠ 2 added `reminderLeads` (ADR 0040); 5 added `savedStories` (ADR 0129);
  * 6 added `leagueSlug` (ADR 0164); 7 added `bdOrder`/`bdHidden` (ADR 0174);
- * 8 added `bdBg` (ADR 0175).
+ * 8 added `bdBg` (ADR 0175); 9 added `favourite` (ADR 0209).
  * Bumping is safe precisely because `FOLLOWED_RULE_VERSION` did NOT move —
  * that separation is what stops a shape bump from emptying every reader's
  * follow list.
  */
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 
 /**
  * ⚠ **The version `followed` changed meaning at — NOT `SCHEMA_VERSION`.**
@@ -240,6 +240,24 @@ export interface Preferences {
    * must not destroy the pick.
    */
   bdBg: string;
+  /**
+   * The ONE club the reader calls theirs (ADR 0209) — a slug from `followed`,
+   * or `null`. Settings shows it as FAVOURITE CLUB and badges the avatar with
+   * its crest.
+   *
+   * ⚠ **Always a member of `followed`, or null.** `parse` drops a stored
+   * favourite that is no longer followed, and the two writers that remove
+   * follows (`unfollowClub`, `clearFollows`) clear it in the same write. A
+   * favourite nobody follows would be a club the reader gets no alerts for,
+   * sitting under a heading that says it is theirs.
+   *
+   * ⚠ A SCALAR (a slug, not an object) for `same()`'s sake — `bdBg`'s reason.
+   *
+   * ⚠ Device-only, like every field here: it is NOT sent to the backend, and
+   * nothing server-side (alerts, feeds) treats it differently from any other
+   * followed club.
+   */
+  favourite: string | null;
 }
 
 const DEFAULTS: Preferences = {
@@ -261,6 +279,7 @@ const DEFAULTS: Preferences = {
   bdOrder: DEFAULT_ORDER,
   bdHidden: DEFAULT_HIDDEN,
   bdBg: DEFAULT_BOARD_BG,
+  favourite: null,
 };
 
 let snapshot: Preferences = DEFAULTS;
@@ -277,12 +296,13 @@ function parse(raw: string | null): Preferences {
     const data = JSON.parse(raw) as Partial<Preferences> & { v?: number };
     const version = typeof data.v === 'number' ? data.v : 0;
     const layout = normalizeLayout(data.bdOrder, data.bdHidden);
+    const followed =
+      version >= FOLLOWED_RULE_VERSION && Array.isArray(data.followed)
+        ? data.followed.filter((s): s is string => typeof s === 'string')
+        : [];
     return {
       v: SCHEMA_VERSION,
-      followed:
-        version >= FOLLOWED_RULE_VERSION && Array.isArray(data.followed)
-          ? data.followed.filter((s): s is string => typeof s === 'string')
-          : [],
+      followed,
       tz: typeof data.tz === 'string' ? data.tz : null,
       clock: data.clock === '12' ? '12' : '24',
       lang: isLocale(data.lang) ? data.lang : null,
@@ -318,10 +338,23 @@ function parse(raw: string | null): Preferences {
       // league pick is checked against the catalogue (`parseLeagueSlug`'s
       // rule); a club pick only for shape — see the field's docblock.
       bdBg: parseBoardBackground(data.bdBg),
+      // Absent on every v1–v8 payload; absent means "none chosen". Checked
+      // against the list parsed ABOVE, so a reset `followed` takes it too.
+      favourite: parseFavourite(data.favourite, followed),
     };
   } catch {
     return DEFAULTS;
   }
+}
+
+/**
+ * A stored favourite, or `null` (ADR 0209).
+ *
+ * ⚠ Must be one of `followed` — see the field's docblock. Exported for
+ * `scripts/preferences-harness.mjs`, which asserts that rule on its own.
+ */
+export function parseFavourite(raw: unknown, followed: readonly string[]): string | null {
+  return typeof raw === 'string' && followed.includes(raw) ? raw : null;
 }
 
 /**
@@ -545,7 +578,24 @@ export function followClub(slug: string) {
 
 export function unfollowClub(slug: string) {
   if (!snapshot.followed.includes(slug)) return;
-  update({ followed: snapshot.followed.filter((entry) => entry !== slug) });
+  update({
+    followed: snapshot.followed.filter((entry) => entry !== slug),
+    // ⚠ In the SAME write (ADR 0209): a favourite nobody follows is a club the
+    // reader gets nothing for, still labelled theirs.
+    favourite: snapshot.favourite === slug ? null : snapshot.favourite,
+  });
+}
+
+/**
+ * The reader's own club (ADR 0209), or `null` to clear it.
+ *
+ * ⚠ A slug that is not followed is refused, not followed on the reader's
+ * behalf — choosing a favourite is not consent to alerts. The picker only ever
+ * offers followed clubs, so this is the store keeping itself honest.
+ */
+export function setFavouriteClub(slug: string | null) {
+  if (slug !== null && !snapshot.followed.includes(slug)) return;
+  update({ favourite: slug });
 }
 
 export function setTimezoneId(id: string | null) {
@@ -704,7 +754,8 @@ export function setReminderLead(lead: ReminderLead, on: boolean) {
  * confirmation copy has to say so.
  */
 export function clearFollows() {
-  update({ followed: [] });
+  // The favourite goes with the follows — see `favourite`'s docblock.
+  update({ followed: [], favourite: null });
 }
 
 /* ── resolved reads ───────────────────────────────────────────────────── */

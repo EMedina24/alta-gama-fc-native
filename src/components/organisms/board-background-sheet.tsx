@@ -8,8 +8,17 @@
  * reveals. Since ADR 0199 this is the full catalogue behind the edit panel's
  * "More" tile.
  * ⚠ A `ScrollView` with padded content, `stickyHeaderIndices` for the bar —
- * `account-sheet`'s proven formSheet shape. Never `flex: 1` in here: inside a
- * `formSheet` it collapses to zero (trap 19).
+ * the formSheet shape the account sheet proved (ADR 0081), and the canonical
+ * write-up of it since that sheet became the Settings screen (ADR 0208).
+ * Never `flex: 1` in here: inside a `formSheet`, react-native-screens lays the
+ * screen out at an auto height ("due to how Yoga resolves layout"), so a
+ * flexed wrapper collapses to zero and paints its children on top of each
+ * other (trap 19). `stickyHeaderIndices` pins the bar without needing one.
+ *
+ * ⚠ …and that is why the bar is TWO views deep. React Native moves a sticky
+ * child's style onto the wrapper it generates and replaces the child's own with
+ * `{ flex: 1 }` — so a row laid out at that level silently becomes a column.
+ * `bar` is the style that gets hoisted; `barRow` is the one that survives.
  *
  * ⚠ Presentational (ADR 0013): the route resolves queries into plain rows.
  */
@@ -61,7 +70,7 @@ export function BoardBackgroundSheet({
 }: BoardBackgroundSheetProps) {
   return (
     <ScrollView contentContainerStyle={styles.wrap} stickyHeaderIndices={[0]}>
-      {/* ⚠ TWO views deep, `account-sheet`'s finding: RN hoists a sticky
+      {/* ⚠ TWO views deep (see the header): RN hoists a sticky
           child's style onto its own wrapper, so `bar` is what gets hoisted and
           `barRow` is the layout that survives. Flatten this and the row
           renders as a column. */}
@@ -148,7 +157,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // The right gutter is the Button's own padding, account-sheet's rule.
+    // The right gutter is the Button's own padding, so its label lands on the
+    // content's gutter below.
     paddingLeft: Spacing.five,
     paddingRight: Spacing.one,
     paddingTop: Spacing.five,

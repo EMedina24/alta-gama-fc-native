@@ -197,7 +197,7 @@ export default function ClubsScreen() {
       accessory={
         <AvatarButton
           initials={initials}
-          onPress={() => router.push('/(sheets)/account')}
+          onPress={() => router.push('/settings')}
           /* ⚠ `ground`, not `crown`: this head is a league's DARK band now, and
              the crown tone's near-black ink is invisible on it (ADR 0165).
              ⚠ No banner here — this screen's league control lives in the BODY

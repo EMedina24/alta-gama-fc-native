@@ -383,7 +383,8 @@ export function ScreenScaffold({
 }
 
 /**
- * The account entry point — the circular initials button that opens the sheet.
+ * The account entry point — the circular initials button that opens Settings
+ * (a pushed screen since ADR 0208; it was the account sheet).
  *
  * ⚠ `initials` is nullable and `null` is the SIGNED-OUT state, not a missing
  * prop. The disc itself is the `Avatar` atom (ADR 0081), which the account
@@ -405,11 +406,13 @@ export function AvatarButton({
   onPress: () => void;
   tone?: 'ground' | 'crown';
 }) {
+  const { copy } = useI18n();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Account"
+      // Localised since ADR 0208 — it was the one English literal on the tabs.
+      accessibilityLabel={copy.settings.title}
       hitSlop={8}
       style={({ pressed }) => pressed && { opacity: 0.7 }}>
       {/* ⚠ `attention` ONLY while signed out (ADR 0101): the spinning arc is

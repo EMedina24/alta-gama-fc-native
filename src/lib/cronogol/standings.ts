@@ -123,6 +123,28 @@ export function leagueOfClub(
 }
 
 /**
+ * A club's row in whichever published table holds it, and that table's league
+ * — or `null`. What the club hero's rank line and Settings' favourite row
+ * quote (lifted out of the club page in ADR 0208, so the two cannot disagree).
+ *
+ * ⚠ GATED on `bandsApply`, unlike `leagueOfClub` above, and `null` is a REAL
+ * answer: an unplayed or incomplete table may not be quoted at all (trap 20),
+ * so the caller draws no rank rather than a dash.
+ */
+export function clubStanding(
+  tables: readonly StandingsTableView[] | undefined,
+  slug: string,
+): { row: StandingsRowView; league: League } | null {
+  for (const table of tables ?? []) {
+    const league = findLeagueByApiSlug(table.league.slug);
+    if (!league || !bandsApply(table, league)) continue;
+    const row = table.rows.find((r) => r.team.slug === slug);
+    if (row) return { row, league };
+  }
+  return null;
+}
+
+/**
  * The bands actually present in a table, in the order they first appear.
  *
  * The legend lists these rather than the league's full four, so a table that

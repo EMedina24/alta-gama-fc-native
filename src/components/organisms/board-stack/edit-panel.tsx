@@ -19,16 +19,14 @@
  * ⚠ The grabber is DECORATION, the kit's: the panel does not resize or
  * dismiss. DONE, in the crown, is the only way out of the mode.
  */
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassSurface, Grabber, PlusGlyph, Text } from '@/components/atoms';
-import { SceneTile, type SceneTileProps } from '@/components/molecules';
+import { SceneTileStrip, type SceneTileStripItem } from '@/components/molecules';
 import { BoardEdit, Colors, Radius, Size, Spacing } from '@/constants/theme';
 
-export interface EditPanelTile extends SceneTileProps {
-  key: string;
-}
+export type EditPanelTile = SceneTileStripItem;
 
 export interface EditPanelProps {
   title: string;
@@ -56,15 +54,6 @@ export function EditPanel({
   onHeight,
 }: EditPanelProps) {
   const insets = useSafeAreaInsets();
-  /**
-   * The strip OPENS on the current pick — a club chosen from the full sheet
-   * can sit several tiles in, and a selection scrolled off the panel is a
-   * selection the reader cannot see. ⚠ `contentOffset` is read at mount only,
-   * which is the point: a tap mid-strip must not yank it back.
-   */
-  const picked = Math.max(0, tiles.findIndex((tile) => tile.selected));
-  const pitch = BoardEdit.tileW + Spacing.three + Spacing.two;
-  const openAt = Math.max(0, picked * pitch - Spacing.seven);
 
   return (
     <View
@@ -93,16 +82,9 @@ export function EditPanel({
 
       {/* ⚠ Bleeds to the panel's inner edge so a tile scrolls off it, not off
           a gutter — the row reads as a strip, the kit's. */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentOffset={{ x: openAt, y: 0 }}
-        style={styles.strip}
-        contentContainerStyle={styles.tiles}>
-        {tiles.map(({ key, ...tile }) => (
-          <SceneTile key={key} {...tile} />
-        ))}
-      </ScrollView>
+      {/* Opens on the current pick — `SceneTileStrip`'s docblock (ADR 0208
+          lifted it out of here so Settings draws the same strip). */}
+      <SceneTileStrip tiles={tiles} bleed={Spacing.five} />
 
       {hidden.length > 0 ? (
         <View style={styles.hidden}>
@@ -148,8 +130,6 @@ const styles = StyleSheet.create({
   flat: { backgroundColor: BoardEdit.panelFill },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pressed: { opacity: 0.6 },
-  strip: { marginHorizontal: -Spacing.five },
-  tiles: { paddingHorizontal: Spacing.four, gap: Spacing.two },
   hidden: { gap: Spacing.two },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   chip: {

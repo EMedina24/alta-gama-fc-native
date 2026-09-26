@@ -79,11 +79,13 @@ export function Score({ home, away, size = 'board', chip = false, noScoreLabel, 
         chip && styles.chip,
         style,
       ]}>
-      <Text variant={variant} tabular color={!played ? 'textFaint' : emphasis.home === 'muted' ? 'textDim' : 'text'}>
+      {/* `opticalCentre` (ADR 0205): the digits, not the Saira line box, sit
+          level with the rule and the chip's middle. */}
+      <Text variant={variant} tabular opticalCentre color={!played ? 'textFaint' : emphasis.home === 'muted' ? 'textDim' : 'text'}>
         {played ? home : NO_SCORE}
       </Text>
       <View style={[styles.rule, RULE[size]]} />
-      <Text variant={variant} tabular color={!played ? 'textFaint' : emphasis.away === 'muted' ? 'textDim' : 'text'}>
+      <Text variant={variant} tabular opticalCentre color={!played ? 'textFaint' : emphasis.away === 'muted' ? 'textDim' : 'text'}>
         {played ? away : NO_SCORE}
       </Text>
     </View>

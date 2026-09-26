@@ -45,13 +45,15 @@ export interface PlayerPhotoProps {
    * through the same circle, because the fit rule above is about the source's
    * aspect ratio and that does not change with the frame.
    */
-  variant: 'row' | 'card' | 'hero';
+  variant: 'row' | 'card' | 'hero' | 'key';
 }
 
 export function PlayerPhoto({ src, variant }: PlayerPhotoProps) {
   const [failed, setFailed] = useState(false);
-  const round = variant === 'row' || variant === 'hero';
-  const disc = variant === 'hero' ? Size.playerPhotoHero : Size.playerThumb;
+  // `key` is another SIZE of `row` (ADR 0205): the club page's key players.
+  const round = variant === 'row' || variant === 'hero' || variant === 'key';
+  const disc =
+    variant === 'hero' ? Size.playerPhotoHero : variant === 'key' ? Size.playerKey : Size.playerThumb;
 
   const frame = round
     ? { width: disc, height: disc, borderRadius: Radius.pill }

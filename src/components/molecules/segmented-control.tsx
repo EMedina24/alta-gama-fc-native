@@ -22,13 +22,19 @@ export interface SegmentedControlProps<T extends string> {
    * `quiet` is the form idiom (ADR 0103): a glass track, the selected segment
    * lifted to `raisedAlt`, ink carrying the state.
    *
+   * `contrast` (ADR 0206) is the club page's tabs: the accent tone's dark
+   * recessed track, but a near-WHITE thumb inked in the page ground, and the
+   * unselected labels a step brighter. Over a club's scene the quiet tone's
+   * dark-on-dark thumb all but disappeared (Ed: "any idea on how to make this
+   * more visible"); white reads on every club colour and spends no lime.
+   *
    * `accent` fills the selected segment with lime and inverts its ink (ADR
    * 0141) — the Season stats view switch, which is the screen's primary and
    * only control and sits on a club-tinted hero where a three-point lift does
    * not read. ⚠ It spends the screen's one lime hero (SPEC §2); a screen using
    * `accent` here must not also carry a solid-lime button.
    */
-  tone?: 'quiet' | 'accent';
+  tone?: 'quiet' | 'accent' | 'contrast';
   /** The control's accessible name; each segment reports as a tab. */
   accessibilityLabel?: string;
 }
@@ -41,9 +47,11 @@ export function SegmentedControl<T extends string>({
   accessibilityLabel,
 }: SegmentedControlProps<T>) {
   const accent = tone === 'accent';
+  const contrast = tone === 'contrast';
+  const recessed = accent || contrast;
   return (
     <View
-      style={[styles.track, accent && styles.trackAccent]}
+      style={[styles.track, recessed && styles.trackAccent]}
       accessibilityLabel={accessibilityLabel}>
       {options.map((option) => {
         const selected = option.value === value;
@@ -58,8 +66,9 @@ export function SegmentedControl<T extends string>({
             hitSlop={{ top: 8, bottom: 8 }}
             style={({ pressed }) => [
               styles.segment,
-              accent && styles.segmentTall,
-              selected && (accent ? styles.segmentAccent : styles.segmentActive),
+              recessed && styles.segmentTall,
+              selected &&
+                (accent ? styles.segmentAccent : contrast ? styles.segmentContrast : styles.segmentActive),
               pressed && !selected && styles.segmentPressed,
             ]}>
             <Text
@@ -72,8 +81,10 @@ export function SegmentedControl<T extends string>({
                 selected
                   ? accent
                     ? 'onAccent'
-                    : 'text'
-                  : accent
+                    : contrast
+                      ? 'background'
+                      : 'text'
+                  : recessed
                     ? 'textSecondary'
                     : 'textMuted'
               }
@@ -114,5 +125,7 @@ const styles = StyleSheet.create({
   },
   segmentTall: { height: Size.pill, paddingVertical: 0 },
   segmentAccent: { backgroundColor: Colors.dark.accent },
+  // The page's own ink as the fill: the brightest neutral the theme has.
+  segmentContrast: { backgroundColor: Colors.dark.text },
   segmentPressed: { opacity: 0.6 },
 });

@@ -197,7 +197,7 @@ export function SeasonSpine({
                   ) : null}
                 </View>
               ) : (
-                <Text variant="numeral" tabular color={fixture.kickoffTbd ? 'textFaint' : 'text'}>
+                <Text variant="numeral" tabular opticalCentre color={fixture.kickoffTbd ? 'textFaint' : 'text'}>
                   {/* ⚠ `--:--` means published-but-unscheduled, not missing. */}
                   {fixture.kickoffTbd ? '--:--' : formatKickoffTime(fixture.kickoffUtc, zone, clock)}
                 </Text>

@@ -25,9 +25,11 @@ import { Size, Spacing } from '@/constants/theme';
 import { abbreviate, displayName } from '@/lib/cronogol/derive';
 import { leagueSeasonLabel } from '@/lib/cronogol/leagues';
 import { leagueOfClub } from '@/lib/cronogol/standings';
+import { statsSlug } from '@/lib/cronogol/stats';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubSquad } from '@/queries/use-club';
 import { useStandings } from '@/queries/use-standings';
+import { chooseStatsPlayer } from '@/store/stats-player';
 import { StyleSheet, View } from 'react-native';
 
 export default function PlayerSheetRoute() {
@@ -38,11 +40,12 @@ export default function PlayerSheetRoute() {
   const squad = useClubSquad(slug);
   /**
    * ⚠ Also a cache read, like the squad above — every screen that can reach
-   * this sheet has already loaded the standings. It is here only to learn how
-   * this club's league NAMES its season: Puerto Rico's is the calendar year
-   * `2026`, not the European `2026/27`.
+   * this sheet has already loaded the standings. It is here to learn how this
+   * club's league NAMES its season (Puerto Rico's is the calendar year `2026`,
+   * not the European `2026/27`) and whether it publishes player stats.
    */
   const standings = useStandings();
+  const league = leagueOfClub(standings.data?.tables, slug);
   const player = squad.data?.players.find((p) => p.id === id);
   const close = () => router.back();
 
@@ -67,6 +70,29 @@ export default function PlayerSheetRoute() {
 
   const team = squad.data.team;
 
+  /**
+   * The link to Season stats (ADR 0207), behind the SAME gate that decides
+   * whether that screen draws its Players segment. Where it passes, the player
+   * is on the screen's list. Where it fails (a league with `playerStats: false`,
+   * or a row with no slug) the button is not drawn, because it would open a
+   * screen with no Players view.
+   *
+   * ⚠ Order matters. Commit to the store BEFORE navigating: the screen reads it
+   * on mount, and `setParams` after `back()` is the race the store exists to
+   * avoid. Then dismiss the formSheet, so the card is not pushed inside it.
+   */
+  const playerSlug = statsSlug(player, league);
+  const openStats = playerSlug
+    ? () => {
+        chooseStatsPlayer(slug, playerSlug);
+        router.back();
+        router.push({
+          pathname: '/club/[slug]/season-stats',
+          params: { slug, mode: 'players' },
+        });
+      }
+    : undefined;
+
   return (
     <PlayerSheet
       player={player}
@@ -80,7 +106,7 @@ export default function PlayerSheetRoute() {
       seasonLabel={
         squad.data.season === null
           ? null
-          : leagueSeasonLabel(leagueOfClub(standings.data?.tables, slug), squad.data.season)
+          : leagueSeasonLabel(league, squad.data.season)
       }
       positionLabel={copy.player.positionNames[player.position]}
       // ⚠ `"both"` is a real value, not a placeholder for unknown.
@@ -99,6 +125,8 @@ export default function PlayerSheetRoute() {
       doneLabel={copy.player.done}
       closeLabel={copy.sheets.close}
       onClose={close}
+      onOpenStats={openStats}
+      statsLabel={copy.player.seeStats}
     />
   );
 }

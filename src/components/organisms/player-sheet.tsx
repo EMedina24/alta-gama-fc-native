@@ -6,7 +6,9 @@
  * club page — because they are a different question, a different cadence (a
  * 3-hourly rebuild, ~25 min to ~4 h behind a whistle) and a different key: that
  * screen addresses a player by `slug`, this sheet by the stable person `id`.
- * Do not add a totals slot here; link, if anything.
+ * Do not add a totals slot here. The link is `onOpenStats` (ADR 0207), and
+ * WHETHER to draw it is the route's call, not this organism's: the route owns
+ * the league and the `statsSlug` gate. Absent the callback, no button.
  *
  * ⚠⚠ **Appearances, minutes and per-90 anything are still absent, permanently.**
  * No source publishes lineup events, so a player who played 90 quiet minutes
@@ -70,6 +72,13 @@ export interface PlayerSheetProps {
   /** Accessibility label for the ✕. The glyph itself is not a readable name. */
   closeLabel: string;
   onClose: () => void;
+  /**
+   * Opens this player on Season stats (ADR 0207). Omitted when that screen
+   * has no Players view for this player (see `statsSlug`), and then the button
+   * is not drawn at all.
+   */
+  onOpenStats?: () => void;
+  statsLabel?: string;
 }
 
 /**
@@ -116,6 +125,8 @@ export function PlayerSheet({
   doneLabel,
   closeLabel,
   onClose,
+  onOpenStats,
+  statsLabel,
 }: PlayerSheetProps) {
   return (
     <View style={styles.wrap}>
@@ -178,6 +189,12 @@ export function PlayerSheet({
           <Cell label={labels.registered} value={seasonLabel} />
         </View>
       </View>
+
+      {/* The sheet's one accent control. The lime position chip is a label,
+          not something to press. */}
+      {onOpenStats && statsLabel ? (
+        <Button label={statsLabel} tone="primary" onPress={onOpenStats} />
+      ) : null}
 
       <Button label={doneLabel} tone="secondary" onPress={onClose} />
 

@@ -121,7 +121,21 @@ export default function RootLayout() {
           }}>
           <Stack.Screen name="(tabs)" />
           {/* ⚠ The sheets are declared HERE, in the stack that PRESENTS them (ADR 0030). */}
-          <Stack.Screen name="(sheets)/account" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+          {/* Settings' three pickers (ADR 0208/0209) — the account sheet they
+              replace is a pushed screen now, `settings.tsx`. `fitToContents`:
+              one field, seven zones, a handful of followed clubs. */}
+          <Stack.Screen
+            name="(sheets)/edit-profile"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
+          <Stack.Screen
+            name="(sheets)/time-zone"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
+          <Stack.Screen
+            name="(sheets)/favourite-club"
+            options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
+          />
           {/* ⚠ Declared HERE like every other sheet (ADR 0030) — a `(sheets)/_layout`
               silently renders it as a full-screen card. `fitToContents`: it is two
               buttons and a paragraph, and a 0.6 detent would leave half a sheet of

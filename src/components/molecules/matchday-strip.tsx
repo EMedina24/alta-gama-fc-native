@@ -128,6 +128,7 @@ export function MatchdayStrip({
             <Text
               variant="numeral"
               tabular
+              opticalCentre
               color={active ? 'onAccent' : played(n) ? 'textSecondary' : 'text'}>
               {n}
             </Text>

@@ -42,9 +42,9 @@ import {
   SectionHeader,
   SegmentedControl,
   StartingXiRow,
-  StatTile,
 } from '@/components/molecules';
 import { ClubHero } from '@/components/organisms/club-hero';
+import { SeasonSoFar } from '@/components/organisms/season-so-far';
 import { SeasonSpine } from '@/components/organisms/season-spine';
 import { SquadList } from '@/components/organisms/squad-list';
 import { BottomTabInset, ClubScene, Colors, Radius, Size, Spacing, Surfaces } from '@/constants/theme';
@@ -59,9 +59,9 @@ import {
   nextUp,
 } from '@/lib/cronogol/derive';
 import { clubSceneTheme } from '@/lib/cronogol/league-theme';
-import { SEASON, findLeagueByApiSlug } from '@/lib/cronogol/leagues';
+import { SEASON } from '@/lib/cronogol/leagues';
 import { clubUrl } from '@/lib/cronogol/site';
-import { bandsApply, leagueOfClub } from '@/lib/cronogol/standings';
+import { clubStanding, leagueOfClub } from '@/lib/cronogol/standings';
 import { pickTeamSeason, pickTeamTotals } from '@/lib/cronogol/stats';
 import type { FixtureView, TeamView } from '@/lib/cronogol/types';
 import { formatFixtureDate, formatKickoffTime } from '@/lib/format';
@@ -82,7 +82,9 @@ export default function ClubScreen() {
   const zone = useZone();
   const { clock, followed } = usePreferences();
 
-  const [tab, setTab] = useState<Tab>('overview');
+  // ⚠ Opens on FIXTURES, not the first segment (Ed, 2026-09-25): the season
+  // is what a reader comes to a club for. The segment ORDER stays the kit's.
+  const [tab, setTab] = useState<Tab>('fixtures');
   /**
    * ⚠ Once at mount — `Date.now()` in a render body is impure and lint rejects
    * it. The 48-hour staleness test below does not need a ticking clock.
@@ -110,17 +112,10 @@ export default function ClubScreen() {
    * incomplete table may not be quoted at all (trap 20), so the rank line and
    * FORM are not drawn rather than showing dashes.
    */
-  const standing = useMemo(() => {
-    const hit = (standings.data?.tables ?? [])
-      .map((table) => {
-        const league = findLeagueByApiSlug(table.league.slug);
-        if (!league || !bandsApply(table, league)) return null;
-        const row = table.rows.find((r) => r.team.slug === slug);
-        return row ? { row, league } : null;
-      })
-      .find(Boolean);
-    return hit ?? null;
-  }, [standings.data, slug]);
+  const standing = useMemo(
+    () => clubStanding(standings.data?.tables, slug),
+    [standings.data, slug],
+  );
 
   /** The club's league for the leaderboards — quotable table or not. */
   const league = standing?.league ?? leagueOfClub(standings.data?.tables, slug);
@@ -251,6 +246,8 @@ export default function ClubScreen() {
               ]}
               value={tab}
               onChange={setTab}
+              // White thumb (ADR 0206): the quiet tone vanished on the scene.
+              tone="contrast"
             />
 
             {tab === 'overview' ? (
@@ -297,23 +294,18 @@ export default function ClubScreen() {
                         ) : undefined
                       }
                     />
-                    <View style={styles.tiles}>
-                      {(
-                        [
-                          ['gf', totals.goalsFor],
-                          ['ga', totals.goalsAgainst],
-                          ['cleanSheets', totals.cleanSheets],
-                        ] as const
-                      ).map(([key, value]) => (
-                        <StatTile
-                          key={key}
-                          value={value}
-                          label={copy.club.tiles[key].label}
-                          accessibilityLabel={`${value} ${copy.club.tiles[key].spoken}`}
-                          onPress={seasonStats !== null ? openStats : undefined}
-                        />
-                      ))}
-                    </View>
+                    <SeasonSoFar
+                      totals={totals}
+                      copy={{
+                        tiles: copy.club.tiles,
+                        perMatch: copy.stats.perMatch,
+                        outOf: copy.stats.outOf,
+                        ofGoals: copy.club.ofGoals,
+                        cleanOf: copy.club.cleanOf,
+                        cleanShare: copy.club.cleanShare,
+                      }}
+                      onOpen={seasonStats !== null ? openStats : undefined}
+                    />
                   </View>
                 ) : null}
 
@@ -324,6 +316,7 @@ export default function ClubScreen() {
                       {keys.map((player, i) => (
                         <PlayerStatRow
                           key={`${player.playerId}-${player.stat}`}
+                          photo={player.squad?.photoUrl ?? null}
                           shirt={player.squad?.shirt ?? null}
                           // The name people use ("Raphinha"), not the registered
                           // one ("Raphael Dias Belloli") the leaderboard carries.
@@ -502,7 +495,6 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.three },
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
   pressed: { opacity: 0.6 },
-  tiles: { flexDirection: 'row', gap: Spacing.two + 2 },
   group: {
     backgroundColor: Colors.dark.card,
     borderRadius: Radius.card,

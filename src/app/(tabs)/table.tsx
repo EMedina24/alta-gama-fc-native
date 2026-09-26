@@ -306,7 +306,7 @@ export default function TableScreen() {
             </View>
             <AvatarButton
               initials={initials}
-              onPress={() => router.push('/(sheets)/account')}
+              onPress={() => router.push('/settings')}
               tone="ground"
             />
           </View>

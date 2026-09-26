@@ -99,7 +99,9 @@ try {
     return resolve.call(this, request, ...rest);
   };
 
-  const { samePreferences, SAVED_STORY_CAP } = require(join(out, 'store/preferences.js'));
+  const { samePreferences, SAVED_STORY_CAP, parseFavourite } = require(
+    join(out, 'store/preferences.js'),
+  );
   assert.equal(typeof samePreferences, 'function');
   assert.ok(SAVED_STORY_CAP > 0, 'the module loaded, not just resolved');
 
@@ -122,6 +124,7 @@ try {
     bdOrder: ['last', 'news', 'results', 'upcoming', 'counters', 'table', 'season'],
     bdHidden: ['table', 'season'],
     bdBg: 'league:la-liga',
+    favourite: 'barcelona',
   });
 
   /* ── 1 · Identity ────────────────────────────────────────────────────────── */
@@ -174,6 +177,20 @@ try {
   assert.equal(parseBoardBackground(undefined), 'default');
   assert.deepEqual(decodeBoardBackground('club:betis'), { kind: 'club', slug: 'betis' });
   assert.deepEqual(decodeBoardBackground('nonsense'), { kind: 'default' });
+
+  /* ── 2c · The favourite is always followed (ADR 0209) ──────────────────── */
+
+  assert.equal(parseFavourite('barcelona', ['barcelona', 'betis']), 'barcelona');
+  // Stored, then unfollowed on another build or by a reset list: dropped.
+  assert.equal(
+    parseFavourite('valencia', ['barcelona']),
+    null,
+    'a favourite that is no longer followed must parse to null — a club the ' +
+      'reader gets no alerts for must not sit under FAVOURITE CLUB',
+  );
+  assert.equal(parseFavourite('barcelona', []), null, 'an emptied follow list takes it too');
+  assert.equal(parseFavourite(42, ['barcelona']), null);
+  assert.equal(parseFavourite(undefined, ['barcelona']), null, 'absent on v1–v8 means none');
 
   const keys = Object.keys(base);
   assert.ok(keys.length >= 16, `expected the full shape, got ${keys.length} keys`);

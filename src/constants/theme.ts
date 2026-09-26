@@ -1054,6 +1054,27 @@ export const DisplayFont = {
 } as const;
 
 /**
+ * Saira Extra Condensed's vertical metrics, as fractions of the size — read
+ * from the TTF's `hhea`/`OS/2` tables (both faces agree; 0194). On iOS a line
+ * box shorter than the face's natural 1.574em keeps the WHOLE descent at the
+ * bottom and trims the top, so a digit (no descender) sits `descent` above the
+ * box's foot and `cap` tall. That is what lets a caller put a number's DIGITS
+ * — not its line box — where it wants them (ADR 0205's ring centres).
+ */
+export const DisplayMetrics = {
+  cap: 0.688,
+  descent: 0.439,
+  /**
+   * ⚠ How much HIGHER a `TextInput` draws Saira than a `Text` with the same
+   * style — the case for `AnimatedNumber`, whose visible digits are an input.
+   * MEASURED on the simulator (ADR 0205): 26pt digits sat 4.8pt above where
+   * the `Text` model put them. Re-measure (pixel rows, not a screenshot
+   * glance) if the number's token or the input's styling changes.
+   */
+  inputLift: 0.185,
+} as const;
+
+/**
  * Type: system font (SF Pro) throughout — except the crown titles, in
  * Saira Extra Condensed (ADRs 0188, 0193; `DisplayFont`) — no licensing, and it
  * inherits Dynamic Type. Sizes are the iOS scale, not the web app's.
@@ -1298,8 +1319,6 @@ export const Size = {
   roundPill: 44,
   /** The club page's glass back/share circles (ADR 0202). */
   glassIcon: 44,
-  /** A key player's shirt-number disc (ADR 0202). */
-  shirtDisc: 38,
   /** The club page's share glyph and the follow button's star (ADR 0202). */
   shareGlyph: 19, starGlyph: 17,
   /** The Calendar pill's glyph, at the kit's 17 (ADR 0200). */
@@ -1344,6 +1363,25 @@ export const Size = {
    * clear the title's cap height, this one is measured against `Type.title3`.
    */
   avatarLg: 64,
+  /**
+   * The Settings profile header's avatar (ADR 0208) — the same disc again, now
+   * the head of a centred stack rather than beside a heading, with Saira
+   * initials at `Type.statSm`. Measured off Ed's mock (84pt on a 393pt screen).
+   */
+  avatarXl: 84,
+  /**
+   * The favourite club's crest badge on `avatarXl` (ADR 0209) — a disc of the
+   * page ground, pinned bottom-right, overlapping the avatar's edge.
+   */
+  avatarBadge: 32,
+  /** The crest inside a Following chip (ADR 0208) — below `crestRow`, since
+   *  the chip is `pill` tall and the crest sits beside a `callout` label. */
+  chipCrest: 18,
+  /**
+   * One Settings row (ADR 0208). ⚠ Above `minTouch`: a row carries a title and
+   * often a note, and 44 would press the two together.
+   */
+  settingsRow: 52,
   /**
    * A reminder lead-time chip (ADR 0081). Below `minTouch` like `eventTab`, and
    * for the same reason — three of them sit inside one row of a group — so they
@@ -1394,6 +1432,8 @@ export const Size = {
   playerThumb: 34, playerPhotoW: 104, playerPhotoH: 116,
   /** The Season stats player card's portrait disc (ADR 0141). */
   playerPhotoHero: 62,
+  /** A club page KEY PLAYER's portrait (ADR 0205) — between a squad row's and the hero's. */
+  playerKey: 44,
   /**
    * The measure a Season stats footnote wraps at (ADR 0141) — the design's
    * 44ch, in points at 11.5pt. Narrower than the card it sits under, on
@@ -1742,6 +1782,19 @@ export const SeasonStats = {
   draw: 800,
   /** Between neighbouring bars inside ONE chart — not between cards. */
   barStagger: 22,
+} as const;
+
+/**
+ * The club page's SEASON SO FAR rings (ADR 0204, replacing 0203's mini bar
+ * charts on Ed's call) — the Season stats screen's ring, sized for a
+ * third-width tile. Their motion is `SeasonStats`': the arc sweeps on the same
+ * clock the number counts on.
+ */
+export const SeasonTiles = {
+  /** The ring's outer diameter — what a third-width tile's inner box holds. */
+  ring: 84,
+  /** The Season stats rings' "cutout 78%": the stroke is the remaining 22%, halved. */
+  cutout: 0.78,
 } as const;
 
 /**

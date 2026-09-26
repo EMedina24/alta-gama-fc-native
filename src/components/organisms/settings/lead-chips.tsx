@@ -1,6 +1,7 @@
 /**
  * The kickoff reminder's lead times, as chips under their master row
- * (ADR 0081, replacing ADR 0040's three indented switch rows).
+ * (ADR 0081, replacing ADR 0040's three indented switch rows; moved into
+ * Settings with the rest of the account sheet in ADR 0208).
  *
  * ⚠ **This changes how the lead times are DRAWN, not how they behave.** The
  * store still couples the master and the list in both directions
@@ -79,10 +80,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: Spacing.two,
-    // ⚠ `Spacing.seven` is the indent the `LeadRow`s used. It is the only thing
-    // saying "these belong to the row above", since the group has no nesting
-    // affordance of its own.
-    paddingLeft: Spacing.seven,
+    // ⚠ The row's own text inset. Settings' rows carry no glyph tile, so the
+    // chips line up under the title they belong to — no rule sits between
+    // the two, and that shared edge is what says "these are that row's".
+    paddingLeft: Spacing.four,
     paddingRight: Spacing.four,
     paddingBottom: Spacing.three,
   },

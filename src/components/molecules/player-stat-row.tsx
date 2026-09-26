@@ -1,23 +1,25 @@
 /**
  * One key player on the club page (ADR 0202) — the Medina kit's `PlayerRow`:
- * the shirt number in a disc, the name over the position, and ONE season
- * figure on the right in Saira with what it counts under it.
+ * the player's PORTRAIT with the shirt number badged on its corner (ADR 0205,
+ * Ed: *"these should have player pictures"*), the name over the position, and
+ * ONE season figure on the right in Saira with what it counts under it.
  *
  * ⚠ Presentational (ADR 0013): the caller has already picked the player and
  * the figure (`features/club/key-players`).
  *
- * ⚠ A null shirt draws an empty disc rather than `0` or `–` — a Premier League
- * row the squad could not be joined to has no number, and inventing one
- * would be a claim.
+ * ⚠ A null photo draws `PlayerPhoto`'s silhouette — part of the design, not a
+ * failure (one in two Premier League players has none). A null shirt draws
+ * NO badge rather than `0` or `–`: inventing a number would be a claim.
  *
  * ⚠ One VoiceOver stop per row: "R. Lewandowski, Forward, 21 goals".
  */
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/atoms';
+import { PlayerPhoto, Text } from '@/components/atoms';
 import { Colors, Radius, Size, Spacing } from '@/constants/theme';
 
 export interface PlayerStatRowProps {
+  photo: string | null;
   shirt: number | null;
   name: string;
   /** The position, already localised. Null draws no second line. */
@@ -30,15 +32,18 @@ export interface PlayerStatRowProps {
   onPress?: () => void;
 }
 
-export function PlayerStatRow({ shirt, name, meta, value, label, divider = true, onPress }: PlayerStatRowProps) {
+export function PlayerStatRow({ photo, shirt, name, meta, value, label, divider = true, onPress }: PlayerStatRowProps) {
   const spoken = [name, meta, `${value} ${label.toLowerCase()}`].filter(Boolean).join(', ');
   const body = (
     <>
-      <View style={styles.disc}>
+      <View>
+        <PlayerPhoto src={photo} variant="key" />
         {shirt !== null ? (
-          <Text variant="tablePos" color="textSecondary">
-            {shirt}
-          </Text>
+          <View style={styles.badge}>
+            <Text variant="xiBadge" tabular color="text">
+              {shirt}
+            </Text>
+          </View>
         ) : null}
       </View>
       <View style={styles.words}>
@@ -85,13 +90,19 @@ const styles = StyleSheet.create({
   },
   divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.dark.hairlineMid },
   pressed: { backgroundColor: Colors.dark.rowActive },
-  disc: {
-    width: Size.shirtDisc,
-    height: Size.shirtDisc,
+  // The shirt number, badged on the portrait's corner — the XI tokens' idiom
+  // (ADR 0072). Ringed in the card's own ground so it reads as cut out of it.
+  badge: {
+    position: 'absolute',
+    right: -Spacing.one,
+    bottom: -Spacing.one,
+    minWidth: Size.xiBadge,
+    height: Size.xiBadge,
+    paddingHorizontal: Spacing.one,
     borderRadius: Radius.pill,
-    borderWidth: Size.glassBorder,
-    borderColor: Colors.dark.glassLine,
-    backgroundColor: Colors.dark.glassFillDim,
+    backgroundColor: Colors.dark.raised,
+    borderWidth: Size.glassBorder * 3,
+    borderColor: Colors.dark.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -16,7 +16,7 @@
  * own. `HEIGHT` is shared so the Google button matches it exactly.
  *
  * ⚠ Two-view-deep sticky bar and `flex: 1` collapsing inside a `formSheet`: see
- * the header comment in [`account-sheet.tsx`](./account-sheet.tsx). The same two
+ * the header comment in [`board-background-sheet.tsx`](./board-background-sheet.tsx). The same two
  * traps apply here and for the same reasons.
  */
 import * as AppleAuthentication from 'expo-apple-authentication';

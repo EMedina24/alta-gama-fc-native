@@ -19,12 +19,20 @@
  * the crown — lime on the crown's lime band is invisible, the same reason the
  * disc itself flips to `onCrown*` there (ADR 0087).
  *
+ * ⚠ At `Size.avatarXl` (Settings' profile header, ADR 0208) the initials are
+ * SAIRA, `statSm`, optically centred (ADR 0205) — the kit's display face on
+ * the one screen where the disc is a headline. Below it they stay SF.
+ *
+ * ⚠ `badge` is a node pinned bottom-right OUTSIDE the disc's clip, so it can
+ * overlap the edge — the favourite club's crest there (ADR 0209). The caller
+ * sizes and grounds it; this atom only places it.
+ *
  * ⚠ The signed-in accent ring settles in ONCE on mount rather than pulsing.
  * The sheet's identity sets it when signed in; the header's button never does
  * — one lime thing per screen (SPEC §2), and on a tab screen that budget
  * belongs to the live marker.
  */
-import { useEffect, useId } from 'react';
+import { useEffect, useId, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -59,14 +67,17 @@ export interface AvatarProps {
    * default is the ground treatment the account sheet still uses.
    */
   tone?: 'ground' | 'crown';
+  /** Pinned bottom-right over the disc's edge — see the warning above. */
+  badge?: ReactNode;
 }
 
 /**
  * The initials' step against the disc, the way `crest.tsx` ramps its monogram.
- * Two stops rather than a formula: the type scale is discrete, and 42 and 64
- * are the only two sizes this draws at today.
+ * Stops rather than a formula: the type scale is discrete, and 42, 64 and 84
+ * are the only sizes this draws at today.
  */
 function initialsVariant(size: number): TypeVariant {
+  if (size >= Size.avatarXl) return 'statSm';
   return size >= Size.avatarLg ? 'title3' : 'caption';
 }
 
@@ -82,6 +93,7 @@ export function Avatar({
   ring = false,
   attention = false,
   tone = 'ground',
+  badge,
 }: AvatarProps) {
   const reduceMotion = useReducedMotion();
   const gradientId = `avatar-orbit-${useId().replace(/:/g, '')}`;
@@ -173,7 +185,11 @@ export function Avatar({
       ) : null}
       <View style={[styles.disc, tone === 'crown' && styles.discCrown, disc]}>
         {initials ? (
-          <Text variant={initialsVariant(size)} color={tone === 'crown' ? 'onCrown' : 'text'}>
+          <Text
+            variant={initialsVariant(size)}
+            color={tone === 'crown' ? 'onCrown' : 'text'}
+            // A no-op on the SF steps; centres Saira's digits and caps at XL.
+            opticalCentre>
             {initials}
           </Text>
         ) : (
@@ -184,6 +200,7 @@ export function Avatar({
           />
         )}
       </View>
+      {badge ? <View style={styles.badge}>{badge}</View> : null}
     </View>
   );
 }
@@ -217,6 +234,9 @@ const styles = StyleSheet.create({
    * The glow half of "spinning glow" (ADR 0101): a soft shadow in the arc's
    * own ink, cast by the arc's alpha. Colour is set inline with the ink.
    */
+  // Overhangs the disc's bottom-right the way the kit draws it: the badge's
+  // centre sits on the disc's edge at roughly four o'clock.
+  badge: { position: 'absolute', right: -Spacing.one, bottom: -Spacing.half },
   orbit: {
     position: 'absolute',
     shadowOpacity: 0.45,

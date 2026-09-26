@@ -20,7 +20,6 @@ import {
   Eyebrow,
   FadeOutImage,
   PencilGlyph,
-  PlusGlyph,
   SkeletonRows,
   Text,
 } from '@/components/atoms';
@@ -33,6 +32,7 @@ import { NextUpCard } from '@/components/organisms/next-up-card';
 import { NextUpCarousel } from '@/components/organisms/next-up-carousel';
 import { NewsCard } from '@/components/organisms/news-card';
 import { BoardStack, type BoardSection, type EditPanelTile } from '@/components/organisms/board-stack';
+import { backgroundTiles } from '@/components/templates/board-background';
 import { ART_MARK, AvatarButton, ScreenScaffold } from '@/components/templates/screen-scaffold';
 import { useIdentityInitials } from '@/features/auth/use-identity';
 import { applyWidgetLive } from '@/features/widgets/live';
@@ -74,7 +74,7 @@ import {
 } from '@/lib/cronogol/live';
 import { abbreviate, crestSrc, displayName, matchday } from '@/lib/cronogol/derive';
 import { clubCrownTheme, leagueCrownTheme } from '@/lib/cronogol/league-theme';
-import { findLeague, LEAGUES } from '@/lib/cronogol/leagues';
+import { findLeague } from '@/lib/cronogol/leagues';
 import { upcomingBounds } from '@/lib/cronogol/fixture-window';
 import { matchEventsCapable, mergeWindows, sliceWindow } from '@/lib/cronogol/team-window';
 import {
@@ -103,7 +103,7 @@ import {
   useRecent,
   useWidgetWindow,
 } from '@/queries/use-today';
-import { clubOption, defaultOption, leagueOption, type BackgroundOption } from '@/features/board/background-options';
+import { stripOptions } from '@/features/board/background-options';
 import { hapticToggle } from '@/lib/haptics';
 import { setBoardEditing, useBoardEditing } from '@/store/board-edit';
 import {
@@ -801,7 +801,7 @@ export default function TodayScreen() {
           value={followed.length}
           label={copy.today.tileFeeds}
           accessibilityLabel={`${followed.length} ${copy.today.tileFeeds}`}
-          onPress={() => router.push('/(sheets)/account')}
+          onPress={() => router.push('/settings')}
         />
       </View>
     ) : null,
@@ -918,61 +918,24 @@ export default function TodayScreen() {
       : undefined;
   /**
    * The edit panel's background tiles (ADR 0199) — the common picks, with the
-   * full catalogue behind the last one. Built HERE because the league marks
-   * live with the scaffold (a template the panel may not import).
-   *
-   * The brand default, the reader's own clubs, then every league; the current
-   * pick is slotted in after the default if it is none of those (a club chosen
-   * from the full sheet), so the selection is always on the strip.
+   * full catalogue behind the last one. The order and the marks are shared
+   * with Settings' Appearance strip (ADR 0208): `stripOptions` and
+   * `backgroundTiles` own both, so the two strips cannot drift.
    */
   const followedTeams = followed.flatMap((slug) => {
     const team = (teams.data ?? []).find((t) => t.slug === slug);
     return team ? [team] : [];
   });
-  const bgOptions: BackgroundOption[] = [
-    defaultOption(copy.board.backgroundDefault, bdBg),
-    ...followedTeams.map((team) => clubOption(team, bdBg)),
-    ...LEAGUES.map((league) => leagueOption(league, bdBg)),
-  ];
-  if (bgTeam && !bgOptions.some((option) => option.selected)) {
-    bgOptions.splice(1, 0, clubOption(bgTeam, bdBg));
-  }
-  const tileMark = (option: BackgroundOption): ReactNode => {
-    if (option.crestFallback !== undefined) {
-      return (
-        <View style={{ opacity: BoardEdit.tileMarkAlpha }}>
-          <Crest src={option.crest} fallback={option.crestFallback} size={BoardEdit.tileMark} />
-        </View>
-      );
-    }
-    if (option.art) {
-      const Mark = ART_MARK[option.art];
-      return <Mark height={BoardEdit.tileMark} alpha={BoardEdit.tileMarkAlpha} />;
-    }
-    return undefined;
-  };
-  const bgTiles: EditPanelTile[] = [
-    ...bgOptions.map((option) => ({
-      key: option.id,
-      label: option.label,
-      stops: option.stops,
-      mark: tileMark(option),
-      markSide: option.art ? ('right' as const) : ('left' as const),
-      selected: option.selected,
-      accessibilityLabel: copy.board.backgroundTile(option.label),
-      onPress: () => {
-        void hapticToggle();
-        setBoardBackground(option.id);
-      },
-    })),
-    {
-      key: 'more',
-      label: copy.board.more,
-      icon: <PlusGlyph color="textSecondary" size={Size.moreGlyph} />,
-      accessibilityLabel: copy.board.more,
-      onPress: () => router.push('/(sheets)/board-background'),
+  const bgTiles: EditPanelTile[] = backgroundTiles({
+    options: stripOptions(copy.board.backgroundDefault, bdBg, followedTeams, bgTeam),
+    moreLabel: copy.board.more,
+    tileLabel: copy.board.backgroundTile,
+    onPick: (id) => {
+      void hapticToggle();
+      setBoardBackground(id);
     },
-  ];
+    onMore: () => router.push('/(sheets)/board-background'),
+  });
 
   /** What the body draws, in the reader's order: on the board, and eligible. */
   const sections = visibleCards(layout).flatMap<BoardSection>((id) => {
@@ -1063,7 +1026,7 @@ export default function TodayScreen() {
             ) : null}
             <AvatarButton
               initials={initials}
-              onPress={() => router.push('/(sheets)/account')}
+              onPress={() => router.push('/settings')}
               /* ⚠ `ground` on a deep background — the crown tone's near-black
                  ink is invisible on a dark band (ADR 0165), and the board can
                  wear one now (ADR 0175). Derived from the SAME theme the

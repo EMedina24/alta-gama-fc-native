@@ -16,6 +16,14 @@ export function contactUrl(locale: Locale): string {
 }
 
 /**
+ * The website's privacy policy, in the reader's language (ADR 0208) —
+ * Settings' Privacy row. The site's route is `app/[lang]/privacy`.
+ */
+export function privacyUrl(locale: Locale): string {
+  return `${SITE_ORIGIN}/${locale}/privacy`;
+}
+
+/**
  * A club's page on the website, in the reader's language (ADR 0202) — what the
  * club page's share sends. The site's route is `app/[lang]/clubs/[slug]`, and
  * its slugs are the API's own, so no mapping stands between the two.

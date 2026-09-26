@@ -71,7 +71,9 @@ Ours had the same data in a different order, on a lime glow.
 3. **Share** sends `altagamafc.com/{es|en}/clubs/{slug}` (`clubUrl`, the web
    app's `app/[lang]/clubs/[slug]` route).
 4. **The tabs** use the `SegmentedControl` molecule and replace the
-   hand-rolled toggle. Overview is the default.
+   hand-rolled toggle. **Fixtures is the default**: Ed's call right after the
+   first build (*"this should default to Partidos"*). The segment order stays
+   the kit's, Overview · Fixtures · Squad.
    - **Overview:**
      - **FORM:** the `FormStrip`, when a standing is quotable.
      - **NEXT MATCH:** `FixturePairCard` (new), home first. The eyebrow is our

@@ -199,7 +199,8 @@ export interface Copy {
     movedNote: string;
     postponed: string;
     postponedNote: string;
-    /** ⚠ Drawn DISABLED with its reason. Never remove the reason. */
+    /** ⚠ Goals, reds and full time behind ONE switch (ADR 0053). Its note is
+     *  the switch's real limit — never remove it while the limit holds. */
     goals: string;
     goalsNote: string;
     preferences: string;
@@ -226,6 +227,49 @@ export interface Copy {
     deleteAccountFailed: string;
     /** Small link to the website's contact page (ADR 0067). */
     contactUs: string;
+  };
+  /**
+   * The Settings screen (ADR 0208) — the account sheet, re-made as a pushed
+   * screen after Ed's Medina mock. Alert, account and preference labels still
+   * come from `account`; this holds only what the new screen added.
+   */
+  settings: {
+    title: string;
+    /** The glass back circle's VoiceOver name. */
+    back: string;
+    editProfile: string;
+    /** Section eyebrows, in screen order. */
+    favouriteClub: string;
+    following: string;
+    notifications: string;
+    appearance: string;
+    about: string;
+    /** The favourite row with none chosen (ADR 0209). */
+    chooseFavourite: string;
+    chooseFavouriteNote: string;
+    /** The dashed chip at the end of FOLLOWING — opens the Clubs tab. */
+    add: string;
+    background: string;
+    /** "Your time · EDT" — the time-zone row while it follows the device. */
+    yourTime: (abbr: string) => string;
+    privacy: string;
+    help: string;
+    version: string;
+    /** ⚠ The SPACED brand (ADR 0042). Ed's mock drew the closed-up form. */
+    footer: string;
+    /** The Edit profile sheet. */
+    nameLabel: string;
+    save: string;
+    saveFailed: string;
+    /** The time-zone sheet: its title, and the device option's name. */
+    timezoneTitle: string;
+    deviceZone: string;
+    deviceZoneNote: (label: string) => string;
+    /** The favourite-club sheet. */
+    favouriteTitle: string;
+    noFavourite: string;
+    noFollows: string;
+    findClubs: string;
   };
   auth: {
     title: string;
@@ -650,6 +694,12 @@ export interface Copy {
      * xG: xG does not exist at any provider the backend holds (CRONOGOL-API.md).
      */
     tiles: Record<'gf' | 'ga' | 'cleanSheets', { label: string; spoken: string }>;
+    /** The clean-sheet ring, spoken — "3 of 7 matches" (ADR 0204). */
+    cleanOf: (clean: number, played: number) => string;
+    /** The clean-sheet tile's caption — "38% of matches" (ADR 0204). */
+    cleanShare: (percent: number) => string;
+    /** A goal ring's total, spoken — "of 26 goals in their matches" (ADR 0204). */
+    ofGoals: (total: number) => string;
     /** What a key player's figure counts. ⚠ No rating — ratings do not exist. */
     keyStat: Record<'goals' | 'assists' | 'involvements', string>;
     /** ONE player's position — `bandLabels` are the squad's plural group heads. */
@@ -911,6 +961,8 @@ export interface Copy {
    */
   player: {
     done: string;
+    /** The link to Season stats (ADR 0207). Only drawn when the player is addressable there. */
+    seeStats: string;
     age: string;
     nationality: string;
     height: string;
@@ -1241,6 +1293,36 @@ export const esCopy: Copy = {
     contactUs: 'Contáctanos',
   },
 
+  settings: {
+    title: 'Ajustes',
+    back: 'Atrás',
+    editProfile: 'Editar perfil',
+    favouriteClub: 'Club favorito',
+    following: 'Siguiendo',
+    notifications: 'Notificaciones',
+    appearance: 'Apariencia',
+    about: 'Acerca de',
+    chooseFavourite: 'Elige tu club',
+    chooseFavouriteNote: 'Entre los clubes que sigues',
+    add: 'Añadir',
+    background: 'Fondo',
+    yourTime: (abbr: string): string => `Tu hora · ${abbr}`,
+    privacy: 'Privacidad',
+    help: 'Ayuda y comentarios',
+    version: 'Versión',
+    footer: 'Alta Gama FC · Medina Digital',
+    nameLabel: 'Nombre',
+    save: 'Guardar',
+    saveFailed: 'No se pudo guardar. Inténtalo de nuevo.',
+    timezoneTitle: 'Zona horaria',
+    deviceZone: 'La de tu dispositivo',
+    deviceZoneNote: (label: string): string => `Ahora: ${label}`,
+    favouriteTitle: 'Club favorito',
+    noFavourite: 'Ninguno',
+    noFollows: 'Sigue a un club y podrás elegirlo como favorito.',
+    findClubs: 'Buscar clubes',
+  },
+
   auth: {
     title: 'Tu cuenta de Alta Gama FC',
     body: 'Para tener tus clubes y calendarios en cualquier dispositivo. Puedes seguir usando la app sin cuenta.',
@@ -1471,10 +1553,14 @@ export const esCopy: Copy = {
       body: 'Todos los partidos en tu app de calendario, siempre al día.',
     },
     tiles: {
-      gf: { label: 'GF', spoken: 'goles a favor' },
-      ga: { label: 'GC', spoken: 'goles en contra' },
+      gf: { label: 'Goles a favor', spoken: 'goles a favor' },
+      ga: { label: 'Goles en contra', spoken: 'goles en contra' },
       cleanSheets: { label: 'Porterías a cero', spoken: 'porterías a cero' },
     },
+    cleanOf: (clean: number, played: number): string => `${clean} de ${played} partidos`,
+    // ⚠ Not "de los partidos": that truncated in a third-width tile (sim).
+    cleanShare: (percent: number): string => `${percent}% de partidos`,
+    ofGoals: (total: number): string => `de ${total} goles en sus partidos`,
     keyStat: { goals: 'Goles', assists: 'Asistencias', involvements: 'G+A' },
     positionLabels: { GK: 'Portero', DEF: 'Defensa', MID: 'Centrocampista', FWD: 'Delantero' },
     notFound: 'No encontramos este club.',
@@ -1611,6 +1697,7 @@ export const esCopy: Copy = {
   },
   player: {
     done: 'Listo',
+    seeStats: 'Ver estadísticas',
     age: 'Edad',
     nationality: 'Nacionalidad',
     height: 'Altura',
@@ -1622,7 +1709,7 @@ export const esCopy: Copy = {
     positionNames: { GK: 'Portero', DEF: 'Defensa', MID: 'Centrocampista', FWD: 'Delantero' },
     footValues: { left: 'Izquierdo', right: 'Derecho', both: 'Ambos' },
     notFound: 'No encontramos a este jugador.',
-    note: 'De la plantilla inscrita en la liga, sincronizada cada semana. Las casillas vacías son datos que la liga no publica: en esta ruta no hay partidos jugados ni goles.',
+    note: 'De la plantilla inscrita en la liga, sincronizada cada semana. Las casillas vacías son datos que la liga no publica.',
   },
 
   clubs: {
@@ -1847,6 +1934,36 @@ export const enCopy: Copy = {
       'This cannot be undone. Calendars you shared stop updating and go empty, and stay in your calendar app until you delete them there. Alerts on this device keep working.',
     deleteAccountFailed: 'Could not delete your account. It is still active — try again.',
     contactUs: 'Contact us',
+  },
+
+  settings: {
+    title: 'Settings',
+    back: 'Back',
+    editProfile: 'Edit profile',
+    favouriteClub: 'Favourite club',
+    following: 'Following',
+    notifications: 'Notifications',
+    appearance: 'Appearance',
+    about: 'About',
+    chooseFavourite: 'Choose your club',
+    chooseFavouriteNote: 'From the clubs you follow',
+    add: 'Add',
+    background: 'Background',
+    yourTime: (abbr: string): string => `Your time · ${abbr}`,
+    privacy: 'Privacy',
+    help: 'Help & feedback',
+    version: 'Version',
+    footer: 'Alta Gama FC · Medina Digital',
+    nameLabel: 'Name',
+    save: 'Save',
+    saveFailed: 'Could not save. Try again.',
+    timezoneTitle: 'Time zone',
+    deviceZone: "Your device's",
+    deviceZoneNote: (label: string): string => `Now: ${label}`,
+    favouriteTitle: 'Favourite club',
+    noFavourite: 'None',
+    noFollows: 'Follow a club and you can make it your favourite.',
+    findClubs: 'Find clubs',
   },
 
   auth: {
@@ -2081,10 +2198,13 @@ export const enCopy: Copy = {
       body: 'Every fixture in your calendar app, kept up to date.',
     },
     tiles: {
-      gf: { label: 'GF', spoken: 'goals for' },
-      ga: { label: 'GA', spoken: 'goals against' },
+      gf: { label: 'Goals for', spoken: 'goals for' },
+      ga: { label: 'Goals against', spoken: 'goals against' },
       cleanSheets: { label: 'Clean sheets', spoken: 'clean sheets' },
     },
+    cleanOf: (clean: number, played: number): string => `${clean} of ${played} matches`,
+    cleanShare: (percent: number): string => `${percent}% of matches`,
+    ofGoals: (total: number): string => `of ${total} goals in their matches`,
     keyStat: { goals: 'Goals', assists: 'Assists', involvements: 'G+A' },
     positionLabels: { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' },
     notFound: 'We could not find this club.',
@@ -2221,6 +2341,7 @@ export const enCopy: Copy = {
   },
   player: {
     done: 'Done',
+    seeStats: 'See season stats',
     age: 'Age',
     nationality: 'Nationality',
     height: 'Height',
@@ -2232,7 +2353,7 @@ export const enCopy: Copy = {
     positionNames: { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' },
     footValues: { left: 'Left', right: 'Right', both: 'Both' },
     notFound: 'We could not find this player.',
-    note: "From the league's registered squad, synced weekly. Blank cells are fields the league does not publish — no appearance or goal data is available on this route.",
+    note: "From the league's registered squad, synced weekly. Blank cells are fields the league does not publish.",
   },
 
   clubs: {
