@@ -21,7 +21,8 @@ import type { CupBandKind } from '@/lib/cronogol/competitions';
 import type { ZoneKind } from '@/lib/cronogol/leagues';
 
 export interface Copy {
-  tabs: { today: string; matchdays: string; table: string; clubs: string };
+  /** ⚠ `startingXi` is the fifth tab (ADR 0212) — the web nav's own words, "My XI" / "Mi once". */
+  tabs: { today: string; matchdays: string; table: string; clubs: string; startingXi: string };
   /**
    * The thinking orb's spoken label (ADR 0197) — VoiceOver only; the orb
    * draws no words. `refreshing` is pull-to-refresh.
@@ -715,54 +716,102 @@ export interface Copy {
    * league-neutral because the builder serves two leagues.
    */
   startingXi: {
-    /** The club-page row. */
+    /** The club-page row (ADR 0065). */
     rowTitle: string;
     rowBody: string;
-    /** The builder's nav title and the eyebrow under the club name. */
+    /** The tab's screen name (ADR 0212) — VoiceOver's, and the empty state's. */
     title: string;
-    /**
-     * ⚠ Takes `null`, and the separator goes with it. `competitionName` is
-     * null on EVERY fixture of both scraped leagues — Puerto Rico's and
-     * Honduras's — so `primaryCompetition` answers null and this printed a
-     * dangling `Inscripciones oficiales ·` with nothing after the dot. Shipped
-     * with Puerto Rico on 2026-09-02 and found when Honduras arrived
-     * (ADR 0159).
-     */
-    sourceLine: (league: string | null) => string;
-    placed: (n: number) => string;
-    hintIdle: string;
-    hintPick: (slot: string) => string;
-    hintSwap: (slot: string) => string;
-    hintFull: string;
-    remove: string;
-    shape: string;
-    look: string;
-    autoFill: string;
+    /** Header (ADR 0212–0214). */
+    clubHint: string;
+    back: string;
+    lineups: string;
+    lineupsCount: (n: number) => string;
+    save: string;
+    saveHint: string;
+    formation: string;
+    formationA11y: (formation: string) => string;
+    export: string;
+    exportHint: string;
+    /** The pitch card (ADR 0213). */
+    status: { count: (n: number) => string; ready: string; noGk: string };
+    reset: string;
+    view3d: string;
+    viewFlat: string;
+    flip: string;
+    tapHint: string;
+    gestureFlat: string;
+    gesture3d: string;
+    emptySlot: (slot: string) => string;
+    filledSlot: (name: string, slot: string) => string;
+    /** The bench row. */
+    bench: string;
+    benchCount: (n: number, max: number) => string;
+    benchEmpty: string;
+    benchFilled: (name: string) => string;
+    mirror: string;
     clear: string;
     clearTitle: string;
     clearBody: string;
     clearConfirm: string;
     cancel: string;
-    filterAll: string;
-    lines: Record<'gk' | 'def' | 'mid' | 'fwd', string>;
-    squadNote: string;
+    /** Empty states. */
+    noClubTitle: string;
+    noClubBody: string;
+    pickClub: string;
     squadEmptyTitle: string;
     squadEmptyBody: string;
-    /** Long-press menu. */
-    menuSwap: string;
-    menuRemove: string;
-    menuPlayer: string;
-    /** Sheets. */
-    shapeTitle: string;
-    shapeNote: string;
-    lookTitle: string;
-    looks: Record<'lines' | 'turf' | 'angled', string>;
+    /** The picker sheet. ⚠ Slot ids inside these are protocol values, never translated. */
+    pickFor: (slot: string) => string;
+    benchTitle: string;
+    search: string;
+    statsCaption: string;
+    /** Plural section heads, keyed by the wire's band. */
+    bands: Record<'GK' | 'DEF' | 'MID' | 'FWD', string>;
+    /** The filter's short labels. */
+    bandShort: Record<'GK' | 'DEF' | 'MID' | 'FWD', string>;
+    all: string;
+    onBench: string;
+    noPlayers: string;
+    /** The player card sheet. */
+    replace: string;
+    toBench: string;
+    benchFull: string;
+    remove: string;
+    goals: string;
+    assists: string;
+    yellows: string;
+    age: string;
+    seasonMode: string;
+    recentMode: string;
+    seasonCaption: (season: string) => string;
+    /** ⚠ Never "career": `overall` sums at most three seasons (ADR 0214). */
+    recentCaption: (seasons: number) => string;
+    noStats: string;
+    /** The club sheet. */
+    clubsTitle: string;
+    searchClubs: string;
+    noClubs: (query: string) => string;
+    allLeagues: string;
+    /** The lineups sheet. */
+    lineupsTitle: string;
+    noLineups: string;
+    noLineupsBody: string;
+    loaded: string;
+    deleteTitle: string;
+    deleteBody: (name: string) => string;
+    delete: string;
+    /** The save sheet. */
+    saveTitle: string;
+    saveMeta: (club: string, formation: string) => string;
+    lineupName: string;
+    lineupFallback: (n: number) => string;
+    limitReached: string;
+    /** The export sheet (ADR 0065, kept by ADR 0214). */
     exportTitle: string;
-    export: string;
     cardTitleLabel: string;
     defaultTitle: string;
     sizeLabels: Record<'4:5' | '1:1' | '9:16', string>;
-    save: string;
+    savePhotos: string;
     share: string;
     exportNote: string;
     saved: string;
@@ -1169,7 +1218,7 @@ export interface Copy {
 }
 
 export const esCopy: Copy = {
-  tabs: { today: 'Hoy', matchdays: 'Jornadas', table: 'Clasificación', clubs: 'Clubes' },
+  tabs: { today: 'Hoy', matchdays: 'Jornadas', table: 'Clasificación', clubs: 'Clubes', startingXi: 'Mi once' },
   orb: { refreshing: 'Actualizando' },
   leagueMenu: {
     label: (league) => `Competición: ${league}`,
@@ -1567,44 +1616,87 @@ export const esCopy: Copy = {
   },
   startingXi: {
     rowTitle: 'Once inicial',
-    rowBody: 'Coloca tus once en el campo y comparte la imagen.',
-    title: 'Once inicial',
-    sourceLine: (league) =>
-      league ? `Inscripciones oficiales · ${league}` : 'Inscripciones oficiales',
-    placed: (n) => `${n} / 11`,
-    hintIdle: 'Toca una posición, o toca un jugador para ocupar la siguiente',
-    hintPick: (slot) => `Elige al ${slot}`,
-    hintSwap: (slot) => `Toca un jugador para ponerlo de ${slot}`,
-    hintFull: 'Once colocados: exporta o sigue ajustando',
-    remove: 'Quitar',
-    shape: 'Dibujo',
-    look: 'Estilo',
-    autoFill: 'Completar',
+    rowBody: 'Monta tu once, guarda hasta cinco y comparte la imagen.',
+    title: 'Mi once',
+    clubHint: 'Cambiar de club',
+    back: 'Atrás',
+    lineups: 'Alineaciones',
+    lineupsCount: (n) => (n === 0 ? 'Alineaciones guardadas' : `Alineaciones guardadas: ${n}`),
+    save: 'Guardar alineación',
+    saveHint: 'Coloca a los once, con un portero en la portería',
+    formation: 'Formación',
+    formationA11y: (formation) => `Formación ${formation}`,
+    export: 'Compartir imagen',
+    exportHint: 'Coloca al menos un jugador',
+    status: { count: (n) => `${n} de 11`, ready: 'Lista', noGk: 'Sin portero' },
+    reset: 'Restablecer',
+    view3d: '3D',
+    viewFlat: 'Plano',
+    flip: 'Girar el campo',
+    tapHint: 'Toca una posición para elegir jugador',
+    gestureFlat: 'Pellizca para hacer zoom',
+    gesture3d: 'Arrastra para girar · pellizca para zoom',
+    emptySlot: (slot) => `${slot}, libre. Elige un jugador`,
+    filledSlot: (name, slot) => `${name}, ${slot}`,
+    bench: 'Banquillo',
+    benchCount: (n, max) => `${n}/${max}`,
+    benchEmpty: 'Hueco libre en el banquillo',
+    benchFilled: (name) => `${name}, en el banquillo`,
+    mirror: 'Espejo',
     clear: 'Vaciar',
     clearTitle: '¿Vaciar el campo?',
-    clearBody: 'Se quitan los once del campo. La plantilla no cambia.',
-    clearConfirm: 'Vaciar el campo',
+    clearBody: 'Se quitan los once y el banquillo. Las alineaciones guardadas no cambian.',
+    clearConfirm: 'Vaciar',
     cancel: 'Cancelar',
-    filterAll: 'Todos',
-    lines: { gk: 'Por', def: 'Def', mid: 'Med', fwd: 'Del' },
-    squadNote:
-      'Inscripciones oficiales de la liga. Un fichaje recién anunciado puede tardar unos días en aparecer.',
+    noClubTitle: 'Elige un club',
+    noClubBody: 'Monta el once de cualquier club cuya liga publique su plantilla.',
+    pickClub: 'Elegir club',
     squadEmptyTitle: 'Sin plantilla publicada',
     squadEmptyBody:
       'La liga publica las inscripciones, pero las de este club aún no han llegado.',
-    menuSwap: 'Cambiar',
-    menuRemove: 'Quitar del campo',
-    menuPlayer: 'Ver jugador',
-    shapeTitle: 'Formación',
-    shapeNote: 'Cambiar el dibujo mantiene a los once jugadores y los recoloca en la nueva rejilla.',
-    lookTitle: 'Campo',
-    looks: { lines: 'Líneas', turf: 'Césped', angled: 'Perspectiva' },
+    pickFor: (slot) => `Elegir para ${slot}`,
+    benchTitle: 'Banquillo',
+    search: 'Buscar jugador',
+    statsCaption: 'Goles · Asistencias',
+    bands: { GK: 'Porteros', DEF: 'Defensas', MID: 'Centrocampistas', FWD: 'Delanteros' },
+    bandShort: { GK: 'POR', DEF: 'DEF', MID: 'MED', FWD: 'DEL' },
+    all: 'Todos',
+    onBench: 'Banquillo',
+    noPlayers: 'Ningún jugador coincide',
+    replace: 'Cambiar jugador',
+    toBench: 'Al banquillo',
+    benchFull: 'Banquillo completo',
+    remove: 'Quitar',
+    goals: 'Goles',
+    assists: 'Asistencias',
+    yellows: 'Amarillas',
+    age: 'Edad',
+    seasonMode: 'Esta temporada',
+    recentMode: 'Últimas temporadas',
+    seasonCaption: (season) => `Temporada ${season}`,
+    recentCaption: (seasons) => (seasons === 1 ? 'En 1 temporada' : `En ${seasons} temporadas`),
+    noStats: 'Esta liga no publica estadísticas de jugadores.',
+    clubsTitle: 'Elige un club',
+    searchClubs: 'Buscar club',
+    noClubs: (query) => `Ningún club coincide con “${query}”`,
+    allLeagues: 'Todas',
+    lineupsTitle: 'Alineaciones',
+    noLineups: 'Aún no hay alineaciones guardadas',
+    noLineupsBody: 'Coloca a los once y toca ✓ para guardar hasta cinco por club.',
+    loaded: 'Cargada',
+    deleteTitle: '¿Borrar la alineación?',
+    deleteBody: (name) => `“${name}” se borrará de este dispositivo.`,
+    delete: 'Borrar',
+    saveTitle: 'Guardar alineación',
+    saveMeta: (club, formation) => `${club} · ${formation} · hasta 5 por club`,
+    lineupName: 'Nombre de la alineación',
+    lineupFallback: (n) => `Alineación ${n}`,
+    limitReached: 'Ya tienes cinco guardadas para este club. Borra una para guardar otra.',
     exportTitle: 'Exportar',
-    export: 'Exportar',
     cardTitleLabel: 'Título de la tarjeta',
     defaultTitle: 'Mi once inicial',
     sizeLabels: { '4:5': 'Feed', '1:1': 'Cuadrado', '9:16': 'Historia' },
-    save: 'Guardar en Fotos',
+    savePhotos: 'Guardar en Fotos',
     share: 'Compartir',
     exportNote:
       'Se dibuja a 1080 px reales fuera de pantalla, no es una captura de este campo. Instagram, Threads, WhatsApp y Fotos salen de la hoja del sistema.',
@@ -1817,7 +1909,7 @@ export const esCopy: Copy = {
 };
 
 export const enCopy: Copy = {
-  tabs: { today: 'Today', matchdays: 'Matchdays', table: 'Table', clubs: 'Clubs' },
+  tabs: { today: 'Today', matchdays: 'Matchdays', table: 'Table', clubs: 'Clubs', startingXi: 'My XI' },
   orb: { refreshing: 'Refreshing' },
   leagueMenu: {
     label: (league) => `Competition: ${league}`,
@@ -2211,50 +2303,93 @@ export const enCopy: Copy = {
   },
   startingXi: {
     rowTitle: 'Starting XI',
-    rowBody: 'Put your eleven on a pitch and share the card.',
-    title: 'Starting XI',
-    sourceLine: (league) =>
-      league ? `Official registrations · ${league}` : 'Official registrations',
-    placed: (n) => `${n} / 11`,
-    hintIdle: 'Tap a slot, or tap a player to fill the next one',
-    hintPick: (slot) => `Pick the ${slot}`,
-    hintSwap: (slot) => `Tap a player to swap into ${slot}`,
-    hintFull: 'Eleven placed — export or keep tinkering',
-    remove: 'Remove',
-    shape: 'Shape',
-    look: 'Look',
-    autoFill: 'Auto fill',
+    rowBody: 'Build your XI, save up to five and share the image.',
+    title: 'My XI',
+    clubHint: 'Switch club',
+    back: 'Back',
+    lineups: 'Lineups',
+    lineupsCount: (n) => (n === 0 ? 'Saved lineups' : `Saved lineups: ${n}`),
+    save: 'Save lineup',
+    saveHint: 'Place all eleven, with a goalkeeper in goal',
+    formation: 'Formation',
+    formationA11y: (formation) => `Formation ${formation}`,
+    export: 'Share image',
+    exportHint: 'Place at least one player',
+    status: { count: (n) => `${n} of 11`, ready: 'Ready', noGk: 'No goalkeeper' },
+    reset: 'Reset',
+    view3d: '3D',
+    viewFlat: 'Flat',
+    flip: 'Flip the pitch',
+    tapHint: 'Tap a position to pick a player',
+    gestureFlat: 'Pinch to zoom',
+    gesture3d: 'Drag to rotate · pinch to zoom',
+    emptySlot: (slot) => `${slot}, empty. Pick a player`,
+    filledSlot: (name, slot) => `${name}, ${slot}`,
+    bench: 'Bench',
+    benchCount: (n, max) => `${n}/${max}`,
+    benchEmpty: 'Empty bench spot',
+    benchFilled: (name) => `${name}, on the bench`,
+    mirror: 'Mirror',
     clear: 'Clear',
     clearTitle: 'Clear the pitch?',
-    clearBody: 'All eleven come off the pitch. The squad is unchanged.',
-    clearConfirm: 'Clear pitch',
+    clearBody: 'Removes the eleven and the bench. Saved lineups are not touched.',
+    clearConfirm: 'Clear',
     cancel: 'Cancel',
-    filterAll: 'All',
-    lines: { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Fwd' },
-    squadNote:
-      'Official league registrations. A newly announced signing can take a few days to appear.',
+    noClubTitle: 'Pick a club',
+    noClubBody: 'Build the XI of any club whose league publishes its squad.',
+    pickClub: 'Pick a club',
     squadEmptyTitle: 'No squad published',
     squadEmptyBody:
-      "The league publishes registrations, but this club's have not landed yet.",
-    menuSwap: 'Swap',
-    menuRemove: 'Remove from pitch',
-    menuPlayer: 'Player page',
-    shapeTitle: 'Formation',
-    shapeNote: 'Changing shape keeps the eleven players and re-seats them on the new grid.',
-    lookTitle: 'Pitch',
-    looks: { lines: 'Line art', turf: 'Turf', angled: 'Angled' },
+      "The league publishes registrations, but this club's have not arrived yet.",
+    pickFor: (slot) => `Pick for ${slot}`,
+    benchTitle: 'Bench',
+    search: 'Search squad',
+    statsCaption: 'Goals · Assists',
+    bands: { GK: 'Goalkeepers', DEF: 'Defenders', MID: 'Midfielders', FWD: 'Forwards' },
+    bandShort: { GK: 'GK', DEF: 'DEF', MID: 'MID', FWD: 'FWD' },
+    all: 'All',
+    onBench: 'Bench',
+    noPlayers: 'No players match',
+    replace: 'Replace player',
+    toBench: 'Move to bench',
+    benchFull: 'Bench full',
+    remove: 'Remove',
+    goals: 'Goals',
+    assists: 'Assists',
+    yellows: 'Yellows',
+    age: 'Age',
+    seasonMode: 'This season',
+    recentMode: 'Recent seasons',
+    seasonCaption: (season) => `Season ${season}`,
+    recentCaption: (seasons) => (seasons === 1 ? 'Across 1 season' : `Across ${seasons} seasons`),
+    noStats: "This league doesn't publish player stats.",
+    clubsTitle: 'Pick a club',
+    searchClubs: 'Search clubs',
+    noClubs: (query) => `No clubs match “${query}”`,
+    allLeagues: 'All',
+    lineupsTitle: 'Lineups',
+    noLineups: 'No saved lineups yet',
+    noLineupsBody: 'Place all eleven and tap ✓ to save up to five per club.',
+    loaded: 'Loaded',
+    deleteTitle: 'Delete this lineup?',
+    deleteBody: (name) => `“${name}” will be removed from this device.`,
+    delete: 'Delete',
+    saveTitle: 'Save lineup',
+    saveMeta: (club, formation) => `${club} · ${formation} · up to 5 per club`,
+    lineupName: 'Lineup name',
+    lineupFallback: (n) => `Lineup ${n}`,
+    limitReached: 'You have five saved for this club. Delete one to save another.',
     exportTitle: 'Export',
-    export: 'Export',
     cardTitleLabel: 'Card title',
     defaultTitle: 'My starting XI',
     sizeLabels: { '4:5': 'Feed', '1:1': 'Square', '9:16': 'Story' },
-    save: 'Save to Photos',
+    savePhotos: 'Save to Photos',
     share: 'Share',
     exportNote:
-      'Rendered at a true 1080 px off-screen, not a screenshot of this pitch. Instagram, Threads, WhatsApp and Photos all come from the system sheet.',
+      'Drawn at a true 1080 px off-screen, not a screenshot of this pitch. Instagram, Threads, WhatsApp and Photos come from the system sheet.',
     saved: 'Saved to Photos',
-    exportFailed: 'The image could not be rendered. Try again.',
-    photosDenied: 'No permission to save to Photos. Allow it in Settings.',
+    exportFailed: "The image couldn't be made. Try again.",
+    photosDenied: 'No permission to save to Photos. Turn it on in Settings.',
     cardLabel: 'Starting XI',
     cardFormation: 'Formation',
     cardUrl: 'ALTAGAMAFC.COM',

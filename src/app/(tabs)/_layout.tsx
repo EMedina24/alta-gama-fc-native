@@ -61,6 +61,15 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{label(copy.tabs.clubs)}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'shield', selected: 'shield.fill' }} />
       </NativeTabs.Trigger>
+
+      {/* The fifth tab (ADR 0212): the Starting XI builder, which had been
+          reachable only from a club page's Squad segment. ⚠ Five is the most
+          an iPhone tab bar shows before iOS adds its own "More" — a sixth
+          destination needs a different home. */}
+      <NativeTabs.Trigger name="starting-xi">
+        <NativeTabs.Trigger.Label>{label(copy.tabs.startingXi)}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'sportscourt', selected: 'sportscourt.fill' }} />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

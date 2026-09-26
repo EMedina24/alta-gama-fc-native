@@ -12,8 +12,8 @@
  * `allowFontScaling={false}`: the card is an image, not a screen, and Dynamic
  * Type must not reflow it.
  *
- * ⚠ Never tilts. The Angled look tilts the on-screen pitch only (decided
- * 2026-08-29); here it is line art with the lime stripe wash.
+ * ⚠ Never tilts, and always Turf (ADR 0213). The live pitch's 3D view is a
+ * camera on the screen; the card is a flat picture of the eleven.
  *
  * ⚠ `onImagesSettled` fires once every portrait and the crest has loaded or
  * failed, so a capture can wait. Images use `transition={0}` — a capture in
@@ -28,6 +28,7 @@ import { PitchSlots, PitchSurface } from '@/components/molecules';
 import { Colors } from '@/constants/theme';
 import {
   CARD,
+  CARD_SLOTS,
   EXPORT_SIZES,
   initials,
   nameSize,
@@ -38,8 +39,8 @@ import {
   tokenName,
   type ExportSize,
 } from '@/features/starting-xi/card-geometry';
-import { FORMATIONS, type FormationId, type Look } from '@/features/starting-xi/formations';
-import type { Placed } from '@/features/starting-xi/lineup';
+import type { FormationId } from '@/features/starting-xi/slots';
+import type { Placements } from '@/features/starting-xi/xi-state';
 import type { SquadPlayerView } from '@/lib/cronogol/types';
 
 export interface LineupCardProps {
@@ -48,8 +49,8 @@ export interface LineupCardProps {
   team: { name: string; crestUrl: string | null; abbr: string };
   title: string;
   formation: FormationId;
-  look: Look;
-  placed: Placed;
+  /** Slot id → person id. */
+  placements: Placements;
   players: ReadonlyMap<string, SquadPlayerView>;
   labels: { cardLabel: string; cardFormation: string; cardUrl: string };
   onImagesSettled?: () => void;
@@ -61,22 +62,21 @@ export function LineupCard({
   team,
   title,
   formation,
-  look,
-  placed,
+  placements,
   players,
   labels,
   onImagesSettled,
 }: LineupCardProps) {
   const { w, h } = EXPORT_SIZES[size];
   const s = (n: number) => n * scale;
-  const slots = FORMATIONS[formation];
+  const slots = CARD_SLOTS[formation];
   const pw = pitchWidth();
   const ph = pitchHeight(h);
 
   // Count image settles: the crest (if any) plus one per portrait drawn.
-  const portraits = slots.filter((_, i) => {
-    const p = placed[i] === undefined ? undefined : players.get(placed[i]);
-    return !!p?.photoUrl;
+  const portraits = slots.filter((slot) => {
+    const id = placements[slot.id];
+    return !!(id === undefined ? undefined : players.get(id))?.photoUrl;
   }).length;
   const expected = portraits + (team.crestUrl ? 1 : 0);
   const settled = useRef(0);
@@ -159,7 +159,6 @@ export function LineupCard({
       {/* Pitch */}
       <View style={{ position: 'absolute', left: s(CARD.padX), top: s(pitchTop()) }}>
         <PitchSurface
-          look={look === 'angled' ? 'angled' : look}
           width={s(pw)}
           height={s(ph)}
           borderRadius={s(CARD.pitchRadius)}>
@@ -170,14 +169,14 @@ export function LineupCard({
             ring={s(CARD.ring)}
             columnWidth={s(CARD.captionMax + 20)}
             insetBottom={s(CARD.captionReserve)}
-            renderSlot={(slot, i) => {
-              const id = placed[i];
+            renderSlot={(slot) => {
+              const id = placements[slot.id];
               const player = id === undefined ? undefined : players.get(id);
               if (!player) {
                 return (
                   <SlotToken
                     mode="empty"
-                    label={slot.label}
+                    label={slot.id}
                     size={s(CARD.ring)}
                     labelSize={s(CARD.chipSize * 1.4)}
                   />

@@ -1,18 +1,20 @@
 /**
- * Positions one child per slot at its centre (ADR 0065).
+ * Positions one child per slot at its centre on the EXPORT CARD (ADR 0065).
  *
- * The ONE projection from the formation's percentages to points is
- * `slotCentre`; the board and the export card both come through here so a
- * table nudge moves both. Each child is centred on its slot with a fixed
+ * The projection from the card's measured percentages to points is
+ * `cardSlotCentre`. Each child is centred on its slot with a fixed
  * `columnWidth` so the caption can overhang the ring symmetrically.
+ *
+ * ⚠ The card only since ADR 0213: the live pitch places its tokens through
+ * the camera (`features/starting-xi/projection.ts`), not through here.
  */
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { slotCentre, type Slot } from '@/features/starting-xi/formations';
+import { cardSlotCentre, type CardSlot } from '@/features/starting-xi/card-geometry';
 
 export interface PitchSlotsProps {
-  slots: readonly Slot[];
+  slots: readonly CardSlot[];
   width: number;
   height: number;
   /** Ring diameter — the column is centred on the ring, not on the caption. */
@@ -23,10 +25,10 @@ export interface PitchSlotsProps {
    * Height kept clear at the bottom, in points (ADR 0075). The y-projection
    * runs over `height − insetBottom`, so the lowest slot's ring AND caption
    * stay inside a pitch that clips. The export card passes
-   * `CARD.captionReserve`; the board passes nothing.
+   * `CARD.captionReserve`.
    */
   insetBottom?: number;
-  renderSlot: (slot: Slot, index: number) => ReactNode;
+  renderSlot: (slot: CardSlot, index: number) => ReactNode;
 }
 
 export function PitchSlots({
@@ -41,10 +43,10 @@ export function PitchSlots({
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {slots.map((slot, i) => {
-        const c = slotCentre(slot, width, height - insetBottom);
+        const c = cardSlotCentre(slot, width, height - insetBottom);
         return (
           <View
-            key={slot.label}
+            key={slot.id}
             pointerEvents="box-none"
             style={[
               styles.column,

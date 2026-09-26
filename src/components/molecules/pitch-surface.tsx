@@ -1,14 +1,15 @@
 /**
- * The pitch: ground, stripes and furniture, per `look` (ADR 0065).
+ * The export card's pitch: turf ground, stripes and furniture (ADR 0065).
  *
- * Shared by the on-screen board and the export card at different sizes, so
- * every measure is proportional to the box. Furniture is `react-native-svg`
+ * Every measure is proportional to the box, so the sheet's preview and the
+ * 1080-px capture draw the same pitch. Furniture is `react-native-svg`
  * (touchline, halfway line, centre circle and spot, both boxes and six-yard
  * boxes) transcribed from `handoff_squad-builder/Starting XI.dc.html`.
  *
- * ⚠ Never applies the Angled tilt itself. The board wraps it in a
- * `perspective` + `rotateX`; the export card never tilts (decided 2026-08-29).
- * `angled` here only picks the lime stripe wash over the line-art ground.
+ * ⚠ **Turf only, since ADR 0213.** The Lines and Angled looks belonged to the
+ * first builder's on-screen board; the live pitch is now `PitchPlane`, and
+ * the card was always drawn flat and green ("green reads as a pitch at
+ * feed-thumbnail size", the 2026-08-22 product call).
  *
  * ⚠ Children are the slots; they render ABOVE the furniture inside the same box.
  */
@@ -17,10 +18,8 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
-import type { Look } from '@/features/starting-xi/formations';
 
 export interface PitchSurfaceProps {
-  look: Look;
   width: number;
   height: number;
   borderRadius: number;
@@ -32,16 +31,15 @@ const STRIPE = 34 / 424;
 /** Touchline inset (12pt on 361 × 424) as a fraction of width. */
 const INSET = 12 / 361;
 
-export function PitchSurface({ look, width, height, borderRadius, children }: PitchSurfaceProps) {
-  const turf = look === 'turf';
-  const ground = turf ? Colors.dark.pitchTurf : Colors.dark.pitchArt;
-  const line = turf ? Colors.dark.pitchLineTurf : Colors.dark.pitchLineArt;
-  const stripe = look === 'lines' ? null : turf ? Colors.dark.pitchStripeTurf : Colors.dark.pitchStripeArt;
+export function PitchSurface({ width, height, borderRadius, children }: PitchSurfaceProps) {
+  const ground = Colors.dark.pitchTurf;
+  const line = Colors.dark.pitchLineTurf;
+  const stripe = Colors.dark.pitchStripeTurf;
 
   const inset = INSET * width;
   const stroke = Math.max(1, 1.5 * (width / 361));
   const stripeH = STRIPE * height;
-  const stripes = stripe ? Math.ceil(height / (stripeH * 2)) : 0;
+  const stripes = Math.ceil(height / (stripeH * 2));
 
   const cx = width / 2;
   const cy = height / 2;
@@ -53,18 +51,13 @@ export function PitchSurface({ look, width, height, borderRadius, children }: Pi
 
   return (
     <View style={[styles.box, { width, height, borderRadius, backgroundColor: ground }]}>
-      {stripe
-        ? Array.from({ length: stripes }, (_, i) => (
-            <View
-              key={i}
-              pointerEvents="none"
-              style={[
-                styles.stripe,
-                { top: i * stripeH * 2, height: stripeH, backgroundColor: stripe },
-              ]}
-            />
-          ))
-        : null}
+      {Array.from({ length: stripes }, (_, i) => (
+        <View
+          key={i}
+          pointerEvents="none"
+          style={[styles.stripe, { top: i * stripeH * 2, height: stripeH, backgroundColor: stripe }]}
+        />
+      ))}
       <Svg
         width={width}
         height={height}

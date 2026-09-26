@@ -1,0 +1,38 @@
+:root {
+  /* Base */
+  --md-ground: #eceef5;        /* the app frame's lavender-grey ground */
+  --md-backdrop: #c4c6d1;      /* page behind the frame (gradient ends) */
+  --md-backdrop-top: #9a9daa;
+  --md-card: #ffffff;
+  --md-chip: #f3f3f8;          /* light fill for chips, table header, inputs */
+  --md-row-hover: #fafafd;
+  --md-line: #e6e7ef;
+  --md-ink: #111218;
+  --md-ink-soft: #3a3c48;
+  --md-muted: #8b8e9c;
+  --md-on-ink: #ffffff;
+  /* Accent — periwinkle, used as tint + line + dot, never as a flood */
+  --md-accent: #6e7be6;
+  --md-accent-ink: #4b57c8;
+  --md-accent-tint: #e7e9fb;
+  --md-accent-hatch: rgba(110,123,230,0.16);
+  /* Status */
+  --md-positive: #5ac48a;
+  --md-positive-ink: #2f8a5a;
+  --md-positive-tint: #e7f6ee;
+  --md-warning: #f0b35a;
+  --md-warning-ink: #9a6a16;
+  --md-warning-tint: #fbf1de;
+  --md-critical: #ef6f6f;
+  --md-critical-ink: #b33a3a;
+  --md-critical-tint: #fdeaea;
+  /* Semantic aliases */
+  --surface-page: var(--md-ground);
+  --surface-card: var(--md-card);
+  --surface-subtle: var(--md-chip);
+  --text-primary: var(--md-ink);
+  --text-secondary: var(--md-muted);
+  --border-subtle: var(--md-line);
+  --action-primary: var(--md-ink);
+  --action-primary-text: var(--md-on-ink);
+}

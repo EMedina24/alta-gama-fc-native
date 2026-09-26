@@ -315,6 +315,55 @@ const dark = {
   cardGround: '#101215',
 
   /**
+   * The redesigned builder (ADR 0213), from `handoff_lineup/`. ⚠ The pitch card
+   * and the plane are PAINT, never glass: the plane moves under a transform, and
+   * a transformed child under a glass ancestor is how the tab bar's rail died
+   * (trap 64). So the handoff's glass recipes stand here as flat washes.
+   */
+  xiCardFill: 'rgba(16,18,22,0.34)',
+  xiPlaneFill: 'rgba(10,11,12,0.28)',
+  /**
+   * ⚠⚠ SOLID inks for SVG gradient stops, faded by `Xi.wash`'s stop opacities.
+   * react-native-svg ignores the alpha of an `rgba()` stopColor — a
+   * `rgba(255,255,255,.07)` stop paints OPAQUE white; the first build of the
+   * pitch card came up as a white slab.
+   */
+  xiWashInk: '#ffffff',
+  xiShadowInk: '#000000',
+  xiPlaneStripe: 'rgba(255,255,255,0.025)',
+  xiPlaneLine: 'rgba(255,255,255,0.18)',
+  /** The pitch card's buttons and the status pill's neutral state. */
+  xiControl: 'rgba(255,255,255,0.08)',
+  xiControlLine: 'rgba(255,255,255,0.16)',
+  xiStatus: 'rgba(255,255,255,0.1)',
+  /** A glass track's active segment. */
+  xiSegActive: 'rgba(255,255,255,0.16)',
+  /** A placed player: the light orb, its ink, its ring and halo. */
+  xiOrbHi: '#f4f6f6',
+  xiOrbLo: '#c9cfd4',
+  xiOrbInk: '#14161a',
+  xiTokenRing: 'rgba(255,255,255,0.9)',
+  xiTokenHalo: 'rgba(255,255,255,0.06)',
+  /** The shirt badge on an orb's shoulder. */
+  xiBadge: '#0a0b0c',
+  xiBadgeRing: 'rgba(255,255,255,0.3)',
+  /** The name under (flat) or over (3D) a token. */
+  xiNamePill: 'rgba(10,11,12,0.72)',
+  /** An empty slot's dashed ring and wash; the bench's empty cells. */
+  xiSlotDash: 'rgba(255,255,255,0.35)',
+  xiSlotWash: 'rgba(255,255,255,0.04)',
+  xiBenchDash: 'rgba(255,255,255,0.25)',
+  /** The formation pop-over — OPAQUE paint (traps 59/69/71/74), not glass. */
+  xiPopover: '#17191d',
+  /**
+   * The camera probe (`_debug/xi?probe=1`, ADR 0216) — DEBUG ONLY, two colours
+   * nothing else on the pitch wears: the native transform's marks, and
+   * `projectPoint`'s rings. Coincident means the maths is the transform.
+   */
+  xiProbeMark: '#ff2d55',
+  xiProbeRing: '#00e5ff',
+
+  /**
    * The NEWS screen's own furniture (ADR 0129, kept by 0130): the saved
    * bookmark's lime plate — the Saved screen's un-save control, the story
    * sheet's toggled Save — and the meta line's separator dot.
@@ -1309,6 +1358,15 @@ export const Type = {
    * the uppercasing is done on the string there.
    */
   tabLabel: { fontFamily: DisplayFont.bold, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+  /**
+   * The Starting XI builder's Saira roles (ADR 0213) — the handoff's display
+   * face for formations, the player card's name and its stat values. Line
+   * heights at 1.2× (trap 78), never the kit's `.92`.
+   */
+  xiFormation: { fontFamily: DisplayFont.bold, fontSize: 19, lineHeight: 23, letterSpacing: 0, fontVariant: TabularNums, textTransform: 'uppercase' },
+  xiFormationLg: { fontFamily: DisplayFont.bold, fontSize: 20, lineHeight: 24, letterSpacing: 0, fontVariant: TabularNums, textTransform: 'uppercase' },
+  xiCardName: { fontFamily: DisplayFont.extraBold, fontSize: 30, lineHeight: 36, letterSpacing: -0.15, textTransform: 'uppercase' },
+  xiStat: { fontFamily: DisplayFont.extraBold, fontSize: 30, lineHeight: 36, letterSpacing: -0.15, fontVariant: TabularNums, textTransform: 'uppercase' },
 } as const;
 
 /** Hit targets: nothing interactive below 44. Switch is 51×31 (system). */
@@ -1743,6 +1801,111 @@ export const Motion = {
   stagger: 45,
   /** One lap of the signed-out avatar's attention ring (ADR 0101). Tuned from 2800 — Ed wanted it calmer. */
   orbit: 4600,
+} as const;
+
+/**
+ * Curves, as `Easing.bezier` arguments. `kit` is the Medina iOS kit's one
+ * easing (`--md-ease`), which the Starting XI builder (ADR 0217) is the first
+ * screen to take.
+ */
+export const Ease = {
+  kit: [0.32, 0.72, 0, 1],
+} as const;
+
+/**
+ * The Starting XI builder's own clock (ADR 0217) — a feature group, like
+ * `Glide`. ⚠ Every animation here is ONE-SHOT; the handoff's 6s token breathe
+ * is not built (the `Pulse` rule: a perpetual loop needs its own argument).
+ */
+export const XiMotion = {
+  /** The plane settling after a toggle, a Reset or a Flip. */
+  plane: 700,
+  /** A placed token popping in, and its ripple. */
+  pop: 700,
+  ripple: 900,
+  /** The formation pop-over fading up. */
+  popover: 350,
+  /** The club scene crossfading on a switch. */
+  scene: 500,
+  /** A tap this soon after a camera gesture is the gesture's tail, not a pick. */
+  tapGuard: 80,
+  /** A placement older than this is not replayed when the pitch comes back into view. */
+  fxStale: 1500,
+} as const;
+
+/**
+ * The Starting XI builder's geometry (ADR 0213), from `handoff_lineup/`.
+ * Points unless marked UNITS — plane units, which the camera scales (about
+ * 0.66pt each at rest on a 393pt phone).
+ */
+export const Xi = {
+  /** Header: the club crest and the two circles. */
+  crest: 34,
+  circle: 44,
+  countBadge: 18,
+  /** Controls row: the formation chip and its circle. */
+  control: 40,
+  /** The pitch card, its top bar and where the scene starts under it. */
+  cardRadius: 28,
+  barInset: 12,
+  barH: 28,
+  sceneTop: 48,
+  /** Stop opacities for the solid gradient inks (`xiWashInk`, `xiShadowInk`). */
+  wash: { cardTop: 0.07, cardFoot: 0.01, planeTop: 0.07, planeFoot: 0.015, shadow: 0.3 },
+  /** UNITS: the plane's corner, and its edge. */
+  planeRadius: 10,
+  planeEdge: 1,
+  /** UNITS: a token and its furniture. */
+  token: 100,
+  tokenRing: 4,
+  tokenHalo: 12,
+  badge: 40,
+  badgeRing: 3,
+  badgeFont: 21,
+  initialsFont: 36,
+  slotDash: 3,
+  slotLabelFont: 19,
+  slotLabelTracking: 2.6,
+  nameFont: 23,
+  namePadX: 16,
+  namePadY: 6,
+  nameGap: 8,
+  pillMax: 180,
+  /**
+   * How far a name pill may reach past its lane into the gap beside it, in
+   * UNITS. Neighbouring names are rarely both long; truncating every
+   * two-word name to keep the worst case apart was the first build's mistake.
+   */
+  pillSpill: 20,
+  /** SF 600's average glyph advance, in ems — to ESTIMATE a pill's width without measuring it. */
+  nameEm: 0.56,
+  /** A 3D token stands on its anchor: lifted this fraction of its diameter. */
+  lift: 0.54,
+  /** The smallest a token draws on screen, in points; below it the art stops shrinking. */
+  minToken: 30,
+  /** The bench row and tray. */
+  benchChipH: 36,
+  benchOrb: 38,
+  benchBadge: 18,
+  benchRadius: 22,
+  /** The hint pill at the foot of the pitch. */
+  hintH: 32,
+  /** The player card sheet. */
+  cardOrb: 60,
+  statRadius: 16,
+  /** A saved lineup's row of initials. */
+  lineupDot: 24,
+  /** A sheet's ✕, the lineup card's bin, and the card sheet's shirt badge. */
+  sheetClose: 40,
+  trash: 36,
+  cardBadge: 24,
+  /** The save sheet's name field — 16pt text, the size iOS does not zoom into. */
+  fieldH: 44,
+  fieldFont: 16,
+  /** The formation pop-over. */
+  popoverW: 170,
+  popoverRow: 44,
+  popoverRadius: 20,
 } as const;
 
 /**

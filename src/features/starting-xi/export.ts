@@ -9,7 +9,15 @@
  * tall, taller than any sheet detent), while the buttons live in the export
  * sheet, which shares no React state with the screen. So the screen registers
  * a `capture` function on mount and the sheet calls `exportLineup`, which
- * awaits it. One registered capture at a time — there is one builder screen.
+ * awaits it.
+ *
+ * ⚠⚠ **Keyed by HOST, since the builder became a tab (ADR 0214).** NativeTabs
+ * keeps the tab's builder mounted, so it and a builder pushed from a club page
+ * can be alive at once; a single slot would hand the export to whichever
+ * mounted last. The sheet names its host in its params. And registration is
+ * on MOUNT, not focus: presenting the export sheet BLURS the builder under it,
+ * so a focus-keyed registration would unregister at the exact moment it is
+ * needed.
  *
  * ⚠ The card is rasterised at a TRUE 1080 × H: the capture view is laid out
  * at `1080 / PixelRatio` points and captured at device pixel ratio, so the
@@ -30,11 +38,25 @@ export type CaptureFn = (size: ExportSize) => Promise<unknown>;
 export type ExportKind = 'share' | 'save';
 export type ExportOutcome = 'shared' | 'saved' | 'denied' | 'unavailable';
 
-let capture: CaptureFn | null = null;
+/** Which builder screen: the tab's, or one pushed from a club page. */
+export type XiHost = 'tab' | 'club';
 
-/** The builder screen registers its capture on mount and `null` on unmount. */
-export function registerCapture(fn: CaptureFn | null): void {
-  capture = fn;
+const captures = new Map<XiHost, CaptureFn>();
+
+export function isXiHost(value: unknown): value is XiHost {
+  return value === 'tab' || value === 'club';
+}
+
+/**
+ * A builder screen registers its capture on mount. The returned function
+ * unregisters it — and ONLY it: a stale cleanup must never remove a newer
+ * builder's capture from the same host.
+ */
+export function registerCapture(host: XiHost, fn: CaptureFn): () => void {
+  captures.set(host, fn);
+  return () => {
+    if (captures.get(host) === fn) captures.delete(host);
+  };
 }
 
 /**
@@ -56,7 +78,8 @@ export async function captureView(ref: React.RefObject<unknown>): Promise<string
   });
 }
 
-export async function exportLineup(kind: ExportKind, size: ExportSize): Promise<ExportOutcome> {
+export async function exportLineup(host: XiHost, kind: ExportKind, size: ExportSize): Promise<ExportOutcome> {
+  const capture = captures.get(host);
   if (!capture) return 'unavailable';
   const uri = (await capture(size)) as string;
 

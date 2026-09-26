@@ -1,7 +1,7 @@
 # 0065 — The Starting XI builder, nested under the club page
 
 - **Date:** 2026-08-29
-- **Status:** Accepted — pure logic harness-proven (94 assertions); not yet verified on the simulator
+- **Status:** Accepted — pure logic harness-proven (94 assertions); not yet verified on the simulator. **Superseded in part by [0211](./0211-the-xi-is-keyed-by-slot-with-a-bench-and-saved-lineups.md)–[0217](./0217-one-curve-and-one-shot-motion.md)** (2026-09-26): state (§3/§5/§6), the board and looks (§4), the sheets (§7–8, §10), club switching (§13). The folder route, the squad-gated entry row, person-id keys and the export card stand.
 - **Decided by:** Ed Medina, with Claude
 
 ## Context

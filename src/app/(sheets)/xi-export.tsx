@@ -6,6 +6,9 @@
  * see `features/starting-xi/export.ts`. The preview here is the same
  * `LineupCard` at sheet width.
  *
+ * ⚠ `host` names WHICH builder: the tab's stays mounted under one pushed from a
+ * club page, and each registers its own capture (ADR 0214).
+ *
  * ⚠ Squad is a cache read (`useClubSquad`), like the player sheet.
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -15,20 +18,19 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { SHEET_GROUND } from '@/components/atoms';
 import { XiExportSheet, type ExportStatus } from '@/components/organisms/xi-export-sheet';
 import { DEFAULT_EXPORT_SIZE, type ExportSize } from '@/features/starting-xi/card-geometry';
-import { exportLineup, type ExportKind } from '@/features/starting-xi/export';
+import { exportLineup, isXiHost, type ExportKind } from '@/features/starting-xi/export';
 import { hapticSaved } from '@/lib/haptics';
-import { visiblePlaced } from '@/features/starting-xi/lineup';
 import { abbreviate, displayName } from '@/lib/cronogol/derive';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useClubSquad } from '@/queries/use-club';
-import { setTitle, useClubLineup } from '@/store/starting-xi';
+import { setXiTitle, useClubXi } from '@/store/starting-xi';
 
 export default function XiExportRoute() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, host } = useLocalSearchParams<{ slug: string; host?: string }>();
   const router = useRouter();
   const { copy } = useI18n();
   const xi = copy.startingXi;
-  const lineup = useClubLineup(slug);
+  const lineup = useClubXi(slug);
   const squad = useClubSquad(slug);
 
   const [size, setSize] = useState<ExportSize>(DEFAULT_EXPORT_SIZE);
@@ -39,7 +41,12 @@ export default function XiExportRoute() {
   const [status, setStatus] = useState<ExportStatus | null>(null);
 
   const byId = useMemo(() => new Map((squad.data?.players ?? []).map((p) => [p.id, p])), [squad.data]);
-  const placed = useMemo(() => visiblePlaced(lineup.placed, new Set(byId.keys())), [lineup.placed, byId]);
+  // Only players still in the squad are drawn; a departed one leaves a slot empty.
+  const placements = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const [slot, id] of Object.entries(lineup.placements)) if (byId.has(id)) out[slot] = id;
+    return out;
+  }, [lineup.placements, byId]);
 
   if (!squad.data) return null;
   const team = squad.data.team;
@@ -48,7 +55,7 @@ export default function XiExportRoute() {
     setBusy(true);
     setStatus(null);
     try {
-      const outcome = await exportLineup(kind, size);
+      const outcome = await exportLineup(isXiHost(host) ? host : 'tab', kind, size);
       if (__DEV__) console.log('[xi-export]', kind, size, outcome);
       if (outcome === 'saved') {
         void hapticSaved();
@@ -78,8 +85,7 @@ export default function XiExportRoute() {
           team: { name: displayName(team.name), crestUrl: team.crestUrl, abbr: abbreviate(team.name, team.slug, team.shortName) },
           title: lineup.title ?? xi.defaultTitle,
           formation: lineup.formation,
-          look: lineup.look,
-          placed,
+          placements,
           players: byId,
           labels: { cardLabel: xi.cardLabel, cardFormation: xi.cardFormation, cardUrl: xi.cardUrl },
         }}
@@ -90,7 +96,7 @@ export default function XiExportRoute() {
         }}
         title={lineup.title ?? xi.defaultTitle}
         onTitle={(t) => {
-          setTitle(slug, t);
+          setXiTitle(slug, t);
           setStatus(null);
         }}
         onSave={() => void run('save')}
@@ -101,7 +107,7 @@ export default function XiExportRoute() {
           heading: xi.exportTitle,
           cardTitle: xi.cardTitleLabel,
           sizes: xi.sizeLabels,
-          save: xi.save,
+          save: xi.savePhotos,
           share: xi.share,
           note: xi.exportNote,
           done: xi.done,

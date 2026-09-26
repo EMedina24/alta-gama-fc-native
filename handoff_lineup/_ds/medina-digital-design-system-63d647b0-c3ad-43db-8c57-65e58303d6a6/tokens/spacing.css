@@ -1,0 +1,33 @@
+:root {
+  --md-space-1: 4px;
+  --md-space-2: 6px;    /* chip gap */
+  --md-space-3: 8px;
+  --md-space-4: 10px;   /* form gap */
+  --md-space-5: 14px;   /* bento gap */
+  --md-space-6: 20px;
+  --md-space-7: 24px;
+  --md-space-8: 30px;   /* card padding (max) */
+  --md-space-9: 44px;
+  --md-card-pad: clamp(20px, 2.4vw, 30px);
+  --md-frame-pad: clamp(18px, 3vw, 44px);
+  /* Radii — concentric: frame > card > media/chip-field > pill */
+  --md-radius-frame: clamp(24px, 3vw, 40px);
+  --md-radius-card: 28px;
+  --md-radius-media: 20px;
+  --md-radius-field: 16px;
+  --md-radius-tile: 14px;
+  --md-radius-mark: 11px;
+  --md-radius-pill: 999px;
+  --md-notch: 26px;     /* inner radius of the corner notch */
+  /* Elevation — ambient only, never hard */
+  --md-shadow-frame: 0 40px 120px -40px rgba(20,22,40,0.45), inset 0 1px 0 rgba(255,255,255,0.8);
+  --md-shadow-card-hover: 0 30px 60px -40px rgba(20,22,40,0.35);
+  --md-shadow-chip: 0 1px 2px rgba(20,22,40,0.05);
+  --md-shadow-mark: 0 20px 40px -20px rgba(20,22,40,0.5);
+  /* Controls */
+  --md-control-h: 48px;
+  --md-control-h-lg: 52px;
+  --md-orb: 38px;
+  --md-orb-lg: 42px;
+  --md-notch-btn: 56px;
+}

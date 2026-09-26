@@ -71,6 +71,7 @@ import { useClubFixtures, useClubSquad } from '@/queries/use-club';
 import { useStandings } from '@/queries/use-standings';
 import { useStatsLeaders, useTeamStats } from '@/queries/use-stats';
 import { usePreferences, useZone, type ClockFormat } from '@/store/preferences';
+import { setLastClub } from '@/store/starting-xi';
 
 type Tab = 'overview' | 'fixtures' | 'squad';
 
@@ -394,9 +395,12 @@ export default function ClubScreen() {
                       ? copy.startingXi.rowBody
                       : copy.club.squadEmpty
                   }
-                  onPress={() =>
-                    router.push({ pathname: '/club/[slug]/starting-xi', params: { slug } })
-                  }
+                  onPress={() => {
+                    // ⚠ Commit, then navigate (ADR 0212): the fifth tab opens on
+                    // the reader's last club, and this tap is them choosing it.
+                    setLastClub(slug);
+                    router.push({ pathname: '/club/[slug]/starting-xi', params: { slug } });
+                  }}
                 />
                 {squad.isPending ? (
                   <SkeletonRows count={6} height={Size.rowSkeleton} />

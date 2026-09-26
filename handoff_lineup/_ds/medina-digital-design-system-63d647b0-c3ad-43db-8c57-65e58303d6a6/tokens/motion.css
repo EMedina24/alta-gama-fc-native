@@ -1,0 +1,15 @@
+:root {
+  --md-ease: cubic-bezier(.32,.72,0,1); /* @kind other */  /* the only curve: heavy, settles softly */
+  --md-dur-fast: .5s; /* @kind other */
+  --md-dur: .6s; /* @kind other */
+  --md-dur-slow: .7s; /* @kind other */
+  --md-dur-reveal: .9s; /* @kind other */
+  --md-lift: -2px;      /* button hover */
+  --md-lift-card: -3px; /* card hover */
+  --md-press: .97; /* @kind other */      /* active scale */
+  --md-reveal-offset: 28px;
+}
+::selection { background: var(--md-accent-tint); }
+*:focus-visible { outline: 2px solid var(--md-accent); outline-offset: 3px; }
+@keyframes md-pulse { 0%,100% { transform: scale(1); opacity: .9 } 50% { transform: scale(1.7); opacity: .2 } }
+@keyframes md-pop { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }

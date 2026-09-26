@@ -18,10 +18,11 @@
  * policy in `./client` does not retry anything under 500, so it fails once and
  * stays failed rather than hammering a route that will never agree with itself.
  */
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { getPlayerStats, getStatsLeaders, getTeamStats } from '@/lib/cronogol/client';
-import type { StatsMetric } from '@/lib/cronogol/types';
+import type { PlayerStatsView, StatsMetric } from '@/lib/cronogol/types';
+import { createLimiter } from '@/lib/limit';
 import { keys } from './keys';
 import { STALE } from './stale';
 
@@ -47,6 +48,37 @@ export function usePlayerStats(slug: string | null) {
     staleTime: STALE.stats,
     enabled: Boolean(slug),
   });
+}
+
+/**
+ * One stats payload per addressable squad player — the Starting XI picker's
+ * goals · assists column (ADR 0214).
+ *
+ * ⚠ The SAME query key as `usePlayerStats`, so the player card that opens
+ * from a picker row is a cache read, and so is Season stats afterwards.
+ *
+ * ⚠ Throttled to four in flight (the handoff's number) by one module-level
+ * gate shared across mounts: a LaLiga squad is ~25 requests, and a picker
+ * opening must not queue them all ahead of whatever else the app is asking.
+ *
+ * ⚠ Callers pass slugs already through `statsSlug` — a league without player
+ * stats passes none and this costs nothing.
+ */
+const statsGate = createLimiter(4);
+
+export function useSquadStats(slugs: readonly string[]): ReadonlyMap<string, PlayerStatsView | null> {
+  const results = useQueries({
+    queries: slugs.map((slug) => ({
+      queryKey: keys.playerStats(slug),
+      queryFn: () => statsGate(() => getPlayerStats(slug)),
+      staleTime: STALE.stats,
+    })),
+  });
+  const out = new Map<string, PlayerStatsView | null>();
+  results.forEach((result, i) => {
+    if (result.data !== undefined) out.set(slugs[i], result.data);
+  });
+  return out;
 }
 
 /**

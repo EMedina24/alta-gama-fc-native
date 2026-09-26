@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/tokens/motion.css">
+  <link rel="stylesheet" href="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+  <script src="_ds/medina-digital-design-system-63d647b0-c3ad-43db-8c57-65e58303d6a6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; min-height: 100%; background: #050607; color: #f4f6f6; }
+    input::placeholder { color: #7c858b; }
+    a { color: var(--md-ink); } a:hover { color: var(--md-accent-ink); }
+    button { -webkit-tap-highlight-color: transparent; }
+    [data-theme="dark"] { --md-ground: #0f151b; --md-backdrop: #05080b; --md-backdrop-top: #0b1015; --md-card: #151c24; --md-chip: #1c242d; --md-row-hover: #1a222b; --md-line: rgba(255,255,255,.08); --md-ink: #f2f5f7; --md-ink-soft: #c9d1d8; --md-muted: #8a95a0; --md-accent: #c8ff3d; --md-accent-ink: #d9ff6b; --md-accent-tint: rgba(200,255,61,.14); --md-accent-hatch: rgba(200,255,61,.2); --md-positive: #c8ff3d; --md-positive-ink: #d9ff6b; --md-positive-tint: rgba(200,255,61,.14); --md-critical-tint: rgba(239,111,111,.16); --md-critical-ink: #ff9a9a; --md-shadow-card-hover: 0 30px 60px -40px rgba(0,0,0,.9); --md-shadow-chip: 0 1px 2px rgba(0,0,0,.4); --md-shadow-mark: 0 20px 40px -20px rgba(0,0,0,.8); --x-stage: #05080b; --x-glass: rgba(15,21,27,.74); --x-glass-line: rgba(255,255,255,.08); --x-on-stage: #f2f5f7; --x-btn-on-ink: #0b1015; --x-pitch-line: rgba(255,255,255,.22); --x-pitch-grid: transparent; --x-name-bg: rgba(11,16,21,.82); --x-name-fg: #f2f5f7; --x-badge-bg: #0b1015; --x-badge-fg: #f2f5f7; --x-badge-halo: rgba(255,255,255,.25); --x-ring-halo: rgba(255,255,255,.06); --x-empty-bg: rgba(255,255,255,.03); --x-empty-border: rgba(255,255,255,.16); --x-empty-fg: #8a95a0; }
+    [data-theme="light"] { --x-stage: #111218; --x-glass: rgba(238,239,245,.74); --x-glass-line: rgba(255,255,255,.6); --x-on-stage: #ffffff; --x-btn-on-ink: #111218; --x-pitch-line: #6f7282; --x-pitch-grid: rgba(17,18,24,.05); --x-empty-bg: rgba(255,255,255,.4); --x-empty-fg: #6f7282; --x-empty-border: rgba(17,18,24,.25); --x-name-bg: rgba(17,18,24,.88); --x-name-fg: #ffffff; --x-badge-bg: #111218; --x-badge-fg: #ffffff; --x-badge-halo: rgba(255,255,255,.9); --x-ring-halo: rgba(17,18,24,.06); }
+    [data-theme="dark"] input { color: #f2f5f7 !important; }
+    @keyframes xi-breathe { 0%,100% { transform: scale(1) } 50% { transform: scale(1.015) } }
+    @keyframes xi-pop { 0% { transform: scale(.7) translateZ(0); opacity: 0 } 70% { transform: scale(1.04) translateZ(24px); opacity: 1 } 100% { transform: scale(1) translateZ(0); opacity: 1 } }
+    @keyframes xi-ripple { 0% { transform: scale(.2); opacity: .9 } 100% { transform: scale(3.2); opacity: 0 } }
+    @keyframes xi-shimmer { 0% { transform: translateX(-120%) } 100% { transform: translateX(120%) } }
+    @keyframes xi-hint { 0%,100% { box-shadow: 0 0 0 0 rgba(200,255,61,.6) } 50% { box-shadow: 0 0 0 14px rgba(200,255,61,0) } }
+    @keyframes xi-fade { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+    @keyframes xi-up { from { transform: translateY(100%) } to { transform: none } }
+    @keyframes xi-dim { from { opacity: 0 } to { opacity: 1 } }
+  </style>
+</helmet>
+
+<div style="min-height: 100vh; display: grid; place-items: center; padding: 32px 16px; box-sizing: border-box; background: radial-gradient(ellipse at 50% 0%, #1a1d22, #050607 70%);">
+<div style="width: 413px; height: 872px; border-radius: 64px; padding: 10px; box-sizing: border-box; background: #1b1c1e; box-shadow: 0 0 0 1px #2c2e31, 0 40px 80px rgba(0,0,0,.45); flex: none;">
+<div data-theme="dark" data-screen-label="Starting XI mobile" style="{{ limeVars }} position: relative; width: 393px; height: 852px; border-radius: 54px; overflow: hidden; background: #0a0b0c; color: #f4f6f6; font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;">
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; overflow: hidden; background: {{ sceneBg }}; transition: background .5s;">
+    <sc-if value="{{ hasWatermark }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -56px; top: 66px; width: 290px; height: 290px; background-image: {{ watermarkImg }}; background-size: contain; background-repeat: no-repeat; background-position: center; opacity: .15; filter: grayscale(.3);"></span></sc-if>
+  </div>
+
+  <div style="position: absolute; top: 0; left: 0; right: 0; height: 54px; z-index: 90; display: flex; align-items: center; justify-content: space-between; padding: 4px 34px 0; box-sizing: border-box; font-size: 16px; font-weight: 600; pointer-events: none;">
+    <span>9:41</span>
+    <span style="position: absolute; left: 50%; top: 11px; transform: translateX(-50%); width: 124px; height: 36px; border-radius: 20px; background: #000;"></span>
+    <span style="display: flex; gap: 6px; align-items: center; font-size: 17px;"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-full" style="font-size: 22px;"></i></span>
+  </div>
+
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+  <div style="position: absolute; inset: 0; padding: 58px 16px 30px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button type="button" onClick="{{ toggleClubMenu }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; padding: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;">
+        <sc-if value="{{ hasCrest }}" hint-placeholder-val="{{ false }}"><span style="width: 34px; height: 34px; flex: none; background-image: {{ crestImg }}; background-size: contain; background-position: center; background-repeat: no-repeat; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));"></span></sc-if>
+        <sc-if value="{{ noCrest }}" hint-placeholder-val="{{ true }}"><span style="width: 34px; height: 34px; flex: none; border-radius: 12px; background: #1e2126; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12); display: grid; place-items: center; font-size: 12.5px; font-weight: 800; color: #a3abb0;">{{ club.abbr }}</span></sc-if>
+        <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+          <span style="display: flex; align-items: center; gap: 5px; font-size: 17px; font-weight: 600; letter-spacing: -.2px; line-height: 1.25;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ club.name }}</span><i class="ph-bold ph-caret-down" style="font-size: 12px; color: #a3abb0; flex: none;"></i></span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; color: #a3abb0; white-space: nowrap;"><span>{{ club.league }} · {{ t.season }}</span><span title="{{ sourceLabel }}" style="width: 5px; height: 5px; border-radius: 99px; background: {{ sourceDot }};"></span></span>
+        </span>
+      </button>
+      <button type="button" onClick="{{ openLineups }}" aria-label="{{ t.lineups }}" style="position: relative; width: 44px; height: 44px; flex: none; border-radius: 44px; padding: 0; color: #f4f6f6; cursor: pointer; display: grid; place-items: center; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box;"><i class="ph-bold ph-bookmarks-simple" style="font-size: 18px;"></i><sc-if value="{{ lineupCount }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 99px; background: var(--md-accent); color: #101806; font-size: 10.5px; font-weight: 700; display: grid; place-items: center;">{{ lineupCount }}</span></sc-if></button>
+      <button type="button" onClick="{{ openSave }}" aria-label="{{ t.save }}" style="width: 44px; height: 44px; flex: none; border-radius: 44px; padding: 0; box-sizing: border-box; display: grid; place-items: center; background: {{ saveBg }}; border: {{ saveBorder }}; backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); color: {{ saveFg }}; cursor: {{ saveCursor }}; transition: background var(--md-dur-fast) var(--md-ease);"><i class="{{ saveIconClass }}" style="font-size: 20px;"></i></button>
+    </div>
+
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: 22px; gap: 2px; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box;">
+        <button type="button" onClick="{{ showMine }}" style="height: 34px; border: 0; border-radius: 18px; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: -.15px; background: {{ mineBg }}; color: {{ mineFg }}; transition: background var(--md-dur-fast) var(--md-ease);">{{ t.mine }}</button>
+        <button type="button" onClick="{{ showPredicted }}" style="height: 34px; border: 0; border-radius: 18px; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: -.15px; background: {{ predBg }}; color: {{ predFg }}; transition: background var(--md-dur-fast) var(--md-ease);">{{ t.predicted }}</button>
+      </div>
+      <button type="button" onClick="{{ toggleFormationMenu }}" style="height: 40px; border-radius: 20px; padding: 0 12px; flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; color: #f4f6f6; cursor: pointer; opacity: {{ formationOpacity }}; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box;"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 19px; font-weight: 700;">{{ formation }}</span><i class="ph-bold ph-caret-down" style="font-size: 12px; color: #a3abb0;"></i></button>
+      <button type="button" onClick="{{ openSettings }}" aria-label="{{ m.settings }}" style="width: 40px; height: 40px; flex: none; border-radius: 40px; padding: 0; color: #f4f6f6; cursor: pointer; display: grid; place-items: center; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box;"><i class="ph-bold ph-sliders-horizontal" style="font-size: 17px;"></i></button>
+    </div>
+
+    <div style="flex: 1; min-height: 0; border-radius: 28px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.01)), rgba(16,18,22,.34);">
+      <div style="position: absolute; top: 12px; left: 12px; right: 12px; display: flex; align-items: center; gap: 6px; z-index: 30; pointer-events: none;">
+        <span style="display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border-radius: 14px; font-size: 12.5px; font-weight: 500; white-space: nowrap; background: {{ statusBg }}; color: {{ statusFg }}; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: all var(--md-dur) var(--md-ease);"><span style="width: 6px; height: 6px; border-radius: 6px; background: {{ statusDot }};"></span>{{ statusText }}</span>
+        <div style="flex: 1;"></div>
+        <sc-if value="{{ showReset }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ resetView }}" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border-radius: 14px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #f4f6f6; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; animation: xi-fade .4s var(--md-ease);"><i class="ph-bold ph-crosshair-simple" style="font-size: 13px;"></i>{{ zoomLabel }}</button>
+        </sc-if>
+        <button type="button" onClick="{{ toggleFlat }}" style="pointer-events: auto; height: 28px; padding: 0 11px; border-radius: 14px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #f4f6f6; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600;">{{ viewLabel }}</button>
+        <button type="button" onClick="{{ flipView }}" aria-label="Flip" style="pointer-events: auto; width: 28px; height: 28px; padding: 0; border-radius: 28px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #f4f6f6; cursor: pointer; display: grid; place-items: center;"><i class="ph-bold ph-arrows-down-up" style="font-size: 13px;"></i></button>
+      </div>
+
+      <sc-if value="{{ showTapHint }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 30; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px 0 10px; border-radius: 16px; background: rgba(10,11,12,.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 12.5px; font-weight: 500; white-space: nowrap; pointer-events: none; animation: xi-fade .6s var(--md-ease);"><i class="ph-bold ph-hand-tap" style="font-size: 15px; color: var(--md-accent);"></i>{{ m.tapToPick }}</div>
+      </sc-if>
+      <sc-if value="{{ showGestureHint }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 30; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px 0 10px; border-radius: 16px; background: rgba(10,11,12,.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 12.5px; font-weight: 500; color: #a3abb0; white-space: nowrap; pointer-events: none; animation: xi-fade .6s var(--md-ease);"><i class="{{ gestureIcon }}" style="font-size: 15px; color: #f4f6f6;"></i>{{ gestureText }}</div>
+      </sc-if>
+
+      <div ref="{{ sceneRef }}" onTouchStart="{{ onTS }}" onTouchMove="{{ onTM }}" onTouchEnd="{{ onTE }}" onTouchCancel="{{ onTE }}" onMouseDown="{{ orbitStart }}" onWheel="{{ onWheelZoom }}" style="position: absolute; inset: 48px 0 0 0; perspective: 1400px; perspective-origin: 50% 30%; user-select: none; touch-action: none; cursor: {{ sceneCursor }};">
+        <div style="position: absolute; left: 50%; top: {{ mPlaneTop }}; width: 520px; height: 800px; margin: -400px 0 0 -260px; transform-origin: 50% 50%; transform-style: preserve-3d; transform: {{ planeTransform }}; transition: {{ planeTransition }};">
+          <div style="position: absolute; inset: 0; border-radius: 10px; background: {{ pitchBg }}; box-shadow: 0 60px 90px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.12); overflow: hidden;">
+            <div style="position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(255,255,255,.025) 0 10%, transparent 10% 20%);"></div>
+            <svg viewBox="0 0 100 154" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,.18); stroke-width: .4;">
+              <rect x="1" y="1" width="98" height="152" rx="1.5"></rect>
+              <line x1="1" y1="77" x2="99" y2="77"></line>
+              <circle cx="50" cy="77" r="13.5"></circle>
+              <circle cx="50" cy="77" r=".8" fill="rgba(255,255,255,.3)"></circle>
+              <rect x="20.3" y="1" width="59.4" height="24.3"></rect>
+              <rect x="36.5" y="1" width="27" height="8.1"></rect>
+              <rect x="20.3" y="128.7" width="59.4" height="24.3"></rect>
+              <rect x="36.5" y="144.9" width="27" height="8.1"></rect>
+              <path d="M 39 25.3 A 13.5 13.5 0 0 0 61 25.3"></path>
+              <path d="M 39 128.7 A 13.5 13.5 0 0 1 61 128.7"></path>
+            </svg>
+            {{ fxLayer }}
+          </div>
+          <sc-for list="{{ slots }}" as="s" hint-placeholder-count="11">
+            <div style="position: absolute; left: {{ s.left }}; top: {{ s.top }}; width: 90px; height: 50px; margin: -25px 0 0 -45px; border-radius: 99px; background: radial-gradient(ellipse, rgba(0,0,0,{{ s.shadowA }}), transparent 70%); pointer-events: none; opacity: {{ shadowOpacity }};"></div>
+            <div onClick="{{ s.tap }}" style="position: absolute; left: {{ s.left }}; top: {{ s.top }}; width: {{ tokenPx }}; height: {{ tokenPx }}; margin: {{ tokenMargin }}; transform-style: preserve-3d; transform: {{ s.transform }}; transition: transform var(--md-dur) var(--md-ease); z-index: {{ s.z }}; cursor: pointer;">
+              <sc-if value="{{ s.empty }}" hint-placeholder-val="{{ true }}">
+                <div style="position: absolute; inset: 0; box-sizing: border-box; border-radius: 99px; border: 3px dashed {{ s.emptyBorder }}; background: {{ s.emptyBg }}; display: grid; place-items: center; color: {{ s.emptyFg }}; animation: {{ s.emptyAnim }};"><i class="ph-bold ph-plus" style="font-size: 36px;"></i></div>
+                <span style="position: absolute; left: 50%; top: {{ nameTop }}; bottom: {{ nameBottom }}; transform: translateX(-50%); font-size: 19px; font-weight: 800; letter-spacing: 2.6px; text-transform: uppercase; white-space: nowrap; color: {{ s.emptyFg }};">{{ s.id }}</span>
+              </sc-if>
+              <sc-if value="{{ s.filled }}" hint-placeholder-val="{{ false }}">
+                <div style="position: absolute; inset: 0; animation: {{ s.popAnim }}; transform-style: preserve-3d;">
+                  <div style="position: absolute; inset: 0; border-radius: 99px; background: linear-gradient(160deg, #f4f6f6, #c9cfd4); box-shadow: 0 0 0 4px {{ s.ring }}, 0 0 0 12px rgba(255,255,255,.06), 0 28px 48px -20px rgba(0,0,0,.7); display: grid; place-items: center; animation: xi-breathe 6s var(--md-ease) infinite; animation-delay: {{ s.breatheDelay }}; overflow: hidden;"><sc-if value="{{ s.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: {{ tokenFont }}; font-weight: 700; color: #14161a;">{{ s.initials }}</span></sc-if><sc-if value="{{ s.hasPhoto }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background-image: {{ s.photoImg }}; background-size: cover; background-position: 50% 12%;"></span></sc-if></div>
+                  <span style="position: absolute; right: -10px; top: -10px; min-width: 40px; height: 40px; padding: 0 10px; box-sizing: border-box; border-radius: 40px; background: #0a0b0c; color: #f4f6f6; font-size: 21px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(255,255,255,.3); font-variant-numeric: tabular-nums;">{{ s.shirtDisplay }}</span>
+                  <span style="position: absolute; left: 50%; top: {{ nameTop }}; bottom: {{ nameBottom }}; transform: translateX(-50%); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 6px 16px; border-radius: 16px; background: rgba(10,11,12,.72); color: #f4f6f6; font-size: 23px; font-weight: 600; box-shadow: inset 0 0 0 2px {{ s.nameLine }};">{{ s.nameLabel }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" onClick="{{ toggleBench }}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 18px; color: #f4f6f6; cursor: pointer; font: inherit; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box;"><i class="{{ benchChevron }}" style="font-size: 13px; color: #a3abb0;"></i><span style="font-size: 14.5px; font-weight: 600; letter-spacing: -.15px;">{{ t.bench }}</span><span style="font-size: 12.5px; font-weight: 500; color: #7c858b; font-variant-numeric: tabular-nums;">{{ benchCount }}/7</span></button>
+      <div style="flex: 1;"></div>
+      <button type="button" onClick="{{ mirror }}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 18px; color: #f4f6f6; cursor: pointer; font: inherit; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box; opacity: {{ formationOpacity }};"><span style="font-size: 12.5px; font-weight: 600;">{{ t.mirror }}</span></button>
+      <button type="button" onClick="{{ clear }}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 18px; color: #f4f6f6; cursor: pointer; font: inherit; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box; opacity: {{ formationOpacity }};"><span style="font-size: 12.5px; font-weight: 600;">{{ t.clear }}</span></button>
+    </div>
+    <sc-if value="{{ benchOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius: 22px; padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); justify-items: center; animation: xi-fade .5s var(--md-ease); background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box;">
+        <sc-for list="{{ bench }}" as="b" hint-placeholder-count="7">
+          <sc-if value="{{ b.filled }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ b.tap }}" style="border: 0; padding: 0; background: none; cursor: pointer;"><span style="width: 38px; height: 38px; border-radius: 99px; flex: none; position: relative; display: grid; place-items: center; background: linear-gradient(160deg, #f4f6f6, #c9cfd4); box-shadow: 0 0 0 2px {{ b.ring }}, 0 0 0 6px rgba(255,255,255,.06), 0 14px 24px -10px rgba(0,0,0,.7); opacity: {{ b.opacity }};"><span style="position: absolute; inset: 0; border-radius: 99px; overflow: hidden; display: grid; place-items: center;"><sc-if value="{{ b.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; color: #14161a;">{{ b.initials }}</span></sc-if><sc-if value="{{ b.hasPhoto }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background-image: {{ b.photoImg }}; background-size: cover; background-position: 50% 12%;"></span></sc-if></span><span style="position: absolute; right: -5px; top: -5px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 20px; background: #0a0b0c; display: grid; place-items: center; box-shadow: 0 0 0 1.5px rgba(255,255,255,.3); font-size: 10.5px; font-weight: 700; color: #f4f6f6; font-variant-numeric: tabular-nums;">{{ b.shirt }}</span></span></button>
+          </sc-if>
+          <sc-if value="{{ b.empty }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ b.tap }}" style="width: 38px; height: 38px; padding: 0; box-sizing: border-box; border-radius: 38px; border: 1.5px dashed rgba(255,255,255,.25); background: transparent; display: grid; place-items: center; color: #7c858b; cursor: pointer;"><i class="ph-bold ph-plus" style="font-size: 13px;"></i></button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ anySheet }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeSheets }}" style="position: absolute; inset: 0; z-index: 70; background: rgba(0,0,0,.35); animation: xi-dim .3s var(--md-ease);"></div>
+</sc-if>
+
+<sc-if value="{{ formationMenu }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; right: 64px; top: 160px; width: 170px; max-height: 560px; overflow-y: auto; scrollbar-width: none; z-index: 80; border-radius: 20px; padding: 6px; display: flex; flex-direction: column; animation: xi-fade .35s var(--md-ease); background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(16,18,22,.34); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.22); box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(22,24,28,.8);">
+    <span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b; padding: 8px 12px 6px;">{{ t.formation }}</span>
+    <sc-for list="{{ formations }}" as="f" hint-placeholder-count="11">
+      <button type="button" onClick="{{ f.pick }}" style="height: 44px; flex: none; border: 0; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; background: {{ f.bg }}; color: #f4f6f6; cursor: pointer;"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700;">{{ f.id }}</span><i class="{{ f.check }}" style="font-size: 16px; color: var(--md-accent);"></i></button>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ picker }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 80; border-radius: 40px; padding: 10px 16px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(20,22,26,.8); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3); animation: xi-up .5s var(--md-ease); top: 180px;">
+    <span style="width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); align-self: center; flex: none;"></span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.2px;">{{ pickerTitle }}</span><span style="font-size: 12.5px; font-weight: 500; color: #7c858b;">{{ t.goals }} · {{ t.assists }}</span></div>
+    <label style="height: 38px; flex: none; border-radius: 12px; background: rgba(118,118,128,.24); display: flex; align-items: center; gap: 7px; padding: 0 10px;"><i class="ph-bold ph-magnifying-glass" style="font-size: 16px; color: #7c858b;"></i><input value="{{ query }}" onChange="{{ setQuery }}" placeholder="{{ t.search }}" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #f4f6f6; font: inherit; font-size: 16px;"></label>
+    <div style="display: flex; flex: none; padding: 2px; border-radius: 11px; background: rgba(118,118,128,.24);">
+      <sc-for list="{{ pickBands }}" as="pb" hint-placeholder-count="5"><button type="button" onClick="{{ pb.pick }}" style="flex: 1; height: 30px; border: 0; border-radius: 9px; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }};">{{ pb.label }}</button></sc-for>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; margin: 0 -4px;">
+      <sc-for list="{{ pickerGroups }}" as="g" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column;">
+          <span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b; padding: 12px 4px 4px;">{{ g.label }}</span>
+          <sc-for list="{{ g.players }}" as="p" hint-placeholder-count="4">
+            <button type="button" onClick="{{ p.pick }}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 4px; border: 0; border-bottom: .5px solid rgba(255,255,255,.05); background: {{ p.rowBg }}; color: inherit; font: inherit; text-align: left; cursor: pointer;">
+              <span style="width: 38px; height: 38px; border-radius: 99px; flex: none; position: relative; display: grid; place-items: center; background: linear-gradient(160deg, #f4f6f6, #c9cfd4); box-shadow: 0 0 0 2px {{ p.ring }}, 0 0 0 6px rgba(255,255,255,.06), 0 14px 24px -10px rgba(0,0,0,.7); opacity: {{ p.opacity }};"><span style="position: absolute; inset: 0; border-radius: 99px; overflow: hidden; display: grid; place-items: center;"><sc-if value="{{ p.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; color: #14161a;">{{ p.initials }}</span></sc-if><sc-if value="{{ p.hasPhoto }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background-image: {{ p.photoImg }}; background-size: cover; background-position: 50% 12%;"></span></sc-if></span><span style="position: absolute; right: -5px; top: -5px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 20px; background: #0a0b0c; display: grid; place-items: center; box-shadow: 0 0 0 1.5px rgba(255,255,255,.3); font-size: 10.5px; font-weight: 700; color: #f4f6f6; font-variant-numeric: tabular-nums;">{{ p.shirt }}</span></span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; opacity: {{ p.opacity }};"><span style="font-size: 15px; font-weight: 600; letter-spacing: -.15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ p.shortName }}</span><sc-if value="{{ p.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size: 11.5px; font-weight: 500; color: {{ p.subColor }};">{{ p.sub }}</span></sc-if></span>
+              <span style="font-size: 13.5px; color: #a3abb0; font-variant-numeric: tabular-nums; flex: none;">{{ p.ga }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ actionOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 80; border-radius: 40px; padding: 10px 16px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(20,22,26,.8); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3); animation: xi-up .5s var(--md-ease);">
+    <span style="width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); align-self: center; flex: none;"></span>
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span style="width: 60px; height: 60px; border-radius: 99px; flex: none; position: relative; display: grid; place-items: center; background: linear-gradient(160deg, #f4f6f6, #c9cfd4); box-shadow: 0 0 0 2px {{ card.ring }}, 0 0 0 6px rgba(255,255,255,.06), 0 14px 24px -10px rgba(0,0,0,.7); opacity: {{ card.opacity }};"><span style="position: absolute; inset: 0; border-radius: 99px; overflow: hidden; display: grid; place-items: center;"><sc-if value="{{ card.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 700; color: #14161a;">{{ card.initials }}</span></sc-if><sc-if value="{{ card.hasPhoto }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background-image: {{ card.photoImg }}; background-size: cover; background-position: 50% 12%;"></span></sc-if></span><span style="position: absolute; right: -5px; top: -5px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 20px; background: #0a0b0c; display: grid; place-items: center; box-shadow: 0 0 0 1.5px rgba(255,255,255,.3); font-size: 10.5px; font-weight: 700; color: #f4f6f6; font-variant-numeric: tabular-nums;">{{ card.shirt }}</span></span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;"><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 800; letter-spacing: -.15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ card.shortName }}</span><span style="font-size: 12.5px; font-weight: 500; color: #a3abb0; text-wrap: pretty;">{{ card.meta }}</span></span>
+      <button type="button" onClick="{{ closeSheets }}" aria-label="Close" style="width: 40px; height: 40px; flex: none; border-radius: 40px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #f4f6f6; cursor: pointer; display: grid; place-items: center; padding: 0;"><i class="ph-bold ph-x" style="font-size: 15px;"></i></button>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+      <div style="border-radius: 16px; padding: 12px; background: rgba(255,255,255,.06); display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;">{{ t.goals }}</span><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 800; color: var(--md-accent);">{{ card.goals }}</span></div>
+      <div style="border-radius: 16px; padding: 12px; background: rgba(255,255,255,.06); display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;">{{ t.assists }}</span><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 800;">{{ card.assists }}</span></div>
+      <div style="border-radius: 16px; padding: 12px; background: rgba(255,255,255,.06); display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;">{{ t.yellows }}</span><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 800;">{{ card.yellows }}</span></div>
+      <div style="border-radius: 16px; padding: 12px; background: rgba(255,255,255,.06); display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;">{{ t.age }}</span><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 800;">{{ card.age }}</span></div>
+    </div>
+    <span style="font-size: 12.5px; font-weight: 500; color: #7c858b;">{{ card.mode }}</span>
+    <sc-if value="{{ actionEditable }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-if value="{{ actIsSlot }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ actReplace }}" style="min-height: 44px; border: 0; border-radius: 14px; background: var(--md-accent); color: #101806; cursor: pointer; font: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.15px;">{{ m.replace }}</button>
+          <button type="button" onClick="{{ actBench }}" style="min-height: 44px; border: .5px solid rgba(255,255,255,.12); border-radius: 14px; background: #1e2126; color: #f4f6f6; cursor: pointer; font: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.15px;">{{ m.toBench }}</button>
+        </sc-if>
+        <button type="button" onClick="{{ actRemove }}" style="min-height: 44px; border: 0; border-radius: 14px; background: rgba(255,92,71,.14); color: #ff5c47; cursor: pointer; font: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.15px;">{{ m.remove }}</button>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ clubMenu }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 80; border-radius: 40px; padding: 10px 16px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(20,22,26,.8); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3); animation: xi-up .5s var(--md-ease); top: 64px;">
+    <span style="width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); align-self: center; flex: none;"></span>
+    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.2px;">{{ t.pickClub }}</span><button type="button" onClick="{{ closeSheets }}" aria-label="Close" style="width: 40px; height: 40px; flex: none; border-radius: 40px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #f4f6f6; cursor: pointer; display: grid; place-items: center; padding: 0;"><i class="ph-bold ph-x" style="font-size: 15px;"></i></button></div>
+    <label style="height: 38px; flex: none; border-radius: 12px; background: rgba(118,118,128,.24); display: flex; align-items: center; gap: 7px; padding: 0 10px;"><i class="ph-bold ph-magnifying-glass" style="font-size: 16px; color: #7c858b;"></i><input value="{{ clubQuery }}" onChange="{{ setClubQuery }}" placeholder="{{ clubSearchPh }}" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #f4f6f6; font: inherit; font-size: 16px;"></label>
+    <div style="display: flex; flex: none; padding: 2px; border-radius: 11px; background: rgba(118,118,128,.24);">
+      <sc-for list="{{ leagueTabs }}" as="lt" hint-placeholder-count="3"><button type="button" onClick="{{ lt.pick }}" style="flex: 1; height: 30px; padding: 0 8px; border: 0; border-radius: 9px; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; background: {{ lt.bg }}; color: {{ lt.fg }};">{{ lt.label }}</button></sc-for>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; margin: 0 -4px;">
+      <sc-for list="{{ clubGroups }}" as="g" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column;">
+          <div style="position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; padding: 12px 4px 6px; background: rgba(24,26,30,.96); font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;"><span>{{ g.label }}</span><span>{{ g.count }}</span></div>
+          <sc-for list="{{ g.clubs }}" as="c" hint-placeholder-count="5">
+            <button type="button" onClick="{{ c.pick }}" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 4px; border: 0; border-bottom: .5px solid rgba(255,255,255,.05); background: {{ c.rowBg }}; color: inherit; font: inherit; text-align: left; cursor: pointer;">
+              <sc-if value="{{ c.hasCrest }}" hint-placeholder-val="{{ false }}"><span style="width: 30px; height: 30px; flex: none; background-image: {{ c.crestImg }}; background-size: contain; background-position: center; background-repeat: no-repeat; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));"></span></sc-if>
+              <sc-if value="{{ c.noCrest }}" hint-placeholder-val="{{ true }}"><span style="width: 30px; height: 30px; flex: none; border-radius: 6px; background: #1e2126; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12); display: grid; place-items: center; font-size: 10px; font-weight: 800; color: #a3abb0;">{{ c.abbr }}</span></sc-if>
+              <span style="flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; letter-spacing: -.15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.name }}</span>
+              <i class="{{ c.checkIcon }}" style="font-size: 16px; color: var(--md-accent);"></i>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noClubHits }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 32px 16px; text-align: center; font-size: 13.5px; color: #7c858b;">{{ noClubsText }}</div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ settings }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 80; border-radius: 40px; padding: 10px 16px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(20,22,26,.8); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3); animation: xi-up .5s var(--md-ease); gap: 16px;">
+    <span style="width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); align-self: center; flex: none;"></span>
+    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.2px;">{{ m.settings }}</span><button type="button" onClick="{{ closeSheets }}" aria-label="Close" style="width: 40px; height: 40px; flex: none; border-radius: 40px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #f4f6f6; cursor: pointer; display: grid; place-items: center; padding: 0;"><i class="ph-bold ph-x" style="font-size: 15px;"></i></button></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;">{{ m.stats }}</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: 22px; gap: 2px; background: rgba(255,255,255,.06);"><button type="button" onClick="{{ setSeason }}" style="height: 38px; border: 0; border-radius: 19px; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 600; background: {{ segSeasonBg }}; color: {{ segSeasonFg }};">{{ t.seasonStats }}</button><button type="button" onClick="{{ setCareer }}" style="height: 38px; border: 0; border-radius: 19px; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 600; background: {{ segCareerBg }}; color: {{ segCareerFg }};">{{ t.career }}</button></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #7c858b;">{{ m.language }}</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: 22px; gap: 2px; background: rgba(255,255,255,.06);"><button type="button" onClick="{{ setEn }}" style="height: 38px; border: 0; border-radius: 19px; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 600; background: {{ segEnBg }}; color: {{ segEnFg }};">English</button><button type="button" onClick="{{ setEs }}" style="height: 38px; border: 0; border-radius: 19px; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 600; background: {{ segEsBg }}; color: {{ segEsFg }};">Español</button></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ lineupsSheet }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 80; border-radius: 40px; padding: 10px 16px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(20,22,26,.8); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3); animation: xi-up .5s var(--md-ease); top: 200px;">
+    <span style="width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); align-self: center; flex: none;"></span>
+    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.2px;">{{ t.lineups }}</span><span style="font-size: 12.5px; font-weight: 500; color: #7c858b; font-variant-numeric: tabular-nums;">{{ lineupCount }}/5</span></span><button type="button" onClick="{{ closeSheets }}" aria-label="Close" style="width: 40px; height: 40px; flex: none; border-radius: 40px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #f4f6f6; cursor: pointer; display: grid; place-items: center; padding: 0;"><i class="ph-bold ph-x" style="font-size: 15px;"></i></button></div>
+    <div style="flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 10px;">
+      <sc-if value="{{ noLineups }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 40px 20px; text-align: center; font-size: 13.5px; color: #a3abb0; border-radius: 20px; background: rgba(255,255,255,.04); background-image: repeating-linear-gradient(135deg, rgba(200,255,61,.16) 0 1px, transparent 1px 9px);">{{ t.noLineups }}</div>
+      </sc-if>
+      <sc-for list="{{ lineups }}" as="l" hint-placeholder-count="0">
+        <div onClick="{{ l.load }}" style="border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid {{ l.border }};">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;"><span style="font-size: 15px; font-weight: 600; letter-spacing: -.15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ l.name }}</span><span style="font-family: 'Saira Extra Condensed', sans-serif; text-transform: uppercase; line-height: .92; font-variant-numeric: tabular-nums; font-size: 19px; font-weight: 700; flex: none;">{{ l.formation }}</span></div>
+          <div style="display: flex; gap: 3px;">
+            <sc-for list="{{ l.dots }}" as="d" hint-placeholder-count="11"><span style="width: 24px; height: 24px; border-radius: 99px; font-size: 9px; font-weight: 700; display: grid; place-items: center; color: #14161a; background: {{ d.bg }};">{{ d.initials }}</span></sc-for>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; font-weight: 500; color: #7c858b;"><span>{{ l.when }}</span><button type="button" onClick="{{ l.remove }}" aria-label="{{ t.delete }}" style="width: 36px; height: 36px; padding: 0; border-radius: 36px; border: .5px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #f4f6f6; cursor: pointer; display: grid; place-items: center;"><i class="ph-bold ph-trash" style="font-size: 14px;"></i></button></div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ saveSheet }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ stop }}" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 80; border-radius: 40px; padding: 10px 16px 24px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02)), rgba(20,22,26,.8); backdrop-filter: blur(28px) saturate(1.8); -webkit-backdrop-filter: blur(28px) saturate(1.8); border: .5px solid rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3); animation: xi-up .5s var(--md-ease);">
+    <span style="width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); align-self: center; flex: none;"></span>
+    <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.2px;">{{ m.saveTitle }}</span><span style="font-size: 12.5px; font-weight: 500; color: #7c858b;">{{ club.name }} · {{ formation }} · {{ m.limit }}</span></div>
+    <label style="height: 44px; border-radius: 14px; background: rgba(118,118,128,.24); display: flex; align-items: center; padding: 0 14px;"><input value="{{ lineupName }}" onChange="{{ setLineupName }}" placeholder="{{ t.lineupName }}" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #f4f6f6; font: inherit; font-size: 16px;"></label>
+    <button type="button" onClick="{{ confirmSave }}" style="min-height: 48px; border: 0; border-radius: 14px; background: var(--md-accent); color: #101806; cursor: pointer; font: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.15px;">{{ t.save }}</button>
+  </div>
+</sc-if>
+
+  <span style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 136px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.4); z-index: 95; pointer-events: none;"></span>
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startingClub&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;real-madrid&quot;,&quot;options&quot;:[&quot;real-madrid&quot;,&quot;atletico-madrid&quot;,&quot;fc-barcelona&quot;,&quot;arsenal&quot;,&quot;manchester-city&quot;,&quot;liverpool&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Stage&quot;},&quot;sound&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Stage&quot;},&quot;tokenSize&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:100,&quot;min&quot;:72,&quot;max&quot;:132,&quot;step&quot;:4,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Stage&quot;},&quot;lime&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#c8ff3d&quot;,&quot;options&quot;:[&quot;#c8ff3d&quot;,&quot;#d6ff4b&quot;,&quot;#b5f000&quot;,&quot;#e2ff7a&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;}}">
+class Component extends DCLogic {
+  clubPickerVals(s) {
+    const es = s.lang === 'es', q = (s.clubQuery || '').trim(), lf = s.clubLeague || 'all';
+    const norm = (x) => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const leagues = [...new Set(s.clubs.map((c) => c.league))];
+    const tab = (k, label) => ({ label, bg: lf === k ? '#1e2126' : 'transparent', fg: lf === k ? '#f4f6f6' : '#a3abb0', pick: (e) => { e.stopPropagation(); this.setState({ clubLeague: k }); } });
+    const groups = leagues.filter((l) => lf === 'all' || l === lf).map((l) => {
+      const clubs = s.clubs.filter((c) => c.league === l && (!q || norm(c.name).includes(norm(q)) || norm(c.abbr).includes(norm(q))))
+        .sort((x, y) => x.name.localeCompare(y.name))
+        .map((c) => { const on = c.slug === s.clubSlug; return { abbr: c.abbr, name: c.name, bg: this.orbBg(c.kit), hasCrest: !!c.crestUrl, noCrest: !c.crestUrl, crestImg: c.crestUrl ? 'url("' + c.crestUrl + '")' : 'none',
+          rowBg: on ? 'rgba(255,255,255,.07)' : 'transparent', weight: 600, checkIcon: on ? 'ph-bold ph-check' : '',
+          pick: (e) => { e.stopPropagation(); this.setState({ clubSlug: c.slug, placements: {}, bench: [], predicted: false, clubMenu: false, loadedId: null, query: '', clubQuery: '' }); } }; });
+      return { label: l, count: String(clubs.length), clubs };
+    }).filter((g) => g.clubs.length);
+    return {
+      clubQuery: s.clubQuery || '', setClubQuery: (e) => this.setState({ clubQuery: e.target.value }),
+      clubSearchPh: es ? 'Buscar club' : 'Search clubs', noClubsText: es ? 'Ningún club coincide' : 'No clubs match',
+      leagueTabs: [tab('all', es ? 'Todas' : 'All'), ...leagues.map((l) => tab(l, l))],
+      clubGroups: groups, noClubHits: groups.length === 0,
+    };
+  }
+  state = {
+    ready: false, source: 'sample', loading: false, clubs: [], squads: {}, stats: {},
+    lang: 'en', clubSlug: 'real-madrid', formation: '4-3-3', placements: {}, bench: [], lineups: {}, lineupName: '',
+    statsMode: 'season', predicted: false, rotZ: 0, tiltX: 34, nudgeZ: 0, nudgeX: 0, orbiting: false,
+    dragging: null, dragOverSlot: null, overBench: false, hoverSlot: null, hoverId: null, clubMenu: false, formationMenu: false,
+    drawerTab: 'squad', query: '', fx: [], sceneScale: 1, flatScale: 1, tiltLocked: true, flat: true, flatRot: 0, zoom: 1, panX: 0, panY: 0, picker: null, pickBand: 'ALL', action: null, settings: false, lineupsSheet: false, saveSheet: false, benchOpen: false, theme: 'dark', justPlaced: null, countValue: null, onboarded: true, savedFlash: false, loadedId: null,
+  };
+  KEY = 'xi.creator.mobile.v1';
+  API = 'https://crono-gol.com/cronogol';
+  LEAGUES = [['laliga', 'LaLiga'], ['premier-league', 'Premier League']];
+
+  async componentDidMount() {
+    this.D = await import('./xi-data.js');
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (e) {}
+    const onboarded = !!localStorage.getItem('xi.creator.onboarded'); const gestured = !!localStorage.getItem('xi.mobile.gestured');
+    // sample fallback, shaped like the API
+    const squads = {}, stats = {};
+    this.D.CLUBS.forEach((c) => { squads[c.slug] = c.players.map((p) => ({ ...p, photoUrl: null })); c.players.forEach((p) => { stats[p.id] = { season: p.season, career: p.career }; }); });
+    const clubs = this.D.CLUBS.map((c) => ({ slug: c.slug, name: c.name, abbr: c.abbr, league: c.league, kit: c.kit, crestUrl: null, predictedFormation: c.predicted.formation }));
+        this.setState({ ready: true, onboarded, gestured, clubs, squads, stats, clubSlug: this.props.startingClub ?? 'real-madrid', ...saved });
+    this.sceneRef = React.createRef();
+    this.measure = () => { const el = this.sceneRef.current; if (!el) return; const w = el.clientWidth, h = el.clientHeight; const land = this.state.flatRot % 180 !== 0; const fl = Math.min((h - 28) / (land ? 520 : 800), (w - 20) / (land ? 800 : 520)); const sc = Math.min((h + 40) / 760, w / 540); if (Math.abs(sc - this.state.sceneScale) > .01 || Math.abs(fl - this.state.flatScale) > .01) this.setState({ sceneScale: sc, flatScale: fl }); };
+    window.addEventListener('resize', this.measure); setTimeout(this.measure, 50); setTimeout(this.measure, 600);
+    this.onMove = (e) => this.orbitMove(e); this.onUp = () => this.orbitEnd();
+    window.addEventListener('mousemove', this.onMove); window.addEventListener('mouseup', this.onUp);
+    this.onDoc = () => { if (this.state.clubMenu || this.state.formationMenu) this.setState({ clubMenu: false, formationMenu: false }); };
+    document.addEventListener('click', this.onDoc);
+    this.loadClubs();
+  }
+  componentWillUnmount() {
+    window.removeEventListener('mousemove', this.onMove); window.removeEventListener('mouseup', this.onUp); window.removeEventListener('resize', this.measure); document.removeEventListener('click', this.onDoc);
+  }
+  componentDidUpdate(_, prev) {
+    const s = this.state; if (!s.ready) return;
+    const keys = ['lang', 'clubSlug', 'formation', 'placements', 'bench', 'lineups', 'statsMode', 'rotZ', 'tiltX', 'tiltLocked', 'flat', 'flatRot', 'benchOpen', 'theme'];
+    if (keys.some((k) => prev[k] !== s[k])) { const out = {}; keys.forEach((k) => { out[k] = s[k]; }); try { localStorage.setItem(this.KEY, JSON.stringify(out)); } catch (e) {} }
+    if (prev.clubSlug !== s.clubSlug && s.source === 'live') this.loadSquad(s.clubSlug);
+  }
+
+  // ── live data (crono-gol.com, public, no auth) ─────────────────────────
+  async get(path) { const r = await fetch(this.API + path, { headers: { accept: 'application/json' } }); if (!r.ok) return null; return r.json(); }
+  isLight(hex) { if (!hex || hex.length < 7) return false; const n = parseInt(hex.slice(1, 7), 16); const r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 200; }
+  kitFrom(t, fallback) {
+    const p = t.colorPrimary || t.colourPrimary || (t.colors && t.colors.primary) || (fallback && fallback.primary) || '#3a3c48';
+    const sec = t.colorSecondary || t.colourSecondary || (t.colors && t.colors.secondary) || (fallback && fallback.secondary) || '#111218';
+    const strong = this.isLight(p) ? (this.isLight(sec) ? '#3a3c48' : sec) : p;
+    return { primary: p, secondary: sec, ring: strong, tint: strong };
+  }
+  async loadClubs() {
+    try {
+      const lists = await Promise.all(this.LEAGUES.map(([slug]) => this.get('/teams?league=' + slug)));
+      const clubs = [];
+      lists.forEach((res, li) => {
+        const teams = Array.isArray(res) ? res : (res && (res.teams || res.items)) || [];
+        teams.forEach((t) => {
+          const sample = this.D.CLUBS.find((c) => c.slug === t.slug);
+          clubs.push({ slug: t.slug, name: t.name, abbr: (t.shortName || this.D.abbreviate(t.name)).slice(0, 3).toUpperCase(), league: this.LEAGUES[li][1],
+            crestUrl: (t.logoUrls && (t.logoUrls.large || t.logoUrls.medium)) || t.logoUrl || t.crestUrl || null,
+            kit: this.kitFrom(t, sample && sample.kit), predictedFormation: sample ? sample.predicted.formation : '4-3-3' });
+        });
+      });
+      if (!clubs.length) return;
+      const clubSlug = clubs.some((c) => c.slug === this.state.clubSlug) ? this.state.clubSlug : clubs[0].slug;
+      this.setState({ clubs, source: 'live', clubSlug });
+      this.loadSquad(clubSlug);
+    } catch (e) { console.warn('crono-gol unreachable, using sample data', e); }
+  }
+  async loadSquad(slug) {
+    if (this.state.squads[slug] && this.state.squads[slug].live) return;
+    this.setState({ loading: true });
+    try {
+      const res = await this.get('/teams/' + slug + '/squad');
+      if (!res) throw new Error('no squad');
+      const players = (res.players || []).map((p) => ({ id: slug + ':' + p.id, slug: p.slug, shirt: p.shirt, name: p.name, shortName: p.shortName || p.name, position: p.position,
+        nat: p.nationality ? p.nationality.code : '—', age: p.age, photoUrl: p.photoUrl }));
+      players.live = true;
+      const clubs = this.state.clubs.map((c) => c.slug === slug && res.team && res.team.crestUrl && !c.crestUrl ? { ...c, crestUrl: res.team.crestUrl } : c);
+      this.setState((st) => ({ squads: { ...st.squads, [slug]: players }, clubs, loading: false }));
+      this.queueStats(players);
+    } catch (e) { console.warn('squad load failed', e); this.setState({ loading: false }); }
+  }
+  queueStats(players) {
+    const todo = players.filter((p) => p.slug && !this.state.stats[p.id]);
+    let idx = 0; const worker = async () => { while (idx < todo.length) { const p = todo[idx++]; await this.loadStats(p); } };
+    Promise.all([worker(), worker(), worker(), worker()]);
+  }
+  async loadStats(p) {
+    const pick = (b) => b ? { goals: b.goals ?? null, assists: b.assists ?? null, yellows: b.yellows ?? null } : { goals: null, assists: null, yellows: null };
+    let entry;
+    try { const r = await this.get('/players/' + p.slug + '/stats'); entry = r ? { season: pick(r.seasonTotals && r.seasonTotals[0]), career: pick(r.overall) } : { season: pick(null), career: pick(null) }; }
+    catch (e) { entry = { season: pick(null), career: pick(null) }; }
+    this.setState((st) => ({ stats: { ...st.stats, [p.id]: entry } }));
+  }
+
+  // ── helpers ────────────────────────────────────────────────────────────
+  club() { return this.state.clubs.find((c) => c.slug === this.state.clubSlug) || this.state.clubs[0]; }
+  players() { return this.state.squads[this.state.clubSlug] || []; }
+  player(id) { return this.players().find((p) => p.id === id); }
+  initials(p) { const w = (p.shortName || p.name).replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[w.length - 1][0] : (w[0] || '?').slice(0, 2)).toUpperCase(); }
+  orbBg(kit) { return 'linear-gradient(160deg, ' + kit.primary + ', ' + kit.secondary + ')'; }
+  tone(ctx = 'sine', f = 440, dur = .18, gain = .05, when = 0) {
+    if ((this.props.sound ?? true) === false) return;
+    try {
+      this.ac = this.ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = this.ac.createOscillator(), g = this.ac.createGain(); o.type = ctx; o.frequency.value = f;
+      g.gain.setValueAtTime(0, this.ac.currentTime + when); g.gain.linearRampToValueAtTime(gain, this.ac.currentTime + when + .01); g.gain.exponentialRampToValueAtTime(.0001, this.ac.currentTime + when + dur);
+      o.connect(g).connect(this.ac.destination); o.start(this.ac.currentTime + when); o.stop(this.ac.currentTime + when + dur + .02);
+    } catch (e) {}
+  }
+  // Placeholder until the backend's expected-XI route is public: fill the club's usual shape by band, lowest shirts first.
+  predictedPlacements() {
+    const c = this.club(); const out = {}; const used = new Set();
+    const pool = (band) => this.players().filter((p) => p.position === band && !used.has(p.id)).sort((a, b) => (a.shirt ?? 99) - (b.shirt ?? 99));
+    this.D.FORMATION_SLOTS[c.predictedFormation].forEach((slot) => { const p = pool(this.D.bandOf(slot))[0] || pool('MID')[0] || pool('FWD')[0] || pool('DEF')[0]; if (p) { out[slot] = p.id; used.add(p.id); } });
+    return out;
+  }
+  validation(placements) {
+    const n = Object.keys(placements).length;
+    const gk = placements.GK ? this.player(placements.GK) : null;
+    const noGk = n === 11 && gk && gk.position !== 'GK';
+    return { n, ready: n === 11 && !noGk, noGk };
+  }
+
+  // ── placement ──────────────────────────────────────────────────────────
+  place(playerId, slot, from) {
+    const s = this.state; if (s.predicted) return;
+    const placements = { ...s.placements }; let bench = [...s.bench];
+    const occupant = placements[slot];
+    Object.keys(placements).forEach((k) => { if (placements[k] === playerId) delete placements[k]; });
+    bench = bench.filter((id) => id !== playerId);
+    placements[slot] = playerId;
+    if (occupant && occupant !== playerId) {
+      if (from && from.startsWith('slot:')) { placements[from.slice(5)] = occupant; }
+      else if (bench.length < 7) bench.push(occupant);
+    }
+    const geo = this.D.geometry(s.formation).find((g) => g.id === slot);
+    const fxId = Date.now(); const kit = this.club().kit;
+    const fx = [...s.fx, { id: fxId, x: geo.x, y: 100 - geo.y, color: kit.ring }];
+    this.setState({ placements, bench, fx, justPlaced: slot, nudgeZ: (geo.x - 50) / 12, nudgeX: s.tiltLocked ? 0 : (geo.y - 50) / 14, dragging: null, dragOverSlot: null, hoverSlot: null });
+    this.tone('sine', 520 + geo.y * 3, .16, .05); this.tone('triangle', 780 + geo.y * 3, .22, .03, .05);
+    if (!s.onboarded) { localStorage.setItem('xi.creator.onboarded', '1'); this.setState({ onboarded: true }); }
+    this.countUp(this.player(playerId).shirt || 0);
+    setTimeout(() => this.setState({ nudgeZ: 0, nudgeX: 0 }), 380);
+    setTimeout(() => this.setState((st) => ({ fx: st.fx.filter((f) => f.id !== fxId), justPlaced: st.justPlaced === slot ? null : st.justPlaced })), 1000);
+  }
+  countUp(target) {
+    const t0 = performance.now(); const dur = 520;
+    const step = (now) => { const k = Math.min(1, (now - t0) / dur); const v = Math.round(target * (1 - Math.pow(1 - k, 3))); this.setState({ countValue: k < 1 ? v : null }); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  toBench(playerId) {
+    const s = this.state; if (s.predicted) return;
+    const placements = { ...s.placements }; let bench = s.bench.filter((id) => id !== playerId);
+    Object.keys(placements).forEach((k) => { if (placements[k] === playerId) delete placements[k]; });
+    if (bench.length < 7) bench.push(playerId);
+    this.setState({ placements, bench, dragging: null, overBench: false, hoverSlot: null }); this.tone('sine', 380, .12, .03);
+  }
+  unplace(playerId) {
+    const s = this.state; if (s.predicted) return;
+    const placements = { ...s.placements };
+    Object.keys(placements).forEach((k) => { if (placements[k] === playerId) delete placements[k]; });
+    this.setState({ placements, bench: s.bench.filter((id) => id !== playerId), dragging: null, hoverSlot: null, dragOverSlot: null, overBench: false });
+    this.tone('sine', 300, .12, .03);
+  }
+  setFormation(id) {
+    const s = this.state; const slots = this.D.FORMATION_SLOTS[id]; const placements = {}; let bench = [...s.bench];
+    Object.entries(s.placements).forEach(([slot, pid]) => { if (slots.includes(slot)) placements[slot] = pid; else if (bench.length < 7) bench.push(pid); });
+    this.setState({ formation: id, placements, bench, formationMenu: false });
+  }
+  mirror() {
+    const s = this.state; if (s.predicted) return;
+    const geo = this.D.geometry(s.formation); const byY = {};
+    geo.forEach((g) => { (byY[g.y] = byY[g.y] || []).push(g); });
+    const placements = {};
+    Object.values(byY).forEach((band) => { band.sort((a, b) => a.x - b.x); band.forEach((g, i) => { const src = band[band.length - 1 - i]; if (s.placements[src.id]) placements[g.id] = s.placements[src.id]; }); });
+    this.setState({ placements }); this.tone('triangle', 440, .2, .03);
+  }
+  save() {
+    const s = this.state; const v = this.validation(s.placements); if (!v.ready) return;
+    const list = s.lineups[s.clubSlug] || []; if (list.length >= 5) return;
+    const entry = { id: Date.now(), name: s.lineupName.trim() || ('Lineup ' + (list.length + 1)), formation: s.formation, placements: s.placements, bench: s.bench, savedAt: new Date().toISOString() };
+    this.setState({ lineups: { ...s.lineups, [s.clubSlug]: [entry, ...list] }, lineupName: '', savedFlash: true, drawerTab: 'lineups', loadedId: entry.id });
+    this.tone('sine', 523, .3, .05); this.tone('sine', 659, .3, .05, .08); this.tone('sine', 784, .4, .05, .16);
+    setTimeout(() => this.setState({ savedFlash: false }), 1600);
+  }
+
+  pickPlayer(id) {
+    const s = this.state; const pk = s.picker; if (!pk) return;
+    const slotOf = Object.keys(s.placements).find((k) => s.placements[k] === id);
+    const from = slotOf ? 'slot:' + slotOf : s.bench.includes(id) ? 'bench' : 'squad';
+    if (pk.slot) { if (slotOf !== pk.slot) this.place(id, pk.slot, from); } else this.toBench(id);
+    this.setState({ picker: null, query: '' });
+  }
+
+  // ── orbit ──────────────────────────────────────────────────────────────
+  gPts(e) { return Array.from(e.touches || []).map((t) => ({ x: t.clientX, y: t.clientY })); }
+  gBegin(pts, keep) {
+    const s = this.state; if (!keep) this.gMoved = false;
+    if (pts.length >= 2) { const [a, b] = pts; this.g = { pinch: true, d0: Math.hypot(b.x - a.x, b.y - a.y) || 1, a0: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, zoom: s.zoom, rotZ: s.rotZ, panX: s.panX, panY: s.panY }; }
+    else this.g = { pinch: false, x: pts[0].x, y: pts[0].y, rotZ: s.rotZ, tiltX: s.tiltX, panX: s.panX, panY: s.panY };
+    this.setState({ orbiting: true });
+  }
+  gMove(pts) {
+    const g = this.g; if (!g || !pts.length) return; const s = this.state;
+    if (g.pinch) { if (pts.length < 2) return; const [a, b] = pts; const d = Math.hypot(b.x - a.x, b.y - a.y), ang = Math.atan2(b.y - a.y, b.x - a.x), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2; this.gMoved = true;
+      const next = { zoom: Math.max(.7, Math.min(2.6, g.zoom * d / g.d0)), panX: g.panX + mx - g.mx, panY: g.panY + my - g.my };
+      if (!s.flat) next.rotZ = g.rotZ + (ang - g.a0) * 180 / Math.PI;
+      this.setState(this.clampPan(next)); return; }
+    const dx = pts[0].x - g.x, dy = pts[0].y - g.y; if (Math.abs(dx) + Math.abs(dy) > 6) this.gMoved = true; if (!this.gMoved) return;
+    if (s.flat) { if (s.zoom > 1.01) this.setState(this.clampPan({ panX: g.panX + dx, panY: g.panY + dy })); }
+    else this.setState({ rotZ: g.rotZ + dx * .4, tiltX: Math.max(14, Math.min(64, g.tiltX - dy * .2)) });
+  }
+  gEnd(pts) { if (!this.g) return; if (pts && pts.length) { this.gBegin(pts, true); return; } this.g = null; const done = { orbiting: false }; if (this.state.zoom <= 1.01) Object.assign(done, { zoom: 1, panX: 0, panY: 0 }); this.setState(done); if (this.gMoved && !this.state.gestured) { this.setState({ gestured: true }); try { localStorage.setItem('xi.mobile.gestured', '1'); } catch (e) {} } setTimeout(() => { this.gMoved = false; }, 80); }
+  clampPan(n) { const z = n.zoom ?? this.state.zoom; const lim = Math.max(0, z - 1) * 200; n.panX = Math.max(-lim, Math.min(lim, n.panX ?? this.state.panX)); n.panY = Math.max(-lim * 1.4, Math.min(lim * 1.4, n.panY ?? this.state.panY)); return n; }
+  orbitStart(e) { if (e.button !== 0) return; this.mouse = true; this.gBegin([{ x: e.clientX, y: e.clientY }]); }
+  orbitMove(e) { if (!this.mouse) return; this.gMove([{ x: e.clientX, y: e.clientY }]); }
+  orbitEnd() { if (!this.mouse) return; this.mouse = false; this.gEnd(); }
+
+  // ── render ─────────────────────────────────────────────────────────────
+  renderVals() {
+    const s = this.state; if (!s.ready || !s.clubs.length) return { ready: false, theme: s.theme, limeVars: '' };
+    const D = this.D, t = D.STRINGS[s.lang], club = this.club(), kit = club.kit, players = this.players();
+    const view = s.predicted ? this.predictedPlacements() : s.placements;
+    const formation = s.predicted ? club.predictedFormation : s.formation;
+    const geo = D.geometry(formation);
+    const mine = new Set(Object.values(s.placements));
+    const v = this.validation(s.placements);
+    const seg = (on) => ({ bg: on ? 'rgba(255,255,255,.16)' : 'transparent', fg: on ? '#f4f6f6' : '#a3abb0', shadow: 'none' });
+    const TINT = { BAR: ['#141d5a', '#8a1538'], RMA: ['#0b1f66', '#3b5bd9'], ATM: ['#3d0b12', '#c8202d'], ARS: ['#4a0a0e', '#e0212b'], LIV: ['#4a0a12', '#c8102e'], BET: ['#08361f', '#1f9a4d'], GET: ['#0b2560', '#2a5fd0'], VIL: ['#3b3208', '#e0b400'] };
+    const hex = (x) => /^#[0-9a-f]{6}/i.test(x || '') ? x.slice(0, 7) : '#3a3f48';
+    const hexA = (x, al) => { const n = parseInt(hex(x).slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + al + ')'; };
+    const shade = (x, k) => { const n = parseInt(hex(x).slice(1), 16); const f = (c) => Math.round(c * k).toString(16).padStart(2, '0'); return '#' + f(n >> 16) + f((n >> 8) & 255) + f(n & 255); };
+    const [c1, c2] = TINT[club.abbr] || [shade(kit.ring, .32), hex(kit.ring)];
+    const sceneBg = 'radial-gradient(90% 46% at 0% 6%, ' + hexA(c2, .5) + ', ' + hexA(c2, 0) + ' 70%), linear-gradient(180deg, ' + c1 + ' 0%, ' + hexA(c1, .8) + ' 34%, #0a0b0c 80%)';
+    const R = React.createElement;
+    const stat = (p, k) => { const st = s.stats[p.id]; if (!st) return '…'; const val = st[s.statsMode][k]; return val === null || val === undefined ? '—' : String(val); };
+    const rotZ = s.flat ? s.flatRot : s.rotZ + s.nudgeZ, tiltX = s.flat ? 0 : s.tiltX + s.nudgeX;
+    const billboard = s.flat ? 'rotateZ(' + (-s.flatRot) + 'deg)' : 'rotateZ(' + (-rotZ) + 'deg) rotateX(' + (-tiltX) + 'deg) translateZ(6px) translateY(-54%)';
+    const status = v.noGk ? { text: t.noGk, bg: 'rgba(255,92,71,.14)', fg: '#ff5c47', dot: '#ff5c47' }
+      : v.ready ? { text: t.ready, bg: 'rgba(200,255,61,.14)', fg: 'var(--md-accent)', dot: 'var(--md-accent)' }
+      : { text: v.n + ' ' + t.of11, bg: 'rgba(255,255,255,.1)', fg: '#f4f6f6', dot: '#f4f6f6' };
+    const showHint = !s.onboarded && !s.predicted && v.n === 0 && players.length > 0;
+    const avatar = (p) => ({ initials: this.initials(p), hasPhoto: !!p.photoUrl, noPhoto: !p.photoUrl, photoImg: p.photoUrl ? 'url("' + p.photoUrl + '")' : 'none', orbBg: 'linear-gradient(160deg, #f4f6f6, #c9cfd4)', ring: 'rgba(255,255,255,.9)', opacity: 1 });
+
+    const slots = geo.map((g, i) => {
+      const pid = view[g.id]; const p = pid ? this.player(pid) : null;
+      const over = s.dragOverSlot === g.id;
+      const diff = s.predicted && p && !mine.has(p.id);
+      return {
+        id: g.id, left: g.x + '%', top: (100 - g.y) + '%', transform: billboard, z: Math.round(100 - g.y) + 10,
+        empty: !p, filled: !!p, shadowA: p ? .3 : 0,
+        emptyBorder: over || (s.picker && s.picker.slot === g.id) ? 'var(--md-accent)' : 'rgba(255,255,255,.35)', emptyBg: over || (s.picker && s.picker.slot === g.id) ? 'rgba(200,255,61,.14)' : 'rgba(255,255,255,.04)', emptyFg: over || (s.picker && s.picker.slot === g.id) ? 'var(--md-accent)' : '#a3abb0',
+        emptyAnim: (showHint && g.id === 'GK') || over ? 'xi-hint 1.6s var(--md-ease) infinite' : 'none',
+        dragOver: (e) => { e.preventDefault(); if (s.dragOverSlot !== g.id) this.setState({ dragOverSlot: g.id }); },
+        dragLeave: () => { if (s.dragOverSlot === g.id) this.setState({ dragOverSlot: null }); },
+        drop: (e) => { e.preventDefault(); e.stopPropagation(); const d = this.state.dragging; if (d) this.place(d.id, g.id, d.from); },
+        tap: (e) => { e.stopPropagation(); if (this.gMoved) return; if (p) this.setState({ action: { slot: s.predicted ? null : g.id, pid: p.id }, hoverId: p.id }); else if (!s.predicted) this.setState({ picker: { slot: g.id }, pickBand: D.bandOf(g.id), query: '' }); },
+        ...(p ? {
+          ...avatar(p), shortName: p.shortName, ring: diff || (s.action && s.action.slot === g.id) ? 'var(--md-accent)' : 'rgba(255,255,255,.9)',
+          shirtDisplay: s.justPlaced === g.id && s.countValue !== null ? String(s.countValue) : String(p.shirt ?? '—'),
+          diff, nameBg: 'var(--x-name-bg)', nameFg: 'var(--x-name-fg)', nameLine: diff ? 'var(--md-accent)' : 'transparent', nameLabel: p.shortName, breatheDelay: (i * .37) + 's',
+          popAnim: s.justPlaced === g.id ? 'xi-pop .7s var(--md-ease)' : 'none',
+          draggable: !s.predicted, cursor: s.predicted ? 'default' : 'grab', showRemove: !s.predicted && s.hoverSlot === g.id,
+          dragStart: (e) => { e.dataTransfer.setData('text/plain', p.id); e.dataTransfer.effectAllowed = 'move'; this.setState({ dragging: { id: p.id, from: 'slot:' + g.id }, hoverSlot: null, hoverId: null }); },
+          enter: () => this.setState({ hoverSlot: g.id, hoverId: p.id }),
+          remove: (e) => { e.stopPropagation(); this.unplace(p.id); },
+        } : {}),
+      };
+    });
+
+    const q = s.query.trim().toLowerCase();
+    const benchSet = new Set(s.bench);
+    const groups = ['GK', 'DEF', 'MID', 'FWD'].map((band) => {
+      const list = players.filter((p) => p.position === band && (!q || (p.shortName || '').toLowerCase().includes(q) || (p.name || '').toLowerCase().includes(q) || String(p.shirt) === q)).sort((a, b) => (a.shirt ?? 99) - (b.shirt ?? 99));
+      const firstGk = band === 'GK' && list[0];
+      return { band, label: t[band], count: list.length, players: list.map((p) => {
+        const placed = mine.has(p.id), benched = benchSet.has(p.id);
+        return { id: p.id, shirt: p.shirt ?? '', shortName: p.shortName, ...avatar(p),
+          ga: stat(p, 'goals') + ' · ' + stat(p, 'assists'),
+          sub: placed ? Object.keys(s.placements).find((k) => s.placements[k] === p.id) : benched ? t.bench : '', hasSub: placed || benched, subColor: placed ? 'var(--md-accent)' : '#7c858b',
+          status: placed ? t.onPitch : benched ? t.onBench : '', statusTone: placed ? 'positive' : 'neutral',
+          opacity: placed || benched ? .5 : 1, draggable: !s.predicted, cursor: s.predicted ? 'default' : 'grab',
+          pick: () => this.pickPlayer(p.id), rowBg: s.picker && s.picker.slot && s.placements[s.picker.slot] === p.id ? 'rgba(200,255,61,.08)' : 'transparent',
+          hintAnim: showHint && firstGk && firstGk.id === p.id ? 'xi-hint 1.6s var(--md-ease) infinite' : 'none',
+          dragStart: (e) => { e.dataTransfer.setData('text/plain', p.id); e.dataTransfer.effectAllowed = 'move'; this.setState({ dragging: { id: p.id, from: benched ? 'bench' : 'squad' }, hoverId: null }); },
+          enter: () => this.setState({ hoverId: p.id, hoverSlot: null }),
+        }; }) };
+    }).filter((g) => g.count > 0);
+
+    const bench = Array.from({ length: 7 }, (_, i) => {
+      const pid = s.bench[i]; const p = pid ? this.player(pid) : null;
+      return p ? { filled: true, empty: false, shirt: p.shirt ?? '', shortName: p.shortName, ...avatar(p), draggable: !s.predicted, cursor: s.predicted ? 'default' : 'grab',
+        dragStart: (e) => { e.dataTransfer.setData('text/plain', p.id); this.setState({ dragging: { id: p.id, from: 'bench' }, hoverId: null }); },
+        enter: () => this.setState({ hoverId: p.id, hoverSlot: null }), tap: () => this.setState({ action: { bench: true, pid: p.id }, hoverId: p.id }) } : { filled: false, empty: true, n: i + 1, tap: () => { if (!s.predicted) this.setState({ picker: { bench: true }, pickBand: 'ALL', query: '' }); } };
+    });
+
+    const list = s.lineups[s.clubSlug] || [];
+    const lineups = list.map((l) => ({
+      id: l.id, name: l.name, formation: l.formation, border: s.loadedId === l.id ? 'var(--md-accent)' : 'transparent',
+      when: new Date(l.savedAt).toLocaleDateString(s.lang === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'short' }),
+      dots: D.FORMATION_SLOTS[l.formation].map((slot) => { const p = this.player(l.placements[slot]); return p ? { initials: this.initials(p), bg: 'linear-gradient(160deg, #f4f6f6, #c9cfd4)', ring: 'transparent' } : { initials: '', bg: 'rgba(255,255,255,.08)', ring: 'transparent' }; }),
+      load: () => this.setState({ formation: l.formation, placements: l.placements, bench: l.bench, predicted: false, loadedId: l.id, lineupsSheet: false }),
+      remove: (e) => { e.stopPropagation(); this.setState({ lineups: { ...s.lineups, [s.clubSlug]: list.filter((x) => x.id !== l.id) } }); },
+    }));
+
+    const hp = s.hoverId ? this.player(s.hoverId) : null;
+    const hoverCard = hp ? { ...avatar(hp), shortName: hp.shortName, shirt: hp.shirt ?? '—',
+      meta: hp.name + ' · #' + (hp.shirt ?? '—') + ' · ' + t[hp.position].replace(/s$/, '') + ' · ' + hp.nat,
+      goals: stat(hp, 'goals'), assists: stat(hp, 'assists'), yellows: stat(hp, 'yellows'), age: hp.age === null || hp.age === undefined ? '—' : hp.age, mode: s.statsMode === 'season' ? t.seasonStats : t.career } : null;
+
+    const fxLayer = s.fx.map((f) => R(React.Fragment, { key: f.id },
+      R('div', { style: { position: 'absolute', left: f.x + '%', top: f.y + '%', width: 90, height: 90, margin: '-45px 0 0 -45px', borderRadius: 999, border: '1.5px solid ' + f.color, animation: 'xi-ripple .9s var(--md-ease) forwards', pointerEvents: 'none' } }),
+      
+      R('div', { style: { position: 'absolute', inset: 0, background: 'linear-gradient(100deg, transparent 35%, rgba(255,255,255,.28) 50%, transparent 65%)', animation: 'xi-shimmer .9s var(--md-ease) forwards', pointerEvents: 'none', mixBlendMode: 'overlay' } })));
+
+    const m = s.lang === 'es'
+      ? { tapToPick: 'Toca una posición para elegir jugador', pickFor: 'Elegir para', replace: 'Cambiar jugador', toBench: 'Al banquillo', remove: 'Quitar', settings: 'Ajustes', stats: 'Estadísticas', language: 'Idioma', appearance: 'Apariencia', dark: 'Oscuro', light: 'Claro', all: 'Todos', saveTitle: 'Guardar alineación', limit: 'hasta 5 por club' }
+      : { tapToPick: 'Tap a position to pick a player', pickFor: 'Pick for', replace: 'Replace player', toBench: 'Move to bench', remove: 'Remove', settings: 'Settings', stats: 'Stats', language: 'Language', appearance: 'Appearance', dark: 'Dark', light: 'Light', all: 'All', saveTitle: 'Save lineup', limit: 'up to 5 per club' };
+    const sSeason = seg(s.statsMode === 'season'), sCareer = seg(s.statsMode === 'career'), sEn = seg(s.lang === 'en'), sEs = seg(s.lang === 'es');
+    const tSquad = seg(s.drawerTab === 'squad'), tLine = seg(s.drawerTab === 'lineups'), mMine = seg(!s.predicted, true), mPred = seg(s.predicted, true);
+    const canSave = v.ready && !s.predicted && list.length < 5;
+    const tok = s.predicted ? Math.round((this.props.tokenSize ?? 100) * .84) : (this.props.tokenSize ?? 100);
+
+    return {
+      limeVars: this.props.lime ? '--md-accent: ' + this.props.lime + '; --md-positive: ' + this.props.lime + ';' : '', theme: s.theme, toggleTheme: () => this.setState({ theme: s.theme === 'dark' ? 'light' : 'dark' }), themeIcon: s.theme === 'dark' ? 'ph-light ph-sun' : 'ph-light ph-moon', ready: true, t, club, sceneBg, hasWatermark: !!club.crestUrl, watermarkImg: club.crestUrl ? 'url("' + club.crestUrl + '")' : 'none', crestBg: this.orbBg(kit), kitHatch: kit.tint + '33', hasCrest: !!club.crestUrl, noCrest: !club.crestUrl, crestImg: club.crestUrl ? 'url("' + club.crestUrl + '")' : 'none',
+      sourceLabel: s.loading ? '…' : s.source === 'live' ? 'crono-gol.com' : t.sample, sourceDot: s.source === 'live' ? 'var(--md-positive)' : 'var(--md-warning)',
+      clubs: s.clubs.map((c) => ({ abbr: c.abbr, name: c.name, leagueLabel: c.league, bg: this.orbBg(c.kit), hasCrest: !!c.crestUrl, noCrest: !c.crestUrl, crestImg: c.crestUrl ? 'url("' + c.crestUrl + '")' : 'none', rowBg: c.slug === s.clubSlug ? 'var(--md-accent-tint)' : 'transparent', checkIcon: c.slug === s.clubSlug ? 'ph-light ph-check' : '',
+        pick: (e) => { e.stopPropagation(); this.setState({ clubSlug: c.slug, placements: {}, bench: [], predicted: false, clubMenu: false, loadedId: null, query: '' }); } })),
+      clubMenu: s.clubMenu, toggleClubMenu: (e) => { e.stopPropagation(); this.setState({ clubMenu: !s.clubMenu, formationMenu: false }); },
+      ...this.clubPickerVals(s),
+      formation, formationMenu: s.formationMenu, toggleFormationMenu: (e) => { e.stopPropagation(); if (s.predicted) return; this.setState({ formationMenu: !s.formationMenu, clubMenu: false }); },
+      formations: D.FORMATION_IDS.map((id) => ({ id, bg: id === s.formation ? 'rgba(255,255,255,.1)' : 'transparent', check: id === s.formation ? 'ph-bold ph-check' : '', pick: (e) => { e.stopPropagation(); this.setFormation(id); } })),
+      setSeason: () => this.setState({ statsMode: 'season' }), setCareer: () => this.setState({ statsMode: 'career' }),
+      segSeasonBg: sSeason.bg, segSeasonFg: sSeason.fg, segSeasonShadow: sSeason.shadow, segCareerBg: sCareer.bg, segCareerFg: sCareer.fg, segCareerShadow: sCareer.shadow,
+      setEn: () => this.setState({ lang: 'en' }), setEs: () => this.setState({ lang: 'es' }),
+      segEnBg: sEn.bg, segEnFg: sEn.fg, segEnShadow: sEn.shadow, segEsBg: sEs.bg, segEsFg: sEs.fg, segEsShadow: sEs.shadow,
+      lineupName: s.lineupName, setLineupName: (e) => this.setState({ lineupName: e.target.value }),
+      save: () => this.save(), saveLabel: s.savedFlash ? t.saved : t.save, saveBg: canSave || s.savedFlash ? 'var(--md-accent)' : 'rgba(255,255,255,.08)', saveFg: canSave || s.savedFlash ? '#101806' : '#59626a', saveBorder: canSave || s.savedFlash ? '0' : '.5px solid rgba(255,255,255,.16)', saveCursor: canSave ? 'pointer' : 'default', saveIconClass: 'ph-bold ph-check', savePointer: canSave ? 'auto' : 'none',
+      saveIcon: R('i', { className: s.savedFlash ? 'ph-light ph-check' : 'ph-light ph-floppy-disk', style: { fontSize: 15 } }),
+      tabSquad: () => this.setState({ drawerTab: 'squad' }), tabLineups: () => this.setState({ drawerTab: 'lineups' }),
+      tabSquadBg: tSquad.bg, tabSquadFg: tSquad.fg, tabSquadShadow: tSquad.shadow, tabLineupsBg: tLine.bg, tabLineupsFg: tLine.fg, tabLineupsShadow: tLine.shadow,
+      showSquad: s.drawerTab === 'squad', showLineups: s.drawerTab === 'lineups', squadCount: players.length, lineupCount: list.length,
+      query: s.query, setQuery: (e) => this.setState({ query: e.target.value }), groups, lineups, noLineups: list.length === 0,
+      predicted: s.predicted, showMine: () => this.setState({ predicted: false }), showPredicted: () => this.setState({ predicted: true, hoverSlot: null, formationMenu: false }),
+      mineBg: mMine.bg, mineFg: mMine.fg, predBg: mPred.bg, predFg: mPred.fg,
+      statusText: status.text, statusBg: status.bg, statusFg: status.fg, statusDot: status.dot, showHint,
+      rotateLeft: () => this.setState({ rotZ: s.rotZ - 90 }), rotateRight: () => this.setState({ rotZ: s.rotZ + 90 }), resetView: () => this.setState({ rotZ: 0, tiltX: 34, zoom: 1, panX: 0, panY: 0 }),
+      tiltLocked: s.tiltLocked, toggleTilt: () => this.setState({ tiltLocked: !s.tiltLocked }), tiltBg: s.tiltLocked ? 'transparent' : 'var(--md-card)', tiltFg: s.tiltLocked ? 'var(--md-muted)' : 'var(--md-ink)', tiltIcon: s.tiltLocked ? 'ph-light ph-lock-simple' : 'ph-light ph-lock-simple-open', tiltTitle: s.tiltLocked ? t.unlockTilt : t.lockTilt, sceneRef: this.sceneRef, orbitStart: (e) => this.orbitStart(e), stopOrbit: (e) => e.stopPropagation(), sceneCursor: s.flat && s.zoom <= 1.01 ? 'default' : s.orbiting ? 'grabbing' : 'grab', flat: s.flat, notFlat: !s.flat, toggleFlat: () => { this.setState({ flat: !s.flat, orbiting: false, zoom: 1, panX: 0, panY: 0 }); setTimeout(this.measure, 50); }, flatBg: s.flat ? 'var(--md-card)' : 'transparent', flatFg: s.flat ? 'var(--md-ink)' : 'var(--md-muted)', flatTitle: s.flat ? t.view3d : t.viewFlat, rotateFlat: () => { this.setState({ flatRot: (s.flatRot + 90) % 360 }); setTimeout(this.measure, 50); setTimeout(this.measure, 750); }, nameTop: s.flat ? 'calc(100% + 8px)' : 'auto', nameBottom: s.flat ? 'auto' : 'calc(100% + 8px)', shadowOpacity: s.flat ? 0 : 1, planeTop: s.flat ? (s.flatRot % 180 !== 0 ? '50%' : '48%') : s.benchOpen ? '50%' : '56%', benchOpen: s.benchOpen, benchClosed: !s.benchOpen, toggleBench: () => { this.setState({ benchOpen: !s.benchOpen }); setTimeout(this.measure, 50); setTimeout(this.measure, 750); }, benchChevron: s.benchOpen ? 'ph-bold ph-caret-up' : 'ph-bold ph-caret-down',
+      planeTransform: 'translate(' + s.panX + 'px, ' + s.panY + 'px) scale(' + ((s.flat ? s.flatScale : s.sceneScale) * s.zoom) + ') rotateX(' + tiltX + 'deg) rotateZ(' + rotZ + 'deg)', planeTransition: s.orbiting ? 'none' : 'transform .7s var(--md-ease)',
+      pitchBg: 'linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.015)), rgba(10,11,12,.28)',
+      fxLayer, slots, hoverCard, tokenPx: tok + 'px', tokenMargin: (-tok / 2) + 'px 0 0 ' + (-tok / 2) + 'px', tokenFont: Math.round(tok * .36) + 'px',
+      bench, benchCount: s.bench.length, benchBorder: s.overBench ? 'var(--md-accent)' : 'rgba(255,255,255,.1)',
+      allowDrop: (e) => { e.preventDefault(); },
+      dropOff: (e) => { e.preventDefault(); const d = this.state.dragging; if (d && d.from !== 'squad') this.unplace(d.id); else this.setState({ dragging: null, dragOverSlot: null }); },
+      dropBench: (e) => { e.preventDefault(); e.stopPropagation(); const d = this.state.dragging; if (d) this.toBench(d.id); },
+      dragEnd: () => this.setState({ dragging: null, dragOverSlot: null, overBench: false }),
+      leaveHover: () => this.setState({ hoverSlot: null, hoverId: null }),
+      m, stop: (e) => e.stopPropagation(),
+      closeSheets: (e) => { if (e) e.stopPropagation(); this.setState({ clubMenu: false, formationMenu: false, picker: null, action: null, settings: false, lineupsSheet: false, saveSheet: false, hoverId: null, query: '' }); },
+      anySheet: !!(s.clubMenu || s.picker || s.action || s.settings || s.lineupsSheet || s.saveSheet),
+      picker: !!s.picker, pickerTitle: s.picker ? (s.picker.slot ? m.pickFor + ' ' + s.picker.slot : t.bench) : '',
+      pickBands: ['ALL', 'GK', 'DEF', 'MID', 'FWD'].map((k) => { const on = s.pickBand === k; return { label: k === 'ALL' ? m.all : k, bg: on ? '#1e2126' : 'transparent', fg: on ? '#f4f6f6' : '#a3abb0', pick: () => this.setState({ pickBand: k }) }; }),
+      pickerGroups: groups.filter((g) => s.pickBand === 'ALL' || g.band === s.pickBand),
+      actionOpen: !!(s.action && hoverCard), card: hoverCard || {}, actionEditable: !s.predicted, actIsSlot: !!(s.action && s.action.slot),
+      actReplace: () => { const sl = s.action.slot; this.setState({ action: null, hoverId: null, picker: { slot: sl }, pickBand: D.bandOf(sl), query: '' }); },
+      actBench: () => { this.toBench(s.action.pid); this.setState({ action: null, hoverId: null }); },
+      actRemove: () => { this.unplace(s.action.pid); this.setState({ action: null, hoverId: null }); },
+      settings: s.settings, openSettings: () => this.setState({ settings: true }), lineupsSheet: s.lineupsSheet, openLineups: () => this.setState({ lineupsSheet: true }),
+      saveSheet: s.saveSheet, openSave: () => { if (canSave) this.setState({ saveSheet: true }); }, confirmSave: () => { this.save(); this.setState({ saveSheet: false }); },
+      setDark: () => this.setState({ theme: 'dark' }), setLight: () => this.setState({ theme: 'light' }),
+      segDarkBg: seg(s.theme === 'dark').bg, segDarkFg: seg(s.theme === 'dark').fg, segDarkShadow: seg(s.theme === 'dark').shadow, segLightBg: seg(s.theme === 'light').bg, segLightFg: seg(s.theme === 'light').fg, segLightShadow: seg(s.theme === 'light').shadow,
+      viewLabel: s.flat ? '3D' : t.flat, flipView: () => { if (s.flat) this.setState({ flatRot: (s.flatRot + 180) % 360 }); else this.setState({ rotZ: s.rotZ + 180 }); },
+      mPlaneTop: s.flat ? '50%' : '47%', stageH: s.benchOpen ? '486px' : '574px',
+      onTS: (e) => this.gBegin(this.gPts(e)), onTM: (e) => this.gMove(this.gPts(e)), onTE: (e) => this.gEnd(this.gPts(e)),
+      onWheelZoom: (e) => { const z = Math.max(.7, Math.min(2.6, s.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1))); this.setState(this.clampPan(Math.abs(z - 1) < .04 ? { zoom: 1, panX: 0, panY: 0 } : { zoom: z })); },
+      showReset: Math.abs(s.zoom - 1) > .01 || !!s.panX || !!s.panY || (!s.flat && (((s.rotZ % 360) + 360) % 360 !== 0 || s.tiltX !== 34)), zoomLabel: Math.round(s.zoom * 100) + '%',
+      showGestureHint: !s.gestured && v.n > 0 && !s.orbiting, gestureIcon: s.flat ? 'ph-bold ph-arrows-in' : 'ph-bold ph-hand-swipe-right',
+      gestureText: s.flat ? (s.lang === 'es' ? 'Pellizca para hacer zoom' : 'Pinch to zoom') : (s.lang === 'es' ? 'Arrastra para girar · pellizca para zoom' : 'Drag to rotate · pinch to zoom'), showTapHint: !s.predicted && v.n === 0 && players.length > 0, formationOpacity: s.predicted ? .5 : 1,
+      mirror: () => this.mirror(), clear: () => { if (!s.predicted) { this.setState({ placements: {}, bench: [], loadedId: null }); this.tone('sine', 260, .2, .03); } },
+    };
+  }
+}
+</script>
+</body>
+</html>

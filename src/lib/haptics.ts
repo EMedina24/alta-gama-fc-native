@@ -18,23 +18,44 @@
  */
 import * as Haptics from 'expo-haptics';
 
-import type { Effect } from '@/features/starting-xi/lineup';
+import type { XiEffect } from '@/features/starting-xi/xi-state';
 
 /**
- * The builder's own moves (ADR 0065): `.light` on place, `.rigid` on swap,
- * `.warning` on clear — the handoff's three, and nothing on remove or select.
+ * The builder's own moves (ADR 0215). Haptics carry the builder — there is no
+ * sound (the handoff's chime needs an audio module the app does not ship):
+ *
+ * - `.light` — a player landing: placed, a lineup loaded;
+ * - `.rigid` — two things trading places: swapped, mirrored;
+ * - `.soft` — a player stepping back to the bench;
+ * - selection tick — removed, the shape changed;
+ * - Warning — the pitch cleared (after its confirm);
+ * - Success — a lineup saved (`hapticSaved`, the export's receipt too).
+ *
+ * `deleted` is silent: the confirm Alert was the moment.
  */
-export async function hapticFor(effect: Effect): Promise<void> {
+export async function hapticFor(effect: XiEffect): Promise<void> {
   try {
     switch (effect) {
       case 'placed':
+      case 'loaded':
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         return;
       case 'swapped':
+      case 'mirrored':
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+        return;
+      case 'benched':
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+        return;
+      case 'removed':
+      case 'reshaped':
+        await Haptics.selectionAsync();
         return;
       case 'cleared':
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return;
+      case 'saved':
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         return;
       default:
         return;

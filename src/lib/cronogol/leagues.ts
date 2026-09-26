@@ -89,6 +89,23 @@ export interface League {
    */
   playerStats: boolean;
   /**
+   * Whether `GET /cronogol/teams/{slug}/squad` holds registered players for
+   * this league's clubs — the gate on which clubs the Starting XI builder
+   * offers (ADR 0212). Ported from the web's `League.squads`.
+   *
+   * ⚠ A CAPABILITY, like `playerStats`: an unsupported club answers `200` with
+   * `players: []`, never a 404, so it cannot be inferred from a response.
+   *
+   * ⚠ True for LaLiga means PRIMERA. The five tracked clubs followed into
+   * segunda answer an empty list; the builder's club list drops them by table
+   * membership (`features/starting-xi/clubs.ts`), not by this flag.
+   *
+   * ⚠ Puerto Rico and Honduras are true (ADR 0105 — "~every player"; ADR
+   * 0159), which the web cannot say because it carries neither league. Serie
+   * A and the Bundesliga have no player rows at all.
+   */
+  squads: boolean;
+  /**
    * True for a season named by ONE calendar year (Puerto Rico's `2026`),
    * false for the European cross-year form (`2026/27`). Feeds
    * `leagueSeasonLabel`; nothing else may branch on it.
@@ -134,6 +151,7 @@ export const LEAGUES: readonly League[] = [
     rounds: true,
     matchEvents: true,
     playerStats: true,
+    squads: true,
     calendarYearSeason: false,
     hasHalves: true,
     zone: 'Europe/Madrid',
@@ -154,6 +172,7 @@ export const LEAGUES: readonly League[] = [
     rounds: true,
     matchEvents: true,
     playerStats: false,
+    squads: true,
     calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/London',
@@ -176,6 +195,7 @@ export const LEAGUES: readonly League[] = [
     rounds: true,
     matchEvents: true,
     playerStats: false,
+    squads: false,
     calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/Berlin',
@@ -199,6 +219,7 @@ export const LEAGUES: readonly League[] = [
     rounds: true,
     matchEvents: true,
     playerStats: false,
+    squads: false,
     calendarYearSeason: false,
     hasHalves: false,
     zone: 'Europe/Rome',
@@ -246,6 +267,7 @@ export const LEAGUES: readonly League[] = [
     rounds: false,
     matchEvents: false,
     playerStats: false,
+    squads: true,
     calendarYearSeason: true,
     hasHalves: false,
     zone: 'America/Puerto_Rico',
@@ -312,6 +334,7 @@ export const LEAGUES: readonly League[] = [
     matchEvents: false,
     // No season statistics exist from this source at any price (§126.11).
     playerStats: false,
+    squads: true,
     // The Apertura runs Jul–Dec 2026 and is named by that one calendar year.
     calendarYearSeason: true,
     // Apertura and Clausura are separate championships, not halves of a season.

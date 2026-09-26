@@ -1,7 +1,7 @@
 # 0072 — Starting XI tokens and rail tiles draw the player's portrait, with the shirt number as a corner badge
 
 - **Date:** 2026-08-30
-- **Status:** Accepted — verified on the simulator (`/_debug/xi?slug=barcelona` and the live builder, 2026-08-30)
+- **Status:** Accepted — verified on the simulator (`/_debug/xi?slug=barcelona` and the live builder, 2026-08-30). The BOARD half is **superseded by [0213](./0213-the-pitch-is-a-plane-seen-through-one-camera.md)** (the live pitch draws `XiOrb`, portrait or initials); the export CARD half stands.
 - **Decided by:** Ed Medina
 
 ## Context

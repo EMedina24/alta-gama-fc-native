@@ -105,8 +105,9 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    // ⚠ Outermost, for the Starting XI board's drag gesture (ADR 0065). A
-    // `GestureDetector` without this root throws at runtime, not compile time.
+    // ⚠ Outermost, for the Starting XI pitch's camera gestures (ADR 0216; the
+    // first builder's drag, ADR 0065). A `GestureDetector` without this root
+    // throws at runtime, not compile time.
     <GestureHandlerRootView style={styles.root}>
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
@@ -188,14 +189,20 @@ export default function RootLayout() {
             name="(sheets)/stats-player"
             options={{ ...sheet, sheetAllowedDetents: [1] }}
           />
-          {/* The Starting XI builder's three sheets (ADR 0065). Export gets a
-              tall detent because it holds a text field and a card preview. */}
+          {/* The Starting XI builder's sheets (ADR 0214). The picker opens
+              high (it is a squad of 25–64 with a search field) and can go
+              full; the club list is ~65 clubs, so full; the card and the save
+              are one block each; the lineups are at most five cards. Export
+              keeps its full detent: a text field and a card preview. */}
+          <Stack.Screen name="(sheets)/xi-pick" options={{ ...sheet, sheetAllowedDetents: [0.8, 1] }} />
           <Stack.Screen
-            name="(sheets)/xi-shape"
+            name="(sheets)/xi-player"
             options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
           />
+          <Stack.Screen name="(sheets)/xi-club" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+          <Stack.Screen name="(sheets)/xi-lineups" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />
           <Stack.Screen
-            name="(sheets)/xi-look"
+            name="(sheets)/xi-save"
             options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }}
           />
           <Stack.Screen name="(sheets)/xi-export" options={{ ...sheet, sheetAllowedDetents: [1] }} />

@@ -1,0 +1,22 @@
+:root {
+  --md-font: 'Outfit', system-ui, -apple-system, sans-serif;
+  --md-weight-light: 300;   /* body & descriptions */
+  --md-weight-regular: 400; /* headings — never heavier */
+  --md-weight-medium: 500;  /* labels, buttons, names */
+  --md-display: clamp(40px, 6.4vw, 84px); /* @kind font */   /* hero h1 */
+  --md-h2: clamp(30px, 4vw, 52px); /* @kind font */           /* section statement */
+  --md-card-title: clamp(26px, 3vw, 34px); /* @kind font */   /* card h2 */
+  --md-lead: clamp(16px, 2vw, 20px); /* @kind font */
+  --md-body: 16px;
+  --md-body-sm: 15px;
+  --md-label: 14px;
+  --md-caption: 13px;
+  --md-micro: 12px;
+  --md-tracking-display: -0.035em;
+  --md-tracking-title: -0.025em;
+  --md-leading-tight: 1;
+  --md-leading-title: 1.1;
+  --md-leading-body: 1.55;
+}
+body { font-family: var(--md-font); color: var(--md-ink); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-weight: var(--md-weight-regular); margin: 0; }

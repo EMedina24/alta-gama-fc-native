@@ -25,7 +25,48 @@ decision 0037), then a wrong .p8 on Render (§104.4). First goal banner delivere
 | **Run** | `npx expo start --dev-client --ios` (needs a dev build — Expo Go no longer works) |
 | **Gates** | `npx tsc --noEmit` · `npx expo export --platform ios` · `npx expo-doctor` |
 
-> ⭐ **NEW 2026-09-25 (latest) — THE ACCOUNT SHEET IS NOW A SETTINGS SCREEN
+> ⭐ **NEW 2026-09-26 (latest) — THE STARTING XI IS REBUILT FROM `handoff_lineup/`
+> AND IS THE FIFTH TAB ([0211](./decisions/0211-the-xi-is-keyed-by-slot-with-a-bench-and-saved-lineups.md)–[0217](./decisions/0217-one-curve-and-one-shot-motion.md)).**
+>
+> **Ed's calls:**
+> - a fifth tab, "Mi once" / "My XI";
+> - no Predicted XI (the backend's are admin-only);
+> - the image export kept;
+> - haptics, no sound.
+>
+> **What changed:**
+> - **Routes.** `/starting-xi` (tab) and `/club/[slug]/starting-xi` (pushed,
+>   club fixed) are shells over `use-xi-screen` + `templates/starting-xi-screen`.
+> - **State.** Store v2 under the SAME key. Placements are slot id → person id.
+>   The bench holds 7 and each club saves 5 lineups. v1 migrates, and ONLY
+>   4-2-3-1 renames its three slots.
+> - **Pitch.** A plane under one camera, with tokens as an upright overlay at
+>   `projectPoint` (traps 81, 82). Flat and 3D; pan, pinch and twist.
+> - **Sheets.** `xi-pick`, `xi-player`, `xi-club`, `xi-lineups`, `xi-save`;
+>   `xi-export` kept. `xi-shape` and `xi-look` are deleted.
+> - **Harness.** `node scripts/starting-xi-harness.mjs` (1,194 assertions)
+>   diffs the formations against `cronogol` and `senpai-backend` when they are
+>   checked out beside this repo.
+>
+> ⚠⚠ **Seen on the iOS 26.5 simulator on live data, Spanish:**
+> - the tab and a migrated XI;
+> - flat, 3D, and the probe coincident at 30°/45°;
+> - the bench, the empty keeper pulse, the pushed builder;
+> - every sheet.
+>
+> **NOT verified:** any TAP or GESTURE (the simulator ran headless, so there
+> was no window for CGEvents), the pop and ripple, export by tap, Reduce Motion,
+> VoiceOver, 375pt, English, and haptics on a device.
+>
+> ⚠ **Lime budget.** Save (valid), the lineups count badge and "Lista" can all
+> be lime at once, against 0193's one-lime rule. That follows the handoff and
+> is Ed's call. The 3D centre (53%) and the flat name reserve are this build's
+> corrections to the handoff, found on the simulator.
+> ⚠ `_debug/xi?state=empty|partial|full|nogk|bench&view=3d&rot=&tilt=&probe=1`
+> draws the REAL template over a synthetic XI; `?seedV1=1` seeds a v1 blob for
+> the migration check (relaunch after).
+
+> ⭐ **NEW 2026-09-25 — THE ACCOUNT SHEET IS NOW A SETTINGS SCREEN
 > ([0208](./decisions/0208-the-account-sheet-becomes-settings.md)–[0210](./decisions/0210-expo-application-for-the-version.md)).**
 > - Ed's Medina mock. `/settings` is a PUSHED screen; `(sheets)/account` is gone.
 >   Every avatar button pushes it.
@@ -2207,6 +2248,38 @@ documented at the code that handles them; this is the index.
       shows through, which is the known risk.
     - NativeTabs ignores `labelStyle.fontFamily` on the iOS 26 glass bar, so
       the tab labels are uppercase SF.
+81. **⚠⚠ A CSS 3D scene is not an RN transform list**
+    ([0213](./decisions/0213-the-pitch-is-a-plane-seen-through-one-camera.md)).
+    - RN folds `transform` as `rhs · lhs` with row vectors (the last op meets
+      the point first, as in CSS), puts `perspective` at `m[11] = −1/p`, and
+      pivots on the layer's CENTRE. There is no parent `perspective-origin`:
+      fold it in as `translateY(o − H/2)` before and `translateY(C − o)` after.
+    - `{ scale }` scales Z; CSS `scale()` does not. Use `scaleX` + `scaleY`.
+    - CSS depth is in UNSCALED px, so a plane laid out at `unit` pt/unit needs
+      `perspective × unit`. The first build used 1400pt and was ~35% flat.
+    - There is no `preserve-3d`: a child of a tilted view is flattened into it.
+      Anything that must stay upright is an overlay placed by the SAME maths —
+      `features/starting-xi/projection.ts`, harness-proven against both models
+      and probed on device (`/_debug/xi?probe=1`).
+82. **⚠⚠ react-native-svg ignores the alpha of an `rgba()` stop colour.** A
+    `stopColor="rgba(255,255,255,.07)"` paints OPAQUE white; the XI pitch card
+    came up as a white slab. Give stops a SOLID ink and a `stopOpacity`
+    (`xiWashInk` + `Xi.wash`).
+83. **⚠⚠ NativeTabs keeps a tab MOUNTED, and a formSheet BLURS the screen under
+    it** ([0214](./decisions/0214-the-builders-sheets-and-its-stats.md)).
+    - A module singleton that "the screen" registers can have two owners — the
+      XI tab's builder under one pushed from a club page. Key it (the export's
+      capture is keyed by host).
+    - Register on MOUNT, not `useFocusEffect`: presenting the export sheet blurs
+      the builder at the exact moment its capture is needed.
+84. **⚠ The React Compiler only knows a shared value is mutable when it comes
+    straight from `useSharedValue`**
+    ([0216](./decisions/0216-3d-and-touch-on-the-pitch.md)).
+    - Packing shared values into an object literal and writing through it lints
+      as "This value cannot be modified". Keep one `const` per value.
+    - A closure a hook RETURNS may not write `.value =`; use `.set()`.
+    - Build RNGH gestures in a function the JSX calls (`board-stack`'s pattern),
+      not at the hook's top level.
 
 ---
 

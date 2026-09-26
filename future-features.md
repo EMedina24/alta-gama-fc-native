@@ -17,6 +17,7 @@ that one tracks designed states that are unbuilt. Nothing here has a design.
 | 8 | Depth on the table screen | M | backend, for the half worth having |
 | 9 | Search across the app | M | backend, or a scoped client search |
 | 10 | iPad and landscape | L | a design pass |
+| 11 | Predicted XI in the Starting XI builder | M | backend (a public route) |
 
 ---
 
@@ -192,6 +193,28 @@ the first casualty of large Dynamic Type. Same problem seen twice.
 get a larger App Store review surface.
 
 ---
+
+## 11 · Predicted XI in the Starting XI builder
+
+`handoff_lineup/` draws a **My XI | Predicted XI** toggle: a read-only XI in the
+club's usual shape, with a lime ring on each player who is not in the reader's
+own. It was left out of the rebuild on purpose ([ADR 0212](.claude/decisions/0212-starting-xi-becomes-the-fifth-tab.md)).
+
+- **The data exists but is not public.** The backend's §114 `ig-xi` pipeline
+  asks a model for a formation and eleven ids from the squad and recent
+  headlines, and stores them in `ig_xi_drafts`. The table is admin-only (RLS
+  closed, `DashboardGuard`), is scoped to LaLiga and the UCL, and holds one
+  draft per upcoming fixture.
+- **The handoff's placeholder is not an option.** It seats the lowest shirt
+  numbers per band, which would put a made-up XI on a real club's crest. The
+  web's poster route treats a named XI as sensitive for exactly that reason.
+- **What it needs:**
+  - a public, read-only route over APPROVED drafts: the fixture, the formation,
+    `xi` as `{slot, playerId}`, and the bench;
+  - the "PREVISTO · NO CONFIRMADO" qualifier the poster already prints;
+  - the seam, which is in place: the glass track goes in front of the
+    formation chip.
+- ⚠ **Backend work:** ask before touching `senpai-backend`.
 
 ## Not on this list, and why
 

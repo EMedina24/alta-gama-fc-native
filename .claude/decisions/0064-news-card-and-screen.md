@@ -1,7 +1,7 @@
 # 0064 — News in the app: a card on the Today board and a pushed News screen, over the global feed
 
 - **Date:** 2026-08-29
-- **Status:** Accepted — verified on the simulator (iPhone 17 Pro, 2026-08-29)
+- **Status:** Accepted — verified on the simulator (iPhone 17 Pro, 2026-08-29). The "without a fifth tab" premise is **superseded by [0212](./0212-starting-xi-becomes-the-fifth-tab.md)** (2026-09-26): the fifth tab went to the Starting XI; News stays a Board card.
 - **Decided by:** Ed Medina
 
 ## Context

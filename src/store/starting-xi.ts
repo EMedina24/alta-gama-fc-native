@@ -1,65 +1,66 @@
 /**
- * Per-club Starting XI state: formation, look, placements, card title (ADR 0065).
+ * The Starting XI builder's state (ADR 0211): every club's working XI, bench
+ * and saved lineups, the club the tab opens on, and how the reader left the
+ * pitch.
  *
  * ⚠ A SIBLING of `preferences.ts`, not a field in it. Preferences is one small
  * fixed record; this is unbounded and keyed by club, and a shape bump here must
  * never be able to touch `followed` (trap 24). Same mechanism otherwise:
- * AsyncStorage + `useSyncExternalStore`, one JSON blob, `parse()` re-validating
- * every field with explicit defaults, hydrated in `_layout.tsx` before the tree
- * renders.
+ * AsyncStorage + `useSyncExternalStore`, one JSON blob, hydrated in
+ * `_layout.tsx` before the tree renders.
  *
- * ⚠ Placements key on the PERSON id. A stored id that has since left the club
- * is dropped at render (`visiblePlaced`) and pruned on the next user action —
- * never in an effect (the lint baseline).
+ * ⚠ Every rule about what a stored byte may become lives in
+ * `features/starting-xi/migrate.ts` (pure, harnessed), and every rule about
+ * what an action does in `features/starting-xi/xi-state.ts`. This file only
+ * reads, writes and emits.
  *
- * ⚠ What is NOT stored: the ephemeral selection (`slot`, `filter`) and the
- * export size — both deliberately, matching the web (`cronogol/components/starting-xi/store.ts`).
+ * ⚠ **One writer for the XI itself: `dispatchXi`.** The screen and every sheet
+ * (the picker places a player, the card benches one, the lineups sheet loads
+ * one) share no React state, so they all go through here and the screen
+ * re-renders underneath them. Departed players are pruned INSIDE that user
+ * action, never in an effect (the lint baseline).
  *
- * ⚠ Nothing here reaches the server. There is no lineup endpoint and none is
- * coming (`CRONOGOL-API.md` "No lineups").
+ * ⚠ Nothing here reaches the server. There is no lineup endpoint.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
-import { clampTitle } from '@/features/starting-xi/card-geometry';
 import {
-  DEFAULT_FORMATION,
-  DEFAULT_LOOK,
-  SLOT_COUNT,
-  isFormationId,
-  isLook,
-  type FormationId,
-  type Look,
-} from '@/features/starting-xi/formations';
-import { reseat, type Placed } from '@/features/starting-xi/lineup';
+  EMPTY_STORED,
+  SCHEMA_VERSION,
+  parseStoredXi,
+  type StoredXi,
+  type XiView,
+} from '@/features/starting-xi/migrate';
+import type { SlotId } from '@/features/starting-xi/slots';
+import {
+  EMPTY_CLUB,
+  reduceXi,
+  sameClubXi,
+  type ClubXi,
+  type SquadIndex,
+  type XiAction,
+  type XiEffect,
+} from '@/features/starting-xi/xi-state';
+import { TITLE_MAX } from '@/features/starting-xi/card-geometry';
 
-/** ⚠ Renaming wipes every reader's saved XI. */
+/** ⚠ Renaming wipes every reader's saved XI. The v1 blob lived here too. */
 const STORAGE_KEY = 'altagama:starting-xi';
-const SCHEMA_VERSION = 1;
 
-export interface ClubLineup {
-  formation: FormationId;
-  look: Look;
-  placed: Placed;
-  /** The card title; `null` = the default copy in the reader's language. */
-  title: string | null;
+/**
+ * The last placement, for the pitch's one-shot pop and ripple (ADR 0217).
+ * ⚠ Ephemeral and never persisted: a relaunch must not replay a placement.
+ * `n` bumps on every event so two placements into one slot still read as two.
+ */
+export interface XiFx {
+  slug: string;
+  slots: readonly SlotId[];
+  at: number;
+  n: number;
 }
 
-interface Stored {
-  v: number;
-  clubs: Record<string, ClubLineup>;
-}
-
-export const EMPTY_LINEUP: ClubLineup = {
-  formation: DEFAULT_FORMATION,
-  look: DEFAULT_LOOK,
-  placed: {},
-  title: null,
-};
-
-const DEFAULTS: Stored = { v: SCHEMA_VERSION, clubs: {} };
-
-let snapshot: Stored = DEFAULTS;
+let snapshot: StoredXi = EMPTY_STORED;
+let fx: XiFx | null = null;
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -67,74 +68,27 @@ function emit() {
   for (const listener of listeners) listener();
 }
 
-function parsePlaced(raw: unknown): Placed {
-  if (!raw || typeof raw !== 'object') return {};
-  const out: Record<number, string> = {};
-  const seen = new Set<string>();
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    const i = Number(key);
-    if (!Number.isInteger(i) || i < 0 || i >= SLOT_COUNT) continue;
-    if (typeof value !== 'string' || value === '' || seen.has(value)) continue;
-    seen.add(value);
-    out[i] = value;
-  }
-  return out;
-}
-
-function parseClub(raw: unknown): ClubLineup | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const data = raw as Partial<Record<keyof ClubLineup, unknown>>;
-  return {
-    formation: isFormationId(data.formation) ? data.formation : DEFAULT_FORMATION,
-    look: isLook(data.look) ? data.look : DEFAULT_LOOK,
-    placed: parsePlaced(data.placed),
-    title: typeof data.title === 'string' && data.title.trim() ? clampTitle(data.title) : null,
-  };
-}
-
-function parse(raw: string | null): Stored {
-  if (!raw) return DEFAULTS;
-  try {
-    const data = JSON.parse(raw) as Partial<Stored>;
-    const clubs: Record<string, ClubLineup> = {};
-    if (data.clubs && typeof data.clubs === 'object') {
-      for (const [slug, value] of Object.entries(data.clubs)) {
-        const club = parseClub(value);
-        if (club) clubs[slug] = club;
-      }
-    }
-    return { v: SCHEMA_VERSION, clubs };
-  } catch {
-    return DEFAULTS;
-  }
-}
-
-function samePlaced(a: Placed, b: Placed): boolean {
-  const ak = Object.keys(a);
-  const bk = Object.keys(b);
-  return ak.length === bk.length && ak.every((k) => a[Number(k)] === b[Number(k)]);
-}
-
-function sameClub(a: ClubLineup, b: ClubLineup): boolean {
-  return a.formation === b.formation && a.look === b.look && a.title === b.title && samePlaced(a.placed, b.placed);
-}
-
-function commit(slug: string, next: ClubLineup) {
-  const prev = snapshot.clubs[slug] ?? EMPTY_LINEUP;
-  if (sameClub(prev, next)) return;
-  snapshot = { v: SCHEMA_VERSION, clubs: { ...snapshot.clubs, [slug]: next } };
+function persist() {
   void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot)).catch(() => {
     // Storage full or unavailable. The value still holds for this session.
   });
+}
+
+function commit(next: StoredXi) {
+  snapshot = next;
+  persist();
   emit();
 }
 
 export async function hydrateStartingXi(): Promise<void> {
   if (hydrated) return;
   try {
-    snapshot = parse(await AsyncStorage.getItem(STORAGE_KEY));
+    const parsed = parseStoredXi(await AsyncStorage.getItem(STORAGE_KEY));
+    snapshot = parsed.stored;
+    // A v1 blob is written forward once, so the migration never runs twice.
+    if (parsed.migrated) persist();
   } catch {
-    snapshot = DEFAULTS;
+    snapshot = EMPTY_STORED;
   }
   hydrated = true;
   emit();
@@ -146,43 +100,97 @@ function subscribe(listener: () => void): () => void {
 }
 
 const getSnapshot = () => snapshot;
+const getFx = () => fx;
 
-/** The club's saved XI, or the empty default. Identity is stable while nothing changes. */
-export function useClubLineup(slug: string): ClubLineup {
+/* ── readers ─────────────────────────────────────────────────────────── */
+
+/** A club's XI, or the empty default. Identity is stable while nothing changes. */
+export function useClubXi(slug: string | null): ClubXi {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return stored.clubs[slug] ?? EMPTY_LINEUP;
+  return (slug && stored.clubs[slug]) || EMPTY_CLUB;
 }
 
-export function getClubLineup(slug: string): ClubLineup {
-  return snapshot.clubs[slug] ?? EMPTY_LINEUP;
+export function getClubXi(slug: string): ClubXi {
+  return snapshot.clubs[slug] ?? EMPTY_CLUB;
 }
 
-/* ── writers ─────────────────────────────────────────────────────────────
-   Module-level, like `preferences.ts`, so the sheets (which share no React
-   state with the builder screen) can write and the screen re-renders under
-   them through the store.
-   ─────────────────────────────────────────────────────────────────────── */
-
-export function commitLineup(slug: string, lineup: { formation: FormationId; placed: Placed }) {
-  commit(slug, { ...getClubLineup(slug), ...lineup });
+export function useXiView(): XiView {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot).view;
 }
 
-/** Changing shape keeps the eleven and re-seats them (`reseat`). */
-export function setFormation(slug: string, formation: FormationId) {
-  const current = getClubLineup(slug);
-  if (current.formation === formation) return;
-  commit(slug, { ...current, formation, placed: reseat(current.formation, formation, current.placed) });
+export function getXiView(): XiView {
+  return snapshot.view;
 }
 
-export function setLook(slug: string, look: Look) {
-  commit(slug, { ...getClubLineup(slug), look });
+export function useLastClub(): string | null {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot).lastClub;
 }
 
-export function setTitle(slug: string, title: string | null) {
-  const clean = title === null ? null : clampTitle(title).trim() || null;
-  commit(slug, { ...getClubLineup(slug), title: clean });
+/** The last placement on THIS club's pitch, or null. */
+export function useXiFx(slug: string | null): XiFx | null {
+  const current = useSyncExternalStore(subscribe, getFx, getFx);
+  return current && current.slug === slug ? current : null;
 }
 
-export function clearLineup(slug: string) {
-  commit(slug, { ...getClubLineup(slug), placed: {} });
+/* ── writers ─────────────────────────────────────────────────────────── */
+
+/**
+ * Apply one builder action to one club. Returns what happened, for the haptic.
+ *
+ * ⚠ Stamps `lastClub` — any edit is the reader choosing this club — and marks
+ * `onboarded` on the first placement. Skips the write when nothing changed.
+ */
+export function dispatchXi(slug: string, action: XiAction, squad: SquadIndex): XiEffect {
+  const prev = getClubXi(slug);
+  const { state, effect } = reduceXi(prev, action, squad);
+  const changed = !sameClubXi(prev, state);
+  const placedNow = effect === 'placed' || effect === 'swapped';
+  const view = placedNow && !snapshot.view.onboarded ? { ...snapshot.view, onboarded: true } : snapshot.view;
+  if (!changed && snapshot.lastClub === slug && view === snapshot.view) return effect;
+
+  if (placedNow && action.type === 'place') {
+    const slots: SlotId[] = [action.slot];
+    // A swap moves the occupant too — both ends land.
+    for (const [slot, id] of Object.entries(state.placements)) {
+      if (slot !== action.slot && prev.placements[slot] !== id && id !== undefined) slots.push(slot);
+    }
+    fx = { slug, slots, at: Date.now(), n: (fx?.n ?? 0) + 1 };
+  }
+
+  commit({
+    ...snapshot,
+    lastClub: slug,
+    clubs: changed ? { ...snapshot.clubs, [slug]: state } : snapshot.clubs,
+    view,
+  });
+  return effect;
 }
+
+/** The club the tab opens on. A reader's own pick or push — never an effect. */
+export function setLastClub(slug: string): void {
+  if (snapshot.lastClub === slug) return;
+  commit({ ...snapshot, lastClub: slug });
+}
+
+export function setXiView(patch: Partial<XiView>): void {
+  const next = { ...snapshot.view, ...patch };
+  const keys = Object.keys(patch) as (keyof XiView)[];
+  if (keys.every((key) => next[key] === snapshot.view[key])) return;
+  commit({ ...snapshot, view: next });
+}
+
+/** The export card's title. Blank is the default copy. */
+export function setXiTitle(slug: string, title: string | null): void {
+  const clean = title === null ? null : title.slice(0, TITLE_MAX).trim() || null;
+  const prev = getClubXi(slug);
+  if (prev.title === clean) return;
+  commit({ ...snapshot, clubs: { ...snapshot.clubs, [slug]: { ...prev, title: clean } } });
+}
+
+/** ⚠ Dev only: a v1 blob for `_debug/xi?seedV1=1`, read on the next launch. */
+export async function seedV1ForDebug(raw: string): Promise<void> {
+  if (!__DEV__) return;
+  await AsyncStorage.setItem(STORAGE_KEY, raw);
+}
+
+export { SCHEMA_VERSION };

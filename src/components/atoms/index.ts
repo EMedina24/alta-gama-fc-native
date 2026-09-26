@@ -61,3 +61,8 @@ export { GlassIconButton, type GlassIconButtonProps } from './glass-icon-button'
 export { ShareGlyph, type ShareGlyphProps } from './share-glyph';
 export { StarGlyph, type StarGlyphProps } from './star-glyph';
 export { SweepRing, type SweepRingProps } from './sweep-ring';
+export { XiOrb, type XiOrbProps } from './xi-orb';
+export { ShirtBadge, type ShirtBadgeProps } from './shirt-badge';
+export { TrashGlyph, type TrashGlyphProps } from './trash-glyph';
+export { FlipGlyph, type FlipGlyphProps } from './flip-glyph';
+export { TapGlyph, type TapGlyphProps } from './tap-glyph';
